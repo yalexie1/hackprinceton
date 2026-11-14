@@ -53,7 +53,7 @@ select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible,
 summary:focus-visible {
-  outline: 3px solid #8da77a;
+  outline: 3px solid #214f3a;
   outline-offset: 4px;
 }
 svg {
@@ -88,7 +88,7 @@ h1 {
 h1 em {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 400;
-  color: #6c8660;
+  color: var(--text-secondary);
 }
 h2 {
   font-weight: 550;
@@ -148,12 +148,12 @@ p {
   letter-spacing: 1.3px;
   margin-top: 4px;
   font-weight: 550;
-  color: #778372;
+  color: var(--text-secondary);
 }
 .workspace-label {
   font-size: 16px;
   letter-spacing: 1.6px;
-  color: #8d9589;
+  color: var(--text-secondary);
   padding: 0 13px;
   margin-bottom: 14px;
   font-weight: 600;
@@ -172,7 +172,7 @@ nav {
   padding: 13px 14px;
   font-size: 16px;
   border-radius: 7px;
-  color: #707d70;
+  color: var(--text-secondary);
 }
 .nav-item:hover:not(:disabled) {
   background: #eef1e8;
@@ -200,7 +200,7 @@ nav {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  color: #6f8664;
+  color: var(--text-secondary);
   border-top: 1px solid var(--line);
 }
 .sidebar-bottom {
@@ -215,7 +215,7 @@ nav {
   overflow: hidden;
 }
 .sidebar-note > svg {
-  color: #69885c;
+  color: var(--text-secondary);
   margin-bottom: 17px;
 }
 .sidebar-note h3 {
@@ -225,7 +225,7 @@ nav {
 }
 .sidebar-note p {
   font-size: 16px;
-  color: #7a8771;
+  color: var(--text-secondary);
   line-height: 1.7;
   margin-top: 10px;
   max-width: 145px;
@@ -237,7 +237,7 @@ nav {
   gap: 10px;
   padding: 12px 9px 23px;
   font-size: 16px;
-  color: #788174;
+  color: var(--text-secondary);
 }
 .help-button svg:last-child {
   margin-left: auto;
@@ -253,7 +253,7 @@ nav {
 .avatar {
   border: 1px solid #dedfce;
   background: #ece9db;
-  color: #6b7057;
+  color: var(--text-secondary);
   font-size: 16px;
   display: grid;
   place-items: center;
@@ -270,7 +270,7 @@ nav {
   display: block;
   font-size: 16px;
   font-weight: 400;
-  color: #92968a;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 .profile .online-dot {
@@ -298,10 +298,10 @@ nav {
   align-items: center;
   gap: 16px;
   font-size: 16px;
-  color: #92978e;
+  color: var(--text-secondary);
 }
 .breadcrumbs strong {
-  color: #596551;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 .topbar-right {
@@ -319,7 +319,7 @@ nav {
 .mode-switch button {
   font-size: 16px;
   padding: 6px 12px;
-  color: #7b8373;
+  color: var(--text-secondary);
   border-radius: 4px;
 }
 .mode-switch button.selected {
@@ -343,25 +343,25 @@ nav {
   font-size: 16px;
   letter-spacing: 1px;
   font-weight: 600;
-  color: #7c866f;
+  color: var(--text-secondary);
   min-height: 23px;
 }
 .mode-notice > span:nth-of-type(2) {
   letter-spacing: 0;
   font-size: 16px;
   font-weight: 400;
-  color: #8f9488;
+  color: var(--text-secondary);
   border-left: 1px solid #d6dccf;
   margin-left: 4px;
   padding-left: 12px;
 }
 .mode-notice > button {
   display: flex;
-  color: #8d9682;
+  color: var(--text-secondary);
   margin-left: auto;
 }
 .mode-notice.live {
-  color: #386b47;
+  color: var(--text-secondary);
 }
 .status-dot {
   width: 5px;
@@ -375,7 +375,7 @@ nav {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 1.5px;
-  color: #788d6b;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -412,13 +412,13 @@ nav {
 .hero-copy > p {
   font-size: 16px;
   max-width: 330px;
-  color: #7d8777;
+  color: var(--text-secondary);
   margin-top: 22px;
   line-height: 1.9;
 }
 .hero-footnote {
   font-size: 16px;
-  color: #7e8e71;
+  color: var(--text-secondary);
   display: flex;
   gap: 9px;
   align-items: center;
@@ -463,7 +463,7 @@ nav {
 .floating-card small {
   display: block;
   font-size: 16px;
-  color: #89907f;
+  color: var(--text-secondary);
   font-weight: 400;
   margin-top: 4px;
 }
@@ -474,7 +474,7 @@ nav {
   display: grid;
   place-items: center;
   background: #edf0d5;
-  color: #7e9051;
+  color: var(--text-secondary);
   font-size: 23px;
 }
 .section-heading {
@@ -498,7 +498,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #8d9585;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .search-toolbar {
@@ -517,7 +517,7 @@ nav {
   background: #fcfdf9;
   border-radius: 7px;
   flex: 1;
-  color: #8b9682;
+  color: var(--text-secondary);
 }
 .search-box input {
   border: 0;
@@ -528,7 +528,7 @@ nav {
   font-size: 16px;
 }
 .search-box input::placeholder {
-  color: #9ca392;
+  color: var(--text-secondary);
 }
 .filter-select {
   display: flex;
@@ -536,7 +536,7 @@ nav {
   border: 1px solid #dfe5d7;
   border-radius: 7px;
   background: #fcfdf9;
-  color: #7b8771;
+  color: var(--text-secondary);
   padding: 0 13px;
   gap: 7px;
   height: 46px;
@@ -545,7 +545,7 @@ nav {
   font-size: 16px;
   background: none;
   border: 0;
-  color: #637258;
+  color: var(--text-secondary);
   outline: none;
   max-width: 150px;
 }
@@ -592,7 +592,7 @@ nav {
   position: absolute;
   top: 15px;
   left: 15px;
-  color: #627458;
+  color: var(--text-secondary);
   text-transform: capitalize;
 }
 .property-index {
@@ -600,7 +600,7 @@ nav {
   top: 18px;
   right: 18px;
   font-family: Georgia, serif;
-  color: #889c7a;
+  color: var(--text-secondary);
   font-size: 17px;
 }
 .property-copy {
@@ -616,12 +616,12 @@ nav {
   letter-spacing: -0.5px;
 }
 .property-copy > div:first-child > svg {
-  color: #86967a;
+  color: var(--text-secondary);
   width: 17px;
 }
 .property-copy > p {
   font-size: 16px;
-  color: #8b9483;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -631,21 +631,21 @@ nav {
   display: flex;
   gap: 0;
   font-size: 16px;
-  color: #87947e;
+  color: var(--text-secondary);
   padding: 13px 0;
   border-top: 1px solid #edf0e7;
 }
 .property-meta > span + span:before {
   content: "·";
   padding: 0 12px;
-  color: #b1b9a9;
+  color: var(--text-secondary);
 }
 .property-action {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 16px;
-  color: #668155;
+  color: var(--text-secondary);
   padding-top: 10px;
 }
 .source-footer {
@@ -660,7 +660,7 @@ nav {
 }
 .source-footer > div {
   font-size: 16px;
-  color: #7a8970;
+  color: var(--text-secondary);
   display: flex;
   gap: 9px;
   align-items: center;
@@ -669,16 +669,16 @@ nav {
   font-family: "Manrope", sans-serif;
   font-size: 16px;
   font-weight: 650;
-  color: #7f8c75;
+  color: var(--text-secondary);
   letter-spacing: -0.3px;
 }
 .source-footer > p > span {
   padding: 0 10px;
-  color: #bdc5b5;
+  color: var(--text-secondary);
 }
 .source-footer > small {
   font-size: 16px;
-  color: #969e8e;
+  color: var(--text-secondary);
   flex-basis: 100%;
   margin-top: 5px;
 }
@@ -686,7 +686,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #9ca391;
+  color: var(--text-secondary);
   font-size: 16px;
   padding: 21px 0 23px;
   margin-top: 25px;
@@ -722,7 +722,7 @@ nav {
 .secondary-button {
   background: #fcfdf8;
   border: 1px solid #dce3d2;
-  color: #5f7752;
+  color: var(--text-secondary);
 }
 .secondary-button:hover:not(:disabled) {
   background: #eef2e6;
@@ -734,7 +734,7 @@ nav {
   gap: 7px;
   font-size: 16px;
   font-weight: 500;
-  color: #627f50;
+  color: var(--text-secondary);
   padding: 4px 0;
 }
 .text-button:hover {
@@ -746,7 +746,7 @@ nav {
   justify-content: center;
   padding: 6px;
   border-radius: 4px;
-  color: #7d8b73;
+  color: var(--text-secondary);
 }
 .icon-button:hover:not(:disabled) {
   background: #e9efdf;
@@ -758,7 +758,7 @@ nav {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #8a957f;
+  color: var(--text-secondary);
   font-size: 16px;
   padding: 0;
   margin: 23px 0;
@@ -778,7 +778,7 @@ nav {
 }
 .section-description {
   font-size: 16px;
-  color: #86927d;
+  color: var(--text-secondary);
   line-height: 1.8;
   margin: 12px 0 24px;
   max-width: 650px;
@@ -803,7 +803,7 @@ nav {
   gap: 4px;
   align-items: center;
   font-size: 16px;
-  color: #8c9682;
+  color: var(--text-secondary);
   margin-top: 7px;
 }
 .setup-form {
@@ -826,11 +826,11 @@ nav {
   gap: 8px;
 }
 .card-heading svg {
-  color: #869a78;
+  color: var(--text-secondary);
 }
 .step-label {
   font-size: 16px;
-  color: #98a18e;
+  color: var(--text-secondary);
   letter-spacing: 1px;
 }
 .setup-form > .card-heading {
@@ -840,14 +840,14 @@ nav {
 }
 label {
   font-size: 16px;
-  color: #66775b;
+  color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   gap: 9px;
 }
 label > small {
   font-size: 16px;
-  color: #949d8c;
+  color: var(--text-secondary);
   line-height: 1.7;
 }
 input:not([type="checkbox"]),
@@ -892,16 +892,16 @@ textarea {
 }
 .bills-form summary {
   cursor: pointer;
-  color: #72876b;
+  color: var(--text-secondary);
 }
 .bills-form summary span {
   float: right;
   font-size: 16px;
-  color: #929d86;
+  color: var(--text-secondary);
 }
 .bills-form p {
   font-size: 16px;
-  color: #8b987d;
+  color: var(--text-secondary);
   margin: 15px 0;
 }
 .bills-form label {
@@ -912,7 +912,7 @@ textarea {
   flex-direction: column;
   gap: 12px;
   margin: 25px 0;
-  color: #8a987e;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 .audit-includes > span {
@@ -921,7 +921,7 @@ textarea {
   gap: 9px;
 }
 .audit-includes svg {
-  color: #749164;
+  color: var(--text-secondary);
 }
 .setup-form > .fineprint {
   text-align: center;
@@ -929,7 +929,7 @@ textarea {
 }
 .fineprint {
   font-size: 16px;
-  color: #8c9780;
+  color: var(--text-secondary);
   line-height: 1.8;
 }
 .page-title {
@@ -954,7 +954,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #8b9680;
+  color: var(--text-secondary);
   font-size: 16px;
   margin-top: 12px;
   flex-wrap: wrap;
@@ -968,7 +968,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #6f8c5f;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 .result-grid {
@@ -1006,7 +1006,7 @@ textarea {
   align-items: center;
   gap: 5px;
   font-size: 16px;
-  color: #80916e;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .range-value {
@@ -1023,14 +1023,14 @@ textarea {
 }
 .range-value small {
   font-size: 16px;
-  color: #87977b;
+  color: var(--text-secondary);
 }
 .metric .range-value {
   margin: 15px 0 8px;
 }
 .metric > small {
   font-size: 16px;
-  color: #97a18c;
+  color: var(--text-secondary);
 }
 .recommendations .section-heading h2 {
   font-size: 22px;
@@ -1041,7 +1041,7 @@ textarea {
 }
 .count-pill {
   font-size: 16px;
-  color: #8b9c7b;
+  color: var(--text-secondary);
   white-space: nowrap;
   background: #eaf0e0;
   padding: 6px 9px;
@@ -1062,19 +1062,19 @@ textarea {
   align-items: center;
   gap: 7px;
   font-size: 16px;
-  color: #9ca78e;
+  color: var(--text-secondary);
   padding: 0 0 13px;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
 .tabs > button[aria-selected="true"] {
   border-color: #718d5e;
-  color: #547742;
+  color: var(--text-secondary);
   font-weight: 550;
 }
 .tabs > button > span {
   font-size: 16px;
-  color: #8da178;
+  color: var(--text-secondary);
   background: #edf1e6;
   border-radius: 4px;
   padding: 2px 5px;
@@ -1107,13 +1107,13 @@ textarea {
   place-items: center;
   background: #edf2e6;
   border-radius: 9px;
-  color: #83a06c;
+  color: var(--text-secondary);
   width: 39px;
   height: 39px;
   flex-shrink: 0;
 }
 .measure-symbol.solar {
-  color: #a49d52;
+  color: var(--text-secondary);
   background: #f4f1db;
 }
 .measure-title {
@@ -1130,11 +1130,11 @@ textarea {
   line-height: 1.5;
 }
 .rank {
-  color: #a4b096;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 .measure-title > small {
-  color: #9ca58f;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 .measure-saving {
@@ -1150,21 +1150,21 @@ textarea {
   font-family: "Manrope", sans-serif;
   font-size: 16px;
   font-weight: 650;
-  color: #59744b;
+  color: var(--text-secondary);
   letter-spacing: -0.3px;
 }
 .measure-saving > strong > small {
   font-size: 16px;
   font-weight: 400;
-  color: #95a187;
+  color: var(--text-secondary);
   margin-left: 3px;
 }
 .measure-saving > small {
   font-size: 16px;
-  color: #9ca78f;
+  color: var(--text-secondary);
 }
 .measure-summary > svg:last-child {
-  color: #9ba98d;
+  color: var(--text-secondary);
   margin-left: 4px;
 }
 .rotate {
@@ -1174,7 +1174,7 @@ textarea {
   border-top: 1px solid #eaf0e2;
   padding: 18px;
   font-size: 16px;
-  color: #748669;
+  color: var(--text-secondary);
 }
 .measure-details > p {
   margin-bottom: 15px;
@@ -1195,7 +1195,7 @@ textarea {
 }
 .detail-grid > div > span:first-child {
   font-size: 16px;
-  color: #929e84;
+  color: var(--text-secondary);
 }
 .detail-grid > div > strong,
 .detail-grid .range-value strong {
@@ -1205,7 +1205,7 @@ textarea {
 }
 .detail-grid > div > small {
   font-size: 16px;
-  color: #929e84;
+  color: var(--text-secondary);
 }
 .detail-grid .range-value small {
   font-size: 16px;
@@ -1237,7 +1237,7 @@ textarea {
 .finance-box small {
   display: block;
   font-size: 16px;
-  color: #8b9b7b;
+  color: var(--text-secondary);
   margin-top: 8px;
 }
 .evidence {
@@ -1274,12 +1274,12 @@ textarea {
   font-size: 16px;
   font-weight: 500;
   margin: 8px 0;
-  color: #9c9678;
+  color: var(--text-secondary);
   text-transform: capitalize;
 }
 .skipped-item p {
   font-size: 16px;
-  color: #95a08a;
+  color: var(--text-secondary);
 }
 .next-step {
   display: flex;
@@ -1292,7 +1292,7 @@ textarea {
   margin-top: 24px;
 }
 .next-icon {
-  color: #83a16c;
+  color: var(--text-secondary);
 }
 .next-step h3 {
   font-size: 16px;
@@ -1301,7 +1301,7 @@ textarea {
 }
 .next-step p {
   font-size: 16px;
-  color: #9aa98a;
+  color: var(--text-secondary);
   margin-top: 6px;
 }
 .next-step > .text-button {
@@ -1342,7 +1342,7 @@ textarea {
   bottom: 9px;
   left: 10px;
   font-size: 16px;
-  color: #79926b;
+  color: var(--text-secondary);
   background: #f9fbf2df;
   border: 1px solid #f9fbf2;
   padding: 5px 8px;
@@ -1364,7 +1364,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #5b7950;
+  color: var(--text-secondary);
   box-shadow: 0 2px 8px #5c7b4110;
   white-space: nowrap;
 }
@@ -1391,7 +1391,7 @@ textarea {
   align-items: center;
   gap: 6px;
   padding: 11px 12px;
-  color: #9ba78e;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 .tour-caption svg {
@@ -1431,7 +1431,7 @@ textarea {
 }
 .budget-card form > small {
   font-size: 16px;
-  color: #98a38b;
+  color: var(--text-secondary);
   display: block;
   margin-top: 8px;
   line-height: 1.6;
@@ -1444,7 +1444,7 @@ textarea {
   align-items: center;
   gap: 6px;
   font-size: 16px;
-  color: #8a9c78;
+  color: var(--text-secondary);
   border-top: 1px solid var(--line);
   padding-top: 14px;
   margin-top: 15px;
@@ -1456,7 +1456,7 @@ textarea {
   border: 1px solid #dde7d0;
 }
 .insight-card > svg {
-  color: #7e9968;
+  color: var(--text-secondary);
   margin-bottom: 14px;
 }
 .insight-card .eyebrow {
@@ -1466,7 +1466,7 @@ textarea {
 .insight-card > p {
   font-size: 16px;
   line-height: 1.9;
-  color: #819370;
+  color: var(--text-secondary);
   white-space: pre-line;
 }
 .insight-card .text-button {
@@ -1484,18 +1484,18 @@ textarea {
 }
 .baseline-card h3 {
   font-size: 22px;
-  color: #698456;
+  color: var(--text-secondary);
   letter-spacing: -0.8px;
 }
 .baseline-card h3 > small {
   font-size: 16px;
   font-weight: 400;
   letter-spacing: 0;
-  color: #98a98a;
+  color: var(--text-secondary);
 }
 .baseline-card > p {
   font-size: 16px;
-  color: #9da98f;
+  color: var(--text-secondary);
   margin-top: 7px;
 }
 .spark-bars {
@@ -1520,13 +1520,13 @@ textarea {
   display: flex;
   justify-content: space-between;
   font-size: 16px;
-  color: #a5af99;
+  color: var(--text-secondary);
   margin-top: 6px;
   letter-spacing: 1px;
 }
 .baseline-card > small {
   font-size: 16px;
-  color: #9ea991;
+  color: var(--text-secondary);
   margin-top: 16px;
   display: block;
 }
@@ -1539,7 +1539,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #a5ac97;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 .audit-grid {
@@ -1586,31 +1586,31 @@ textarea {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #87a66a;
+  color: var(--text-secondary);
   z-index: 1;
   flex-shrink: 0;
 }
 .event.fallback .event-dot,
 .event.question .event-dot {
   background: #f3eedc;
-  color: #a89c65;
+  color: var(--text-secondary);
 }
 .event small {
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
-  color: #99a88c;
+  color: var(--text-secondary);
 }
 .event p {
   font-size: 16px;
-  color: #738765;
+  color: var(--text-secondary);
   margin-top: 5px;
 }
 .audit-working {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #a1af95;
+  color: var(--text-secondary);
   font-size: 16px;
   margin: 0 0 22px 38px;
 }
@@ -1628,7 +1628,7 @@ textarea {
 }
 .question-card p {
   font-size: 16px;
-  color: #90a17e;
+  color: var(--text-secondary);
   margin: 12px 0 18px;
 }
 .question-card > div {
@@ -1651,7 +1651,7 @@ textarea {
 }
 .geometry-panel > .section-heading > svg,
 .documents-panel > .section-heading > svg {
-  color: #91a77d;
+  color: var(--text-secondary);
 }
 .geometry-panel h2,
 .documents-panel h2 {
@@ -1687,7 +1687,7 @@ textarea {
   padding: 12px;
   border-radius: 5px;
   font-size: 16px;
-  color: #899678;
+  color: var(--text-secondary);
   line-height: 1.8;
   margin-top: 15px;
 }
@@ -1713,7 +1713,7 @@ textarea {
 }
 .measure-checks legend {
   font-size: 16px;
-  color: #839771;
+  color: var(--text-secondary);
   padding: 0 7px;
 }
 .measure-checks label {
@@ -1728,7 +1728,7 @@ textarea {
   line-height: 1.8;
   margin: 20px 0;
   font-size: 16px;
-  color: #8f9d80;
+  color: var(--text-secondary);
 }
 input[type="checkbox"] {
   accent-color: var(--green);
@@ -1767,12 +1767,12 @@ input[type="checkbox"] {
 }
 .draft-text p {
   font-size: 16px;
-  color: #879579;
+  color: var(--text-secondary);
   white-space: pre-wrap;
 }
 .draft-text mark {
   background: #f4edca;
-  color: #a0925c;
+  color: var(--text-secondary);
   padding: 2px 3px;
   border-radius: 2px;
 }
@@ -1790,7 +1790,7 @@ input[type="checkbox"] {
   align-items: flex-start;
   gap: 8px;
   font-size: 16px;
-  color: #929e81;
+  color: var(--text-secondary);
   line-height: 1.8;
   margin-top: 12px;
 }
@@ -1800,10 +1800,10 @@ input[type="checkbox"] {
   margin-top: 4px;
 }
 .check-pending > svg {
-  color: #b6a261;
+  color: var(--text-secondary);
 }
 .check-pass > svg {
-  color: #7a9f61;
+  color: var(--text-secondary);
 }
 .assumption-list {
   display: flex;
@@ -1828,7 +1828,7 @@ input[type="checkbox"] {
   text-transform: uppercase;
   letter-spacing: 0.7px;
   background: #edf2e4;
-  color: #91a27d;
+  color: var(--text-secondary);
   padding: 4px 6px;
   border-radius: 3px;
   margin-bottom: 10px;
@@ -1851,11 +1851,11 @@ input[type="checkbox"] {
 .assumption-body strong {
   font-size: 17px;
   font-weight: 500;
-  color: #6f885c;
+  color: var(--text-secondary);
 }
 .assumption-body small {
   font-size: 16px;
-  color: #a2ac94;
+  color: var(--text-secondary);
 }
 .confidence {
   max-width: 160px;
@@ -1866,7 +1866,7 @@ input[type="checkbox"] {
 }
 .confidence span {
   font-size: 16px;
-  color: #9eaa90;
+  color: var(--text-secondary);
 }
 .confidence progress {
   width: 100%;
@@ -1911,11 +1911,11 @@ input[type="checkbox"] {
   border-radius: 8px;
   padding: 60px 25px;
   margin: 20px 0;
-  color: #8da178;
+  color: var(--text-secondary);
 }
 .empty-state h3 {
   font-size: 17px;
-  color: #748d5e;
+  color: var(--text-secondary);
 }
 .empty-state p {
   font-size: 16px;
@@ -1935,14 +1935,14 @@ input[type="checkbox"] {
   border-radius: 6px;
   font-size: 16px;
   line-height: 1.8;
-  color: #9a8450;
+  color: var(--text-secondary);
 }
 .error-message > .icon-button {
   margin-left: auto;
 }
 .success-message {
   font-size: 16px;
-  color: #82946d;
+  color: var(--text-secondary);
   padding: 12px 0;
 }
 .spin {
@@ -2005,7 +2005,7 @@ input[type="checkbox"] {
 .help-modal ol {
   padding-left: 20px;
   margin: 25px 0;
-  color: #7c9569;
+  color: var(--text-secondary);
 }
 .help-modal li {
   padding-left: 8px;
@@ -2013,12 +2013,12 @@ input[type="checkbox"] {
   font-size: 16px;
 }
 .help-modal li strong {
-  color: #547644;
+  color: var(--text-secondary);
   font-weight: 550;
 }
 .help-modal li p {
   font-size: 16px;
-  color: #96a387;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 .help-modal > .primary-button {
@@ -2485,8 +2485,8 @@ input[type="checkbox"] {
     font-size: 16px;
   }
   .page-title > .secondary-button {
-    font-size: 0;
-    gap: 0;
+    font-size: 17px;
+    gap: 8px;
     padding: 10px;
   }
   .page-title .completed-label {
@@ -2976,21 +2976,21 @@ input[type="checkbox"] {
   background: transparent;
 }
 .fineprint {
-  color: #748267;
+  color: var(--text-secondary);
 }
 .section-description {
-  color: #748268;
+  color: var(--text-secondary);
 }
 .measure-title > small,
 .measure-saving > small {
-  color: #7f8d73;
+  color: var(--text-secondary);
 }
 .metric > small,
 .range-value small {
-  color: #7e8e70;
+  color: var(--text-secondary);
 }
 .mode-notice > span:nth-of-type(2) {
-  color: #75816b;
+  color: var(--text-secondary);
 }
 @media (max-width: 500px) {
   .search-box input {
@@ -3016,7 +3016,7 @@ input[type="checkbox"] {
   display: block;
   margin: 3px 0 5px;
   font-size: 16px;
-  color: #7b916c;
+  color: var(--text-secondary);
 }
 .value-uplift {
   margin-top: 23px;
@@ -3034,7 +3034,7 @@ input[type="checkbox"] {
 }
 .event.error .event-dot {
   background: #f3eedc;
-  color: #9c8c53;
+  color: var(--text-secondary);
 }
 .event-todos {
   margin: 13px 0 0;
@@ -3048,7 +3048,7 @@ input[type="checkbox"] {
   font-size: 16px;
   line-height: 1.8;
   margin-top: 7px;
-  color: #81936f;
+  color: var(--text-secondary);
 }
 .event-todos li small {
   margin-left: auto;

@@ -39,13 +39,21 @@ function highlightBlanks() {
 
 export default function DocumentText({
   text,
-  compact = false,
+  variant = "document",
 }: {
   text: string;
-  compact?: boolean;
+  variant?: "document" | "notice" | "report";
 }) {
   return (
-    <div className={compact ? "document-disclaimer" : "draft-text"}>
+    <div
+      className={
+        variant === "notice"
+          ? "document-disclaimer"
+          : variant === "report"
+            ? "audit-report"
+            : "draft-text"
+      }
+    >
       <Markdown
         remarkPlugins={[remarkGfm, highlightBlanks]}
         skipHtml

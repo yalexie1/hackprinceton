@@ -234,7 +234,8 @@ def test_film_card_matches_fixture(name):
 
 def test_shade_card_matches_house_fixture():
     fx, c = fixture_card("house", "WIN_SHADE"), card("house", "WIN_SHADE")
-    assert c.formula_ids == fx["formula_ids"]
+    # the fixture is real output (#330): the simulation adds its own ids after the card's
+    assert fx["formula_ids"][:len(c.formula_ids)] == c.formula_ids
     assert set(fx["params"]["window_surface_ids"]) <= set(c.params["window_surface_ids"])
     assert fx["anchors"][0]["room_id"] == c.anchors[0].room_id
     assert c.title.startswith("Exterior shading on the south")

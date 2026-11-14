@@ -121,7 +121,7 @@ def test_hvac_hp_applies_to_house_not_office(reg):
 def test_hvac_rtu_reverse_and_hvac00(reg):
     house = run(reg, "house", "HVAC_RTU")
     assert not house.applicable and skip_reason(house) == "flow"
-    assert house.not_applicable_reason == fixture_card("house", "HVAC_RTU")["not_applicable_reason"]
+    assert house.not_applicable_reason      # #330: the house fixture evaluates only the home flow, so it has no RTU card
     b, m = unconfirmed_office()                             # no rooftop unit confirmed: HVAC-00
     la = evaluate(b, m, "HVAC_RTU", "landlord", FakeSimulate(), registry=reg, simulate_formula_ids=("ZON-04",))
     assert not la.applicable and skip_reason(la) == "feasibility"
@@ -218,7 +218,10 @@ def test_card_matches_fixture(reg, name, mid):
     fx = fixture_card(name, mid)
     assert MeasureResult.model_validate(r.model_dump()) == r
     assert r.applicable == fx["applicable"]
-    assert r.params == fx["params"]                                    # pricing keys included
+    # pricing keys included; the heat pump's capacity is sized from the simulated peak, which the
+    # fixture has from the real simulation and this test from FakeSimulate (#330)
+    skip = {"capacity_tons"} if mid == "HVAC_HP" else set()
+    assert {k: v for k, v in r.params.items() if k not in skip} == {k: v for k, v in fx["params"].items() if k not in skip}
     assert r.title == fx["title"]
     ids = set(r.formula_ids) - {"HVAC-04"}      # HVAC-04: physics 02 HVAC_HP evaluation, not in the fixture
     assert ids <= set(fx["formula_ids"]), ids - set(fx["formula_ids"])
@@ -235,7 +238,7 @@ def test_card_matches_fixture(reg, name, mid):
 
 
 def test_pricing_quantities_present(reg):
-    assert run(reg, "house", "HVAC_HP").params["capacity_tons"] == 3
+    assert run(reg, "house", "HVAC_HP").params["capacity_tons"] == 2.5   # FakeSimulate's 8 kW peak x 1.2, in half tons
     assert run(reg, "house", "LGT_LED").params["lamps"] == 30
     assert run(reg, "office", "HVAC_RTU").params["units"] == 3
     assert run(reg, "office_houston", "HVAC_RTU").params["capacity_tons"] == 30

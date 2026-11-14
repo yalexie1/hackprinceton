@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.5"
+SCHEMA_VERSION = "0.3.6"
 
 # ---------- primitives ----------
 
@@ -406,6 +406,7 @@ class BaselineResult(BaseModel):
     cooling_need_kwh: Optional[float] = None
     latent_cooling_kwh: float = 0.0
     hourly_path: Optional[str] = None          # cached hourly zone outputs, read by the desk-placement physics
+    warnings: list[str] = []                   # sanity checks on the result, e.g. the BEN-03 benchmark band (A31)
 
 MeasureId = Literal[
     "ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE",

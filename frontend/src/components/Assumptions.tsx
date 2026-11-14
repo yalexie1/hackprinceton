@@ -2,6 +2,22 @@ import { useState } from "react";
 import { Info, Pencil, RotateCcw } from "lucide-react";
 import type { Assumption, RunResult } from "../lib/types";
 import { number, ranged } from "../lib/format";
+/**
+ * A readable name for an assumption.
+ *
+ * The backend sets a friendly label for almost every input ("Ceiling height", "People working
+ * in the suite"), but a user override arrives with its own machine key as the label, so the page
+ * showed `lighting.lamp_type`. A key is recognisable by having dots and no spaces; anything that
+ * already reads as a sentence is left exactly as it is.
+ */
+export function readableLabel(label: string, key: string): string {
+  const raw = label || key;
+  if (raw.includes(" ")) return raw;
+  const words = raw.replaceAll(".", " ").replaceAll("_", " ").trim();
+  if (!words) return raw;
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 const sourceNames: Record<string, string> = {
   vintage_default: "Estimate based on building age",
   published_default: "Published reference value",
@@ -74,13 +90,13 @@ export default function Assumptions({
                 <span className="source-badge">
                   {sourceNames[a.source] || a.source.replaceAll("_", " ")}
                 </span>
-                <h3>{a.label}</h3>
+                <h3>{readableLabel(a.label, a.key)}</h3>
               </div>
               {a.user_editable && (
                 <button
                   className="icon-button"
                   disabled={demo || !a.user_editable || busy}
-                  aria-label={`Edit ${a.label}`}
+                  aria-label={`Edit ${readableLabel(a.label, a.key)}`}
                   title={
                     demo
                       ? "Connect to live mode to edit assumptions"
@@ -138,7 +154,7 @@ export default function Assumptions({
                 }}
               >
                 <label>
-                  New {a.label.toLowerCase()}
+                  New {readableLabel(a.label, a.key).toLowerCase()}
                   {typeof a.value === "boolean" ? (
                     <select
                       value={value}

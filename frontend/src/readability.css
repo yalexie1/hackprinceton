@@ -1335,3 +1335,233 @@ textarea {
     max-width: calc(100vw - 24px);
   }
 }
+
+/* The audit's position, at the top of the page (#357 item 4). */
+.audit-progress {
+  margin-top: 0.75rem;
+  max-width: 28rem;
+}
+.audit-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
+}
+.audit-progress-row strong {
+  font-weight: 650;
+}
+.audit-progress-row span {
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.audit-progress progress {
+  width: 100%;
+  height: 0.5rem;
+}
+/* Waiting on a person is not progress: a bar that keeps creeping reads as "working". */
+.audit-progress.waiting .audit-progress-row strong {
+  color: #8a5a00;
+}
+.audit-progress.done .audit-progress-row strong {
+  color: #174b35;
+}
+
+/* "How this was calculated" — the provenance drawer (#357 item 3). */
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 0;
+  padding: 0.25rem 0;
+  font: inherit;
+  font-size: 1rem;
+  color: #174b35;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.source-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 60;
+}
+.source-drawer {
+  background: #fbfaf5;
+  color: #1d2a1f;
+  width: min(34rem, 100%);
+  height: 100%;
+  overflow-y: auto;
+  padding: 1.5rem 1.6rem 3rem;
+  box-shadow: -8px 0 32px rgb(0 0 0 / 25%);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.source-drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.source-drawer h3 {
+  margin: 0.2rem 0 0;
+}
+.source-drawer h4 {
+  margin: 1.4rem 0 0.4rem;
+  font-size: 1.05rem;
+}
+.source-drawer ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.source-drawer li {
+  margin-bottom: 0.45rem;
+}
+.source-drawer code {
+  font-size: 0.95rem;
+  background: #ecebe2;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}
+.source-drawer .icon-button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+}
+@media (max-width: 600px) {
+  .source-drawer {
+    width: 100%;
+    padding: 1.1rem 1rem 3rem;
+  }
+}
+
+/* Other findings: the reason, and on opening what it means (#357). */
+.skipped-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.skipped-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+.skipped-summary .rotate {
+  transform: rotate(180deg);
+}
+.skipped-detail {
+  margin: 0.4rem 0 0;
+}
+.skipped-explain {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgb(0 0 0 / 12%);
+}
+.skipped-explain h4 {
+  margin: 0.7rem 0 0.2rem;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+.skipped-explain h4:first-child {
+  margin-top: 0;
+}
+.skipped-explain p {
+  margin: 0;
+}
+/* The audit's take, now in the main column rather than the sidebar. */
+.insight-card.insight-main {
+  margin-bottom: 1.5rem;
+}
+
+/* How it works: the method, the sources, the equations (#357 item 6). */
+.how-it-works h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 2rem 0 0.6rem;
+}
+.how-it-works h4 {
+  margin: 1.2rem 0 0.4rem;
+  font-size: 1.05rem;
+  opacity: 0.85;
+}
+.hiw-stages {
+  padding-left: 1.3rem;
+  margin: 0;
+}
+.hiw-stages li {
+  margin-bottom: 0.9rem;
+}
+.hiw-stages strong {
+  display: block;
+  margin-bottom: 0.15rem;
+}
+.hiw-stages p {
+  margin: 0;
+}
+.hiw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+.hiw-table th,
+.hiw-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem 0.7rem 0.5rem 0;
+  border-bottom: 1px solid rgb(0 0 0 / 12%);
+}
+.hiw-table th {
+  font-weight: 650;
+  white-space: nowrap;
+}
+.hiw-table td:first-child {
+  white-space: nowrap;
+  font-weight: 600;
+}
+.hiw-equations dt {
+  font-weight: 650;
+  margin-top: 0.9rem;
+}
+.hiw-equations dd {
+  margin: 0.2rem 0 0;
+}
+.hiw-equations code,
+.how-it-works code {
+  font-size: 0.95rem;
+  background: #ecebe2;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}
+.hiw-limits {
+  padding-left: 1.2rem;
+}
+.hiw-limits li {
+  margin-bottom: 0.5rem;
+}
+/* Wide tables scroll inside themselves rather than the page. */
+@media (max-width: 760px) {
+  .how-it-works {
+    overflow-x: hidden;
+  }
+  .hiw-table {
+    display: block;
+    overflow-x: auto;
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  BookOpen,
   ArrowLeft,
   ArrowRight,
   Box,
@@ -55,6 +56,8 @@ import Documents from "./components/Documents";
 import Warnings, { AuditNarrative } from "./components/Warnings";
 import Calibration from "./components/Calibration";
 import RunSource from "./components/RunSource";
+import { AuditProgress } from "./components/AuditProgress";
+import HowItWorks from "./components/HowItWorks";
 import AuditTasks from "./components/AuditTasks";
 import { replayBatch } from "./lib/audit-replay";
 import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
@@ -66,7 +69,8 @@ type View =
   | "roof"
   | "layout"
   | "assumptions"
-  | "documents";
+  | "documents"
+  | "how";
 const views: { id: View; label: string; icon: typeof Home }[] = [
   { id: "find", label: "Properties", icon: Home },
   { id: "plan", label: "Energy plan", icon: ClipboardList },
@@ -74,6 +78,7 @@ const views: { id: View; label: string; icon: typeof Home }[] = [
   { id: "layout", label: "Workspace", icon: Layers3 },
   { id: "assumptions", label: "Assumptions", icon: Settings2 },
   { id: "documents", label: "Documents", icon: FileText },
+  { id: "how", label: "How it works", icon: BookOpen },
 ];
 function bills(text: string): number[] | undefined {
   if (!text.trim()) return undefined;
@@ -153,6 +158,17 @@ export default function App() {
   const done = run?.status === "done";
   const office = property?.segment === "commercial";
   const budgets = demoBudgets(property?.sid);
+  // @Sri-SriPod's cold-start finding: the form defaulted to $15,000 whatever the property, so
+  // choosing a saved run with a different budget re-planned it on the spot and every screen
+  // then said "the plan has changed" and "the summary was not regenerated". A saved run's own
+  // budget is the honest default for it. Only when the property has exactly one saved budget:
+  // a sandbox with several, or a live property with none, keeps whatever the user typed.
+  useEffect(() => {
+    if (!demo || !property) return;
+    const saved = demoBudgets(property.sid);
+    if (saved.length === 1) setBudget(saved[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demo, property?.sid]);
   function clearAsync() {
     epoch.current++;
     controller.current?.abort();
@@ -704,6 +720,8 @@ export default function App() {
               {notice}
             </p>
           )}
+          {/* The only view that needs no run: it describes the method, not a building. */}
+          {view === "how" && <HowItWorks />}
           {view === "find" && (
             <Find
               properties={properties}
@@ -921,6 +939,11 @@ export default function App() {
                     budget
                   </p>
                   <RunSource run={run} />
+                  <AuditProgress
+                    events={events}
+                    done={done}
+                    waiting={Boolean(question)}
+                  />
                 </div>
                 {done && (
                   <button
@@ -932,6 +955,65 @@ export default function App() {
                   </button>
                 )}
               </div>
+              {/* The question sits above the log: in a rehearsal it was below a
+                  screenful of events, so the one thing the run needed from a person was
+                  the last thing they saw. */}
+                {question && (
+                  <div className="question-card">
+                    <span className="eyebrow">
+                      {approval
+                        ? "YOUR APPROVAL IS REQUIRED"
+                        : "A QUICK QUESTION"}
+                    </span>
+                    <h3>{question.prompt}</h3>
+                    <p>{question.impact_note}</p>
+                    {approval && (
+                      <p className="inline-note">
+                        Draft request:{" "}
+                        {String(approval.doc_type || "document").replaceAll(
+                          "_",
+                          " ",
+                        )}{" "}
+                        · {String(approval.state || "jurisdiction pending")}
+                        <br />
+                        Scope:{" "}
+                        {Array.isArray(approval.measure_ids)
+                          ? approval.measure_ids
+                              .map(
+                                (id) =>
+                                  run.plan?.selected.find(
+                                    (item) => item.measure.measure_id === id,
+                                  )?.measure.title ||
+                                  run.measures.find(
+                                    (measure) => measure.measure_id === id,
+                                  )?.title ||
+                                  String(id),
+                              )
+                              .join(", ")
+                          : "Review the scope before approving."}
+                      </p>
+                    )}
+                    {demo && (
+                      <p className="fineprint">
+                        Demo replay: your choice advances the saved scenario.
+                        Its estimates and original answers remain unchanged.
+                      </p>
+                    )}
+                    <div>
+                      {question.choices.map((choice, i) => (
+                        <button
+                          className="secondary-button"
+                          disabled={busy}
+                          key={i}
+                          onClick={() => void answer(choice.value)}
+                        >
+                          {choice.label}
+                          <ArrowRight size={14} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               <div className="audit-grid">
                 <section className="audit-timeline">
                   <div className="card-heading">
@@ -1024,62 +1106,6 @@ export default function App() {
                       </div>
                     )}
                   </div>
-                  {question && (
-                    <div className="question-card">
-                      <span className="eyebrow">
-                        {approval
-                          ? "YOUR APPROVAL IS REQUIRED"
-                          : "A QUICK QUESTION"}
-                      </span>
-                      <h3>{question.prompt}</h3>
-                      <p>{question.impact_note}</p>
-                      {approval && (
-                        <p className="inline-note">
-                          Draft request:{" "}
-                          {String(approval.doc_type || "document").replaceAll(
-                            "_",
-                            " ",
-                          )}{" "}
-                          · {String(approval.state || "jurisdiction pending")}
-                          <br />
-                          Scope:{" "}
-                          {Array.isArray(approval.measure_ids)
-                            ? approval.measure_ids
-                                .map(
-                                  (id) =>
-                                    run.plan?.selected.find(
-                                      (item) => item.measure.measure_id === id,
-                                    )?.measure.title ||
-                                    run.measures.find(
-                                      (measure) => measure.measure_id === id,
-                                    )?.title ||
-                                    String(id),
-                                )
-                                .join(", ")
-                            : "Review the scope before approving."}
-                        </p>
-                      )}
-                      {demo && (
-                        <p className="fineprint">
-                          Demo replay: your choice advances the saved scenario.
-                          Its estimates and original answers remain unchanged.
-                        </p>
-                      )}
-                      <div>
-                        {question.choices.map((choice, i) => (
-                          <button
-                            className="secondary-button"
-                            disabled={busy}
-                            key={i}
-                            onClick={() => void answer(choice.value)}
-                          >
-                            {choice.label}
-                            <ArrowRight size={14} />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   {!busy && !done && !question && !demo && (
                     <button
                       className="secondary-button reconnect"
@@ -1151,6 +1177,32 @@ export default function App() {
               </div>
               <div className="result-grid">
                 <div className="result-main">
+                  {/* The audit's own account of the building, in the main column: it
+                      explains the numbers beside it, so it reads before them rather than
+                      beside them in a sidebar. */}
+                  <section className="insight-card insight-main">
+                    <Sparkles size={19} />
+                    <span className="eyebrow">
+                      {demo ? "SAVED EXAMPLE REPORT" : "THE AUDIT’S TAKE"}
+                    </span>
+                    {demo && (
+                      <p className="fineprint">
+                        This is a saved example report. Answering replay
+                        questions does not recalculate its numbers.
+                      </p>
+                    )}
+                    <AuditNarrative
+                      text={run.narrative_md}
+                      warnings={run.warnings}
+                    />
+                    <button
+                      className="text-button"
+                      onClick={() => setView("assumptions")}
+                    >
+                      See the assumptions
+                      <ArrowRight size={14} />
+                    </button>
+                  </section>
                   {view === "plan" && (
                     <>
                       <Calibration run={run} />
@@ -1262,29 +1314,6 @@ export default function App() {
                       <CheckCircle2 size={14} />
                       Operations first. Solar last.
                     </p>
-                  </section>
-                  <section className="insight-card">
-                    <Sparkles size={19} />
-                    <span className="eyebrow">
-                      {demo ? "SAVED EXAMPLE REPORT" : "THE AUDIT’S TAKE"}
-                    </span>
-                    {demo && (
-                      <p className="fineprint">
-                        This is a saved example report. Answering replay
-                        questions does not recalculate its numbers.
-                      </p>
-                    )}
-                    <AuditNarrative
-                      text={run.narrative_md}
-                      warnings={run.warnings}
-                    />
-                    <button
-                      className="text-button"
-                      onClick={() => setView("assumptions")}
-                    >
-                      See the assumptions
-                      <ArrowRight size={14} />
-                    </button>
                   </section>
                   {run.baseline && (
                     <section className="baseline-card">

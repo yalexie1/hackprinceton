@@ -14,19 +14,11 @@ import {
   Wind,
 } from "lucide-react";
 import { useId, useState } from "react";
-import type { MeasureResult, Ranged, RunResult } from "../lib/types";
+import type { Assumption, MeasureResult, Ranged, RunResult } from "../lib/types";
+import { SourceDrawer } from "./SourceDrawer";
+import { REASON_DETAIL, REASON_LABELS, measureName } from "./FindingReason";
 import { money, number, ranged } from "../lib/format";
-const reasonLabels: Record<string, string> = {
-  not_cost_effective: "Not cost-effective",
-  over_budget: "Does not fit the cash budget",
-  not_applicable: "Does not apply to this building",
-  no_savings: "No energy savings found",
-  no_cost_data: "Cost estimate unavailable",
-  already_done: "Already installed",
-  role: "Outside your permissions",
-  feasibility: "Needs further checks",
-  dependency: "Another upgrade is needed first",
-};
+const reasonLabels = REASON_LABELS;
 export function Range({
   value,
   currency = false,
@@ -62,16 +54,66 @@ export function MeasureIcon({ id }: { id: string }) {
             : Lightbulb;
   return <Icon size={20} />;
 }
+/**
+ * One "other finding", with the reason it was left out and - on opening - what that reason means
+ * and what would change it. The backend's one-liner is the summary; the explanation never
+ * introduces a number the backend did not give.
+ */
+function SkippedItem({
+  item,
+  title,
+}: {
+  item: { measure_id: string; reason: string; detail: string };
+  title: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const explain = REASON_DETAIL[item.reason];
+  return (
+    <div className={`skipped-item reason-${item.reason} ${open ? "expanded" : ""}`}>
+      <button
+        className="skipped-summary"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
+        <span>
+          <ChevronDown size={16} className={open ? "rotate" : ""} />
+          {title}
+        </span>
+        <strong>
+          {reasonLabels[item.reason] || item.reason.replaceAll("_", " ")}
+        </strong>
+      </button>
+      <p className="skipped-detail">{item.detail}</p>
+      {open && explain && (
+        <div className="skipped-explain">
+          <h4>What this means</h4>
+          <p>{explain.what}</p>
+          <h4>What would change it</h4>
+          <p>{explain.change}</p>
+        </div>
+      )}
+      {open && !explain && (
+        <p className="fineprint">
+          No further explanation is recorded for this reason.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function MeasureCard({
   measure,
   rank,
   onFocus,
+  assumptions = [],
 }: {
   measure: MeasureResult;
   rank?: number;
   onFocus: (id: string) => void;
+  assumptions?: Assumption[];
 }) {
   const [open, setOpen] = useState(false);
+  const [sources, setSources] = useState(false);
   const f = measure.finance;
   return (
     <article className={`measure-card ${open ? "expanded" : ""}`}>
@@ -119,6 +161,18 @@ export function MeasureCard({
       {open && (
         <div className="measure-details">
           <p>{measure.description}</p>
+          {/* One click to the provenance, and nothing added to the page until asked:
+              a source for every estimate, with the main pages kept clean. */}
+          <button className="source-link" onClick={() => setSources(true)}>
+            <Info size={14} /> How this was calculated
+          </button>
+          {sources && (
+            <SourceDrawer
+              measure={measure}
+              assumptions={assumptions}
+              onClose={() => setSources(false)}
+            />
+          )}
           {f && (
             <>
               <div className="detail-grid">
@@ -539,6 +593,7 @@ export default function PlanView({
                 measure={item.measure}
                 rank={item.rank}
                 onFocus={onFocus}
+                assumptions={run.building_model?.assumptions ?? []}
               />
             ))}
           {tab === "financeable" && (
@@ -548,24 +603,26 @@ export default function PlanView({
                 mean a loan or C-PACE programme is available.
               </p>
               {plan.financeable.map((m) => (
-                <MeasureCard key={m.measure_id} measure={m} onFocus={onFocus} />
+                <MeasureCard
+                  key={m.measure_id}
+                  measure={m}
+                  onFocus={onFocus}
+                  assumptions={run.building_model?.assumptions ?? []}
+                />
               ))}
             </>
           )}
           {tab === "skipped" &&
             skipped.map((item, i) => (
-              <div className={`skipped-item reason-${item.reason}`} key={i}>
-                <span>
-                  <ChevronRight size={16} />
-                  {run.measures.find((m) => m.measure_id === item.measure_id)
-                    ?.title || item.measure_id}
-                </span>
-                <strong>
-                  {reasonLabels[item.reason] ||
-                    item.reason.replaceAll("_", " ")}
-                </strong>
-                <p>{item.detail}</p>
-              </div>
+              <SkippedItem
+                key={i}
+                item={item}
+                title={measureName(
+                  item.measure_id,
+                  run.measures.find((m) => m.measure_id === item.measure_id)
+                    ?.title,
+                )}
+              />
             ))}
           {(tab === "skipped" ? skipped.length : plan[tab].length) === 0 && (
             <div className="empty-state small">

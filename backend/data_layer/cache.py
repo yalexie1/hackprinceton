@@ -207,6 +207,19 @@ def write_text(source: str, identifier: str, text: str, query: Optional[dict] = 
     return _atomic_write(path_for(source, identifier, query, suffix=suffix), text.encode())
 
 
+def relative(path: Path) -> str:
+    """A cache path as the repo-relative string a bundle carries.
+
+    Bundle fields like `ortho_path` and `mask_png_path` are strings resolved against
+    the repo root by `get_asset`, so an absolute path from this module has to be
+    converted before it goes into the contract.
+    """
+    try:
+        return str(path.resolve().relative_to(_ROOT))
+    except ValueError:
+        return str(path.resolve())
+
+
 def atomic_write_path(path: Path, data: bytes) -> Path:
     """Atomic write to a caller's own path, for the files whose location is part of
     the contract rather than ours - `ClimateSite.weather_path` is in the bundle, so

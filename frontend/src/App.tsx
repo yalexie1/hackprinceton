@@ -1237,7 +1237,7 @@ export default function App() {
                             ? "This example has one saved budget. A live analysis is needed to compare a different budget."
                             : "Switch between saved budget scenarios."
                           : run.served_by === "replay"
-                            ? "Saved replay: changing the budget does not recalculate the selected upgrades or estimates."
+                            ? "Budget changes go to the API. Review the returned plan and warnings; a saved replay may keep its recorded selection."
                             : "Changing your budget reruns the backend analysis."}
                       </small>
                     </form>

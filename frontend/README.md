@@ -34,11 +34,11 @@ The renderer loads lazily when visible, pauses rendering offscreen/in background
 4. Open **Solar & roof** and **Assumptions**. A property without desk candidates shows an empty state rather than invented layout data.
 5. In **Documents**, enter illustrative party names, select measures, approve drafting, and export the Markdown preview. Missing terms remain highlighted. Demo documents are unverified interface previews.
 6. Return to Properties and run the office marked **Shared contract example** at its saved budget and role. Inspect workspace candidates, financing eligibility and its stated reasons, and the separate property-value estimate. Shared example identity and budgets follow the team's imported files.
-7. For the judge presentation, follow [the Culver-first walkthrough](JUDGE_WALKTHROUGH.md). Saved replay keeps its selection when its request budget changes; use a real live analysis for budget comparisons.
+7. For the judge presentation, follow [the Culver-first walkthrough](JUDGE_WALKTHROUGH.md). Review the returned plan and warnings after a budget change. Example replay retains its saved selection; recorded re-planning depends on the backend capability.
 
 ## Live integration
 
-The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Connect API**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure. The server controls `AGENT_MODE=replay|live`; connecting does not itself turn on live analysis. Replay returns saved examples, including their original measure selection, even when PATCH changes the request budget.
+The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Connect API**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure. The server controls `AGENT_MODE=replay|live`; connecting does not itself turn on live analysis. Example replay returns its original measure selection even when PATCH changes the request budget. Recorded-run re-planning is owned by the server; review returned warnings and the audit trail rather than assuming a fresh model run.
 
 Optional configuration goes in the **repository root `.env`** (Vite's envDir is the repo root):
 

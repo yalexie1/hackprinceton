@@ -55,6 +55,43 @@ PLACE_LAYER = "place"
 
 GEOCODER = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
 
+#: Census state FIPS to USPS code. The geocoder returns `STATE` as a two-digit FIPS
+#: string on both the place and the county record - **there is no state abbreviation
+#: anywhere in the response**, so the mapping has to live here.
+#:
+#: This exists because `PropertySummary.state` came back empty on a machine with no
+#: CoStar kit mirror, and `get_tariff` then fell back to a hard-coded `"CA"`. In
+#: Houston that is not a near miss: it swaps a 0.0896 USD/kWh commercial price for
+#: 0.3002, changes the eGRID subregion from ERCT to CAMX, and selects California
+#: contract clauses for a Texas building. Reported by @Sri-SriPod from a live run.
+#:
+#: The whole table and not just CA and TX: Vexcel's coverage is Los Angeles and
+#: Houston, but the EIA price, the emissions factor and the legal templates all key on
+#: the state, and a property outside Vexcel coverage still gets a tariff. A partial
+#: table would silently resolve to `None` and land back on the `"CA"` default, which
+#: is the bug this fixes.
+STATE_FIPS = {
+    "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT",
+    "10": "DE", "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL",
+    "18": "IN", "19": "IA", "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD",
+    "25": "MA", "26": "MI", "27": "MN", "28": "MS", "29": "MO", "30": "MT", "31": "NE",
+    "32": "NV", "33": "NH", "34": "NJ", "35": "NM", "36": "NY", "37": "NC", "38": "ND",
+    "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI", "45": "SC", "46": "SD",
+    "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA", "54": "WV",
+    "55": "WI", "56": "WY",
+    # Territories. The geocoder covers them; the EIA price tables largely do not, so a
+    # tariff there will fall back and say so rather than quoting a mainland number.
+    "60": "AS", "66": "GU", "69": "MP", "72": "PR", "78": "VI",
+}
+
+#: The Census appends a legal/statistical area description to the place name -
+#: "Los Angeles city", "Nassau Bay city", "Houston city". `PropertySummary.city` wants
+#: the name a person would write on an envelope, so the suffix is stripped. The full
+#: name is kept everywhere the *boundary* matters (`CITY_OF_LA`, `TX_PACE_PLACES`),
+#: because "Los Angeles city" and "Los Angeles County" are different places and
+#: collapsing them is how a county property would be handed LADWP.
+_LSAD_SUFFIXES = (" city", " town", " village", " borough", " municipality", " CDP")
+
 #: Pinned so a cached answer keeps meaning what it meant. `Current_Current` tracks the
 #: latest vintage, which is right for "who serves this meter today".
 BENCHMARK = "Public_AR_Current"
@@ -167,6 +204,74 @@ def lookup(
         detail=(f"{where}"
                 + (f", {place.county}" if place.city and place.county else "")
                 + ("; served from the cache" if from_cache else "")),
+    )
+
+
+def state_for(
+    lat: float, lon: float, *, get: Optional[Getter] = None
+) -> tuple[Optional[str], FetchRecord]:
+    """The USPS state code at a point, or `(None, record)`.
+
+    For `PropertySummary.state` when there is no CoStar kit to read it from. Derived
+    from the Census `STATE` FIPS, which arrives on the same cached call D14 already
+    makes for the utility - so this costs nothing extra on the bundle path.
+
+    `None` means the lookup failed or returned a FIPS this table does not know, never
+    "not in a state". A caller must not substitute a default for it: handing Houston
+    `"CA"` is what this exists to stop.
+    """
+    place, record = lookup(lat, lon, get=get)
+    if place is None:
+        return None, record
+    if not place.state_fips:
+        return None, FetchRecord(
+            layer=PLACE_LAYER, what="census/state", status="missing",
+            detail=(f"the geocoder answered for {place.city or place.county or 'the point'} "
+                    f"but carried no state FIPS"),
+        )
+    code = STATE_FIPS.get(str(place.state_fips).zfill(2))
+    if code is None:
+        return None, FetchRecord(
+            layer=PLACE_LAYER, what="census/state", status="missing",
+            detail=f"state FIPS {place.state_fips!r} is not in the USPS table",
+        )
+    return code, FetchRecord(
+        layer=PLACE_LAYER, what="census/state", status="ok",
+        detail=(f"{code} from Census state FIPS {place.state_fips}"
+                f"{f' ({place.county})' if place.county else ''}; the CoStar kit "
+                f"carried no state for this property"),
+    )
+
+
+def city_for(
+    lat: float, lon: float, *, get: Optional[Getter] = None
+) -> tuple[Optional[str], FetchRecord]:
+    """The incorporated place name at a point, without its Census suffix.
+
+    `None` for an unincorporated address, which is a real answer: 6 of the 16 kit
+    properties CoStar labels `"Houston"` are not in any incorporated place. This is
+    only used to fill `PropertySummary.city` when the kit is absent, and it is
+    *better* than CoStar's field rather than a substitute for it - CoStar's is a
+    mailing city, measured wrong 7 times in 16 in Houston.
+    """
+    place, record = lookup(lat, lon, get=get)
+    if place is None:
+        return None, record
+    if not place.city:
+        return None, FetchRecord(
+            layer=PLACE_LAYER, what="census/city", status="missing",
+            detail=(f"the point is in no incorporated place"
+                    f"{f' ({place.county})' if place.county else ''}, so there is no city "
+                    f"name to give - which is itself the answer, not a failure"),
+        )
+    name = place.city
+    for suffix in _LSAD_SUFFIXES:
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+            break
+    return name.strip() or None, FetchRecord(
+        layer=PLACE_LAYER, what="census/city", status="ok",
+        detail=f"{name.strip()} from the Census incorporated-place layer ({place.city})",
     )
 
 

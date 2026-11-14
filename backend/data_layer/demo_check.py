@@ -18,6 +18,7 @@ this project actually went wrong that way:
 | roof extent | one building outlined twice, 1.9x apart, by two captures - a tower against its podium |
 | scan richness | a one-room, sixteen-panorama scan makes a poor 3D tour |
 | provenance errors | an `error` record is a real fault; `missing` is often normal |
+| CoStar kit mirrored | without it the use type, segment, address, floor plate, occupancy and market data are all absent or guessed, and nothing raises |
 | fetch time | upstream latency has been measured between 2 s and 76 s on the same call |
 
 **Nothing here writes to `data/cache`.** The run points `DATA_LAYER_CACHE_DIR` at a
@@ -102,6 +103,7 @@ def check_property(sid: str, *, run_analysis: bool = False) -> list[Check]:
     elapsed = time.time() - started
 
     out.append(Check("bundle", "ok", f"assembled in {elapsed:.1f} s (cold)"))
+    out.append(_kit_check())
     out.append(Check(
         "fetch time",
         "warn" if elapsed > SLOW_BUNDLE_S else "ok",
@@ -193,6 +195,27 @@ def check_property(sid: str, *, run_analysis: bool = False) -> list[Check]:
     if run_analysis:
         out += _analysis_checks(bundle)
     return out
+
+
+def _kit_check() -> Check:
+    """Is the CoStar kit mirrored? Almost everything degrades quietly without it.
+
+    Measured on a machine with the kit hidden: `use_type` falls to `unknown`,
+    `segment` to a recorded guess, `address` to None, there is no floor plate so D16
+    picks the newest capture's own primary structure instead of the plate-matched one
+    (the Houston office reads 4,164 m2 rather than 1,104 m2), and there is no
+    occupancy or market data at all. The state and city survive, via the Census
+    geocoder. None of that raises.
+    """
+    from backend.data_layer import mirror
+
+    said: list[str] = []
+    if mirror.check(log=said.append):
+        return Check("costar kit", "ok", said[0] if said else "mirrored")
+    return Check("costar kit", "fail",
+                 "the CoStar kit is not mirrored, so use_type, segment, the address, "
+                 "the floor plate that picks the building, occupancy and market data "
+                 "are all absent or guessed - run `python -m backend.data_layer.mirror`")
 
 
 def _int(value) -> str:

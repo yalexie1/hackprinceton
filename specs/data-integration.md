@@ -783,6 +783,104 @@ It picks the building, records the disagreement (`property/extract:extent`, laye
 `vexcel`, status `fallback`) and surfaces it in the runbook. **Which extent A11 and A14
 should model is @yalexie1's call**, and it moves PV capacity by roughly 1.9x.
 
+### 4.6 D17: a complete bundle without the kit, and the one-command mirror
+
+Two `HANDOFF-REQUEST:`s from @Sri-SriPod, both found by a real live run rather than by
+reading code.
+
+#### `state` was empty without a kit mirror, and the default was silently wrong
+
+`_assemble` read `state`, `city` and `address` from the starter-CSV join, which needs
+the extracted kit. With no kit the row is `{}`, so `state` was `None` and `get_tariff`
+fell back to a hard-coded `"CA"`. On a Houston property that is not a near miss:
+
+| | with the "CA" default | resolved |
+|---|---|---|
+| electricity | 0.3002 USD/kWh | **0.0896** |
+| export regime | `net_metering` | **`none`** (ERCOT has no state regime) |
+| eGRID subregion | CAMX | **ERCT** |
+| legal templates | `specs/legal/california.md` | **`texas.md`** |
+
+Matterport carries no address (`MatterportData` has no such field, and adding one is a
+`CONTRACT-CHANGE:` in @yalexie1's file), so the state has to come from the
+coordinates. **The Census call D14 already makes carries it**: `STATE` arrives as a
+two-digit FIPS on both the place and the county record, so `places.state_for` costs
+nothing extra on the bundle path. There is **no state abbreviation anywhere in the
+response**, which is why `STATE_FIPS` exists; it is complete (50 + DC + 5 territories)
+because a partial table resolves to `None` and lands back on the `"CA"` default, which
+is the bug being fixed. `city_for` fills `city` from the same call, stripping the
+Census LSAD suffix ("Houston city" → "Houston") - while every *boundary* rule keeps
+the full name, because "Los Angeles city" and "Los Angeles County" are different
+places and collapsing them is how a county property gets handed LADWP.
+
+`address` is left empty. A street address is not derivable from a coordinate without a
+reverse-geocode this lane does not make, and an invented one would end up quoted in a
+legal document.
+
+#### What running it then found: `segment` read residential on a 16-storey office
+
+Not asked for, and worse than the reported bug. `segment` is not cosmetic - it selects
+the measure catalogue (`catalogue.py:79`), the cost and useful-life tables, the
+incentive filter, **C-PACE eligibility** (`cpace.py:63` requires commercial) and which
+legal templates are listed. With no kit it fell to `"residential"` for both golden
+offices.
+
+What can and cannot settle it, measured 2026-11-14:
+
+| source | house | Culver Connect | Houston office | usable? |
+|---|---|---|---|---|
+| room labels | Bedroom, Bathroom, Dining Room… | **none** | **none** | **yes, positive-only** |
+| `property_classifications` | `[]` | `[]` | `[]` | no |
+| Vexcel `building-type.class` | `single_family` | **`condo_apartment`** | **`condo_apartment`** | **no - argues residential for an office** |
+
+So room labels prove a dwelling and nothing available proves an office. The house is
+now *confirmed* residential from its own scan; an office without the kit keeps the
+fallback and gets a `FetchRecord` naming everything the guess decides. **The actual fix
+is to mirror the kit**, which is the other half of this package.
+
+#### The mirror
+
+`costar.kit_dir()` had always told the reader to "mirror it once from
+`COSTAR_KIT_URL`" and nothing implemented it, so the kit was extracted by hand.
+`python -m backend.data_layer.mirror` now does it; `--check` reports without changing
+anything, `--force` re-mirrors. 52 MB zip → 404 MB extracted, all under git-ignored
+`data/cache/`, because **the kit is sponsor data and is never committed**.
+
+- **The archive is ZipCrypto, not AES** (`flag_bits & 1` set, compression method 8,
+  not 99), so Python's `zipfile` decrypts it at **16 MB/s - about 26 s for 423 MB**.
+  That path uses no subprocess, no argv and no tty, so it is the default. [V] 2026-11-14
+- **`unzip` will not take a password on stdin.** Piping it gives `unable to get
+  password`, skips every member and exits 5: it reads the prompt from `/dev/tty`. So
+  the AES fallback has to use `-P`, which puts the password where `ps` can read it -
+  which is exactly why it is the fallback and not the default. [V] 2026-11-14
+- **Neither secret can reach the output.** `COSTAR_KIT_URL` is a signed S3 URL whose
+  query carries an AWS credential and signature, so it is only ever printed through
+  `_describe_url`, which keeps scheme, host, port and path. `hostname` and not
+  `netloc`, so `user:password@` cannot slip through either. A download failure does
+  **not** interpolate the exception, because an httpx error carries the request URL.
+  Tests assert all of it, including that the source never formats the password into a
+  string.
+- Extraction is staged beside the target and moved in at the end, and a truncated
+  archive that happens to contain the marker is **refused** - otherwise it reads as
+  mirrored and fails later, one dataset at a time, inside the demo.
+
+**What the runbook now says.** `demo_check` fails on a missing kit, because with the
+kit hidden: `use_type` falls to `unknown`, `segment` to a recorded guess, `address` to
+`None`, there is no floor plate so D16 picks the newest capture's own primary structure
+instead of the plate-matched one (**the Houston office reads 4,164 m² rather than
+1,104 m²**), and there is no occupancy or market data at all. The state and city
+survive. **None of that raises.**
+
+#### One for the next person to write a live test
+
+The first version of D17's live test assembled a kit-less bundle **without pointing
+`DATA_LAYER_CACHE_DIR` anywhere**, so it overwrote the real Houston entry - and two
+D16 tests then failed with 4,164 m² because a cached bundle carries whichever answer
+was current when it was written. Any test that assembles live must send the cache
+somewhere temporary, and must clear `costar.enums`, `costar.rows_by_model`,
+`index.by_sid` and `index.summaries`, which are `lru_cache`d on the kit's contents.
+This is the same class of fault @Sri-SriPod reported in the weather test (#243).
+
 ## 5. External data — D9
 
 Checked live 2026-11-14. **Two of the sources `SPEC.md` and `handoff-plan.md` name are unreachable from this environment**, so the recommended set differs from the plan.
@@ -1288,3 +1386,8 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | D8 mask against D16's footprint | live detection | 2026-11-14 | house **0.95**, Houston **0.96** (was 0.25 against `features[0]`), LA **1.49** → the podium question, §4.5a |
 | `ac-unit.count` across captures of one roof | live, golden house ×5 | 2026-11-14 | **2, 1, 1, 1, 0** — capture-dependent, so never quote one count as the building's |
 | LA office tower vs podium extent | live, 2 captures + mask | 2026-11-14 | **[P] open — 1,566 m² vs 2,938 m², 87 % nested, solar flag differs; @yalexie1 to decide which A11/A14 model** |
+| CoStar kit zip cipher | real archive, 2026-11-14 | 2026-11-14 | **ZipCrypto** (flag 1, method 8, not 99/AES); `zipfile` decrypts at **16 MB/s**, 423 MB in ~26 s |
+| `unzip` password on stdin | real archive | 2026-11-14 | **does not work** - `unable to get password`, every member skipped, exit 5; it reads `/dev/tty` |
+| Kit mirror end to end | live download + extract to a clean target | 2026-11-14 | 52 MB downloaded, 42 files / 404 MB mirrored, lane tests green against it |
+| State without a kit mirror | live, kit hidden | 2026-11-14 | Houston resolves **TX** and 0.0896 USD/kWh; the old default gave CA and 0.3002 |
+| Segment signals without a kit | live, 4 properties | 2026-11-14 | room labels positive-only; `property_classifications` empty on all; **Vexcel `building-type.class` says `condo_apartment` for both offices** |

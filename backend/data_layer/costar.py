@@ -47,8 +47,10 @@ def kit_dir() -> Path:
     base = Path(override) if override else _ROOT / "data" / "cache" / "costar" / "kit"
     if not (base / "commercial-properties.csv").is_file():
         raise KitMissing(
-            f"CoStar kit not found at {base}. It is git-ignored (49 MB zip, 404 MB "
-            "extracted); mirror it once from COSTAR_KIT_URL, or set COSTAR_KIT_DIR."
+            f"CoStar kit not found at {base}. It is git-ignored (52 MB zip, 404 MB "
+            "extracted). Mirror it once with `python -m backend.data_layer.mirror` "
+            "(needs COSTAR_KIT_URL or COSTAR_KIT_ZIP and COSTAR_ZIP_PASSWORD in .env), "
+            "or point COSTAR_KIT_DIR at a copy you already have."
         )
     return base
 

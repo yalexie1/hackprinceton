@@ -270,6 +270,12 @@ def get_property_bundle(
 #: disk, so `raw` is rebuilt on a cache hit in about 0.04 s, and the field stays
 #: truthful on both paths. Scrubbing it in place instead would make a cache hit
 #: disagree with a fresh assembly, which is the worse failure: silent and invisible.
+#: Used only when neither the CoStar kit nor the Census geocoder can say which state
+#: a property is in, and `get_tariff` requires one. Two of the three golden properties
+#: are in California, and Vexcel's coverage is Los Angeles and Houston - so this is
+#: the less-wrong guess, not a correct one, and `_assemble` records it as a fallback.
+_TARIFF_DEFAULT_STATE = "CA"
+
 _STRIPPED = "costar.raw"
 
 #: Bumped whenever a change to assembly makes an existing cached bundle **wrong**
@@ -456,24 +462,52 @@ def _assemble(sid: str) -> PropertyBundle:
     climate, cnotes = d9.get_climate_site(sid, lat, lon, WEATHER_YEAR)
     provenance += cnotes
 
+    # D17: without a kit mirror the starter-CSV row is `{}`, so `state` was `None` and
+    # `get_tariff` fell back to a hard-coded "CA". In Houston that is not a near miss -
+    # it swaps 0.0896 for 0.3002 USD/kWh, moves the eGRID subregion from ERCT to CAMX,
+    # and selects California contract clauses for a Texas building. @Sri-SriPod hit it
+    # on a live run. The Census call D14 already makes carries the state FIPS, so this
+    # is free on the bundle path and needs no new source.
     state = row.get("state")
+    city = row.get("city")
+    if not state:
+        state, srecord = d14.state_for(lat, lon)
+        provenance.append(srecord)
+    if not city:
+        city, crecord = d14.city_for(lat, lon)
+        provenance.append(crecord)
     sector = "RES" if (costar and costar.kind == "residential_listing") else "COM"
 
     # D14: who serves the meter, from the Census incorporated-place layer rather than
     # the CoStar `City` field, which is a *mailing* city - right 14/14 for Los Angeles
     # and only 9 of 16 for Houston. `None` means "do not guess", and `get_tariff` then
     # keeps its own honest label rather than being handed a wrong utility name.
-    utility, ploc = d14.utility_for(lat, lon, state or "CA")
+    utility, ploc = d14.utility_for(lat, lon, state or _TARIFF_DEFAULT_STATE)
     provenance.append(ploc)
 
-    tariff, tnotes = d9.get_tariff(state or "CA", sector, utility=utility)
+    if not state:
+        # Everything above failed: no kit row and no geocoder. The tariff state is a
+        # required argument, so there is a default - but it is recorded as a guess
+        # rather than passed silently, because a wrong state is invisible downstream.
+        provenance.append(FetchRecord(
+            layer="tariff", what="state", status="fallback",
+            detail=(f"neither the CoStar kit nor the Census geocoder gave a state, so "
+                    f"the tariff, the emissions factor and the legal templates all use "
+                    f"{_TARIFF_DEFAULT_STATE} - check this before quoting any number"),
+        ))
+    tariff, tnotes = d9.get_tariff(state or _TARIFF_DEFAULT_STATE, sector, utility=utility)
     provenance += tnotes
     if tariff is None:
         raise IncompleteBundle(
             f"{sid}: tariff is a required field and could not be sourced", provenance)
 
+    # Built before the bundle, not inside the constructor: it appends to `provenance`,
+    # and relying on left-to-right argument evaluation to get that record into the
+    # bundle is the kind of thing that silently stops being true.
+    summary = _summary_from(sid, matterport, costar, row, state=state, city=city,
+                            provenance=provenance)
     return PropertyBundle(
-        summary=_summary_from(sid, matterport, costar, row),
+        summary=summary,
         matterport=matterport,
         vexcel=vexcel,
         costar=costar,
@@ -483,10 +517,66 @@ def _assemble(sid: str) -> PropertyBundle:
     )
 
 
-def _summary_from(sid, matterport, costar, row) -> PropertySummary:
+#: Room labels that only a dwelling has. Measured on the golden set: the house returns
+#: Bedroom, Bathroom, Closet, Dining Room and Hallway, while **all three commercial
+#: scans return no room labels at all** - which is the same finding as the empty
+#: `classifications` in the spec's section 3.4.
+#:
+#: Deliberately narrow. Bathroom, Kitchen, Closet and Hallway all occur in offices, so
+#: they are not here; these are the ones that cannot. The test is positive-only:
+#: finding one proves residential, finding none proves nothing.
+_DWELLING_ROOMS = frozenset({
+    "bedroom", "primary bedroom", "master bedroom", "living room", "dining room",
+    "nursery", "guest bedroom", "family room", "den",
+})
+
+
+def _segment_evidence(matterport) -> Optional[str]:
+    """`"residential"` when the scan's own room labels prove a dwelling, else `None`.
+
+    The only second source for segment when there is no CoStar kit. **Vexcel's
+    `building-type.class` cannot be used**: measured under D16 it reads
+    `'single_family'` on the house but `'condo_apartment'` on *both* golden offices and
+    `None` on the third, so it would not merely fail to help - it would argue for
+    residential on a 16-storey office tower.
+    """
+    for room in matterport.rooms:
+        if room.label and room.label.strip().casefold() in _DWELLING_ROOMS:
+            return "residential"
+    return None
+
+
+def _summary_from(sid, matterport, costar, row, *, state=None, city=None,
+                  provenance=None) -> PropertySummary:
     geo = matterport.georeference
+    known = bool(row.get("property_id")) or (
+        costar is not None and costar.kind in ("commercial_property", "residential_listing"))
     commercial = bool(row.get("property_id")) or (
         costar is not None and costar.kind == "commercial_property")
+
+    if not known:
+        # No kit, so nothing authoritative says which this is - and `segment` is not a
+        # cosmetic field: it picks the measure catalogue (`catalogue.py:79`), the cost
+        # and useful-life tables, the incentive filter, **C-PACE eligibility**
+        # (`cpace.py:63` requires commercial) and which legal templates are listed.
+        # The scan's room labels can prove a dwelling; nothing available can prove an
+        # office, so an office without the kit is still recorded as a guess.
+        evidence = _segment_evidence(matterport)
+        if evidence == "residential":
+            commercial = False
+        if provenance is not None:
+            provenance.append(FetchRecord(
+                layer="costar", what="summary:segment",
+                status="ok" if evidence else "fallback",
+                detail=(
+                    f"no CoStar record, so segment is inferred: the scan's room labels "
+                    f"prove a dwelling" if evidence else
+                    f"no CoStar record and no dwelling room label, so segment falls back to "
+                    f"'{'commercial' if commercial else 'residential'}' - it decides the "
+                    f"measure catalogue, the cost tables, the incentive filter, C-PACE "
+                    f"eligibility and the legal templates, so mirror the kit before "
+                    f"trusting a plan built on it"),
+            ))
     # One use-type table for the lane, in `index.py`. A second one here, keyed by
     # enum *name* instead of code, is how the two quietly stop agreeing.
     use_type: UseType = (
@@ -500,9 +590,12 @@ def _summary_from(sid, matterport, costar, row) -> PropertySummary:
         name=(indexed.name if indexed else None) or row.get("address") or sid,
         segment="commercial" if commercial else "residential",
         use_type=use_type,
+        # The address itself has no second source: a street address is not derivable
+        # from a coordinate without a reverse-geocode this lane does not make, so it
+        # stays empty without the kit rather than being approximated.
         address=row.get("address"),
-        city=row.get("city"),
-        state=row.get("state"),
+        city=row.get("city") or city,
+        state=row.get("state") or state,
         lat=geo.latitude if geo else None,
         lon=geo.longitude if geo else None,
         costar_property_id=row.get("property_id"),

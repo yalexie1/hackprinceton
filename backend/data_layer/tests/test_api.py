@@ -207,3 +207,97 @@ def test_use_type_mapping_covers_the_golden_properties():
 
     assert index.use_type_for("commercial_property", 5) == "office"       # Office
     assert index.use_type_for("residential_listing", 1) == "single_family"  # Detached
+
+
+# ---------- D17: a complete summary without the CoStar kit ----------
+
+def _matterport(room_labels=()):
+    """A minimal `MatterportData` with a georeference and the given room labels."""
+    from backend.schema import GeoReference, MatterportData, Quaternion, Room
+
+    return MatterportData(
+        georeference=GeoReference(latitude=29.746, longitude=-95.4576,
+                                  rotation=Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)),
+        floors=[], panos=[],
+        rooms=[Room(id=f"r{i}", floor_id="f0", label=label)
+               for i, label in enumerate(room_labels)],
+    )
+
+
+def test_the_kit_row_still_wins_when_it_has_a_state():
+    """The geocoder is a *fallback*. CoStar's own record stays authoritative where it
+    exists, so mirroring the kit cannot change an answer this already got right."""
+    summary = api._summary_from(
+        "sid", _matterport(), None,
+        {"state": "TX", "city": "Houston", "address": "2100 West Loop"},
+        state="CA", city="Los Angeles")
+    assert summary.state == "TX" and summary.city == "Houston"
+
+
+def test_a_resolved_state_fills_an_empty_row():
+    summary = api._summary_from("sid", _matterport(), None, {},
+                                state="TX", city="Houston")
+    assert summary.state == "TX" and summary.city == "Houston"
+
+
+def test_the_address_is_left_empty_rather_than_approximated():
+    """A street address is not derivable from a coordinate without a reverse-geocode
+    this lane does not make, and an invented one would be quoted in a legal document."""
+    summary = api._summary_from("sid", _matterport(), None, {},
+                                state="TX", city="Houston")
+    assert summary.address is None
+
+
+def test_room_labels_prove_a_dwelling_when_there_is_no_costar_record():
+    """`segment` is not cosmetic: it selects the measure catalogue, the cost and
+    useful-life tables, the incentive filter, **C-PACE eligibility** (which requires
+    commercial) and which legal templates are offered."""
+    provenance = []
+    summary = api._summary_from(
+        "sid", _matterport(["Bedroom", "Dining Room"]), None, {}, provenance=provenance)
+    assert summary.segment == "residential"
+    note = next(n for n in provenance if n.what == "summary:segment")
+    assert note.status == "ok" and "room labels" in note.detail
+
+
+def test_an_office_without_the_kit_is_recorded_as_a_guess():
+    """All three commercial golden scans return **no room labels at all**, so nothing
+    available proves an office. The honest outcome is a loud record, not a confident
+    answer - and the fix is to mirror the kit."""
+    provenance = []
+    summary = api._summary_from("sid", _matterport(), None, {}, provenance=provenance)
+    note = next(n for n in provenance if n.what == "summary:segment")
+    assert note.status == "fallback"
+    assert "C-PACE" in note.detail and "mirror the kit" in note.detail
+    assert summary.segment in ("residential", "commercial")
+
+
+def test_a_costar_record_means_no_segment_guess_is_recorded():
+    from backend.schema import CostarData
+
+    provenance = []
+    costar = CostarData(kind="commercial_property", matterport_model_id="m",
+                        record_id="r", raw={}, property_id="234088")
+    summary = api._summary_from("sid", _matterport(), costar, {}, provenance=provenance)
+    assert summary.segment == "commercial"
+    assert not [n for n in provenance if n.what == "summary:segment"]
+
+
+def test_vexcel_building_type_is_not_used_for_segment():
+    """Measured under D16: `building-type.class` reads `'single_family'` on the house
+    but **`'condo_apartment'` on both golden offices** and None on the third. Using it
+    would argue for residential on a 16-storey office tower, so it is not consulted -
+    this asserts the source does not quietly come back."""
+    import inspect
+
+    source = inspect.getsource(api._segment_evidence)
+    assert "building-type" not in source or "cannot be used" in source
+    assert "rooms" in source
+
+
+def test_bathrooms_and_hallways_are_not_dwelling_evidence():
+    """They occur in offices too. The test is positive-only: finding a dwelling room
+    proves residential; finding none proves nothing."""
+    assert api._segment_evidence(_matterport(["Bathroom", "Hallway", "Closet"])) is None
+    assert api._segment_evidence(_matterport(["Bedroom"])) == "residential"
+    assert api._segment_evidence(_matterport()) is None

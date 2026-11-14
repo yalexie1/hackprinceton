@@ -1,6 +1,6 @@
 # Master spec
 
-Status: draft v0.3.2, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.3, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
@@ -9,6 +9,8 @@ v0.3 (contract 0.3.0) adds what the physics and legal specs needed, all additive
 v0.3.1 adds `CostarData.parent_ids`: one Matterport scan can be attached to several CoStar records, so the alternatives travel with the bundle.
 
 v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so the area of a detection is the area of its own mask, never a sum of masks, a bounding box or a hull. `mask_wkt` stays `None` until a true polygon is derived from the mask.
+
+v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
 
 Companion files:
 
@@ -349,7 +351,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.2"
+SCHEMA_VERSION = "0.3.3"
 
 # ---------- primitives ----------
 
@@ -603,7 +605,7 @@ class Tariff(BaseModel):
     retrieved: str                             # ISO date
 
 class FetchRecord(BaseModel):
-    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff"]
+    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff", "place"]   # place: incorporated-place and program-area lookups
     what: str
     status: Literal["ok", "missing", "locked", "error", "fallback"]
     detail: Optional[str] = None

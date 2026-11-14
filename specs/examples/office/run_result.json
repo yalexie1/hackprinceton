@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.2",
+  "schema_version": "0.3.3",
   "run_id": "run_office_example",
   "status": "done",
   "request": {
@@ -32,7 +32,7 @@
     "floor_count": 1
   },
   "building_model": {
-    "schema_version": "0.3.2",
+    "schema_version": "0.3.3",
     "sid": "jfiEvosX974",
     "bedrooms": null,
     "north_offset_deg": {

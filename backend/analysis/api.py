@@ -77,7 +77,18 @@ def _folder(sid: str) -> Path:
     raise LookupError(f"no example for sid {sid}")
 
 
+def _has_example(sid: str) -> bool:
+    try:
+        _folder(sid)
+        return True
+    except LookupError:
+        return False
+
+
 def _measures(sid: str) -> list[MeasureResult]:
+    """The example's evaluated measures; none for a property that has no example (a real one)."""
+    if not _has_example(sid):
+        return []
     return [MeasureResult.model_validate(m) for m in _load(_folder(sid), "measures.json")]
 
 
@@ -163,6 +174,8 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
     """REAL (A7) when `set_vision` has been called; otherwise the example's observations."""
     if _VISION["ask_model"] is not None and _VISION["get_bytes"] is not None:
         return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"], room_fallback=True)
+    if not _has_example(bundle.summary.sid):      # a real property: no observations, vintage defaults carry on
+        return [], []
     m = BuildingModel.model_validate(_load(_folder(bundle.summary.sid), "building_model.json"))
     return list(m.assumptions), list(m.flags)
 
@@ -814,6 +827,8 @@ def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunReques
     core = ("ENV_ATTIC", "LGT_LED", "HVAC_HP" if engine.flow_of(bundle.summary) == "home" else "HVAC_RTU")
     if all(m in engine.REGISTRY.plugins for m in core):
         return _ask_questions(model, _responsive_plan(bundle, model, request))
+    if not _has_example(bundle.summary.sid):
+        return []
     return [Question.model_validate(q)
             for q in _load(_folder(bundle.summary.sid), "run_result.json")["questions"]]
 

@@ -606,3 +606,26 @@ def test_a_number_written_as_text_is_a_number():
     assert rebuilt.model_dump_json() == same.model_dump_json()
     assert api.set_assumption(base, "window.type", "single_clear_non_metal").model_dump_json() == \
         api.set_assumption(base, "window.type", "single_clear_non_metal").model_dump_json()      # categorical text stays text
+
+
+# ---- a property with no example folder ----
+
+def test_the_whole_door_works_for_a_property_that_has_no_example():
+    bundle, request = load("office_houston")
+    real = bundle.model_copy(update={"summary": bundle.summary.model_copy(update={"sid": "ZSPaQbkGcJJ"})})
+    assert not api._has_example("ZSPaQbkGcJJ") and api._measures("ZSPaQbkGcJJ") == []
+    observed, flags = api.observe_interior(real)
+    assert observed == [] and flags == []
+    model = api.build_building_model(real, observed, flags, request.overrides)
+    assert api.run_baseline(real, model).annual.electricity_kwh.expected > 0
+    tiny = request.model_copy(update={"budget_usd": 2_000.0})                   # a small plan keeps the test quick
+    plan = api.build_plan(real, model, tiny)
+    assert plan.selected and all(i.measure.finance is not None for i in plan.selected)
+    assert api.lookup_incentives("LGT_LED", real.summary) is not None
+    priced = api.price_measure(real, api.evaluate_measure(real, model, "LGT_LED", request.role))
+    assert priced.finance is not None and api.cpace_scenario(real, priced) is not None
+
+
+def test_a_missing_example_does_not_change_a_property_that_has_one():
+    bundle, request = load("house")
+    assert api._has_example(bundle.summary.sid) and api._measures(bundle.summary.sid)

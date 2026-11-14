@@ -120,6 +120,19 @@ def office_hvac_on(stamps, schedule: str = "office") -> np.ndarray:
     return on
 
 
+def home_setback_on(stamps) -> np.ndarray:
+    """True in the hours a home thermostat with a setback runs at its setback and setup values:
+    nights 22:00 to 06:00 every day and weekdays 08:00 to 18:00. UNSOURCED (DEF-08 sources no
+    home setback hours; constants.HOME_SETBACK_HOURS). Stamps are hour-ending."""
+    start = _hour_starts(stamps)
+    hour_no = (start.astype("datetime64[h]") - start.astype("datetime64[D]")).astype(int) + 1
+    weekday = (start.astype("datetime64[D]").astype(int) + 3) % 7      # 1970-01-01 was a Thursday
+    on = np.isin(hour_no, list(C.HOME_SETBACK_HOURS["night"]))
+    wk = weekday < 5
+    on[wk] |= np.isin(hour_no[wk], list(C.HOME_SETBACK_HOURS["weekday_away"]))
+    return on
+
+
 def _month_index(stamps, n: int) -> Optional[np.ndarray]:
     if stamps is not None:
         start = _hour_starts(stamps)
@@ -339,6 +352,19 @@ def zone_loads(model: BuildingModel, t_out_c: ArrayLike, surface_irradiance_w_m2
         sp = C.SETPOINTS["home"]
         set_h = np.full(n, sysm.heating_setpoint_c.expected if sysm.heating_setpoint_c else sp["heat"])
         set_c = np.full(n, sysm.cooling_setpoint_c.expected if sysm.cooling_setpoint_c else sp["cool"])
+        if sysm.heating_setback_c is not None or sysm.cooling_setup_c is not None:
+            # a home with a setback thermostat (CTRL_TSTAT): DEF-08 sources no hours, so the
+            # setback runs on the unsourced HOME_SETBACK_HOURS
+            if stamps is None:
+                warnings.append("home setback ignored: no `stamps` to place the setback hours")
+            else:
+                away = home_setback_on(stamps)
+                if sysm.heating_setback_c is not None:
+                    set_h = np.where(away, np.minimum(set_h, sysm.heating_setback_c), set_h)
+                if sysm.cooling_setup_c is not None:
+                    set_c = np.where(away, np.maximum(set_c, sysm.cooling_setup_c), set_c)
+                warnings.append("home setback hours are unsourced (DEF-08): nights 22:00-06:00 and "
+                                "weekdays 08:00-18:00")
     if setpoint_heat_c is not None:
         set_h = _as_array(setpoint_heat_c, n, "setpoint_heat_c")
     if setpoint_cool_c is not None:

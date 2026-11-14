@@ -312,3 +312,27 @@ def test_ground_method_and_capacity_options():
 def test_deterministic():
     a, b = run("house"), run("house")
     assert np.array_equal(a.phi_hc_w, b.phi_hc_w)
+
+
+def test_home_setback_lowers_heating_and_cooling_need():
+    # CTRL_TSTAT on a home sets heating_setback_c and cooling_setup_c (A22); without home setback
+    # hours the zone model ignored them and the measure saved nothing
+    base = run("house")
+    m = model("house")
+    m = m.model_copy(update={"systems": m.systems.model_copy(
+        update={"heating_setback_c": 17.8, "cooling_setup_c": 27.8})})
+    sb = run("house", m)
+    assert sb.heating_need_kwh < base.heating_need_kwh
+    assert sb.cooling_need_kwh < base.cooling_need_kwh
+    assert any("setback hours are unsourced" in w for w in sb.warnings)
+
+
+def test_home_setback_hours():
+    from backend.analysis.physics.zone.model import home_setback_on
+    # hour-ending stamps on Monday 2024-01-08: hour 1 (00-01) is set back, hour 8 (07-08) is not,
+    # hour 10 (09-10) is (weekday away), hour 20 (19-20) is not, hour 23 (22-23) is
+    stamps = np.array(["2024-01-08T01:00", "2024-01-08T08:00", "2024-01-08T10:00",
+                       "2024-01-08T20:00", "2024-01-08T23:00"], dtype="datetime64[m]")
+    assert home_setback_on(stamps).tolist() == [True, False, True, False, True]
+    # Saturday 2024-01-13 at 09-10: not set back (weekend daytime)
+    assert home_setback_on(np.array(["2024-01-13T10:00"], dtype="datetime64[m]")).tolist() == [False]

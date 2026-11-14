@@ -100,3 +100,9 @@ SETPOINTS = {
 
 # ---- DEF-09: office HVAC-on hours, hour 1 = 00:00 to 01:00 (S11 Table B-13) ----
 OFFICE_HVAC_ON_HOURS = {"weekday": range(7, 23), "saturday": range(7, 19), "other": range(0)}
+
+# ---- Home setback hours, used only when Systems.heating_setback_c or cooling_setup_c is set ----
+# UNSOURCED (physics 02 DEF-08: no home setback schedule is sourced). A common programmable-
+# thermostat pattern, this project's judgment: nights 22:00 to 06:00 every day, and weekdays
+# 08:00 to 18:00 when the home is empty. Hour 1 is 00:00 to 01:00, as in DEF-09.
+HOME_SETBACK_HOURS = {"night": tuple(range(23, 25)) + tuple(range(1, 7)), "weekday_away": range(9, 19)}

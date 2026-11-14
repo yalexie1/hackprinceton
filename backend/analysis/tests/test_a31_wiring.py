@@ -156,8 +156,17 @@ def test_a_baseline_outside_the_band_warns_on_the_result():
 def test_a_baseline_inside_the_band_is_silent():
     """80 percent of real comparable buildings are inside the band, so a model that is must not
     be warned about - otherwise the warning means nothing."""
-    _, _, baseline = baseline_of("office")
+    _, _, baseline = baseline_of("house")                     # inside the band on the committed weather year
     assert [w for w in benchmark_warnings(baseline) if "intensity" in w] == []
+
+
+def test_the_golden_offices_gas_is_flagged_as_far_below_comparable_buildings():
+    """Culver on the 3rd floor has no roof, and Houston's office gas is low too: both are outside the band, and
+    that is a finding about the office gas model that the warning exists to show, not a quiet pass."""
+    for flavor in ("office", "office_houston"):
+        _, _, baseline = baseline_of(flavor)
+        flagged = [w for w in benchmark_warnings(baseline) if "intensity" in w]
+        assert flagged and "below the 5th percentile" in flagged[0], flavor
 
 
 def test_the_benchmark_changes_no_number_in_the_baseline():

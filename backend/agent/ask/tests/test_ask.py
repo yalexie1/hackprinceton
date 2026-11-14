@@ -84,8 +84,10 @@ def _graph(tool):
     return g.compile(checkpointer=InMemorySaver())
 
 
-@pytest.mark.parametrize("value,expected_calls", [(100.0, 1), (None, 0)])
+@pytest.mark.parametrize("value,expected_calls", [("first-choice", 1), (None, 0)])
 def test_interrupt_pause_and_resume(value, expected_calls):
+    if value == "first-choice":                         # the example's own first choice, whatever the example asks
+        value = next(c.value for c in HOUSE.questions[0].choices if c.value is not None)
     calls = []
     session = AskSession(HOUSE.questions)
     graph = _graph(make_ask_user(session, lambda k, v: calls.append((k, v))))

@@ -19,11 +19,17 @@ def test_fixture_narrative_passes(flavor):
 
 
 def test_changing_one_number_fails():
+    import re
     r = run("house")
-    bad = r.narrative_md.replace("$9,302", "$9,402")
-    assert bad != r.narrative_md
+    text = r.narrative_md
+    once = [m for m in re.findall(r"\$(\d{1,3}(?:,\d{3})+)", text) if text.count("$" + m) == 1]
+    assert once, "the example narrative has a dollar figure that appears once"
+    old = once[0]
+    new = f"{int(old.replace(',', '')) + 1000:,}"
+    bad = text.replace("$" + old, "$" + new)
+    assert bad != text
     msgs = check_narrative(bad, r)
-    assert len(msgs) == 1 and msgs[0].startswith("9,402")
+    assert len(msgs) == 1 and msgs[0].startswith(new)
 
 
 def test_every_number_is_checked_one_by_one():
@@ -64,7 +70,7 @@ def test_bundle_value_is_accepted_only_when_the_bundle_is_passed():
     only_bundle = next(v for v in sorted(set(_walk(b.model_dump(mode="json"))))
                        if v not in in_result and v != int(v) and round(v, 2) == v and 0 < v < 1000
                        and not any(abs(v - w) < 0.005 for w in in_result))
-    text = f"The bundle reports {only_bundle} here."
+    text = f"The bundle reports {only_bundle:.2f} here."          # written at two decimals, as it is compared
     assert check_narrative(text, r) != []
     assert check_narrative(text, r, b) == []
 

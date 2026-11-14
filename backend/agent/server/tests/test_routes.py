@@ -290,3 +290,27 @@ def test_an_answer_for_a_run_that_closed_meanwhile_is_a_409(monkeypatch):
     value = next(c.value for c in q.choices if c.value is not None)
     r = client.post(f"/api/runs/{run_id}/answers", json={"question_id": q.id, "value": value})
     assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_waiting"
+
+
+# ---------- GET /api/templates: what the Documents step may offer ----------
+
+def test_templates_lists_what_the_legal_door_can_draft():
+    from backend.legal import api as legal
+    r = client.get("/api/templates")
+    assert r.status_code == 200 and r.json() == legal.list_templates(None, None)
+    ca = client.get("/api/templates", params={"state": "CA", "segment": "residential"}).json()
+    assert ca == legal.list_templates("CA", "residential") and "retrofit_contract_residential" in ca
+    assert "retrofit_contract_commercial" not in ca
+    tx = client.get("/api/templates", params={"state": "TX"}).json()
+    assert tx == legal.list_templates("TX", None)
+
+
+def test_every_template_offered_can_be_drafted_and_nothing_else_is_offered():
+    offered = client.get("/api/templates").json()
+    for doc_type in ("bid_package_rfp", "energy_savings_guarantee"):       # no template file exists for these
+        assert doc_type not in offered
+
+
+def test_templates_refuses_a_state_it_does_not_know():
+    r = client.get("/api/templates", params={"state": "NY"})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_request"

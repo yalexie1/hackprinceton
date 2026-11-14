@@ -255,6 +255,15 @@ Working query: `floors { id label edges { id type thickness openings { id type w
 - Base `https://api.vexcelgroup.com/v2`, header `X-API-KEY`. [V]
 - **WKT is longitude first.** Always send `srid=4326`. [V]
 - Layers `urban`, `urban-r`, `wide-area`, `urban-g`; obliques only in `urban`. Houston and Los Angeles only. [V]
+- **The `layer` set changes which collection is selected, and so changes every attribute.** [V] 2026-11-14, found while building D3. The same point on the LA office:
+
+  | `layer` | collection | structures | primary footprint | height |
+  |---|---|---|---|---|
+  | `urban` | `us-ca-losangeles-2023` | **1** | 2,207.43 m² | −15.338 |
+  | `urban,urban-r,wide-area,urban-g` | `us-ca-losangeles_rf08-2023` | **2** | 2,473.94 m² | −14.223 |
+
+  Structure count, footprint, roof elevation and height all move, so the tutorial's advice to pass every layer silently changes the parcel decomposition. **D3 pins `layer=urban`** — both cities are urban and obliques exist only there — and carries the collection on `VexcelData.collection` so any result can be traced to the flight it came from.
+- **`403` means outside the licensed coverage, as distinct from `404` meaning no parcel inside it.** A point at 0°,0° answers 403. Both are normal outcomes and are reported as `FetchRecord`s. [V] 2026-11-14
 - `404` = no parcel at that point, a **normal outcome**. `429` = too fast, exponential backoff. [V]
 - `GET /oriented/collections` verified 200; returns a FeatureCollection of collections with `product-type` (e.g. `us-ca-glendale-2025`, `nadir`). Use it to learn which obliques exist before asking for imagery. [V]
 
@@ -306,7 +315,9 @@ The absolute value matches `|roof − ground|` on all three; the sign comes out 
 
 > **This section has now been corrected twice.** The first version said *roof − ground*, inferred from a `precomputed`-only response paired with a `calculated`-only one, which this section's own rule forbids. The second said *ground − roof*, which fitted the house and the LA office but is contradicted by the Houston office above. Three samples were needed before the real behaviour was visible — one sample can confirm a wrong formula.
 
-**The magnitude is wrong on both towers, and now the cause is clear.** They report 15.5 m and 15.7 m against roughly 47 m and 44 m expected at their own measured room heights. Their detected footprints are **1.7× and 4.6×** the CoStar typical floor plate (1,313 m² and 944 m²), so Vexcel is outlining a low podium or garage on both. **So `footprint.area` and `height` describe the podium, not the tower** — which also bounds how `footprint.area` may be used for rooftop PV area on a tower. The house value additionally **changed between calls** (0.4254 standalone vs 0.3639 combined), so it is not even stable.
+**The magnitude is wrong on both towers, and now the cause is clear.** They report 15.5 m and 15.7 m against roughly 47 m and 44 m expected at their own measured room heights. Their detected footprints are **1.7× and 4.6×** the CoStar typical floor plate (1,313 m² and 944 m²), so Vexcel is outlining a low podium or garage on both. **So `footprint.area` and `height` describe the podium, not the tower** — which also bounds how `footprint.area` may be used for rooftop PV area on a tower. The house value additionally **changed between calls** (0.4254 standalone vs 0.3639 combined), and the LA office returned **−15.497 then −15.338 for identical parameters**, so the calculated elevation and height are **not reproducible**. Never assert equality on them and never derive a dimension from them.
+
+**Catching the podium case needs the storey count.** An absolute floor alone (reject under ~2.5 m) catches the house's 0.36 m but not a tower's 15.5 m, which looks like an ordinary low building. D3's `plausible_building_height(attrs, stories=...)` compares the rise against `stories × 2.2 m`, so the caller passes CoStar `numStoriesAboveGrade`; both golden towers then fail it as they should.
 
 **Conclusion: do not use `roof-characteristics.height` for building height.** Take storey count from CoStar `numStoriesAboveGrade` and multiply by a floor-to-floor height, or use the scan's own room heights. Keep the Vexcel figure only as a weak cross-check, with its sign stated explicitly.
 
@@ -587,6 +598,9 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Measure cost data | — | — | **[P] not started, no owner** |
 | Model-id uniqueness | both CSVs, full scan | 2026-11-14 | **307 ids have >1 parent** (55 commercial, 252 residential); 387 extra rows |
 | GraphQL partial errors | live, office model | 2026-11-14 | `errors` **and** populated `data` together; absent `view` is a field-scoped `not.found` |
+| Vexcel `layer` affects the answer | live, LA office, 2 layer sets | 2026-11-14 | different collection, **1 vs 2 structures**, different footprint and height |
+| Vexcel calculated values reproducible? | live, repeated calls | 2026-11-14 | **no** — −15.497 then −15.338 on identical parameters |
+| Vexcel 403 vs 404 | live, 0°,0° | 2026-11-14 | **403 = outside coverage**, 404 = no parcel inside it |
 | Residential field shapes | kit record + models/ | 2026-11-14 | `yearBuilt` scalar, area is `sqftMin`/`sqftMax` range, `propertyType` ambiguous |
 | Contract v0.2 extract + examples | independent check, pydantic 2.14.3 | 2026-11-14 | 538 lines, imports clean, 56 models, 27/27 examples valid (99 checks, 0 fail) |
 | Open-Meteo time convention | hourly-vs-daily reconciliation + sunrise boundary | 2026-11-14 | **`hour_end`** — ratio 1.0001; 05:00 stamp = 04:00–05:00 mean |

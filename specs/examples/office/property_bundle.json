@@ -36,7 +36,7 @@
     "floors": [
       {
         "id": "floor_1",
-        "label": "Floor 4",
+        "label": "Floor 3",
         "vertices": [
           {
             "id": "v01",
@@ -1647,7 +1647,7 @@
           "industry": "Media production (illustrative)",
           "employees": 196,
           "area_m2": 2355.0,
-          "floor": "4",
+          "floor": "3",
           "move_in": "2024-09-01",
           "move_out": null
         },
@@ -1656,7 +1656,7 @@
           "industry": "Software (illustrative)",
           "employees": 92,
           "area_m2": 1180.0,
-          "floor": "3",
+          "floor": "4",
           "move_in": "2021-03-01",
           "move_out": null
         },
@@ -1665,7 +1665,7 @@
           "industry": "Architecture (illustrative)",
           "employees": 44,
           "area_m2": 610.0,
-          "floor": "3",
+          "floor": "4",
           "move_in": "2019-07-01",
           "move_out": null
         },
@@ -1727,10 +1727,10 @@
     "timezone": "America/Los_Angeles",
     "climate_zone": "3B",
     "weather_path": "data/cache/ZSPaQbkGcJJ/weather/typical_year_hourly.csv",
-    "weather_source": "Open-Meteo archive API: hourly GHI, DNI, DHI, temperature, relative humidity and wind. The cached file is not part of this example.",
+    "weather_source": "Live runs read the TMYx typical-year file of the nearest representative station (climate.onebuilding.org, data-integration 5.1f), with the Open-Meteo archive as the fallback; the cached file is not part of this example. The example runs on the committed NOAA 2024 year of the same station (specs/examples/weather/README.md).",
     "weather_time_convention": "hour_end",
-    "pvgis_annual_kwh_per_kw": 1690.0,
-    "pvgis_sd_fraction": 0.023
+    "pvgis_annual_kwh_per_kw": 1676.75,
+    "pvgis_sd_fraction": 0.02248
   },
   "tariff": {
     "utility": "LADWP (electricity), SoCalGas (gas)",
@@ -1817,9 +1817,9 @@
     },
     {
       "layer": "weather",
-      "what": "hourly weather (Open-Meteo archive) and the PVGIS annual cross-check",
+      "what": "hourly weather (TMYx station typical year) and the PVGIS annual cross-check",
       "status": "ok",
-      "detail": null
+      "detail": "PVGIS v5_3 PVcalc, building-mounted (mountingplace=building), 14 % loss, tilt 20, south, PVGIS-ERA5, fetched 2026-11-14: 1676.75 kWh per kWp a year, standard deviation 0.02248 of it. The station file is not in the example; it runs on the committed NOAA 2024 year"
     },
     {
       "layer": "place",

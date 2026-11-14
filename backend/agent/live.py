@@ -26,7 +26,7 @@ from typing import Any, AsyncIterator, Callable, Optional
 
 from backend.agent.ask import AskSession, make_ask_user
 from backend.agent.graph import build_auditor, detect_fallbacks
-from backend.agent.narrative import check_narrative
+from backend.agent.narrative import check_narrative, remove_unsupported
 from backend.agent.runtime.replan import PatchError, replan
 from backend.agent.runtime.runtime import DEFAULT_RUNS_DIR, RunStore, build_result, execute_run
 from backend.agent.tools import Doors, ToolContext, build_tools
@@ -191,7 +191,7 @@ class LiveRun:
         self.config = {"configurable": {"thread_id": self.run_id}, "recursion_limit": 200,
                        "callbacks": [self.usage_handler], "run_name": "energy-audit",
                        "tags": ["energy-audit", f"sid:{self.request.sid}"],
-                       "metadata": {"run_id": self.run_id, "sid": self.request.sid, "role": self.request.role,
+                       "metadata": {"audit_run": self.run_id, "sid": self.request.sid, "role": self.request.role,
                                     "budget_usd": self.request.budget_usd}}
         orchestrator = settings.model or os.environ.get("AGENT_ORCHESTRATOR_MODEL") or None
         subagent = settings.subagent_model or os.environ.get("AGENT_SUBAGENT_MODEL") or None
@@ -265,12 +265,9 @@ class LiveRun:
         r = self.request
         return (f"Audit the property with sid {r.sid}. Budget: ${r.budget_usd:,.0f}. Role: {r.role}. "
                 f"Desks requested: {r.desks_requested}. Overrides already given by the user: "
-                f"{json.dumps(r.overrides)}. Run the pipeline in order: scout, surveyor, "
-                "physicist (evaluate each measure id once, and no measure twice), financier (price "
-                "the measures, call the sensitivity tool, then build the plan). Call ask_user "
-                "once per question the sensitivity tool returned, and not at all if it "
-                "returned none. Finish by writing report.md: a short summary whose every number "
-                "is copied from a tool result.")
+                f"{json.dumps(r.overrides)}. Follow the order in your instructions: scout, surveyor, "
+                "physicist, financier, then the questions if sensitivity returned any, then report.md. "
+                "Finish only when build_plan has returned a plan and report.md is written.")
 
     def _segment_config(self) -> dict:
         config = dict(self.config)
@@ -389,29 +386,59 @@ class LiveRun:
         yield {"fallback": "The agent did not build the plan; the runtime built it from the building model.",
                "stage": "S7", "payload": {"fallback": "plan_built_by_runtime"}}
 
-    async def _finish(self) -> AsyncIterator:
-        async for out in self._plan_if_missing():
-            yield out
-        if self._stage:
-            yield {"stage_done": self._stage, "message": STAGE_TITLE[self._stage]}
-        yield {"stage_started": "S8", "message": STAGE_TITLE["S8"]}
-        report = ""
+    async def _report_text(self) -> str:
         state = await self.graph.aget_state(self.config)
         vfiles = (state.values or {}).get("files") or {}
         for key in REPORT_KEYS:
             if key in vfiles:
                 data = vfiles[key]
                 content = data.get("content") if isinstance(data, dict) else data
-                report = "\n".join(content) if isinstance(content, list) else str(content or "")
-                break
-        report = report or self._last_text
+                return "\n".join(content) if isinstance(content, list) else str(content or "")
+        return self._last_text
+
+    async def _ask_for_a_corrected_report(self, problems: list[str]) -> None:
+        """One more turn for the auditor: the numbers no tool returned, and the instruction to rewrite."""
+        message = ("report.md states numbers that no tool returned: " + "; ".join(problems[:8]) + ". Rewrite "
+                   "report.md now, using only numbers copied exactly from tool results and removing any figure "
+                   "you worked out yourself. Do not call other tools.")
+        async for chunk in self.graph.astream({"messages": [("user", message)]}, self._segment_config(),
+                                              stream_mode="updates"):
+            self._map_update(chunk)
+
+    def _check(self, report: str) -> list[str]:
+        result = build_result(self.run_id, self.request, self.files, "done")
+        bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+        return check_narrative(report, result, bundle, result.building_model)
+
+    async def _finish(self) -> AsyncIterator:
+        async for out in self._plan_if_missing():
+            yield out
+        if self._stage:
+            yield {"stage_done": self._stage, "message": STAGE_TITLE[self._stage]}
+        yield {"stage_started": "S8", "message": STAGE_TITLE["S8"]}
+        report = await self._report_text()
         if report:
             self.files.write("report.md", report)
             try:
-                result = build_result(self.run_id, self.request, self.files, "done")
-                bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
-                for problem in check_narrative(report, result, bundle, result.building_model)[:5]:
-                    yield {"type": "error", "stage": "S8", "message": f"check_narrative: {problem}"}
+                problems = self._check(report)
+                if problems:        # SPEC 8 rule 1: the text may not state a number the tools did not return
+                    yield {"fallback": f"The summary stated {len(problems)} number(s) no tool returned; the "
+                                       "auditor was asked to correct it.", "stage": "S8",
+                           "payload": {"fallback": "narrative_repair", "problems": problems[:8]}}
+                    try:
+                        await self._ask_for_a_corrected_report(problems)
+                        report = await self._report_text() or report
+                        self.files.write("report.md", report)
+                        problems = self._check(report)
+                    except Exception as exc:
+                        yield {"type": "error", "stage": "S8", "message": f"narrative repair failed: {type(exc).__name__}: {exc}"[:300]}
+                if problems:        # still wrong: drop the lines that state them, and say so
+                    result = build_result(self.run_id, self.request, self.files, "done")
+                    bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+                    report, dropped = remove_unsupported(report, result, bundle, result.building_model)
+                    self.files.write("report.md", report)
+                    yield {"type": "error", "stage": "S8",
+                           "message": f"check_narrative: removed {len(dropped)} line(s) that stated numbers no result holds"}
             except ValueError:
                 pass
         yield {"stage_done": "S8", "message": "Summary written"}
@@ -424,7 +451,7 @@ class LiveRun:
             # so the ids that find the trace are kept with the run. Private: data/runs is git-ignored.
             (self.files.root / "trace.json").write_text(json.dumps({
                 "trace_id": str(self.trace_id), "project": os.environ.get("LANGSMITH_PROJECT"),
-                "run_id": self.run_id, "metadata_to_search": {"run_id": self.run_id, "sid": self.request.sid}}, indent=2))
+                "run_id": self.run_id, "metadata_to_search": {"audit_run": self.run_id, "sid": self.request.sid}}, indent=2))
         self._thread.start()
 
     def _publish(self, event: RunEvent) -> None:

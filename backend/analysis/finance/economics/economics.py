@@ -179,12 +179,16 @@ def irr(flows: list[float]) -> Optional[float]:
     low, high = -0.99, 10.0
     if npv_at(low) * npv_at(high) > 0:
         return None
+    f_low = npv_at(low)
     for _ in range(300):
         mid = (low + high) / 2
-        if npv_at(low) * npv_at(mid) <= 0:
+        f_mid = npv_at(mid)
+        if f_low * f_mid <= 0:
             high = mid
         else:
-            low = mid
+            low, f_low = mid, f_mid
+        if high - low < 1e-12:
+            break
     return (low + high) / 2
 
 

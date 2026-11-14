@@ -193,6 +193,8 @@ def test_a_home_carries_its_uplift_on_owned_rooftop_solar_only():
 
 def clear_caches():
     api._SIM_CACHE.clear()
+    api._ZONE_CACHE.clear()
+    api._EVAL_CACHE.clear()
     api._DESIGN_CACHE.clear()
     api._CLIMATE_CACHE.clear()
 
@@ -481,3 +483,96 @@ def test_with_no_state_to_be_found_pricing_still_runs_without_escalation():
     assert plan.selected
     assert api.lookup_incentives("LGT_LED", nowhere.summary) is not None
     assert api.cpace_scenario(nowhere, priced).eligible is False        # no state, no C-PACE rules to apply
+
+
+# ---- the ask rule on the real physics (checkpoint 3) ----
+
+ASK = EX / "ask"
+
+
+def ask_model(name):
+    return BuildingModel.model_validate_json((ASK / f"building_model_{name}.json").read_text())
+
+
+def test_the_ask_rule_fires_on_the_wide_fixture_and_not_on_the_narrow_one():
+    from backend.analysis.finance.sensitivity import sensitivity as ask
+    bundle, request = load("house")
+    wide, narrow = ask_model("wide"), ask_model("narrow")
+    questions = ask(wide, api._responsive_plan(bundle, wide, request))
+    assert questions and questions[0].choices[-1].value is None             # an "I don't know" with no value
+    assert ask(narrow, api._responsive_plan(bundle, narrow, request)) == []
+
+
+def test_a_moved_assumption_really_moves_the_plan():
+    """A27 collapses the value in the assumption list only; the door rebuilds the model so the walls,
+    the systems and the zones follow. Without that every variant plan was the same plan."""
+    bundle, request = load("house")
+    base = model_of(bundle, request)
+    plan_of_model = api._responsive_plan(bundle, base, request)
+    from backend.analysis.finance.sensitivity import with_value
+    key = "infiltration.ach50"
+    leaky = plan_of_model(with_value(base, key, 30.0))
+    tight = plan_of_model(with_value(base, key, 6.0))
+    assert leaky.total_annual_savings_usd.expected != tight.total_annual_savings_usd.expected
+    assert plan_of_model(base).model_dump_json() == plan_of_model(base).model_dump_json()
+
+
+# ---- the caches return what a fresh run would ----
+
+@pytest.mark.parametrize("flavor", ["house", "office"])
+def test_a_measure_that_leaves_the_zone_inputs_alone_shares_the_loads_of_its_parent(flavor):
+    import numpy as np
+    bundle, request = load(flavor)
+    base = model_of(bundle, request)
+    hours, weather, _ = api._climate(bundle)
+    from backend.analysis.physics.systems import calendar_from_stamps
+    cal = calendar_from_stamps(hours.stamps, bundle.climate.weather_time_convention)
+    same, different = 0, 0
+    for mid in api.engine.REGISTRY.registered():
+        skip, _ = api.engine.applicability(bundle, base, mid, request.role)
+        if skip is not None:
+            continue
+        changed = api.engine.apply_measure(bundle, base, mid)
+        if api._zone_key(bundle, changed) == api._zone_key(bundle, base):
+            same += 1
+            cached = api._hourly_loads(bundle, changed, hours, weather, cal)
+            fresh = api._zone_run(bundle, changed, hours, weather, cal)[0]
+            assert np.array_equal(cached.heating_need_w, fresh.heating_need_w), mid
+            assert np.array_equal(cached.cooling_need_w, fresh.cooling_need_w), mid
+        else:
+            different += 1
+    assert same and different                                              # neither branch is vacuous
+
+
+def test_the_layout_card_is_the_same_whether_or_not_it_comes_from_the_cache():
+    bundle, request = load("office")
+    base = model_of(bundle, request)
+    before = api.run_baseline(bundle, base)
+    fresh = api.layout.describe(bundle, base, base, before, {"desks_requested": 4},
+                                score_point=api._desk_scorer(bundle, base))
+    api._LAYOUT_CACHE.clear()
+    cached = api._describe_layout(bundle, base, base, before, {"desks_requested": 4})
+    assert cached.model_dump_json() == fresh.model_dump_json()
+    # what cannot move a desk: the solar array, the flags, the roof, the water heater
+    shuffled = base.model_copy(update={"flags": list(reversed(base.flags)),
+                                       "roof_planes": list(reversed(base.roof_planes))})
+    pv = api.engine.apply_measure(bundle, base, "PV_ROOF")
+    for other in (shuffled, pv):
+        assert api._layout_key(bundle, other, 4) == api._layout_key(bundle, base, 4)
+        assert api._describe_layout(bundle, base, other, before, {"desks_requested": 4}).model_dump_json() \
+            == fresh.model_dump_json()
+    # what can: plug-load gains change the zone temperatures the comfort model reads
+    skip, _ = api.engine.applicability(bundle, base, "PLUG_MGMT", request.role)
+    if skip is None:
+        changed = api.engine.apply_measure(bundle, base, "PLUG_MGMT")
+        assert api._layout_key(bundle, changed, 4) != api._layout_key(bundle, base, 4)
+
+
+def test_the_simulation_cache_ignores_only_what_the_simulation_does_not_read():
+    bundle, request = load("house")
+    base = model_of(bundle, request)
+    first = api.run_baseline(bundle, base)
+    shuffled = base.model_copy(update={"flags": list(reversed(base.flags)), "roof_planes": list(reversed(base.roof_planes))})
+    assert api._simulate(bundle, shuffled) is api._simulate(bundle, base)                 # not read by S5
+    warmer = api.set_assumption(base, "setpoint.heating", 24.0)
+    assert api.run_baseline(bundle, warmer).model_dump_json() != first.model_dump_json()  # read: a new run

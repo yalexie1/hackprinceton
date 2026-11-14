@@ -194,6 +194,8 @@ _CLIMATE_CACHE: dict[tuple, tuple[ClimateHours, Weather, tuple[str, ...]]] = {}
 _SIM_CACHE: dict[str, SystemsBaseline] = {}
 _SIM_CACHE_MAX = 512
 _DESIGN_CACHE: dict[str, SolarDesign] = {}
+_EVAL_CACHE: dict = {}
+_EVAL_CACHE_MAX = 6000
 
 # Assumptions that move the zone loads, run at low and at high so the baseline range reflects
 # them (A2 and A3 handoff note): envelope, glazing, infiltration, setpoints and internal gains.
@@ -245,6 +247,37 @@ def _zone_run(bundle: PropertyBundle, model: BuildingModel, hours: ClimateHours,
                        outdoor_temp_c=np.asarray(hours.temp_c, dtype=float)), {"zone": loads}
 
 
+# The Systems fields the zone model and the internal gains read (recorded by instrumenting a run of
+# every example, plus the ones the zone code names for offices); the rest of Systems (efficiencies,
+# water heating, distribution) cannot change an hourly load. A guard test compares the cached loads
+# with a fresh run for every measure on every example.
+_ZONE_SYSTEM_FIELDS = frozenset({
+    "cooling_capacity_w", "cooling_setpoint_c", "cooling_setup_c", "economizer_limit_c",
+    "envelope_leakage_l_s_m2_75pa", "has_economizer", "heating_fuel", "heating_setback_c",
+    "heating_setpoint_c", "hvac_type", "infiltration_ach", "infiltration_ach50", "lighting_w_per_m2",
+    "occupancy_schedule", "occupants", "outdoor_air_m3_s", "plug_w_per_m2"})
+_ZONE_CACHE: dict[str, HourlyLoads] = {}
+_ZONE_CACHE_MAX = 384
+
+
+def _zone_key(bundle: PropertyBundle, model: BuildingModel) -> str:
+    body = model.model_dump_json(include={"zones", "surfaces", "bedrooms", "north_offset_deg"})
+    systems = model.systems.model_dump_json(include=_ZONE_SYSTEM_FIELDS)
+    return hashlib.sha256(f"{bundle.summary.sid}|{bundle.climate.weather_path}|{body}|{systems}".encode()).hexdigest()
+
+
+def _hourly_loads(bundle: PropertyBundle, model: BuildingModel, hours: ClimateHours, weather: Weather,
+                  cal) -> HourlyLoads:
+    """The hourly loads of a state of the building. A measure that changes only what the zone model
+    does not read (an efficiency, the water heater, the solar array) shares the loads of its parent."""
+    key = _zone_key(bundle, model)
+    if key not in _ZONE_CACHE:
+        if len(_ZONE_CACHE) >= _ZONE_CACHE_MAX:
+            _ZONE_CACHE.pop(next(iter(_ZONE_CACHE)))
+        _ZONE_CACHE[key] = _zone_run(bundle, model, hours, weather, cal)[0]
+    return _ZONE_CACHE[key]
+
+
 def _variant_model(bundle: PropertyBundle, model: BuildingModel, key: str, value: float) -> BuildingModel:
     """The model rebuilt with one assumption collapsed to `value` (geometry and systems follow)."""
     keep = {a.key: a.value.expected if isinstance(a.value, Ranged) else a.value
@@ -259,19 +292,25 @@ def _simulate(bundle: PropertyBundle, model: BuildingModel) -> SystemsBaseline:
     assumption at its low and high; in fast mode (exploring a plan, the ask rule) that is skipped
     and the range is the price range alone."""
     fast = _FAST.get()
-    stamp = hashlib.sha256(((b"fast" if fast else b"full") + (bundle.summary.sid + bundle.climate.weather_path
-                                                              + model.model_dump_json()).encode())).hexdigest()
+    # What S5 reads of a model: the zone model's inputs, the whole of Systems, the tariff and the price
+    # ranges of the registry. A model that differs only in, say, a roof plane or an unrelated assumption
+    # shares the result.
+    prices = [a.model_dump(mode="json") for a in model.assumptions if a.key.startswith("tariff.")]
+    ranges = [] if fast else [a.model_dump(mode="json") for a in model.assumptions if a.key in _LOAD_KEYS]
+    stamp = hashlib.sha256(json.dumps([fast, _zone_key(bundle, model), model.systems.model_dump(mode="json"),
+                                       prices, ranges, bundle.tariff.model_dump(mode="json")],
+                                      sort_keys=True).encode()).hexdigest()
     if stamp in _SIM_CACHE:
         return _SIM_CACHE[stamp]
     hours, weather, _ = _climate(bundle)
     cal = calendar_from_stamps(hours.stamps, bundle.climate.weather_time_convention)
-    loads, _ = _zone_run(bundle, model, hours, weather, cal)
+    loads = _hourly_loads(bundle, model, hours, weather, cal)
     variants = {}
     for a in ([] if fast else model.assumptions):
         if a.key in _LOAD_KEYS and a.user_editable and isinstance(a.value, Ranged) and a.value.low < a.value.high:
             runs = []
             for value in (a.value.low, a.value.high):
-                runs.append(_zone_run(bundle, _variant_model(bundle, model, a.key, value), hours, weather, cal)[0])
+                runs.append(_hourly_loads(bundle, _variant_model(bundle, model, a.key, value), hours, weather, cal))
             # A3 already varies lighting, plug and occupant energy under these keys; the same inputs
             # also change the heat gains the zone model sees, which is a separate effect.
             name = f"zone.{a.key}" if a.key in _A3_OWN_KEYS else a.key
@@ -312,7 +351,7 @@ def _register_plugins() -> None:
             engine.register(measure_id, change=change, describe=describe, check=check, formula_ids=formula_ids)
     engine.register("LAYOUT", check=layout.check, change=layout.change, describe=_describe_layout,
                     formula_ids=layout.FORMULA_IDS)
-    engine.register("PV_ROOF", change=lambda bundle, model: model.model_copy(deep=True),
+    engine.register("PV_ROOF", change=lambda bundle, model: model,      # changes no model field
                     describe=_describe_pv, formula_ids=("PV-01", "PV-02", "PV-03", "PV-04", "PV-05",
                                                         "PV-06", "PV-09", "LAY-03", "ROOF-04"))
 
@@ -491,12 +530,25 @@ def _desk_scorer(bundle: PropertyBundle, model: BuildingModel):
 _LAYOUT_CACHE: dict[str, MeasureResult] = {}
 
 
+# What the desk layout reads of a model: the zone model's inputs (windows, walls, setpoints, gains,
+# north), the daylight and comfort assumptions of A5, and the lighting control. Nothing else (an
+# efficiency, the water heater, the solar array) can move a desk, so those share one layout card.
+_LAYOUT_ASSUMPTION_PREFIXES = ("site.", "glazing.", "interior.", "comfort.")
+_LAYOUT_ASSUMPTION_KEYS = ("lighting.control_type", "lighting.manual_switch_fraction")
+
+
+def _layout_key(bundle: PropertyBundle, model: BuildingModel, desks_requested) -> str:
+    read = [a.model_dump(mode="json") for a in model.assumptions
+            if a.key.startswith(_LAYOUT_ASSUMPTION_PREFIXES) or a.key in _LAYOUT_ASSUMPTION_KEYS]
+    return hashlib.sha256(json.dumps([_zone_key(bundle, model), read, desks_requested],
+                                     sort_keys=True).encode()).hexdigest()
+
+
 def _describe_layout(bundle: PropertyBundle, model: BuildingModel, changed: BuildingModel,
                      before: BaselineResult, options: dict) -> MeasureResult:
     """The LAYOUT card for the A16 engine: A23 placing desks with the A5 scorer. Scoring a few
     thousand positions takes seconds, so the card is memoised on the building and the request."""
-    key = hashlib.sha256(json.dumps([bundle.summary.sid, bundle.climate.weather_path, model.model_dump_json(),
-                                     (options or {}).get("desks_requested")]).encode()).hexdigest()
+    key = _layout_key(bundle, model, (options or {}).get("desks_requested"))
     if key not in _LAYOUT_CACHE:
         if len(_LAYOUT_CACHE) >= 64:
             _LAYOUT_CACHE.pop(next(iter(_LAYOUT_CACHE)))
@@ -574,6 +626,11 @@ class _PlanState:
     spent: float = 0.0              # net upfront cash of the measures chosen
     applied: int = 0                # how many measures have been chosen
 
+    @functools.cached_property
+    def key(self) -> str:
+        """Content hash of the building in this state (the plan asks about the same state many times)."""
+        return hashlib.sha256(self.model.model_dump_json().encode()).hexdigest()
+
 
 def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
             wanted: Optional[frozenset] = None) -> Plan:
@@ -587,13 +644,24 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
 
     def evaluate(measure_id, state):
         full = wanted is not None and (measure_id, state.applied) in wanted
-        tokens = (_PV_BUDGET.set(max(0.0, request.budget_usd - state.spent)), _FAST.set(not full))
+        budget_left = max(0.0, request.budget_usd - state.spent)
+        # the result depends on the building, the role and desks asked for, whether ranges are wanted,
+        # and (for solar only) the budget still left: a round that changed nothing reuses the last one
+        key = (bundle.summary.sid, bundle.climate.weather_path, measure_id, state.key, request.role,
+               request.desks_requested, full, round(budget_left, 2) if measure_id == "PV_ROOF" else None)
+        if key in _EVAL_CACHE:
+            return _EVAL_CACHE[key]
+        tokens = (_PV_BUDGET.set(budget_left), _FAST.set(not full))
         try:
             found = evaluate_measure(bundle, state.model, measure_id, request.role, request.desks_requested)
         finally:
             _FAST.reset(tokens[1])
             _PV_BUDGET.reset(tokens[0])
-        return price_measure(bundle, found)
+        priced = price_measure(bundle, found)
+        if len(_EVAL_CACHE) >= _EVAL_CACHE_MAX:
+            _EVAL_CACHE.pop(next(iter(_EVAL_CACHE)))
+        _EVAL_CACHE[key] = priced
+        return priced
 
     def apply(state, measure):
         spent = state.spent + (measure.finance.net_upfront_usd.expected if measure.finance else 0.0)
@@ -706,6 +774,25 @@ def cpace_scenario(bundle: PropertyBundle, measure: MeasureResult) -> FinancingS
     return a28(measure, summary, in_pace_region=in_region)
 
 
+def _responsive_plan(bundle: PropertyBundle, base: BuildingModel, request: RunRequest):
+    """The plan function A27 needs: a model whose assumption was moved to its low or high gives the plan
+    of the building that assumption describes. A27 only collapses the value in the assumption list;
+    the walls, the systems and the zones the physics reads come from the registry and the geometry, so
+    the model is rebuilt with the moved value as an override (a number collapses its range, SPEC 5.1)."""
+    vision = [a for a in base.assumptions if a.source == "vision"]
+    by_key = {a.key: a.value for a in base.assumptions}
+    user = {a.key: (a.value.expected if isinstance(a.value, Ranged) else a.value)
+            for a in base.assumptions if a.source == "user"}
+
+    def plan(moved: BuildingModel) -> Plan:
+        overrides = dict(user)
+        for a in moved.assumptions:
+            if by_key.get(a.key) != a.value and isinstance(a.value, Ranged):
+                overrides[a.key] = a.value.expected
+        return _plan_fast(bundle, build_building_model(bundle, vision, base.flags, overrides), request)
+    return plan
+
+
 @_with_state
 def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> list[Question]:
     """REAL (A27) once the envelope, lighting and heating-and-cooling plug-ins are registered, so
@@ -713,7 +800,7 @@ def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunReques
     rule demonstrable."""
     core = ("ENV_ATTIC", "LGT_LED", "HVAC_HP" if engine.flow_of(bundle.summary) == "home" else "HVAC_RTU")
     if all(m in engine.REGISTRY.plugins for m in core):
-        return _ask_questions(model, lambda m: _plan_fast(bundle, m, request))
+        return _ask_questions(model, _responsive_plan(bundle, model, request))
     return [Question.model_validate(q)
             for q in _load(_folder(bundle.summary.sid), "run_result.json")["questions"]]
 

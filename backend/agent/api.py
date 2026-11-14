@@ -1,7 +1,11 @@
 """Run door of the agent lane (workplan 3.5). Imported only by backend/server.py.
 
-G0 stub: every function replays the fixtures in specs/examples/ behind the final
-signatures. Real code replaces the bodies later; the signatures stay.
+Two modes, chosen per run by the env var AGENT_MODE (read at `start_run`, default replay):
+- replay: every function replays the fixtures in specs/examples/ behind the final
+  signatures (the G0 behaviour; any example folder with a run_result.json is recognised).
+- live: `start_run` drives the deep agent through the run runtime (backend/agent/live.py);
+  `answer` resumes a paused run with Command(resume={"value": v}).
+A run belongs to the mode it started in; the other functions find it in either registry.
 
 Confirmed against the installed deepagents 0.7.38 (G0, 2026-11-14):
 - create_deep_agent(model, tools, *, system_prompt, middleware, subagents, skills,
@@ -11,33 +15,34 @@ Confirmed against the installed deepagents 0.7.38 (G0, 2026-11-14):
 - SPEC 8 [U] note 1 (subagents cannot delegate further): not tested here, it needs a model.
 - SPEC 8 [U] note 2 (TodoListMiddleware may need adding explicitly): a source search of
   the installed package finds the middleware imported only in a model-profile module, so
-  the real agent should pass it through `middleware=[TodoListMiddleware()]`.
+  the real agent passes it through `middleware=[TodoListMiddleware()]`.
 """
 from __future__ import annotations
 
 import asyncio
 import itertools
-import json
-from pathlib import Path
+import os
+import sys
 from typing import AsyncIterator
 
+from backend.agent.fixtures import flavor_for_sid as _flavor_for_sid, load as _load
 from backend.schema import DocumentDraft, DocumentRequest, RunEvent, RunRequest, RunResult
 
-_EXAMPLES = Path(__file__).resolve().parents[2] / "specs" / "examples"
-_FLAVORS = ("house", "office")
 _counter = itertools.count(1)
 _runs: dict[str, dict] = {}
 
 
-def _load(flavor: str, name: str) -> dict | list:
-    return json.loads((_EXAMPLES / flavor / name).read_text())
+def mode() -> str:
+    value = os.environ.get("AGENT_MODE", "replay").strip().lower() or "replay"
+    if value not in ("replay", "live"):
+        raise ValueError(f"AGENT_MODE must be replay or live, not {value!r}")
+    return value
 
 
-def _flavor_for_sid(sid: str) -> str:
-    for flavor in _FLAVORS:
-        if _load(flavor, "run_result.json")["property"]["sid"] == sid:
-            return flavor
-    return "house"
+def _live(run_id: str):
+    """The LiveRun for run_id, or None when the run is a replay run."""
+    live = sys.modules.get("backend.agent.live")      # not imported: no live run can exist
+    return live._RUNS.get(run_id) if live else None
 
 
 def _get(run_id: str) -> dict:
@@ -48,6 +53,9 @@ def _get(run_id: str) -> dict:
 
 
 def start_run(request: RunRequest) -> str:
+    if mode() == "live":
+        from backend.agent import live
+        return live.start_run(request)
     flavor = _flavor_for_sid(request.sid)
     run_id = f"run_{flavor}_{next(_counter)}"
     result = _load(flavor, "run_result.json")
@@ -64,21 +72,35 @@ def start_run(request: RunRequest) -> str:
 
 
 async def stream_events(run_id: str) -> AsyncIterator[RunEvent]:
+    run = _live(run_id)
+    if run is not None:
+        async for event in run.stream():
+            yield event
+        return
     for event in _get(run_id)["events"]:
         yield event
         await asyncio.sleep(0)
 
 
 def get_run(run_id: str) -> RunResult:
+    run = _live(run_id)
+    if run is not None:
+        return run.result()
     return _get(run_id)["result"]
 
 
 def answer(run_id: str, question_id: str, value: float | str | bool | None) -> None:
+    run = _live(run_id)
+    if run is not None:
+        run.answer(question_id, value)
+        return
     _get(run_id)["answers"][question_id] = value
 
 
 def update_run(run_id: str, budget_usd: float | None = None,
                overrides: dict[str, float | str | bool] | None = None) -> None:
+    if _live(run_id) is not None:
+        raise NotImplementedError("adjust and re-run of a live run is G11")
     run = _get(run_id)
     request = run["result"].request
     if budget_usd is not None:
@@ -88,6 +110,9 @@ def update_run(run_id: str, budget_usd: float | None = None,
 
 
 def draft_document(request: DocumentRequest) -> DocumentDraft:
+    live_run = _live(request.run_id)
+    if live_run is not None:
+        return live_run.draft(request)
     run = _get(request.run_id)
     draft = DocumentDraft.model_validate(_load(run["flavor"], "document_draft.json"))
     draft.doc_type = request.doc_type
@@ -98,6 +123,12 @@ def draft_document(request: DocumentRequest) -> DocumentDraft:
 
 
 def get_document(run_id: str, doc_id: str) -> DocumentDraft:
+    live_run = _live(run_id)
+    if live_run is not None:
+        try:
+            return live_run.docs[doc_id]
+        except KeyError:
+            raise KeyError(f"unknown doc_id: {doc_id}") from None
     try:
         return _get(run_id)["docs"][doc_id]
     except KeyError:

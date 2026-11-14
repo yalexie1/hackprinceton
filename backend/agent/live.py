@@ -10,7 +10,9 @@ langgraph).
 from __future__ import annotations
 
 import asyncio
+import copy
 import functools
+import hashlib
 import json
 import os
 import queue
@@ -42,6 +44,13 @@ STAGE_TITLE = {
     "S5": "Simulating the baseline", "S6": "Evaluating measures", "S7": "Building the plan",
     "S8": "Writing the summary", "S9": "Drafting documents",
 }
+# Tools never memoized: fill_template drafts a document and records it, every call counts.
+NO_MEMO = frozenset({"fill_template"})
+# Files a tool result can depend on; measures.json is folded in per measure, not whole.
+STATE_FILES = ("bundle.json", "model.json", "baseline.json")
+# Tools whose result also depends on the saved row of their measure (evaluate_measure does
+# not: it ignores measures.json, so re-running it never overwrites a priced row).
+MEASURE_STATE = frozenset({"price_measure", "cpace_scenario"})
 REPORT_KEYS = ("/report.md", "/run/report.md", "report.md")
 
 
@@ -120,6 +129,8 @@ class LiveRun:
         # Tools share the run files (read-modify-write of measures.json, model.json), and
         # the model may issue parallel tool calls: one tool at a time per run.
         self._tool_lock = threading.RLock()
+        self._memo: dict[str, Any] = {}      # (tool, args, run state) -> result
+        self.memo_hits = 0
         self._stage: Optional[str] = None
         self._last_text = ""
         self._q: Optional[asyncio.Queue] = None
@@ -165,15 +176,37 @@ class LiveRun:
         self._stage = stage
         return out
 
+    def _memo_key(self, name: str, a: tuple, k: dict) -> str:
+        """Tool, arguments and the run state the result depends on (bundle, model, baseline,
+        and for a measure tool that measure's saved row). A state change misses the cache."""
+        h = hashlib.sha256(json.dumps([name, list(a), k], sort_keys=True, default=str).encode())
+        for f in STATE_FILES:
+            p = self.files.root / f
+            h.update(p.read_bytes() if p.exists() else b"-")
+        measure_id = k.get("measure_id") or (a[0] if a else None)
+        if name in MEASURE_STATE and measure_id:
+            row = next((r for r in (self.files.read_json("measures.json") or [])
+                        if r.get("measure_id") == measure_id), None)
+            h.update(json.dumps(row, sort_keys=True).encode())
+        return h.hexdigest()
+
     def _instrument(self, name: str, fn: Callable) -> Callable:
         @functools.wraps(fn)
         def wrapper(*a, **k):
-            for chunk in self._stage_chunks(name):
-                self._emit(chunk)
-            self._emit({"tool_call": {"name": name, "args": k or list(a)},
-                        "stage": STAGE_OF.get(name)})
             with self._tool_lock:
+                key = None if name in NO_MEMO else self._memo_key(name, a, k)
+                if key is not None and key in self._memo:     # identical call, same state
+                    self.memo_hits += 1
+                    return copy.deepcopy(self._memo[key])
+                for chunk in self._stage_chunks(name):
+                    self._emit(chunk)
+                self._emit({"tool_call": {"name": name, "args": k or list(a)},
+                            "stage": STAGE_OF.get(name)})
                 out = fn(*a, **k)
+                if key is not None and not (isinstance(out, dict) and "error" in out):
+                    # stored under the state before and after, so the same call repeated
+                    # once the run files have moved on (a saved row, a new model) still hits
+                    self._memo[key] = self._memo[self._memo_key(name, a, k)] = copy.deepcopy(out)
             if name == "get_property_bundle" and isinstance(out, dict) and "error" not in out:
                 bundle = self.files.read_json("bundle.json")
                 if bundle:

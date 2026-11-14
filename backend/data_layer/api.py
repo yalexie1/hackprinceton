@@ -46,6 +46,7 @@ from backend.schema import (
     PropertySummary,
     Segment,
     UseType,
+    VexcelData,
     VexcelDetection,
 )
 
@@ -293,7 +294,7 @@ _STRIPPED = "costar.raw"
 #: 2 - D16: the structure enclosing the CoStar address point, floor plate deciding.
 #: 3 - #295: the weather is a TMYx station typical year, Open-Meteo only the fallback.
 #:     A bundle written before names the Open-Meteo 2024 file and its time zone.
-BUNDLE_RULE_VERSION = 3
+BUNDLE_RULE_VERSION = 4
 
 
 def _write_bundle_cache(path: Path, bundle: PropertyBundle) -> Path:
@@ -363,6 +364,52 @@ def _parcel_at(point, locator: str, costar, plate):
     return d3.get_vexcel_data_with_notes(
         d3.point_wkt(*point), stories=(costar.stories if costar else None),
         at=point, floor_plate_m2=plate, locator=locator)
+
+
+#: What a cold `ortho/extract` costs, measured live on the golden house parcel on 2026-11-14.
+#: The four obliques cost 2.88 s more plus a 0.13 s coverage call, which is why they are not
+#: fetched: see `_with_imagery`.
+ORTHO_FETCH_SECONDS = 0.52
+
+
+def _with_imagery(sid: str, vexcel: VexcelData) -> tuple[VexcelData, list[FetchRecord]]:
+    """Fill `ortho_path` with the cached aerial crop of the parcel.
+
+    `imagery.fetch_ortho` existed and **nothing called it**, so a live bundle carried no path
+    and `/api/assets/{path}` had nothing to serve: the roof view (`GET /api/runs/{id}/roof`)
+    reported `image_available` false for every property. Found by @Sri-SriPod on a live run.
+
+    One `extract` POST, 0.52 s cold, and only on a live assembly - the bundle cache replays the
+    path afterwards, and `BUNDLE_RULE_VERSION` is bumped so bundles cached before this are
+    re-assembled rather than replayed without it.
+
+    **Obliques are deliberately not fetched** (the lead's call, board 2026-11-14): nothing reads
+    `oblique_paths`, the four directions cost 2.88 s plus a 0.13 s coverage call on a cold
+    bundle, and `oriented/extract` is the endpoint most prone to 429 - so it is the likeliest
+    thing to stall a demo for data no screen shows. The record says so rather than leaving a
+    reader to wonder whether the fetch failed.
+    """
+    from backend.data_layer import imagery as d8
+
+    notes: list[FetchRecord] = []
+    update: dict = {}
+
+    ortho, onotes = d8.fetch_ortho(vexcel.parcel_wkt, sid=sid)
+    notes += onotes
+    if ortho:
+        update["ortho_path"] = ortho
+    else:
+        notes.append(FetchRecord(
+            layer="vexcel", what="ortho/extract", status="missing",
+            detail="no ortho crop for this parcel, so the roof view has no aerial image"))
+
+    notes.append(FetchRecord(
+        layer="vexcel", what="oriented/extract", status="missing",
+        detail=("not fetched: no consumer. Nothing reads oblique_paths, and four directions "
+                "cost about 2.9 s on a cold bundle at the endpoint most prone to 429. Fetch "
+                "them on demand if a screen ever needs them")))
+
+    return (vexcel.model_copy(update=update) if update else vexcel), notes
 
 
 def _assemble(sid: str) -> PropertyBundle:
@@ -457,6 +504,10 @@ def _assemble(sid: str) -> PropertyBundle:
         provenance.append(FetchRecord(layer="vexcel", what="property/extract",
                                       status="missing",
                                       detail="no georeference, so no point to query"))
+
+    if vexcel is not None and vexcel.parcel_wkt:
+        vexcel, inotes = _with_imagery(sid, vexcel)
+        provenance += inotes
 
     if lat is None or lon is None:
         raise IncompleteBundle(f"{sid}: no georeference, so climate cannot be built",

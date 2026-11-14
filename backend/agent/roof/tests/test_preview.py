@@ -67,15 +67,50 @@ def test_route_serves_a_recording_and_the_cache_in_that_order(client, tmp_path):
     rec = tmp_path / "demo" / sid
     rec.mkdir(parents=True)
     (rec / "bundle.json").write_text(json.dumps(b))
+    (rec / "result.json").write_text(json.dumps({"data_source": "live"}))
     body = client.get(f"/api/properties/{sid}/preview").json()
     assert body["available"] and body["origin"] == "recorded_run"
     (rec / "bundle.json").unlink()
     cache = tmp_path / "cache" / sid
     cache.mkdir(parents=True)
-    (cache / "bundle.json").write_text(json.dumps({"rule": 1, "bundle": b}))
+    (cache / "bundle.json").write_text(json.dumps({"rule": data.BUNDLE_RULE_VERSION, "bundle": b}))
     assert client.get(f"/api/properties/{sid}/preview").json()["origin"] == "cached_bundle"
 
 
 def test_unknown_sid_is_404(client):
     r = client.get("/api/properties/nope/preview")
     assert r.status_code == 404 and r.json()["error"]["code"] == "property_not_found"
+
+
+def test_a_recording_made_from_example_data_is_not_served(client, tmp_path):
+    sid = sid_of_example(client)
+    rec = tmp_path / "demo" / sid
+    rec.mkdir(parents=True)
+    (rec / "bundle.json").write_text((EX / "house" / "property_bundle.json").read_text())
+    (rec / "result.json").write_text(json.dumps({"data_source": "example"}))
+    body = client.get(f"/api/properties/{sid}/preview").json()
+    assert body["available"] is False and body["georeference"] is None
+
+
+def test_a_cached_bundle_of_an_older_rule_is_not_served(client, tmp_path):
+    sid = sid_of_example(client)
+    cache = tmp_path / "cache" / sid
+    cache.mkdir(parents=True)
+    b = json.loads((EX / "house" / "property_bundle.json").read_text())
+    (cache / "bundle.json").write_text(json.dumps({"rule": -1, "bundle": b}))
+    assert client.get(f"/api/properties/{sid}/preview").json()["available"] is False
+
+
+def test_cached_obliques_come_from_the_data_layer_without_a_fetch(client, tmp_path, monkeypatch):
+    sid = sid_of_example(client)
+    held = {"oblique-north": "data/cache/x/n.jpg", "oblique-south": "data/cache/x/s.jpg"}
+    calls = []
+    monkeypatch.setattr(data, "get_obliques", lambda s, live=True: calls.append(live) or (held, []), raising=False)
+    monkeypatch.setattr(data, "get_asset", lambda path: b"" if path.endswith("n.jpg") else (_ for _ in ()).throw(FileNotFoundError(path)))
+    body = client.get(f"/api/properties/{sid}/preview").json()
+    assert body["oblique_paths"] == {"oblique-north": "data/cache/x/n.jpg"} and calls == [False]
+
+
+def test_without_get_obliques_the_preview_still_answers(client, monkeypatch):
+    monkeypatch.delattr(data, "get_obliques", raising=False)
+    assert client.get(f"/api/properties/{sid_of_example(client)}/preview").json()["oblique_paths"] == {}

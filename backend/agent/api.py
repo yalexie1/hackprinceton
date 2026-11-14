@@ -148,6 +148,13 @@ def draft_document(request: DocumentRequest) -> DocumentDraft:
         from backend.legal import api as legal
         from backend.schema import PropertyBundle
         draft = legal.fill_template(request, run["result"], PropertyBundle.model_validate(run["bundle"]))
+        if not draft.statutory_checks:
+            # `engine.fill_template` always returns an empty checklist - running the
+            # predicates is the caller's job, and `LiveRun.draft` already does it. This
+            # path did not, so a document drafted from a recording came back with no
+            # statutory checklist at all - which is the one thing SPEC 15 step 7 shows,
+            # and the demo serves recordings.
+            draft = draft.model_copy(update={"statutory_checks": legal.check_document(draft)})
         run["docs"][draft.doc_id] = draft
         return draft
     draft = DocumentDraft.model_validate(_load(run["flavor"], "document_draft.json"))

@@ -117,11 +117,19 @@ def configure_tracing(env=None) -> bool:
 def default_doors() -> Doors:
     from backend.data_layer import api as data
     from backend.legal import api as legal
+    degraded = None
     try:
         from backend.analysis import api as analysis
-    except ImportError:                      # the Analysis lane's door is not on main yet
+    except ImportError as exc:
+        # The analysis door **is** on main, so an ImportError here means a broken
+        # environment - a missing numpy or shapely - not a missing lane. Falling back is
+        # still better than refusing to run, but it replaces every analysis figure with
+        # the example's, so it is recorded and surfaces as a run warning rather than
+        # leaving someone to wonder why the numbers look like the fixtures.
         from backend.agent import analysis_stub as analysis
-    return Doors(data=data, analysis=analysis, legal=legal)
+        degraded = (f"the analysis door could not be imported ({exc}), so this run "
+                    f"replays the example's analysis instead of computing it")
+    return Doors(data=data, analysis=analysis, legal=legal, degraded=degraded)
 
 
 class FeedingSession(AskSession):
@@ -167,7 +175,9 @@ class LiveRun:
         # the model may issue parallel tool calls: one tool at a time per run.
         self._tool_lock = threading.RLock()
         self._update_lock = threading.Lock()
-        self._warnings: list[str] = []
+        # A degraded door is a property of the environment, not of the run, so it is
+        # seeded here rather than waiting for an `error` event that never comes.
+        self._warnings: list[str] = [self.doors.degraded] if self.doors.degraded else []
         self._memo: dict[str, Any] = {}      # (tool, args, run state) -> result
         self.memo_hits = 0
         self._stage: Optional[str] = None

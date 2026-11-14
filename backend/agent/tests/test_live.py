@@ -499,3 +499,49 @@ def test_with_nothing_recorded_replay_serves_the_example(monkeypatch):
     monkeypatch.delenv("AGENT_MODE", raising=False)
     run_id = api.start_run(request())
     assert run_id.startswith("run_house_") and drain(run_id)[-1].type == "done"
+
+
+# ---------- a degraded door is reported, not swallowed (#274) ----------
+
+def test_a_missing_analysis_dependency_is_recorded_rather_than_swallowed(monkeypatch):
+    """`default_doors` falls back to `analysis_stub` on ImportError. The analysis door is
+    on main, so that now means a broken environment - a missing numpy or shapely - and
+    it replaces every analysis figure with the example's. Silently, before this: someone
+    would have been left debugging why live numbers matched the fixtures."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def without_analysis(name, *args, **kwargs):
+        # `from backend.analysis import api` calls __import__ with the *package* name
+        # and the attribute in fromlist, not with "backend.analysis.api". Matching the
+        # dotted name silently never fires, and the test then passes against the real
+        # door while claiming to have broken it.
+        fromlist = args[2] if len(args) > 2 else kwargs.get("fromlist") or ()
+        if name == "backend.analysis" and "api" in fromlist:
+            raise ImportError("no module named 'shapely'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", without_analysis)
+    doors = live.default_doors()
+
+    assert doors.analysis.__name__.endswith("analysis_stub")
+    assert doors.degraded and "shapely" in doors.degraded
+    assert "replays the example" in doors.degraded
+
+
+def test_a_healthy_environment_records_no_degradation():
+    doors = live.default_doors()
+    assert doors.analysis.__name__ == "backend.analysis.api"
+    assert doors.degraded is None
+
+
+def test_a_degraded_door_becomes_a_run_warning(tmp_path):
+    """It has to reach `RunResult.warnings`, because that is what the frontend shows."""
+    from backend.agent.tools import Doors
+
+    settings = live.LiveSettings(runs_dir=tmp_path,
+                                 doors=Doors(data=object(), analysis=object(),
+                                             legal=object(), degraded="analysis is a stub"))
+    run = live.LiveRun("run_degraded", request(), settings)
+    assert "analysis is a stub" in run._warnings

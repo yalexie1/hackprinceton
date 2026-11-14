@@ -128,7 +128,13 @@ def create_app() -> FastAPI:
             raise ApiError(400, "run_id_mismatch", "body run_id differs from the path")
         if run.status != "done":
             raise ApiError(409, "run_not_done", f"run {run_id} is {run.status}; documents need a finished run")
-        return api.draft_document(request)
+        try:
+            return api.draft_document(request)
+        except LookupError as err:
+            # No template for this document type and state. A 404 and not a 500: the
+            # legal door refuses rather than relabelling another document, and
+            # `list_templates` is how a client learns what it may ask for.
+            raise ApiError(404, "template_not_available", str(err))
 
     @app.get("/api/runs/{run_id}/documents/{doc_id}", response_model=DocumentDraft)
     def get_document(run_id: str, doc_id: str):

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SCHEMA_VERSION } from "./types";
 import { demoBudgets, demoEvents, demoProperties, demoRun } from "./fixtures";
 import { polygon } from "./format";
 import { resolveSweep } from "../components/Tour";
@@ -54,13 +55,19 @@ describe("demo fixtures", () => {
           expect(
             plan.selected[0].measure.finance!.net_upfront_usd.expected,
           ).toBe(0);
-        expect(run.schema_version).toBe("0.3.0");
+        expect(run.schema_version).toBe(SCHEMA_VERSION);
         expect(run.warnings.join(" ")).toMatch(/illustrative/i);
       }
   });
   it("loads the shared golden house and office with their actual event and request shapes", () => {
-    const house = demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
-    const office = demoRun(sharedOffice.property.sid, sharedOffice.request.budget_usd);
+    const house = demoRun(
+      sharedHouse.property.sid,
+      sharedHouse.request.budget_usd,
+    );
+    const office = demoRun(
+      sharedOffice.property.sid,
+      sharedOffice.request.budget_usd,
+    );
     expect(office.request).toEqual(sharedOffice.request);
     expect(office.plan!.value_uplift).toBeTruthy();
     expect(house.property.costar_listing_id).toBe("235967170");

@@ -37,8 +37,9 @@ for path in sorted((ROOT / 'frontend/fixtures').glob('*.json')):
         assert result.plan.total_upfront_usd.expected <= result.plan.budget_usd
         count += 1
     print(f'{path.name}: valid PropertySummary + {len(fixture["runs"])} RunResult snapshots')
-for kind in ['house', 'office']:
-    folder = ROOT / 'specs/examples' / kind
+for run_path in sorted((ROOT / 'specs/examples').glob('*/run_result.json')):
+    folder = run_path.parent
+    kind = folder.name
     for name, cls in [('run_result', module.RunResult), ('property_bundle', module.PropertyBundle), ('building_model', module.BuildingModel), ('document_request', module.DocumentRequest), ('document_draft', module.DocumentDraft)]:
         model = cls.model_validate_json((folder / f'{name}.json').read_text())
         if actual:

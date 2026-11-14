@@ -1,9 +1,6 @@
 import house from "../../fixtures/house.json";
 import office from "../../fixtures/office.json";
 import sharedHouse from "../../../specs/examples/house/run_result.json";
-import sharedOffice from "../../../specs/examples/office/run_result.json";
-import sharedHouseEvents from "../../../specs/examples/house/run_events.json";
-import sharedOfficeEvents from "../../../specs/examples/office/run_events.json";
 import type {
   DocumentDraft,
   DocumentRequest,
@@ -12,7 +9,15 @@ import type {
   RunResult,
 } from "./types";
 export const budgets = [5000, 15000, 30000] as const;
-const sharedRuns = [sharedHouse, sharedOffice] as unknown as RunResult[];
+const sharedRunFiles = import.meta.glob(
+  "../../../specs/examples/*/run_result.json",
+  { eager: true, import: "default" },
+) as Record<string, RunResult>;
+const sharedEventFiles = import.meta.glob(
+  "../../../specs/examples/*/run_events.json",
+  { eager: true, import: "default" },
+) as Record<string, RunEvent[]>;
+const sharedRuns = Object.values(sharedRunFiles);
 const fixtures = [
   ...sharedRuns.map((run) => ({
     property: run.property,
@@ -113,12 +118,12 @@ export const demoStages: RunEvent[] = [
   },
 ];
 export function demoEvents(sid: string): RunEvent[] {
-  const shared =
-    sid === sharedHouse.property.sid
-      ? sharedHouseEvents
-      : sid === sharedOffice.property.sid
-        ? sharedOfficeEvents
-        : null;
+  const entry = Object.entries(sharedRunFiles).find(
+    ([, run]) => run.property.sid === sid,
+  );
+  const shared = entry
+    ? sharedEventFiles[entry[0].replace("run_result.json", "run_events.json")]
+    : null;
   return structuredClone((shared || demoStages) as RunEvent[]);
 }
 export function fixtureSource(sid: string) {

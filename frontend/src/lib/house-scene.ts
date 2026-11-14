@@ -462,14 +462,38 @@ export function createHouseScene(
     box(upper, [0.86, 0.18, 0.58], [x, 0.92, -1.42], white, 0.1);
   for (const x of [-3.65, -0.6]) {
     box(upper, [0.52, 0.5, 0.52], [x, 0.47, -1.58], wood, 0.025);
-    cylinder(upper, 0.11, 0.22, [x, 0.85, -1.58], bronze);
-    cylinder(upper, 0.22, 0.27, [x, 1.07, -1.58], fabric, 0.15);
+    cylinder(upper, 0.11, 0.22, [x, 0.85, -1.58], bronze).userData.energyPart =
+      "lighting";
+    cylinder(
+      upper,
+      0.22,
+      0.27,
+      [x, 1.07, -1.58],
+      fabric,
+      0.15,
+    ).userData.energyPart = "lighting";
   }
-  box(upper, [2.8, 0.1, 0.8], [2.25, 0.98, -2.2], wood, 0.02);
+  box(
+    upper,
+    [2.8, 0.1, 0.8],
+    [2.25, 0.98, -2.2],
+    wood,
+    0.02,
+  ).userData.energyPart = "workspace";
   for (const x of [1.1, 3.4])
     box(upper, [0.1, 0.75, 0.65], [x, 0.6, -2.2], charcoal);
-  box(upper, [0.7, 0.44, 0.045], [2.15, 1.33, -2.25], charcoal);
-  box(upper, [0.63, 0.36, 0.02], [2.15, 1.33, -2.21], mat("#91a49b", 0.3));
+  box(
+    upper,
+    [0.7, 0.44, 0.045],
+    [2.15, 1.33, -2.25],
+    charcoal,
+  ).userData.energyPart = "workspace";
+  box(
+    upper,
+    [0.63, 0.36, 0.02],
+    [2.15, 1.33, -2.21],
+    mat("#91a49b", 0.3),
+  ).userData.energyPart = "workspace";
   cylinder(upper, 0.06, 0.19, [2.15, 1.08, -2.25], charcoal);
   box(upper, [0.65, 0.12, 0.66], [2.2, 0.65, -1.08], olive, 0.07);
   box(upper, [0.65, 0.65, 0.12], [2.2, 0.96, -0.78], olive, 0.06);
@@ -619,6 +643,8 @@ export function createHouseScene(
     mesh: THREE.Mesh;
     part: EnergyPart;
     material: THREE.MeshStandardMaterial;
+    originalEmissive: THREE.Color;
+    originalIntensity: number;
   }[] = [];
   house.traverse((object) => {
     if (
@@ -634,7 +660,13 @@ export function createHouseScene(
     const material = object.material.clone();
     object.material = material;
     materials.push(material);
-    energyMeshes.push({ mesh: object, part, material });
+    energyMeshes.push({
+      mesh: object,
+      part,
+      material,
+      originalEmissive: material.emissive.clone(),
+      originalIntensity: material.emissiveIntensity,
+    });
   });
   let energyActive: EnergyPart[] = [];
   let lastHover: EnergyPart | null = null;
@@ -838,20 +870,18 @@ export function createHouseScene(
       energyActive = active;
       for (const item of energyMeshes) {
         const lit = active.includes(item.part);
-        item.material.emissive.set(
-          lit
-            ? planned.includes(item.part)
-              ? "#6aab42"
-              : "#c9a04a"
-            : "#000000",
-        );
+        if (lit)
+          item.material.emissive.set(
+            planned.includes(item.part) ? "#6aab42" : "#c9a04a",
+          );
+        else item.material.emissive.copy(item.originalEmissive);
         item.material.emissiveIntensity = lit
           ? hovered === item.part
             ? 0.65
             : planned.includes(item.part)
               ? 0.12
               : 0.025
-          : 0;
+          : item.originalIntensity;
       }
       dirty = true;
     },

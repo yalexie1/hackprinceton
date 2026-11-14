@@ -136,9 +136,19 @@ export default function Find({
                   "Address unavailable"}
               </p>
               <div className="property-meta">
-                <span>{p.room_count} rooms</span>
-                <span>{p.pano_count} panoramas</span>
-                <span>{p.has_splat ? "Aerial splat" : "Interior scan"}</span>
+                <span>
+                  {p.room_count
+                    ? `${p.room_count} rooms`
+                    : "Room details pending"}
+                </span>
+                <span>
+                  {p.pano_count
+                    ? `${p.pano_count} panoramas`
+                    : "Scan details pending"}
+                </span>
+                {p.pano_count > 0 && (
+                  <span>{p.has_splat ? "Aerial splat" : "Interior scan"}</span>
+                )}
               </div>
               {demo && (
                 <small className="fixture-source">{fixtureSource(p.sid)}</small>

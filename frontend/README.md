@@ -1,6 +1,6 @@
 # Evergreen frontend
 
-Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.0**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
+Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.1**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
 
 ## Run
 
@@ -10,7 +10,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and office examples from `specs/examples/`, followed by two frontend-owned UI sandboxes with three budget scenarios each. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
+Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and two office examples from `specs/examples/`, followed by two frontend-owned UI sandboxes with three budget scenarios each. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
 
 ## Interactive architecture
 
@@ -76,7 +76,7 @@ SDK behavior on the sponsor models remains unverified until the local `.env` and
 
 1. The public API returns `PropertySummary` and `RunResult`, but currently exposes no `PropertyBundle`/floorplan/orthophoto endpoint. Roof and workspace screens therefore draw supplied geometry and candidate positions. Aerial image overlays and a real floorplan background need a bundle route (plus georeferenced image bounds for alignment).
 2. Window/roof anchors and SDK sweep identity need validation on the two real golden properties.
-3. The shared `specs/examples/house` and `office` run results and event sequences are imported directly, without editing or copying the spec files. Additional frontend-owned sandboxes live in `frontend/fixtures/`. Both sources validate against the current Pydantic contract. Shared examples have one saved budget each; arbitrary budget and role changes require the live backend.
+3. Shared run results and event sequences are discovered under `specs/examples/*/` (currently `house`, `office`, and `office_houston`), without editing or copying the spec files. Additional frontend-owned sandboxes live in `frontend/fixtures/`. Both sources validate against the current Pydantic contract. Shared examples have one saved budget each; arbitrary budget and role changes require the live backend.
 4. The financial breakdown and legal checklist depend on the analysis/legal owners. This frontend supplies no production pricing, physics, incentive rules, or statutory contract language.
 
 ## Checks

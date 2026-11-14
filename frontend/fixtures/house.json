@@ -18,7 +18,7 @@
   },
   "runs": {
     "5000": {
-      "schema_version": "0.3.0",
+      "schema_version": "0.3.1",
       "run_id": "demo-house-5000",
       "status": "done",
       "request": {
@@ -43,7 +43,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.3.0",
+        "schema_version": "0.3.1",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -2242,7 +2242,7 @@
       ]
     },
     "15000": {
-      "schema_version": "0.3.0",
+      "schema_version": "0.3.1",
       "run_id": "demo-house-15000",
       "status": "done",
       "request": {
@@ -2267,7 +2267,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.3.0",
+        "schema_version": "0.3.1",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -4466,7 +4466,7 @@
       ]
     },
     "30000": {
-      "schema_version": "0.3.0",
+      "schema_version": "0.3.1",
       "run_id": "demo-house-30000",
       "status": "done",
       "request": {
@@ -4491,7 +4491,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.3.0",
+        "schema_version": "0.3.1",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,

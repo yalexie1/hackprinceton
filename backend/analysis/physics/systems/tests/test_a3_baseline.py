@@ -255,3 +255,14 @@ def test_default_calendar_and_length_checks():
     assert len(b.monthly_electricity_kwh) == 12
     with pytest.raises(ValueError):
         HourlyLoads(np.zeros(10), np.zeros(9), np.zeros(10))
+
+
+def test_lowering_a_homes_lighting_density_lowers_its_lighting_energy():
+    # LGT_LED on a home applies the LGT-01 lamp-mix factor to lighting_w_per_m2; that must reach the
+    # energy (it did not while the scale was taken relative to the model's own expected value)
+    model, _ = _fixture("house")
+    before = _run("house")[0].baseline.end_use_kwh["lighting"]
+    lpd = model.systems.lighting_w_per_m2
+    led = Ranged(low=lpd.low * 0.4851, expected=lpd.expected * 0.4851, high=lpd.high * 0.4851, unit=lpd.unit)
+    after = _run("house", systems=model.systems.model_copy(update={"lighting_w_per_m2": led}))[0]
+    assert after.baseline.end_use_kwh["lighting"] == pytest.approx(before * 0.4851, rel=1e-6)

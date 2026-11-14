@@ -7,6 +7,14 @@ from __future__ import annotations
 
 # ---- unit conversions: physics 02 section 0, physics 04 TAR-05 ----
 COP_PER_BTU_PER_WH = 0.293071        # EER, SEER, HSPF (Btu/(W.h)) to W/W; HVAC-01
+# Homes take lighting and plug energy from the LGT-01 and LGT-02 annual formulas, which describe
+# the existing lamp and appliance mix. `Systems.lighting_w_per_m2` and `plug_w_per_m2` scale those
+# formulas relative to the reference densities below, the expected values of the registry's home
+# placeholders (A10, tables.HOME_LPD_PLACEHOLDER and HOME_PPD_PLACEHOLDER). A measure that lowers a
+# density (LGT_LED applies the LGT-01 lamp-mix factor) therefore lowers the energy. Moves to
+# backend/config.py under A29.
+HOME_LPD_REFERENCE_W_M2 = 7.0
+HOME_PPD_REFERENCE_W_M2 = 5.0
 KWH_PER_THERM = 29.3071070172         # TAR-05: 1 therm = 100 000 Btu_IT
 MJ_PER_KWH = 3.6                      # TAR-05
 KG_PER_LB = 0.45359237                # TAR-05

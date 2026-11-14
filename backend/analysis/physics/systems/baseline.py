@@ -23,7 +23,7 @@ import numpy as np
 
 from backend.schema import Assumption, BaselineResult, EnergyUse, Ranged, Systems, Tariff
 
-from .constants import (CD_DEFAULT, CENTRAL_PLANT_BAND, COOL_CURVE_VALID_C, COP_PER_BTU_PER_WH,
+from .constants import (HOME_LPD_REFERENCE_W_M2, HOME_PPD_REFERENCE_W_M2, CD_DEFAULT, CENTRAL_PLANT_BAND, COOL_CURVE_VALID_C, COP_PER_BTU_PER_WH,
                         DHW_ENERGY_BAND, DHW_VOLUME_BAND, DSE_DUCTS_OUTSIDE, HP_COLD_HOURS_WARN,
                         HP_COLD_LIMIT_C, RTU_MIN_CAPACITY_W, SEASONAL_CLIMATE_BAND, SIZING_FACTOR)
 from .cost import grid_emission_factor, gas_emission_factor
@@ -259,8 +259,10 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
         eu = end_use_profiles(
             occupancy_schedule=systems.occupancy_schedule, floor_area_m2=floor_area_m2, cal=cal,
             lpd_w_m2=p["lighting.lpd"], ppd_w_m2=p["plug.ppd"], occupants=p["occupancy.count"], bedrooms=bedrooms,
-            lpd_scale=p["lighting.lpd"] / lpd_exp if lpd_exp else 1.0,
-            ppd_scale=p["plug.ppd"] / ppd_exp if ppd_exp else 1.0)
+            # homes only (offices use the densities directly): relative to the fixed reference,
+            # not to this model's own expected value, so a measure that lowers it saves energy
+            lpd_scale=p["lighting.lpd"] / HOME_LPD_REFERENCE_W_M2,
+            ppd_scale=p["plug.ppd"] / HOME_PPD_REFERENCE_W_M2)
         heat = np.maximum(np.asarray(ld.heating_need_w, dtype=float), 0.0)
         cool = np.maximum(np.asarray(ld.cooling_need_w, dtype=float), 0.0)
         lat_oa = np.zeros(n) if ld.latent_oa_w is None else np.maximum(np.asarray(ld.latent_oa_w, dtype=float), 0.0)

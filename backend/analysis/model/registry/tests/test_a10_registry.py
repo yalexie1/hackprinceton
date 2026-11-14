@@ -346,3 +346,14 @@ def test_registry_output_fits_a_building_model(name):
     m = model(name)
     BuildingModel.model_validate({**m.model_dump(), "assumptions": [x.model_dump() for x in r.assumptions],
                                   "systems": r.systems.model_dump(), "flags": [f.model_dump() for f in r.flags]})
+
+
+def test_a_missing_gas_price_is_unknown_not_no_gas():
+    # a live bundle may carry no gas price; that must not turn a home into an all-electric heat pump
+    b = bundle("house")
+    no_price = b.model_copy(update={"tariff": b.tariff.model_copy(update={"gas_usd_per_kwh": None})})
+    with_price = {x.key: x for x in build_registry(b).assumptions}
+    without = {x.key: x for x in build_registry(no_price).assumptions}
+    assert without["hvac.system_type"].value == with_price["hvac.system_type"].value == "central_ac_furnace"
+    assert without["hvac.system_type"].confidence < with_price["hvac.system_type"].confidence
+    assert without["hvac.heating_fuel"].value == "gas"

@@ -2,12 +2,16 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.2.0"
+SCHEMA_VERSION = "0.3.0"
 
 # ---------- primitives ----------
 
 class Ranged(BaseModel):
-    """A quantity with uncertainty. low <= expected <= high."""
+    """A quantity with uncertainty. low <= expected <= high.
+
+    expected is the result at expected inputs; low and high are approximate
+    10th and 90th percentiles (physics UNC-01), not hard bounds.
+    """
     low: float
     expected: float
     high: float
@@ -19,7 +23,7 @@ class Ranged(BaseModel):
             raise ValueError("Ranged requires low <= expected <= high")
         return self
 
-Source = Literal["user", "measured", "costar", "vexcel", "vision", "vintage_default"]
+Source = Literal["user", "measured", "costar", "vexcel", "vision", "published_default", "vintage_default"]
 
 class EvidenceRef(BaseModel):
     kind: Literal["pano", "ortho", "oblique", "matterport_field", "vexcel_attr",
@@ -81,7 +85,8 @@ class Opening(BaseModel):
     height_m: Optional[float] = None
     lower_elevation_m: Optional[float] = None   # bottom of the opening above the floor (sill height)
     relative_center: Optional[float] = Field(default=None, ge=0, le=1)   # NOT metres: centre as a fraction of
-                                                # the edge length; centre in metres = relative_center * edge length
+                                                # the edge length; centre in metres = relative_center * edge length.
+                                                # Which vertex it is measured from is [P] Data lane
 
 class WallEdge(BaseModel):
     id: str
@@ -106,6 +111,7 @@ class Room(BaseModel):
     depth_m: Optional[float] = None
     height_m: Optional[float] = None
     boundary_edge_ids: list[str] = []
+    polygon: list[tuple[float, float]] = []    # room outline in the model frame, metres, in order
 
 class Pano(BaseModel):
     id: str
@@ -237,9 +243,10 @@ class ClimateSite(BaseModel):
 
 class Tariff(BaseModel):
     utility: str
-    electricity_usd_per_kwh: float
-    gas_usd_per_kwh: Optional[float] = None
-    export_usd_per_kwh: Optional[float] = None
+    electricity_usd_per_kwh: float             # marginal price, with per-kWh riders and taxes
+    gas_usd_per_kwh: Optional[float] = None    # per kWh of higher heating value; 1 therm = 29.3071 kWh
+    export_usd_per_kwh: Optional[float] = None # None where no export price is mandated (Texas)
+    export_regime: Optional[Literal["net_metering", "net_billing", "none"]] = None
     fixed_usd_per_month: float = 0.0
     source: str
     retrieved: str                             # ISO date
@@ -272,9 +279,13 @@ class Surface(BaseModel):
     tilt_deg: float                            # 0 = horizontal facing up, 90 = vertical
     u_value: Ranged                            # W/m2K
     shgc: Optional[Ranged] = None              # windows only
+    visible_transmittance: Optional[Ranged] = None   # windows only; daylight needs it, shgc is not enough
     parent_surface_id: Optional[str] = None    # window -> wall
     source_edge_id: Optional[str] = None       # WallEdge this surface was built from
     source_opening_id: Optional[str] = None    # Opening this window or door was built from; None = from vision
+    solar_absorptance: Optional[Ranged] = None # opaque exterior surfaces (physics ENV-05)
+    emittance: Optional[float] = None
+    exposed_perimeter_m: Optional[float] = None   # ground floors (physics ENV-04)
 
 class Zone(BaseModel):
     id: str
@@ -283,20 +294,43 @@ class Zone(BaseModel):
     floor_area_m2: float
     volume_m3: float
     conditioned: bool = True
+    mass_class: Literal["very_light", "light", "medium", "heavy", "very_heavy"] = "medium"   # physics ZON
 
 class Systems(BaseModel):
-    hvac_type: str
+    hvac_type: Literal["central_ac_furnace", "heat_pump", "rooftop_unit", "room_ac", "central_plant",
+                       "none", "unknown"]
     heating_fuel: Literal["electricity", "gas", "none", "unknown"]
-    cooling_cop: Ranged
-    heating_efficiency: Ranged                 # COP for heat pumps, fraction for furnaces
-    dhw_type: str
+    cooling_cop: Ranged                        # seasonal, W/W
+    heating_efficiency: Ranged                 # seasonal: COP for heat pumps, fraction for furnaces
+    dhw_type: Literal["storage", "tankless", "heat_pump", "unknown"]
     dhw_fuel: Literal["electricity", "gas", "unknown"]
     dhw_efficiency: Ranged
     lighting_w_per_m2: Ranged
     plug_w_per_m2: Ranged
-    infiltration_ach: Ranged
-    occupancy_schedule: str                    # key into the schedule table
+    infiltration_ach: Ranged                   # annual mean air changes per hour, a reported result
+    occupancy_schedule: str                    # "home", "office" or "office_vacant" (physics DEF)
     occupants: Optional[Ranged] = None         # people; from CoStar tenancies when present
+    # optional detail the thermal spec uses when known (specs/physics/02-thermal-systems.md section 12)
+    infiltration_ach50: Optional[Ranged] = None             # homes: air changes at 50 Pa
+    envelope_leakage_l_s_m2_75pa: Optional[Ranged] = None   # offices
+    cooling_rating: Optional[Ranged] = None
+    cooling_rating_metric: Optional[Literal["SEER", "SEER2", "EER", "EER2", "IEER"]] = None
+    heating_rating: Optional[Ranged] = None
+    heating_rating_metric: Optional[Literal["HSPF", "HSPF2", "AFUE", "COP"]] = None
+    compressor_type: Literal["single", "two_stage", "variable", "unknown"] = "unknown"
+    cooling_capacity_w: Optional[float] = None
+    heating_cop_47f: Optional[float] = None
+    hvac_install_year: Optional[int] = None
+    distribution_efficiency: Optional[Ranged] = None
+    duct_location: Literal["conditioned", "attic", "garage", "crawlspace", "none", "unknown"] = "unknown"
+    outdoor_air_m3_s: Optional[Ranged] = None
+    has_economizer: Optional[bool] = None
+    economizer_limit_c: Optional[float] = None
+    heating_setpoint_c: Optional[Ranged] = None
+    cooling_setpoint_c: Optional[Ranged] = None
+    heating_setback_c: Optional[float] = None
+    cooling_setup_c: Optional[float] = None
+    dhw_location: Literal["conditioned", "garage", "outdoor", "unknown"] = "unknown"
 
 class RoofPlane(BaseModel):
     id: str
@@ -315,6 +349,7 @@ class RoofPlane(BaseModel):
 class BuildingModel(BaseModel):
     schema_version: str = SCHEMA_VERSION
     sid: str
+    bedrooms: Optional[int] = None             # homes; drives hot water and occupancy defaults
     north_offset_deg: Ranged                   # azimuth of the model frame's +y axis, degrees clockwise from true
                                                # north, so azimuth_true = azimuth_in_model + north_offset_deg
                                                # (physics ROOF-02). Derived from the georeference quaternion; which
@@ -332,16 +367,23 @@ class EnergyUse(BaseModel):
     electricity_kwh: Ranged
     gas_kwh: Ranged
     cost_usd: Ranged
-    co2_kg: Ranged
+    co2_kg: Ranged                             # kg CO2-equivalent, first year: eGRID total-output rate for
+                                               # electricity plus the EPA combustion factor for gas (physics EMI)
+    co2_nonbaseload_kg: Optional[Ranged] = None   # the "up to" figure at the eGRID non-baseload rate
 
 class BaselineResult(BaseModel):
     annual: EnergyUse
-    end_use_kwh: dict[str, float]              # expected values by end use
+    end_use_kwh: dict[str, float]              # expected values; keys: heating, cooling, water_heating,
+                                               # lighting, plug, appliances
     monthly_electricity_kwh: list[float]       # 12 values, expected
     monthly_gas_kwh: list[float]
     peak_cooling_w: float
     peak_heating_w: float
     calibrated_to_bills: bool = False
+    heating_need_kwh: Optional[float] = None   # thermal need before system efficiency
+    cooling_need_kwh: Optional[float] = None
+    latent_cooling_kwh: float = 0.0
+    hourly_path: Optional[str] = None          # cached hourly zone outputs, read by the desk-placement physics
 
 MeasureId = Literal[
     "ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE",
@@ -350,9 +392,12 @@ MeasureId = Literal[
 
 class Incentive(BaseModel):
     name: str
-    kind: Literal["upfront_rebate", "tax_credit", "tax_deduction", "performance_payment"]
+    kind: Literal["upfront_rebate", "rebate_after_install", "tax_credit", "tax_deduction",
+                  "performance_payment"]         # only upfront_rebate reduces net_upfront_usd
     amount_usd: Ranged
-    status: Literal["verified", "unverified", "expired"]
+    status: Literal["verified", "unverified", "expired"]          # of the program itself
+    eligibility: Literal["confirmed", "needs_confirmation", "not_eligible"] = "confirmed"   # of this project
+    conditions: list[str] = []                 # what must hold, e.g. "placed in service by 2027-12-31"
     citation: str
 
 class FinancingScenario(BaseModel):
@@ -362,9 +407,10 @@ class FinancingScenario(BaseModel):
     rate: Optional[float] = None
     term_years: Optional[int] = None
     annual_payment_usd: float = 0.0
-    net_cashflow_year1_usd: Ranged
-    program_sir: Optional[float] = None        # the PACE program's own test: undiscounted savings over the
-                                               # term / total cost with financing costs; Texas requires >= 1
+    net_cashflow_year1_usd: Ranged             # at base-date prices
+    program_sir: Optional[float] = None        # the PACE program's own test (physics ECO-12b): undiscounted
+                                               # savings over the term / total cost with financing costs;
+                                               # Texas requires >= 1. Not the same as FinancialBreakdown.sir
     notes: list[str] = []
 
 class FinancialBreakdown(BaseModel):
@@ -378,12 +424,14 @@ class FinancialBreakdown(BaseModel):
     simple_payback_years: Optional[Ranged] = None
     discounted_payback_years: Optional[float] = None
     npv_usd: Ranged
-    sir: Optional[float] = None
-    irr: Optional[float] = None
-    discount_rate: float
-    electricity_escalation: float
-    gas_escalation: float
-    analysis_period_years: int
+    npv_sensitivity_usd: Optional[float] = None   # NPV at the 7 percent sensitivity rate (physics ECO-05)
+    sir: Optional[float] = None                # discounted savings-to-investment ratio (physics ECO-09)
+    irr: Optional[float] = None                # conventional IRR; None when it is not unique
+    airr: Optional[float] = None               # adjusted internal rate of return (physics ECO-10)
+    discount_rate: float                       # real, not nominal
+    electricity_escalation: float              # real, per year
+    gas_escalation: float                      # real, per year
+    analysis_period_years: int                 # min(useful life, 40)
     financing: list[FinancingScenario]
 
 class Anchor(BaseModel):
@@ -419,15 +467,28 @@ class DeskScore(BaseModel):
     room_id: str
     x: float
     y: float
-    daylight: float                            # metric defined in physics.md
-    glare_risk: float
-    comfort_ppd: float
-    score: float
+    daylight: float                            # daylight autonomy at 300 lux: fraction of occupied hours, 0 to 1
+    glare_risk: float                          # fraction of occupied hours with glare, 0 to 1
+    comfort_ppd: float                         # mean predicted percentage dissatisfied, percent, 5 to 100
+    score: float                               # 0 to 1 (physics LCT-03)
     recommended: bool = False
+    daylight_factor: Optional[float] = None    # percent
+    view_azimuth_deg: Optional[float] = None   # recommended facing direction, clockwise from true north
+    direct_sun_hours: Optional[float] = None   # occupied hours per year with the sun in view
+    max_dt_pr_k: Optional[float] = None        # worst radiant temperature asymmetry, K
+    warnings: list[str] = []
 
 class LayoutResult(BaseModel):
     candidates: list[DeskScore]
     desks_requested: int
+    window_source: Optional[Literal["measured", "vision"]] = None
+    target_lux: Optional[float] = None
+    setpoint_lux: Optional[float] = None
+    control_type: Optional[str] = None         # lighting control assumed for the saving (physics LCT-01)
+    score_weights: dict[str, float] = {}
+    occupied_hours_per_year: Optional[float] = None
+    lighting_kwh_saved: Optional[Ranged] = None
+    warnings: list[str] = []                   # e.g. "window geometry read from panoramas"
 
 class MeasureResult(BaseModel):
     measure_id: MeasureId
@@ -444,6 +505,7 @@ class MeasureResult(BaseModel):
     formula_ids: list[str] = []                # physics.md entries used
     solar: Optional[SolarDesign] = None
     layout: Optional[LayoutResult] = None
+    value_uplift: Optional["ValueUplift"] = None   # homes with owned rooftop solar only (physics VAL-03)
     warnings: list[str] = []
 
 class PlanItem(BaseModel):
@@ -454,11 +516,16 @@ class PlanItem(BaseModel):
 
 class SkippedItem(BaseModel):
     measure_id: MeasureId
-    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done"]
+    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done", "no_cost_data"]
     detail: str
 
 class ValueUplift(BaseModel):
-    """Estimated change in property value from the plan's savings. Never added to savings."""
+    """Estimated change in property value from the plan's savings (physics VAL).
+
+    Never added to savings, and never used in NPV, SIR, payback or ranking.
+    Commercial and multifamily: capitalised savings, on Plan. Homes: owned rooftop
+    solar only, on the PV_ROOF MeasureResult. There is no rent component yet.
+    """
     value_usd: Ranged
     method: str                                # physics.md entry id
     cap_rate: Optional[Ranged] = None

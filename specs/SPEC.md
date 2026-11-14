@@ -1,8 +1,10 @@
 # Master spec
 
-Status: draft v0.2, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
+
+v0.3 (contract 0.3.0) adds what the physics and legal specs needed, all additive: incentive eligibility and a rebate-after-install kind, real-rate and AIRR fields on the financial breakdown, the export regime on the tariff, a `published_default` source, a `no_cost_data` skip reason, the non-baseload CO2 figure, desk-score and layout detail, visible transmittance on windows, room polygons, and value uplift on the rooftop solar measure for homes.
 
 Companion files:
 
@@ -81,13 +83,14 @@ Every input the physics needs that is not measured is an `Assumption`: a key, a 
 | `costar` | from the CoStar record (year built, building class, gross building area, tenancies and tenant employee counts) |
 | `vexcel` | from Vexcel attributes (roof material, shape, condition, footprint, tree cover) |
 | `vision` | a model read it from panoramas or aerial imagery |
+| `published_default` | a published figure that is not specific to the building, such as a state average electricity price |
 | `vintage_default` | lookup by construction era, climate zone and building type |
 
-A stronger source replaces a weaker one for the same key. Vintage default tables and their sources are defined in `physics.md`.
+A stronger source replaces a weaker one for the same key. Vintage default tables and their sources are in `specs/physics/02-thermal-systems.md` section 8 (DEF entries).
 
 What is data and what is an assumption:
 
-- **Windows.** Area, position and orientation come from the scan's wall openings and georeference (`measured`). Only glazing performance, meaning U-value and solar heat gain coefficient, is an assumption. Where a model's wall graph has no window openings, vision supplies count and size (`vision`) and the range widens.
+- **Windows.** In homes, area, position and orientation come from the scan's wall openings and georeference (`measured`). Commercial scans carry almost no openings: in a sample of 12 office models the Data lane found no window opening at all, against 34 in 12 homes. So for offices, and for any model without window openings, windows come from the interior panoramas (`vision`, range about ±30 percent), and where vision finds none, from a window-to-wall ratio in the office default table applied to the footprint and storey count (`vintage_default`, wider still; `specs/physics/02-thermal-systems.md` DEF entries). Glazing performance, meaning U-value and solar heat gain coefficient, is always an assumption. Decided by the owner, 2026-11-14.
 - **Office occupancy.** Where CoStar has tenancy records, the number of occupants, their industry and the tenancy period are data (`costar`) and drive plug loads, lighting schedules and ventilation. Homes, and offices with no tenant record, use the vintage defaults.
 - **Year built and area.** CoStar has no single year-built field. Years are in `constructionEvents[]`; the model uses the construction-complete event and records which event it used. The envelope uses gross building area, never rentable area.
 
@@ -113,7 +116,9 @@ The agent asks only when the range is too wide to act on:
 2. For each assumption, re-run at its low and at its high with all others at expected.
 3. Ask if either holds:
    - the set of selected measures differs between low and high, or
-   - the plan's total annual savings satisfy `(high - low) / expected > ASK_WIDTH` (default 0.40, in `backend/config.py`).
+   - for that one assumption, the plan's total annual savings satisfy `(high - low) / expected > ASK_WIDTH` (default 0.40, in `backend/config.py`), where high and low are the totals of its two runs.
+
+   The test is applied per assumption, and the plan is re-selected in each run, so a run may pick different measures from the expected-value plan.
 4. Ask about the one assumption with the largest swing. Offer concrete choices plus "I don't know". Re-run. Stop after `ASK_MAX` questions (default 3) or when neither condition holds.
 
 "I don't know" keeps the range and the result is shown with it.
@@ -163,6 +168,15 @@ IDs are stable and appear in the contract as `MeasureId`.
 
 A measure is skipped with a stated reason when the role cannot do it, when the model shows it is already done, or when a feasibility flag blocks it.
 
+Limits the physics spec puts on this table (`specs/physics/02-thermal-systems.md`, sections 10 and 12):
+
+- **`HVAC_RTU` and `HVAC_ECON`** are evaluated only when a packaged rooftop unit is confirmed, by Vexcel, by interior vision, or by the user. Otherwise they return not applicable. `HVAC_ECON` savings are net of the added latent load.
+- **`HVAC_DUCT`** returns not applicable for now: no source for the distribution efficiency of leaky ducts could be opened. The baseline uses an upper-bound figure.
+- **`ROOF_COOL`** uses the envelope, sol-air and zone modules. It is fully supported on low-slope roofs; on a home with a vented attic the result is an upper bound and carries a warning.
+- **`HVAC_HP`** needs the proposed product's SEER2, HSPF2 and certified COP at 47 °F. **`DHW_HPWH`** assumes the heater sits outside the conditioned space.
+- **`LGT_LED` in offices, `LGT_CTRL`, `PLUG_MGMT`, `ENV_AIRSEAL` and `CTRL_TSTAT`** each depend on one parameter that has no opened source yet (for example the lighting power after retrofit, or the setback depth). Until each has a citation it is carried as an assumption with a wide range and the measure's result is marked as resting on it.
+- A vacant office suite, one with no current tenancy, is modelled with the `office_vacant` schedule.
+
 ### 6.3 Solar pipeline
 
 1. **Locate the lot.** Latitude and longitude from the Matterport georeference, then Vexcel `property/extract` for the parcel polygon and structure footprints, then the CoStar record joined on the Matterport model id.
@@ -185,7 +199,7 @@ A measure is skipped with a stated reason when the role cannot do it, when the m
 1. Candidate desk positions on a 0.5 m grid inside rooms classed as work areas, at least 0.6 m from walls and clear of door swings.
 2. For each candidate: daylight availability, glare risk for a seated viewer, and thermal comfort near glazing (`physics.md`, daylight, glare and comfort modules).
 3. Score and choose the top N positions with a minimum spacing, N from the user or from area per person.
-4. Savings come from lighting energy displaced where daylight targets are met, and are reported like any other measure, with zero cost.
+4. Savings come from lighting energy displaced where daylight targets are met, and are reported like any other measure, with zero cost. They are claimed in full only where automatic daylight control exists or `LGT_CTRL` is in the plan. Without it, moving a desk saves energy only if people switch the lights off, so the saving is shown as a potential range from zero to the automatic-control figure; the midpoint used as expected has no published source and is flagged as an assumption (`specs/physics/03-daylight-comfort.md`, LCT-02).
 
 The home flow uses the same engine for a home-office desk or reading spot.
 
@@ -214,7 +228,8 @@ Rules:
 
 - Zero-cost measures are always evaluated first, since they always fit.
 - A measure whose `net_upfront_usd.high` exceeds `remaining` is still picked on its expected cost, and carries the warning "may exceed budget".
-- Each skipped measure records why: over budget, role, feasibility, or no positive savings.
+- Each skipped measure records why: over budget, role, feasibility, no positive savings, already done, or no cost data.
+- A measure with no verified cost source is never priced from a guess. It is skipped with reason `no_cost_data` and the detail "no verified cost; needs a quote", unless the user enters a quote. Today that is `WIN_FILM`, `WIN_SHADE` and `PLUG_MGMT` (`specs/physics/04-economics-emissions-mv.md`, COST-01).
 - Payback, NPV and SIR are shown but do not change the order.
 
 ### 6.6 Financial breakdown
@@ -225,7 +240,7 @@ Every recommended and financeable measure shows all of:
 |---|---|
 | Installed cost, low/expected/high | with the cost source named |
 | Incentives | each with type, amount, status (`verified`, `unverified`, `expired`) and citation |
-| Net upfront cash | installed cost minus point-of-sale rebates only; tax benefits arrive later and do not reduce the cap |
+| Net upfront cash | installed cost minus point-of-sale rebates only, meaning a discount on the invoice. Rebates claimed after installation (the LADWP programs pay by cheque) and tax benefits arrive later and do not reduce the cap |
 | Annual savings, low/expected/high | kWh, gas, dollars |
 | Annual operation and maintenance change | |
 | Useful life | |
@@ -234,7 +249,7 @@ Every recommended and financeable measure shows all of:
 | CO2 avoided per year | |
 | Financing scenarios | cash always; C-PACE where the property is eligible under its state's program (below) |
 
-The plan as a whole also shows a **value uplift** where CoStar market data exists for the property: the estimated change in property value from the plan's annual savings, capitalised at a rate taken from comparable sales, as a low/expected/high range with the number of comparables used. It is reported beside the plan totals and is never added to savings or used in the ranking. Method and limits: `physics.md`, value module.
+The plan as a whole also shows a **value uplift** where CoStar market data exists for the property: the estimated change in property value from the plan's annual savings, capitalised at a rate taken from comparable sales, as a low/expected/high range with the number of comparables used. It is reported beside the plan totals and is never added to savings or used in the ranking. Method and limits: `specs/physics/04-economics-emissions-mv.md`, VAL entries. For a home, the only uplift reported is for owned rooftop solar, on that measure.
 
 C-PACE scenario fields: financed amount, rate, term (not longer than useful life), annual assessment, first-year net cash flow, the program's own savings test where it has one, eligibility notes, and plain statements that the assessment is a lien that runs with the property and of what the state requires from an existing mortgage holder. The rules differ by state and are set out below; statutory conditions, with citations, are in `specs/legal/texas.md` section 6 and `specs/legal/california.md` section 7.
 
@@ -251,7 +266,18 @@ California, verified 2026-11-14 (`specs/legal/california.md` sections 4 and 7; r
 - **What is statute and what is programme practice.** Mortgage-holder consent and a term no longer than useful life are programme practice for a new commercial assessment in California; neither was found as a statutory condition, so no document cites them as law. The one statutory numeric test found for commercial property is that annual property taxes plus assessments may not exceed 5 percent of the property's market value (Streets and Highways Code 5898.15). The scenario reports that ratio in its notes when a market value is known. California has no SIR test in statute.
 - **Solar depends on the electric utility**, which is `Tariff.utility`. Inside the City of Los Angeles the utility is LADWP, a municipal utility: the state net metering statute and the CPUC solar consumer guide do not apply. In Southern California Edison territory the Net Billing Tariff applies and a residential contract needs the signed CPUC guide; a commercial net-billing PV project there is a prevailing-wage job (Public Utilities Code 769.2), which raises its installed cost. Export value is an assumption in both, taken from the utility's own tariff.
 
-Federal incentive status to confirm before use, from secondary sources read 2026-11-13 [U]: the residential credits under sections 25C and 25D ended for 2025; the section 179D commercial deduction ends for construction beginning after June 30, 2026; the section 48E credit for solar is cut off for facilities that begin construction after July 4, 2026 unless placed in service by the end of 2027. Until the finance package confirms these against primary sources, the registry marks federal incentives `unverified` and the plan is computed without them.
+Federal incentives, confirmed 2026-11-14 against Public Law 119-21 and the amended code (`specs/physics/04-economics-emissions-mv.md`, INC-01 to INC-06) [V]:
+
+| Provision | Status for work starting now |
+|---|---|
+| 25C, home efficiency credit | expired: property placed in service after 2025-12-31 does not qualify |
+| 25D, residential clean energy credit | expired: expenditures after 2025-12-31 do not qualify |
+| 179D, commercial building deduction | not available where construction begins after 2026-06-30 |
+| 45L, new energy efficient home credit | not available for homes acquired after 2026-06-30 |
+| 48, energy investment credit | not available for solar whose construction began after 2024 |
+| 48E, clean electricity investment credit | the only one left for solar, and only for business-owned systems placed in service by 2027-12-31 that meet the prohibited-foreign-entity sourcing condition. Never for a homeowner |
+
+So a home plan carries no federal tax credit. A business-owned solar measure may carry 48E with `eligibility` set to `needs_confirmation` and its conditions listed, because the tool cannot see the in-service date or the sourcing. Utility programs verified and usable: the LADWP Consumer Rebate, attic insulation, BOSS and CLIP programs, and the CenterPoint residential solar incentive; the rest of the registry is marked unverified and left out of the plan's arithmetic.
 
 ## 7. Architecture
 
@@ -315,12 +341,16 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.2.0"
+SCHEMA_VERSION = "0.3.0"
 
 # ---------- primitives ----------
 
 class Ranged(BaseModel):
-    """A quantity with uncertainty. low <= expected <= high."""
+    """A quantity with uncertainty. low <= expected <= high.
+
+    expected is the result at expected inputs; low and high are approximate
+    10th and 90th percentiles (physics UNC-01), not hard bounds.
+    """
     low: float
     expected: float
     high: float
@@ -332,7 +362,7 @@ class Ranged(BaseModel):
             raise ValueError("Ranged requires low <= expected <= high")
         return self
 
-Source = Literal["user", "measured", "costar", "vexcel", "vision", "vintage_default"]
+Source = Literal["user", "measured", "costar", "vexcel", "vision", "published_default", "vintage_default"]
 
 class EvidenceRef(BaseModel):
     kind: Literal["pano", "ortho", "oblique", "matterport_field", "vexcel_attr",
@@ -394,7 +424,8 @@ class Opening(BaseModel):
     height_m: Optional[float] = None
     lower_elevation_m: Optional[float] = None   # bottom of the opening above the floor (sill height)
     relative_center: Optional[float] = Field(default=None, ge=0, le=1)   # NOT metres: centre as a fraction of
-                                                # the edge length; centre in metres = relative_center * edge length
+                                                # the edge length; centre in metres = relative_center * edge length.
+                                                # Which vertex it is measured from is [P] Data lane
 
 class WallEdge(BaseModel):
     id: str
@@ -419,6 +450,7 @@ class Room(BaseModel):
     depth_m: Optional[float] = None
     height_m: Optional[float] = None
     boundary_edge_ids: list[str] = []
+    polygon: list[tuple[float, float]] = []    # room outline in the model frame, metres, in order
 
 class Pano(BaseModel):
     id: str
@@ -550,9 +582,10 @@ class ClimateSite(BaseModel):
 
 class Tariff(BaseModel):
     utility: str
-    electricity_usd_per_kwh: float
-    gas_usd_per_kwh: Optional[float] = None
-    export_usd_per_kwh: Optional[float] = None
+    electricity_usd_per_kwh: float             # marginal price, with per-kWh riders and taxes
+    gas_usd_per_kwh: Optional[float] = None    # per kWh of higher heating value; 1 therm = 29.3071 kWh
+    export_usd_per_kwh: Optional[float] = None # None where no export price is mandated (Texas)
+    export_regime: Optional[Literal["net_metering", "net_billing", "none"]] = None
     fixed_usd_per_month: float = 0.0
     source: str
     retrieved: str                             # ISO date
@@ -585,9 +618,13 @@ class Surface(BaseModel):
     tilt_deg: float                            # 0 = horizontal facing up, 90 = vertical
     u_value: Ranged                            # W/m2K
     shgc: Optional[Ranged] = None              # windows only
+    visible_transmittance: Optional[Ranged] = None   # windows only; daylight needs it, shgc is not enough
     parent_surface_id: Optional[str] = None    # window -> wall
     source_edge_id: Optional[str] = None       # WallEdge this surface was built from
     source_opening_id: Optional[str] = None    # Opening this window or door was built from; None = from vision
+    solar_absorptance: Optional[Ranged] = None # opaque exterior surfaces (physics ENV-05)
+    emittance: Optional[float] = None
+    exposed_perimeter_m: Optional[float] = None   # ground floors (physics ENV-04)
 
 class Zone(BaseModel):
     id: str
@@ -596,20 +633,43 @@ class Zone(BaseModel):
     floor_area_m2: float
     volume_m3: float
     conditioned: bool = True
+    mass_class: Literal["very_light", "light", "medium", "heavy", "very_heavy"] = "medium"   # physics ZON
 
 class Systems(BaseModel):
-    hvac_type: str
+    hvac_type: Literal["central_ac_furnace", "heat_pump", "rooftop_unit", "room_ac", "central_plant",
+                       "none", "unknown"]
     heating_fuel: Literal["electricity", "gas", "none", "unknown"]
-    cooling_cop: Ranged
-    heating_efficiency: Ranged                 # COP for heat pumps, fraction for furnaces
-    dhw_type: str
+    cooling_cop: Ranged                        # seasonal, W/W
+    heating_efficiency: Ranged                 # seasonal: COP for heat pumps, fraction for furnaces
+    dhw_type: Literal["storage", "tankless", "heat_pump", "unknown"]
     dhw_fuel: Literal["electricity", "gas", "unknown"]
     dhw_efficiency: Ranged
     lighting_w_per_m2: Ranged
     plug_w_per_m2: Ranged
-    infiltration_ach: Ranged
-    occupancy_schedule: str                    # key into the schedule table
+    infiltration_ach: Ranged                   # annual mean air changes per hour, a reported result
+    occupancy_schedule: str                    # "home", "office" or "office_vacant" (physics DEF)
     occupants: Optional[Ranged] = None         # people; from CoStar tenancies when present
+    # optional detail the thermal spec uses when known (specs/physics/02-thermal-systems.md section 12)
+    infiltration_ach50: Optional[Ranged] = None             # homes: air changes at 50 Pa
+    envelope_leakage_l_s_m2_75pa: Optional[Ranged] = None   # offices
+    cooling_rating: Optional[Ranged] = None
+    cooling_rating_metric: Optional[Literal["SEER", "SEER2", "EER", "EER2", "IEER"]] = None
+    heating_rating: Optional[Ranged] = None
+    heating_rating_metric: Optional[Literal["HSPF", "HSPF2", "AFUE", "COP"]] = None
+    compressor_type: Literal["single", "two_stage", "variable", "unknown"] = "unknown"
+    cooling_capacity_w: Optional[float] = None
+    heating_cop_47f: Optional[float] = None
+    hvac_install_year: Optional[int] = None
+    distribution_efficiency: Optional[Ranged] = None
+    duct_location: Literal["conditioned", "attic", "garage", "crawlspace", "none", "unknown"] = "unknown"
+    outdoor_air_m3_s: Optional[Ranged] = None
+    has_economizer: Optional[bool] = None
+    economizer_limit_c: Optional[float] = None
+    heating_setpoint_c: Optional[Ranged] = None
+    cooling_setpoint_c: Optional[Ranged] = None
+    heating_setback_c: Optional[float] = None
+    cooling_setup_c: Optional[float] = None
+    dhw_location: Literal["conditioned", "garage", "outdoor", "unknown"] = "unknown"
 
 class RoofPlane(BaseModel):
     id: str
@@ -628,6 +688,7 @@ class RoofPlane(BaseModel):
 class BuildingModel(BaseModel):
     schema_version: str = SCHEMA_VERSION
     sid: str
+    bedrooms: Optional[int] = None             # homes; drives hot water and occupancy defaults
     north_offset_deg: Ranged                   # azimuth of the model frame's +y axis, degrees clockwise from true
                                                # north, so azimuth_true = azimuth_in_model + north_offset_deg
                                                # (physics ROOF-02). Derived from the georeference quaternion; which
@@ -645,16 +706,23 @@ class EnergyUse(BaseModel):
     electricity_kwh: Ranged
     gas_kwh: Ranged
     cost_usd: Ranged
-    co2_kg: Ranged
+    co2_kg: Ranged                             # kg CO2-equivalent, first year: eGRID total-output rate for
+                                               # electricity plus the EPA combustion factor for gas (physics EMI)
+    co2_nonbaseload_kg: Optional[Ranged] = None   # the "up to" figure at the eGRID non-baseload rate
 
 class BaselineResult(BaseModel):
     annual: EnergyUse
-    end_use_kwh: dict[str, float]              # expected values by end use
+    end_use_kwh: dict[str, float]              # expected values; keys: heating, cooling, water_heating,
+                                               # lighting, plug, appliances
     monthly_electricity_kwh: list[float]       # 12 values, expected
     monthly_gas_kwh: list[float]
     peak_cooling_w: float
     peak_heating_w: float
     calibrated_to_bills: bool = False
+    heating_need_kwh: Optional[float] = None   # thermal need before system efficiency
+    cooling_need_kwh: Optional[float] = None
+    latent_cooling_kwh: float = 0.0
+    hourly_path: Optional[str] = None          # cached hourly zone outputs, read by the desk-placement physics
 
 MeasureId = Literal[
     "ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE",
@@ -663,9 +731,12 @@ MeasureId = Literal[
 
 class Incentive(BaseModel):
     name: str
-    kind: Literal["upfront_rebate", "tax_credit", "tax_deduction", "performance_payment"]
+    kind: Literal["upfront_rebate", "rebate_after_install", "tax_credit", "tax_deduction",
+                  "performance_payment"]         # only upfront_rebate reduces net_upfront_usd
     amount_usd: Ranged
-    status: Literal["verified", "unverified", "expired"]
+    status: Literal["verified", "unverified", "expired"]          # of the program itself
+    eligibility: Literal["confirmed", "needs_confirmation", "not_eligible"] = "confirmed"   # of this project
+    conditions: list[str] = []                 # what must hold, e.g. "placed in service by 2027-12-31"
     citation: str
 
 class FinancingScenario(BaseModel):
@@ -675,9 +746,10 @@ class FinancingScenario(BaseModel):
     rate: Optional[float] = None
     term_years: Optional[int] = None
     annual_payment_usd: float = 0.0
-    net_cashflow_year1_usd: Ranged
-    program_sir: Optional[float] = None        # the PACE program's own test: undiscounted savings over the
-                                               # term / total cost with financing costs; Texas requires >= 1
+    net_cashflow_year1_usd: Ranged             # at base-date prices
+    program_sir: Optional[float] = None        # the PACE program's own test (physics ECO-12b): undiscounted
+                                               # savings over the term / total cost with financing costs;
+                                               # Texas requires >= 1. Not the same as FinancialBreakdown.sir
     notes: list[str] = []
 
 class FinancialBreakdown(BaseModel):
@@ -691,12 +763,14 @@ class FinancialBreakdown(BaseModel):
     simple_payback_years: Optional[Ranged] = None
     discounted_payback_years: Optional[float] = None
     npv_usd: Ranged
-    sir: Optional[float] = None
-    irr: Optional[float] = None
-    discount_rate: float
-    electricity_escalation: float
-    gas_escalation: float
-    analysis_period_years: int
+    npv_sensitivity_usd: Optional[float] = None   # NPV at the 7 percent sensitivity rate (physics ECO-05)
+    sir: Optional[float] = None                # discounted savings-to-investment ratio (physics ECO-09)
+    irr: Optional[float] = None                # conventional IRR; None when it is not unique
+    airr: Optional[float] = None               # adjusted internal rate of return (physics ECO-10)
+    discount_rate: float                       # real, not nominal
+    electricity_escalation: float              # real, per year
+    gas_escalation: float                      # real, per year
+    analysis_period_years: int                 # min(useful life, 40)
     financing: list[FinancingScenario]
 
 class Anchor(BaseModel):
@@ -732,15 +806,28 @@ class DeskScore(BaseModel):
     room_id: str
     x: float
     y: float
-    daylight: float                            # metric defined in physics.md
-    glare_risk: float
-    comfort_ppd: float
-    score: float
+    daylight: float                            # daylight autonomy at 300 lux: fraction of occupied hours, 0 to 1
+    glare_risk: float                          # fraction of occupied hours with glare, 0 to 1
+    comfort_ppd: float                         # mean predicted percentage dissatisfied, percent, 5 to 100
+    score: float                               # 0 to 1 (physics LCT-03)
     recommended: bool = False
+    daylight_factor: Optional[float] = None    # percent
+    view_azimuth_deg: Optional[float] = None   # recommended facing direction, clockwise from true north
+    direct_sun_hours: Optional[float] = None   # occupied hours per year with the sun in view
+    max_dt_pr_k: Optional[float] = None        # worst radiant temperature asymmetry, K
+    warnings: list[str] = []
 
 class LayoutResult(BaseModel):
     candidates: list[DeskScore]
     desks_requested: int
+    window_source: Optional[Literal["measured", "vision"]] = None
+    target_lux: Optional[float] = None
+    setpoint_lux: Optional[float] = None
+    control_type: Optional[str] = None         # lighting control assumed for the saving (physics LCT-01)
+    score_weights: dict[str, float] = {}
+    occupied_hours_per_year: Optional[float] = None
+    lighting_kwh_saved: Optional[Ranged] = None
+    warnings: list[str] = []                   # e.g. "window geometry read from panoramas"
 
 class MeasureResult(BaseModel):
     measure_id: MeasureId
@@ -757,6 +844,7 @@ class MeasureResult(BaseModel):
     formula_ids: list[str] = []                # physics.md entries used
     solar: Optional[SolarDesign] = None
     layout: Optional[LayoutResult] = None
+    value_uplift: Optional["ValueUplift"] = None   # homes with owned rooftop solar only (physics VAL-03)
     warnings: list[str] = []
 
 class PlanItem(BaseModel):
@@ -767,11 +855,16 @@ class PlanItem(BaseModel):
 
 class SkippedItem(BaseModel):
     measure_id: MeasureId
-    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done"]
+    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done", "no_cost_data"]
     detail: str
 
 class ValueUplift(BaseModel):
-    """Estimated change in property value from the plan's savings. Never added to savings."""
+    """Estimated change in property value from the plan's savings (physics VAL).
+
+    Never added to savings, and never used in NPV, SIR, payback or ranking.
+    Commercial and multifamily: capitalised savings, on Plan. Homes: owned rooftop
+    solar only, on the PV_ROOF MeasureResult. There is no rent component yet.
+    """
     value_usd: Ranged
     method: str                                # physics.md entry id
     cap_rate: Optional[Ranged] = None
@@ -952,7 +1045,8 @@ Environment variables, in a git-ignored `.env` (names only; never commit values)
 | Item | Owner | Fallback |
 |---|---|---|
 | Georeference missing or wrong on a model (north alignment itself is no longer a risk: the Model API returns the rotation). Both golden models report source `processing`, meaning derived by Matterport, not set by a person | Data + Analysis | cross-check against the Vexcel footprint; if they disagree or the field is absent, register to the footprint and widen `north_offset_deg` |
-| Window openings not populated in a model's wall graph | Data + Analysis | window count and size from vision, wider range |
+| Commercial scans carry almost no window openings (none in 12 sampled offices) | Data + Analysis | decided: vision from panoramas, then a window-to-wall ratio default; office daylight and desk placement carry the wider range |
+| The first golden office (PropertyId 354635) is an industrial warehouse in CoStar, not an office | Data lane picks a `propertyType` 5 replacement | examples keep 354635 until the new one is chosen |
 | MatterPak locked for most models | Data | wall graph and room heights are enough for the thermal model |
 | CoStar kit download link expires 2026-11-15 03:30 UTC | Data | the verified mirror the Data lane holds (git-ignored); get the zip from @vigjay, do not re-download |
 | The kit's `index.md` mentions a separate zip for connecting to Matterport models, which nobody has | team, via `/ask-costar` | the starter CSVs already give the join |

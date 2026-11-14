@@ -71,8 +71,8 @@ def test_no_georeference_logs_fallback():
 
 
 def test_other_rules():
-    b = _bundle("house")
+    b = _bundle("office")
     b.costar = None
     b.matterport.matterpak_available = False
     keys = {e.payload["fallback"] for e in detect_fallbacks(b)}
-    assert {"no_costar", "matterpak_locked", "no_window_openings"} <= keys   # house has doorways only
+    assert {"no_costar", "matterpak_locked", "no_window_openings"} <= keys   # office has doorways only

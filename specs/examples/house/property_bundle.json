@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "summary": {
     "sid": "zvKHR9DHNjJ",
     "name": "5836 La Mirada Ave",
@@ -116,6 +116,15 @@
             "openings": [
               {
                 "id": "op_e01_1",
+                "type": "window",
+                "label": null,
+                "width_m": 1.2,
+                "height_m": 1.2,
+                "lower_elevation_m": 0.9,
+                "relative_center": 0.2
+              },
+              {
+                "id": "op_e01_2",
                 "type": "doorway",
                 "label": null,
                 "width_m": 0.91,
@@ -133,7 +142,17 @@
               "v02",
               "v03"
             ],
-            "openings": []
+            "openings": [
+              {
+                "id": "op_e02_1",
+                "type": "window",
+                "label": null,
+                "width_m": 2.69,
+                "height_m": 1.21,
+                "lower_elevation_m": 0.8,
+                "relative_center": 0.5
+              }
+            ]
           },
           {
             "id": "e03",
@@ -143,7 +162,17 @@
               "v03",
               "v04"
             ],
-            "openings": []
+            "openings": [
+              {
+                "id": "op_e03_1",
+                "type": "window",
+                "label": null,
+                "width_m": 1.5,
+                "height_m": 1.2,
+                "lower_elevation_m": 0.9,
+                "relative_center": 0.5
+              }
+            ]
           },
           {
             "id": "e04",
@@ -163,7 +192,17 @@
               "v05",
               "v06"
             ],
-            "openings": []
+            "openings": [
+              {
+                "id": "op_e05_1",
+                "type": "window",
+                "label": null,
+                "width_m": 0.9,
+                "height_m": 0.91,
+                "lower_elevation_m": 1.11,
+                "relative_center": 0.5
+              }
+            ]
           },
           {
             "id": "e06",
@@ -173,7 +212,17 @@
               "v06",
               "v07"
             ],
-            "openings": []
+            "openings": [
+              {
+                "id": "op_e06_1",
+                "type": "window",
+                "label": null,
+                "width_m": 0.51,
+                "height_m": 0.91,
+                "lower_elevation_m": 1.11,
+                "relative_center": 0.3
+              }
+            ]
           },
           {
             "id": "e07",
@@ -273,7 +322,26 @@
               "v13",
               "v01"
             ],
-            "openings": []
+            "openings": [
+              {
+                "id": "op_e13_1",
+                "type": "window",
+                "label": null,
+                "width_m": 1.8,
+                "height_m": 1.49,
+                "lower_elevation_m": 0.63,
+                "relative_center": 0.3
+              },
+              {
+                "id": "op_e13_2",
+                "type": "window",
+                "label": null,
+                "width_m": 1.8,
+                "height_m": 1.49,
+                "lower_elevation_m": 0.63,
+                "relative_center": 0.7
+              }
+            ]
           },
           {
             "id": "e14",
@@ -325,6 +393,32 @@
           "e11",
           "e12",
           "e13"
+        ],
+        "polygon": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            5.04,
+            0.0
+          ],
+          [
+            5.04,
+            4.84
+          ],
+          [
+            5.04,
+            5.7
+          ],
+          [
+            4.07,
+            5.7
+          ],
+          [
+            0.0,
+            5.7
+          ]
         ]
       },
       {
@@ -341,6 +435,24 @@
           "e03",
           "e10",
           "e09"
+        ],
+        "polygon": [
+          [
+            5.04,
+            0.0
+          ],
+          [
+            9.44,
+            0.0
+          ],
+          [
+            9.44,
+            4.84
+          ],
+          [
+            5.04,
+            4.84
+          ]
         ]
       },
       {
@@ -359,6 +471,32 @@
           "e06",
           "e07",
           "e08"
+        ],
+        "polygon": [
+          [
+            5.04,
+            4.84
+          ],
+          [
+            9.44,
+            4.84
+          ],
+          [
+            9.83,
+            4.84
+          ],
+          [
+            9.83,
+            7.84
+          ],
+          [
+            5.04,
+            7.84
+          ],
+          [
+            5.04,
+            5.7
+          ]
         ]
       },
       {
@@ -375,6 +513,24 @@
           "e14",
           "e15",
           "e16"
+        ],
+        "polygon": [
+          [
+            4.07,
+            5.7
+          ],
+          [
+            0.0,
+            5.7
+          ],
+          [
+            0.0,
+            9.69
+          ],
+          [
+            4.07,
+            9.69
+          ]
         ]
       }
     ],
@@ -465,8 +621,8 @@
       "residential"
     ],
     "matterpak_available": true,
-    "mesh_path": "data/cache/zvKHR9DHNjJ/matterpak/mesh.obj",
-    "point_cloud_path": "data/cache/zvKHR9DHNjJ/matterpak/cloud.xyz",
+    "mesh_path": null,
+    "point_cloud_path": null,
     "splat_path": "data/cache/zvKHR9DHNjJ/splat/aerial_splat.ply",
     "drone_photo_paths": [
       "data/cache/zvKHR9DHNjJ/drone/photo_001.jpg",
@@ -630,9 +786,7 @@
     "listing_id": "235967170",
     "residential_listing_id": "221139020",
     "record_id": "235967170",
-    "raw": {
-      "_note": "The kit record is deliberately not copied into this example: sponsor data must not be committed (SPEC.md section 3, item 6). A live bundle carries the residential-listings.jsonl record as found. Field names are in the kit's models/ and schemas/ folders; none are invented here."
-    },
+    "raw": {},
     "property_type": null,
     "property_type_code": null,
     "year_built": 1924,
@@ -652,16 +806,20 @@
     "timezone": "America/Los_Angeles",
     "climate_zone": "3B",
     "weather_path": "data/cache/zvKHR9DHNjJ/weather/typical_year_hourly.csv",
-    "weather_source": "ILLUSTRATIVE: typical-year source to be chosen by the Data lane"
+    "weather_source": "Open-Meteo archive API: hourly GHI, DNI, DHI, temperature, relative humidity and wind. The cached file is not part of this example.",
+    "weather_time_convention": "hour_end",
+    "pvgis_annual_kwh_per_kw": 1754.23,
+    "pvgis_sd_fraction": 0.02301
   },
   "tariff": {
     "utility": "LADWP (electricity), SoCalGas (gas)",
     "electricity_usd_per_kwh": 0.25,
     "gas_usd_per_kwh": 0.065,
-    "export_usd_per_kwh": 0.08,
+    "export_usd_per_kwh": null,
+    "export_regime": "net_metering",
     "fixed_usd_per_month": 12.0,
-    "source": "ILLUSTRATIVE flat rates, not a retrieved tariff schedule",
-    "retrieved": "2026-11-13"
+    "source": "ILLUSTRATIVE flat prices, not a retrieved LADWP schedule. Under net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03).",
+    "retrieved": "2026-11-14"
   },
   "provenance": [
     {
@@ -680,7 +838,7 @@
       "layer": "matterport",
       "what": "wall openings",
       "status": "ok",
-      "detail": "doorway openings only; no window openings in this example's wall graph"
+      "detail": "window and doorway openings; no window opening on the bedroom's edges in this example"
     },
     {
       "layer": "matterport",
@@ -691,8 +849,8 @@
     {
       "layer": "matterport",
       "what": "MatterPak (mesh and point cloud)",
-      "status": "ok",
-      "detail": null
+      "status": "missing",
+      "detail": "the bundle is unlocked but its resources are unavailable; the wall graph is used instead"
     },
     {
       "layer": "matterport",
@@ -726,15 +884,15 @@
     },
     {
       "layer": "weather",
-      "what": "typical-year hourly file",
+      "what": "hourly weather (Open-Meteo archive) and the PVGIS annual cross-check",
       "status": "ok",
       "detail": null
     },
     {
       "layer": "tariff",
-      "what": "electricity and gas rates",
-      "status": "fallback",
-      "detail": "no schedule retrieved; flat average rates used"
+      "what": "LADWP residential rate (URDB lookup)",
+      "status": "ok",
+      "detail": "the prices in this example are illustrative"
     }
   ]
 }

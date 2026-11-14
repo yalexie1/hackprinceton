@@ -1,12 +1,14 @@
 """Explain step (G4): `check_narrative` (SPEC 8 rule 1). The agent never does arithmetic:
 every number in the narrative must be a value in the structured RunResult, shown at the
-precision the text uses. Pure and deterministic."""
+precision the text uses. Callers may also pass the PropertyBundle and the BuildingModel, and
+the numbers in the property address (street number, ZIP) are always accepted: those are
+data the agent reads, not figures it computes. Pure and deterministic."""
 from __future__ import annotations
 
 import re
-from typing import Iterator
+from typing import Iterator, Optional
 
-from backend.schema import RunResult
+from backend.schema import BuildingModel, PropertyBundle, RunResult
 
 _NUMBER = re.compile(r"(?<![\w.])\$?(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(%?)")
 _YEAR = range(1900, 2101)
@@ -43,9 +45,24 @@ def extract_numbers(text: str) -> list[tuple[str, float, int, bool]]:
     return out
 
 
-def check_narrative(narrative_md: str, result: RunResult) -> list[str]:
+def _address_numbers(*addresses: Optional[str]) -> Iterator[float]:
+    for text in addresses:
+        for m in re.finditer(r"\d+", text or ""):
+            yield float(m.group(0))
+
+
+def check_narrative(narrative_md: str, result: RunResult,
+                    bundle: Optional[PropertyBundle] = None,
+                    model: Optional[BuildingModel] = None) -> list[str]:
     """Mismatches, one message per number. An empty list means every number matches."""
-    pool = sorted(set(_walk(result.model_dump(mode="json", exclude={"narrative_md"}))))
+    sources = [result.model_dump(mode="json", exclude={"narrative_md"})]
+    if bundle is not None:
+        sources.append(bundle.model_dump(mode="json"))
+    if model is not None:
+        sources.append(model.model_dump(mode="json"))
+    pool = sorted({v for src in sources for v in _walk(src)}
+                  | set(_address_numbers(result.property.address,
+                                         bundle.summary.address if bundle else None)))
     problems = []
     for written, value, decimals, pct in extract_numbers(narrative_md):
         half = 0.5 * 10 ** -decimals

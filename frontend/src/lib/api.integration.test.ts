@@ -129,6 +129,11 @@ describe.skipIf(process.env.RUN_API_INTEGRATION !== "1")(
             fields: {
               owner_names: "Frontend Test Owner",
               contractor_name: "Frontend Test Contractor",
+              owner_mailing_address: "123 Frontend Test Street",
+              contractor_license_number: "UI-TEST-LICENCE",
+              start_date: "2027-01-12",
+              completion_date: "2027-02-12",
+              contract_price_usd: "12345.67",
             },
           });
           expect(draft.doc_id).toBeTruthy();
@@ -141,6 +146,15 @@ describe.skipIf(process.env.RUN_API_INTEGRATION !== "1")(
           expect(draft.statutory_checks.length).toBeGreaterThan(0);
           expect(draft.unfilled_placeholders.length).toBeGreaterThan(0);
           expect(draft.disclaimer).toBeTruthy();
+          if (doc_type.startsWith("retrofit_contract")) {
+            expect(draft.markdown).toContain("UI-TEST-LICENCE");
+            expect(draft.markdown).toContain("2027-01-12");
+            expect(draft.markdown).toContain("12345.67");
+            expect(draft.unfilled_placeholders).not.toContain(
+              "contractor_license_number",
+            );
+            expect(draft.unfilled_placeholders).not.toContain("start_date");
+          }
         }
         await expect(
           api.draft({ ...template!, run_id, doc_type: "bid_package_rfp" }),

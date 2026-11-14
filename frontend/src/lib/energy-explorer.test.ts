@@ -69,8 +69,20 @@ describe("energy exploration", () => {
         expect(upgrade.reason).toBe(item.detail);
       }
     }
+    const attic = run.measures.find(
+      (measure) => measure.measure_id === "ENV_ATTIC",
+    )!;
+    attic.applicable = true;
+    attic.not_applicable_reason = null;
+    run.plan!.selected = run.plan!.selected.filter(
+      (item) => item.measure.measure_id !== "ENV_ATTIC",
+    );
+    run.plan!.skipped = run.plan!.skipped.filter(
+      (item) => item.measure_id !== "ENV_ATTIC",
+    );
     expect(
-      upgrades.find((u) => u.measure.measure_id === "ENV_ATTIC")!.status,
+      energyUpgrades(run).find((u) => u.measure.measure_id === "ENV_ATTIC")!
+        .status,
     ).toBe("opportunity");
   });
   it("does not invent an upgrade when no plan or mapping exists", () => {

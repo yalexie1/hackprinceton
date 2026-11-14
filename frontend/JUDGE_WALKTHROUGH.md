@@ -1,17 +1,14 @@
-# Informal judge walkthrough · 15 minutes
+# Judge walkthrough · 2 minutes 40 seconds
 
-Open http://127.0.0.1:5173. The local API is in replay mode. Connecting the UI does not run a model. These are saved, interim examples; final regenerated numbers are still being prepared by the team.
+Open http://127.0.0.1:5173 and connect to the replay API. Confirm the Culver recording is installed and labelled **Live property data · Saved replay** before presenting. An example-input fallback is labelled as such; it has no roof photo. Replaying never runs a fresh analysis.
 
-1. **2 minutes:** rotate the exploded energy explorer, inspect a planned change and its savings/caveats, then switch to All findings. Explain that this concept house is illustrative; the separate Matterport tour is the property scan.
-2. **4 minutes:** connect to the API, find Culver Connect, enter its saved $150,000 landlord budget and 12 desks, and run the audit. Open the plan, then Workspace and inspect a position. Open Solar & roof, toggle detection boxes, and explain approximate alignment/missing cached imagery if shown.
-3. **3 minutes:** return to Properties, run the shared house, and inspect the plan and assumptions. In Demo mode its saved audit pauses for a question; answering advances a replay and does not recalculate it. For an API-connected run, change the budget and follow the re-plan events. A replay keeps its example selection; a real live re-plan is computed by the backend.
-4. **3 minutes:** open Documents for the house or Culver. Use clearly fictitious party names, select the scope, approve drafting and inspect visible blanks and unsatisfied checks. API-connected example and recorded runs both use the real legal engine; the separate browser-only Demo is an illustrative preview. A template is not a completed legal review. Visit Houston to show C-PACE eligibility notes honestly; a financing package can require review even when eligibility fails.
-5. **3 minutes:** ask and record the answers below. Do not represent a replay’s interim plan as having the final consultant-practice measure mix. The UI describes the new operational/efficiency/equipment/solar order; the shared plan regeneration is pending.
+1. **0–15 seconds:** property list and problem. Choose Culver Connect. Explain that the app connects building scans, aerial evidence and energy analysis to a practical improvement plan.
+2. **15–55 seconds:** run one saved Culver audit with its recorded inputs. Explain the disclosed geometry fallbacks: the scan has no wall outlines, so the model uses footprint walls; roof extent uses plate matching. Saved browser demos advance quickly, with a “Show next question or result” control.
+3. **55–70 seconds:** answer a question only if the recording asks one. A replay answer advances the recorded scenario; it does not recalculate the saved analysis.
+4. **70–100 seconds:** open the plan. Explain operations first, followed by efficiency, equipment and solar sized for remaining demand. Selected improvements pass the backend savings-to-investment test. Open Other findings and read two actual exclusion reasons.
+5. **100–130 seconds:** open Solar & roof and show the recorded aerial image. Distinguish image evidence, detection boxes and proposed solar geometry. If no image is available, disclose that and show geometry only.
+6. **130–160 seconds:** open Documents. Show the California commercial contract, then the C-PACE package as a hypothetical financing review with programme confirmation still required. Use clearly fictitious party names for the demonstration. Missing owner, contractor or attorney details remain visible; a template is not a completed legal review.
 
-Feedback to send back to the team:
+Keep Houston’s empty plan and failed SIR, the house, workspace, concept 3D model and benchmarks for questions. The concept model is illustrative, separate from the actual property scan. There is no budget-change beat: saved replay does not reselect the measures when a budget changes. Do not quote an unsupported consultant price or turnaround claim.
 
-- Would an owner trust this enough to act without hiring an energy consultant? What evidence is missing?
-- Is the reasoning for the selected and rejected upgrades clear?
-- Which view matters most: the plan, documents, or 3D? Why?
-
-Record the audience, time, exact feedback and any observed glitch. Post actual answers on Message Board #1 with `[Vinayak's Codex]`; leave unanswered items explicitly pending.
+Record actual judge feedback, audience and observed glitches on Message Board #1. Leave unanswered questions pending.

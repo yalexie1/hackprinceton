@@ -18,6 +18,16 @@ const labels: Record<DocType, string> = {
   energy_savings_guarantee: "Energy savings guarantee",
   cpace_package: "Commercial C-PACE package",
 };
+const documentDetails = [
+  ["owner_mailing_address", "Owner’s mailing address", "text"],
+  ["contractor_business_address", "Contractor’s business address", "text"],
+  ["contractor_phone", "Contractor’s phone", "tel"],
+  ["contractor_license_number", "Contractor’s licence number", "text"],
+  ["contractor_cancellation_email", "Contractor’s cancellation email", "email"],
+  ["start_date", "Agreed start date", "date"],
+  ["completion_date", "Agreed completion date", "date"],
+  ["contract_price_usd", "Contractor’s quoted price (USD)", "number"],
+] as const;
 function demoTypes(commercial: boolean) {
   return Object.keys(labels).filter((key) =>
     commercial
@@ -62,6 +72,7 @@ export default function Documents({
   const [state, setState] = useState<"CA" | "TX">(run.property.state || "CA");
   const [owner, setOwner] = useState("");
   const [contractor, setContractor] = useState("");
+  const [details, setDetails] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState(
     run.plan?.selected.map((i) => i.measure.measure_id) || [],
   );
@@ -148,7 +159,15 @@ export default function Documents({
       doc_type: docType,
       state,
       measure_ids: selectedScope,
-      fields: { owner_names: owner, contractor_name: contractor },
+      fields: {
+        ...(!demo
+          ? Object.fromEntries(
+              Object.entries(details).filter(([, value]) => value.trim()),
+            )
+          : {}),
+        owner_names: owner,
+        contractor_name: contractor,
+      },
     };
     try {
       const result = demo ? demoDraft(body, run) : await api.draft(body);
@@ -256,6 +275,34 @@ export default function Documents({
             />
           </label>
         </div>
+        {!demo && (
+          <details className="financial-guide">
+            <summary>Add verified document details</summary>
+            <p>
+              Optional. Supply details from the owner or contractor to fill
+              matching blanks. The quoted price must come from a contractor’s
+              bid. Energy estimates are shown separately. Missing details stay
+              visible in the draft.
+            </p>
+            <div className="form-grid">
+              {documentDetails.map(([key, label, type]) => (
+                <label key={key}>
+                  {label}
+                  <input
+                    type={type}
+                    min={type === "number" ? 0 : undefined}
+                    step={type === "number" ? "0.01" : undefined}
+                    value={details[key] || ""}
+                    onChange={(event) => {
+                      setDetails({ ...details, [key]: event.target.value });
+                      invalidate();
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+          </details>
+        )}
         <fieldset className="measure-checks">
           <legend>Scope of work</legend>
           {docType === "cpace_package" && (

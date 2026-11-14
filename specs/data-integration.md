@@ -574,7 +574,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D1 | P0 | CoStar kit reader | `data-costar` | `backend/data_layer/costar.py`, `data/fixtures/costar/` | `CostarData` |
 | D2 | P0 | Matterport client | `data-matterport` | `backend/data_layer/matterport.py`, `data/fixtures/matterport/` | `MatterportData` |
 | D3 | P0 | Vexcel client | `data-vexcel` | `backend/data_layer/vexcel.py`, `data/fixtures/vexcel/` | `VexcelData` |
-| D4 | P0 | Cache + fetch records | `data-cache` | `backend/data_layer/cache.py` | `FetchRecord` |
+| D4 | P0 | Cache + fetch records — **done**, see 6.5 | `data-cache` | `backend/data_layer/cache.py` | `FetchRecord` |
 | D5 | P0 | The one public door | `data-api` | `backend/data_layer/api.py` | `PropertyBundle`, `PropertySummary` |
 | D6 | P0 | Golden fixtures | each source agent, in its own subdirectory | `data/fixtures/costar/`, `/matterport/`, `/vexcel/` — **never the parent** | — |
 | D7 | P1 | Index + office selection — **done**, see 2.4a | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
@@ -624,6 +624,55 @@ mp_out/               git-ignored
 Cache keys include source, identifier **and query shape** (Vexcel's `include=` and `layer`, Matterport's field selection, CoStar's dataset and record id). **No signed URL is ever persisted.** Writes are atomic so an interrupted run cannot leave a half-written entry that later reads as a hit.
 
 Every fetch returns a `FetchRecord` alongside its payload. Outcomes that must each be distinct and are all **normal**: Vexcel 404 (no parcel) and 429 (rate limited), MatterPak locked, no splat, no defurnished view, rooms missing dimensions, a CoStar property with an empty `MatterportModelId` (51 commercial, 1 residential), a hidden residential address (4) or a non-public listing (228), `building-type.class` absent.
+
+### 6.5 What D4 actually does, and the one invariant that bit
+
+`backend/data_layer/cache.py`, built 2026-11-14. [V]
+
+**Measured.** With every source payload cached, a full live re-assembly of a bundle
+drops from **2.9 s to 0.39 s** and makes no call to a sponsor API; the bundle cache
+on top of that serves in **0.002–0.046 s**. The point is not the milliseconds, it is
+that the keys are shared with every other team at the hackathon, so a demo that
+re-assembles three times should query Matterport once.
+
+**An injected transport bypasses the cache, read and write.** D5 shipped the opposite
+once: its bundle cache was consulted *before* the live-or-offline decision, so on a
+machine where someone had run a live assembly the tests silently ran against cached
+data instead of the fixtures — and passed. A caller supplying the response is in
+control of what comes back, and a stubbed response has no business being left on disk
+for the next caller. Checked by running the whole lane suite with the cache empty and
+with it fully populated from live runs: **150 passed / 15 skipped both ways.**
+
+**A 429 is never cached.** It describes the service's last few seconds, not the
+parcel, so a cached one would poison that point for every later run. A 404 *is*
+cached: "Vexcel has never flown this parcel" is a stable fact about coverage.
+
+**The URL invariant caught a real leak in my own code.** The rule above says no
+signed URL is ever persisted, and the first version of the bundle cache broke it:
+`CostarData.raw` is "the record as found in the kit" per the contract, and the golden
+house's record carries **54 URL-valued fields** — `imagescdn.homes.com` image URIs
+with query strings, agent profile images, brokerage websites. Three ways to fix it,
+and only one is right:
+
+- *Scrub `raw` in place on write* — then a cache hit disagrees with a fresh assembly.
+  That is the worst option: silent, invisible, and exactly the class of bug the D5
+  cache-ordering mistake belonged to.
+- *Scrub `raw` at assembly* — then the field no longer is what the contract says it
+  is, and the contract is not mine to redefine.
+- **Strip `raw` from the cache entry and rebuild it on read.** Safe precisely because
+  it is *local* data: the kit mirror is on disk, so `raw` comes back in about 0.04 s
+  and the field stays truthful on both paths. Verified: `hit == miss` on all three
+  golden properties, `raw` rebuilt in each.
+
+If a URL ever survives the strip — a new field somewhere starts carrying one — the
+write is **refused** rather than persisting or mangling it. The caller still gets its
+bundle, with a `FetchRecord` saying it was not cached and why. A loud failure on an
+unexpected shape is what a cache with a documented invariant owes its reader.
+
+**Unreadable entries are deleted on read.** A pre-D4 bundle entry cannot be parsed by
+this code, so it was dead weight that went on leaking those 54 URLs indefinitely. The
+reader removes it; it is git-ignored and regenerable. A test asserts no entry anywhere
+in the real cache carries a URL, so this cannot quietly regress.
 
 ---
 
@@ -684,6 +733,10 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Lane suite with and without the mirror | `pytest backend/data_layer -q` | 2026-11-14 | 115/15 skipped with, 100/30 skipped without — **no failures either way** |
 | Search makes no network call | `socket.socket.connect` patched to raise | 2026-11-14 | first call 0.069 s, second 0.006 s, no connection attempted |
 | Live bundle after D7 | all three golden, `refresh=True` | 2026-11-14 | 2.2–2.9 s; names now `Executive Tower`, `5836 La Mirada Avenue`, `2100 West Loop South` |
+| Source payload cache (D4) | all three golden, two passes | 2026-11-14 | full re-assembly **2.9 s → 0.39 s**, zero sponsor-API calls on the second pass |
+| Bundle cache round trip (D4) | all three golden | 2026-11-14 | 0.002–0.046 s; `raw` rebuilt from the kit; **hit == miss** on name, tariff and `raw` |
+| No URL in any cache entry | regex over the whole cache tree | 2026-11-14 | clean — after fixing the bundle entry, which carried **54** URL-valued fields from `costar.raw` |
+| Suite with an empty vs a fully populated cache | `pytest backend/data_layer -q` | 2026-11-14 | **150 passed / 15 skipped both ways** |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; open blocker |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |

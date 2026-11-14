@@ -36,6 +36,8 @@ from typing import Callable, Optional
 
 from backend.schema import ClimateSite, FetchRecord, Tariff
 
+from . import cache
+
 _ROOT = Path(__file__).resolve().parents[2]
 
 OPEN_METEO = "https://archive-api.open-meteo.com/v1/archive"
@@ -97,13 +99,27 @@ def hourly_csv(payload: dict) -> str:
     return buf.getvalue()
 
 
-def fetch_hourly(lat: float, lon: float, year: int, *, get: Optional[Getter] = None) -> dict:
-    return (get or _default_get)(OPEN_METEO, {
+def fetch_hourly(lat: float, lon: float, year: int, *, get: Optional[Getter] = None,
+                 refresh: bool = False) -> dict:
+    """A year of hourly weather. Cached by D4 - it is 8,760 rows and the slowest call
+    in the lane at 1.3 s - and the cache is bypassed when `get` is injected.
+
+    The variable list is in the key: adding one must not serve the older response
+    that lacks it.
+    """
+    params = {
         "latitude": lat, "longitude": lon,
         "start_date": f"{year}-01-01", "end_date": f"{year}-12-31",
         "hourly": ",".join(HOURLY_VARS),
         "timezone": "auto",
-    })
+    }
+    payload, _ = cache.cached_json(
+        "open-meteo", f"{lat:.5f},{lon:.5f},{year}",
+        lambda: (get or _default_get)(OPEN_METEO, params),
+        {"hourly": params["hourly"]},
+        use_cache=get is None, refresh=refresh,
+    )
+    return payload
 
 
 def fetch_pvgis(lat: float, lon: float, *, tilt: float = 20.0, azimuth: float = 0.0,
@@ -114,11 +130,18 @@ def fetch_pvgis(lat: float, lon: float, *, tilt: float = 20.0, azimuth: float = 
     `PVGIS-NSRDB` is not a valid v5_3 value and `PVGIS-SARAH3` reports Los Angeles
     out of coverage.
     """
-    return (get or _default_get)(PVGIS, {
+    params = {
         "lat": lat, "lon": lon, "peakpower": 1, "loss": 14,
         "angle": tilt, "aspect": azimuth, "mountingplace": "building",
         "outputformat": "json",
-    })
+    }
+    payload, _ = cache.cached_json(
+        "pvgis", f"{lat:.5f},{lon:.5f}",
+        lambda: (get or _default_get)(PVGIS, params),
+        {"angle": tilt, "aspect": azimuth, "loss": 14},
+        use_cache=get is None,
+    )
+    return payload
 
 
 def _pvgis_annual_and_sd(payload: dict) -> tuple[Optional[float], Optional[float]]:
@@ -146,9 +169,9 @@ def get_climate_site(
     rows = len((payload.get("hourly") or {}).get("time") or [])
     rel = weather_path(sid)
     if write:
-        target = _ROOT / rel
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(hourly_csv(payload))
+        # Atomic: a plain `write_text` interrupted part way leaves 8,760 rows of
+        # half a CSV that the next run happily reads as a complete year.
+        cache.atomic_write_path(_ROOT / rel, hourly_csv(payload).encode())
     notes.append(FetchRecord(
         layer="weather", what="open-meteo/archive",
         status="ok" if rows >= 8760 else "fallback",

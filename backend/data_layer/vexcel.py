@@ -47,6 +47,8 @@ from typing import Callable, Optional
 
 from backend.schema import FetchRecord, VexcelData, VexcelStructure
 
+from . import cache
+
 BASE = "https://api.vexcelgroup.com/v2"
 
 #: Obliques exist only in `urban`, and the layer set changes which collection is
@@ -197,36 +199,57 @@ def primary_structure(data: VexcelData) -> Optional[VexcelStructure]:
     return max(data.structures, key=lambda s: s.footprint_area_m2 or 0.0)
 
 
+#: What goes into the D4 cache key besides the point. `include=precomputed` and
+#: `include=precomputed,calculated` return different key sets for the same parcel
+#: (finding 4.3), so sharing an entry would serve a caller asking for roof height a
+#: payload that has none, silently.
+def _query_shape(layers: str) -> dict:
+    return {"include": "precomputed,calculated", "layer": layers, "srid": 4326}
+
+
 def get_vexcel_data_with_notes(
     wkt: str, *, layers: str = DEFAULT_LAYERS, stories: Optional[int] = None,
-    get: Optional[Getter] = None,
+    get: Optional[Getter] = None, refresh: bool = False,
 ) -> tuple[Optional[VexcelData], list[FetchRecord]]:
     """Parcel attributes and geometry for one point or area.
 
     Returns `(None, [FetchRecord])` when there is no parcel or the service stayed
     rate-limited, because both are normal outcomes for this lane rather than faults.
+
+    Cached by D4 when the default transport is used; **an injected `get` bypasses the
+    cache**. The HTTP status is cached with the body, because "no parcel here" is a
+    stable fact about coverage and worth not re-asking - but a 429 is not, since it
+    says nothing about the parcel and everything about the last few seconds.
     """
-    status, body = (get or _default_get)("property/extract", {
-        "wkt": wkt,
-        "srid": 4326,
-        # One call: `calculated` alone cannot be joined back to the precomputed
-        # structures, and `precomputed` alone leaves every height null.
-        "include": "precomputed,calculated",
-        "layer": layers,
-    })
-    if status == 403:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="missing",
-                                  detail=f"outside the licensed coverage: {wkt}")]
-    if status == 404:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="missing",
-                                  detail=f"no parcel at {wkt}")]
+    def fetch():
+        status, body = (get or _default_get)("property/extract", {
+            "wkt": wkt,
+            "srid": 4326,
+            # One call: `calculated` alone cannot be joined back to the precomputed
+            # structures, and `precomputed` alone leaves every height null.
+            "include": "precomputed,calculated",
+            "layer": layers,
+        })
+        return {"status": status, "body": body}
+
+    shape = _query_shape(layers)
+    payload, from_cache = cache.cached_json(
+        "vexcel", wkt, fetch, shape, use_cache=get is None, refresh=refresh)
+    status, body = payload.get("status"), payload.get("body")
+
     if status == 429:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="error",
-                                  detail="rate limited after retries")]
+        # Never cache a rate limit: it describes the service's last few seconds, not
+        # this parcel, and a cached 429 would poison the point until the key changed.
+        if get is None and not from_cache:
+            cache.path_for("vexcel", wkt, shape).unlink(missing_ok=True)
+        return None, [cache.record("vexcel.rate_limited", wkt)]
+    if status == 403:
+        return None, [cache.record("vexcel.outside_coverage", wkt)]
+    if status == 404:
+        return None, [cache.record("vexcel.no_parcel", wkt)]
     features = (body or {}).get("features") or []
     if not features:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="missing",
-                                  detail="response carried no features")]
+        return None, [cache.record("vexcel.no_features", wkt)]
 
     feature = features[0]
     props = feature.get("properties") or {}
@@ -237,6 +260,8 @@ def get_vexcel_data_with_notes(
         structures=_structures(props),
     )
     notes = [FetchRecord(layer="vexcel", what="property/extract", status="ok")]
+    if get is None:
+        notes.append(cache.cache_note("vexcel", "property/extract", hit=from_cache))
     primary = primary_structure(data)
     if not plausible_building_height(primary.attributes if primary else {}, stories):
         notes.append(FetchRecord(

@@ -12,6 +12,23 @@ import pytest
 from backend.data_layer import index, screening as d13
 from backend.schema import PropertySummary
 
+def golden_office() -> str:
+    """The California commercial golden property, discovered rather than named.
+
+    @yalexie1 moved it from `jfiEvosX974` to `ZSPaQbkGcJJ` (Culver Connect) in #253 and
+    every test here that named the old sid failed on `main`. The lane's own code already
+    discovers the set - `screening._GOLDEN_SIDS` and `demo_check.golden_sids()` both do -
+    so the tests do too.
+    """
+    from backend.data_layer import api
+
+    for folder in api._folders():
+        summary = api._load(folder, "property_summary.json")
+        if summary["segment"] == "commercial" and summary.get("state") == "CA":
+            return summary["sid"]
+    raise AssertionError("no California commercial golden property in specs/examples/")
+
+
 needs_kit = pytest.mark.skipif(not index.kit_available(), reason="no CoStar kit mirror")
 
 
@@ -210,12 +227,13 @@ def test_no_candidates_means_no_tiles():
 
 @needs_kit
 def test_screening_matches_the_golden_office_to_its_parcel():
-    summary = index.by_sid()["jfiEvosX974"]
+    sid = golden_office()
+    summary = index.by_sid()[sid]
     structures = [_structure(summary.lat, summary.lon, area=2938.0, solar=True)]
     found, notes = d13.screen(summary.lat, summary.lon, 60, get=_getter(structures))
     assert found, "the golden office did not match its own parcel"
     top = found[0]
-    assert top.summary.sid == "jfiEvosX974", "a sibling scan won the property"
+    assert top.summary.sid == sid, "a sibling scan won the property"
     assert top.roof_area_m2 == 2938.0 and top.has_solar is True
     assert top.distance_m < d13.MATCH_TOLERANCE_M
     assert any(n.what == "screening:matched" for n in notes)
@@ -227,13 +245,18 @@ def test_the_representative_scan_is_the_one_search_returns():
     user would audit, not a sibling suite - so this reuses `index.collapse` with the
     example folders' sids, not `search_results.json`, which holds three of the suites
     and cannot discriminate."""
-    assert d13._GOLDEN_SIDS == frozenset({"zvKHR9DHNjJ", "jfiEvosX974", "L3266YcPPvd"})
+    from backend.data_layer import api
+
+    discovered = frozenset(api._load(f, "property_summary.json")["sid"] for f in api._folders())
+    assert d13._GOLDEN_SIDS == discovered, \
+        "the golden set is read from specs/examples/, so it follows a fixture swap"
+    assert golden_office() in d13._GOLDEN_SIDS
 
 
 @needs_kit
 def test_a_filter_that_excludes_everything_gives_an_empty_list():
     """The workplan's acceptance: an empty result is an empty list."""
-    summary = index.by_sid()["jfiEvosX974"]
+    summary = index.by_sid()[golden_office()]
     structures = [_structure(summary.lat, summary.lon, shape="flat")]
     found, notes = d13.screen(summary.lat, summary.lon, 60,
                               filters=d13.Filters(roof_shape=frozenset({"dome"})),
@@ -245,7 +268,7 @@ def test_a_filter_that_excludes_everything_gives_an_empty_list():
 @needs_kit
 def test_index_side_filters_shrink_the_candidate_set_before_any_call():
     calls = []
-    summary = index.by_sid()["jfiEvosX974"]
+    summary = index.by_sid()[golden_office()]
     d13.screen(summary.lat, summary.lon, 400,
                filters=d13.Filters(segment="residential"), get=_getter([], calls))
     assert calls == [], "a segment with no candidates still called Vexcel"
@@ -253,7 +276,7 @@ def test_index_side_filters_shrink_the_candidate_set_before_any_call():
 
 @needs_kit
 def test_results_are_ranked_by_roof_area_and_say_so():
-    summary = index.by_sid()["jfiEvosX974"]
+    summary = index.by_sid()[golden_office()]
     nearby = [s for s in index.summaries()
               if s.lat and s.lon and d13._metres((summary.lat, summary.lon), (s.lat, s.lon)) <= 400]
     structures = [_structure(s.lat, s.lon, area=100.0 * (i + 1))
@@ -267,7 +290,7 @@ def test_results_are_ranked_by_roof_area_and_say_so():
 
 @needs_kit
 def test_an_unmatched_candidate_is_counted_not_dropped_silently():
-    summary = index.by_sid()["jfiEvosX974"]
+    summary = index.by_sid()[golden_office()]
     # A parcel far from every candidate: nothing matches, and the note says how many.
     found, notes = d13.screen(summary.lat, summary.lon, 60,
                               get=_getter([_structure(40.0, -90.0)]))

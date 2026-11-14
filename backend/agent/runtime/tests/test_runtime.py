@@ -110,3 +110,43 @@ def test_unknown_run_and_bad_file_name(tmp_path):
         store.load("nope")
     with pytest.raises(ValueError):
         store.files("x").path("../evil")
+
+
+# ---- event shapes the frontend shows (todo, question, approval) ----
+
+def test_a_todo_update_is_one_event_with_counts_and_the_current_item():
+    from backend.agent.runtime.runtime import map_chunk
+    todos = [{"content": "Fetch the property", "status": "completed"},
+             {"content": "Build the model", "status": "in_progress"},
+             {"content": "Simulate", "status": "pending", "extra": 1}]
+    (ev,) = map_chunk({"todos": todos})
+    assert ev.type == "todo" and ev.message == "1 of 3 done: Build the model"
+    assert ev.payload == {"todos": [{"content": t["content"], "status": t["status"]} for t in todos],
+                          "total": 3, "done": 1, "current": "Build the model"}
+    (last,) = map_chunk({"todos": [dict(t, status="completed") for t in todos]})
+    assert last.payload["current"] is None and last.message == "3 of 3 done"
+
+
+def test_a_question_and_an_approval_are_both_question_events_told_apart_by_kind():
+    from backend.agent.runtime.runtime import map_chunk
+    q = {"id": "q_x", "prompt": "How big?", "choices": []}
+    (ask,) = map_chunk({"question": q, "stage": "ask"})
+    assert ask.type == "question" and ask.payload == {"question": q, "kind": "question"}
+    proposal = {"doc_type": "retrofit_contract_residential", "state": "CA", "measure_ids": ["PV_ROOF"]}
+    (gate,) = map_chunk({"question": q, "kind": "approval", "approval": proposal})
+    assert gate.payload["kind"] == "approval" and gate.payload["approval"] == proposal
+
+
+def test_the_counsel_gate_reaches_the_stream_as_an_approval_event():
+    from backend.agent import live
+    run = live.LiveRun.__new__(live.LiveRun)
+    run._stage, run.pending, run._last_text = "S9", None, ""
+    proposal = {"doc_type": "retrofit_contract_residential", "state": "CA", "measure_ids": ["PV_ROOF"]}
+
+    class Interrupt:
+        value = {"approval": proposal}
+    (out,) = run._map_update({"__interrupt__": [Interrupt()]})
+    assert out["kind"] == "approval" and out["approval"] == proposal
+    assert out["question"]["id"] == "approve_retrofit_contract_residential"
+    assert [c["value"] for c in out["question"]["choices"]] == [True, False]
+    assert run.pending[0] == "approval"

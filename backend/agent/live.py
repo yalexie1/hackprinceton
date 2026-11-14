@@ -345,15 +345,17 @@ class LiveRun:
         for node, body in update.items():
             if node == "__interrupt__":
                 payload = body[0].value if body else {}
+                extra: dict = {}
                 if "question" in payload:
                     q = Question.model_validate(payload["question"])
                     self.pending = ("question", q)
                 elif "approval" in payload:
                     q = _approval_question(payload["approval"])
                     self.pending = ("approval", q)
+                    extra = {"kind": "approval", "approval": payload["approval"]}
                 else:
                     continue
-                out.append({"question": q.model_dump(mode="json"), "stage": self._stage})
+                out.append({"question": q.model_dump(mode="json"), "stage": self._stage, **extra})
             elif isinstance(body, dict):
                 if body.get("todos"):
                     out.append({"todos": body["todos"]})

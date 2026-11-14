@@ -200,14 +200,40 @@ def test_office_without_occupancy_gives_no_occupants_and_the_vintage_default(nam
     assert not any(x.source == "costar" and x.key.startswith("occupancy") for x in r.assumptions)
 
 
-def test_office_with_only_ended_tenancies_falls_back_to_the_vintage_default():
+def _with_tenancies(b, tenancies):
+    occ = b.costar.occupancy.model_copy(update={"tenancies": tenancies})
+    return b.model_copy(update={"costar": b.costar.model_copy(update={"occupancy": occ})})
+
+
+@pytest.mark.parametrize("how", ["ended", "empty"])
+def test_office_with_records_but_no_sitting_tenant_is_vacant(how):
+    # SPEC 5.1: no current tenancy -> office_vacant. D10 returns an empty list when the
+    # property has records but none is current; a fixture may pass ended ones instead.
     b = bundle("office")
-    occ = b.costar.occupancy
-    ended = [t.model_copy(update={"move_out": "2020-01-01"}) for t in occ.tenancies]
-    c = b.costar.model_copy(update={"occupancy": occ.model_copy(update={"tenancies": ended})})
-    r = build_registry(b.model_copy(update={"costar": c}))
+    tenancies = [t.model_copy(update={"move_out": "2020-01-01"}) for t in b.costar.occupancy.tenancies] \
+        if how == "ended" else []
+    r = build_registry(_with_tenancies(b, tenancies))
+    sch = by_key(r.assumptions)["occupancy.schedule"]
+    assert sch.value == "office_vacant" and sch.source == "costar"
+    assert r.systems.occupancy_schedule == "office_vacant"
     assert by_key(r.assumptions)["occupancy.count"].source == "vintage_default"
     assert r.systems.occupants is None
+
+
+@pytest.mark.parametrize("name", ["office", "office_houston"])
+def test_office_with_a_sitting_tenant_or_no_records_is_not_vacant(name):
+    assert build_registry(bundle(name)).systems.occupancy_schedule == "office"
+    b = bundle(name)
+    b = b.model_copy(update={"costar": b.costar.model_copy(update={"occupancy": None})})
+    r = build_registry(b)
+    assert r.systems.occupancy_schedule == "office"
+    assert "occupancy.schedule" not in by_key(r.assumptions)
+
+
+def test_a_user_can_override_the_vacant_schedule():
+    b = _with_tenancies(bundle("office"), [])
+    r = build_registry(b, overrides={"occupancy.schedule": "office"})
+    assert r.systems.occupancy_schedule == "office"
 
 
 # ---------------------------------------------------------------- feasibility flags

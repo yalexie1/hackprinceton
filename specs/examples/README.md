@@ -1,6 +1,6 @@
 # Example payloads for the shared contract
 
-One house and two offices, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.6). Lanes build and test against these files until the real doors are live.
+One house and two offices, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.7). Lanes build and test against these files until the real doors are live.
 
 **These files are hand-made examples, not analysis output and not a capture of sponsor data.** No API response and no CoStar kit record is copied here. Three kinds of value appear, and section 2 separates them:
 

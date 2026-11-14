@@ -1,6 +1,6 @@
 # Master spec
 
-Status: draft v0.3.6, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.7, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
@@ -13,6 +13,8 @@ v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so
 v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
 
 v0.3.4 adds `"not_cost_effective"` to `SkippedItem.reason`: the plan follows consultant practice (section 6.5), and a measure whose SIR is below 1 is never recommended or offered for financing.
+
+v0.3.7 adds `RunResult.data_source` (`live` or `example`: the property data the analysis ran on) and `RunResult.served_by` (`live` or `replay`), both optional, so a client never infers a run's provenance from warning text. A live run that assembled its bundle from `specs/examples/` reports `example`.
 
 v0.3.6 adds `BaselineResult.warnings` (default empty), where the A31 benchmark checks (physics 02 BEN-01 to BEN-03) report a baseline outside the published range for its type and climate. Warnings, never silent changes.
 
@@ -384,7 +386,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.6"
+SCHEMA_VERSION = "0.3.7"
 
 # ---------- primitives ----------
 
@@ -997,6 +999,9 @@ class RunResult(BaseModel):
     questions: list[Question] = []
     narrative_md: str = ""
     warnings: list[str] = []
+    data_source: Optional[Literal["live", "example"]] = None   # what the analysis ran on: live sponsor data, or the
+                                                # committed example bundle; a replayed recording keeps the value it was recorded with
+    served_by: Optional[Literal["live", "replay"]] = None      # how this result reached the client
 
 DocType = Literal["retrofit_contract_residential", "retrofit_contract_commercial",
                   "solar_installation_agreement", "bid_package_rfp",

@@ -9,6 +9,7 @@ import type {
 import { api, ApiError } from "../lib/api";
 import { demoDraft } from "../lib/fixtures";
 import { download } from "../lib/format";
+import DocumentText from "./DocumentText";
 const labels: Record<DocType, string> = {
   retrofit_contract_residential: "Residential retrofit contract",
   retrofit_contract_commercial: "Commercial retrofit contract",
@@ -43,30 +44,6 @@ export function documentScope(run: RunResult, docType: DocType) {
     (measure, index) =>
       measures.findIndex((item) => item.measure_id === measure.measure_id) ===
       index,
-  );
-}
-function DraftText({ text }: { text: string }) {
-  return (
-    <div className="draft-text">
-      {text.split("\n").map((line, i) => {
-        const content = line
-          .split(/(\{\{[^}]+\}\}|\[\[BLANK:[^\]]+\]\])/g)
-          .map((chunk, j) =>
-            chunk.startsWith("{{") || chunk.startsWith("[[BLANK:") ? (
-              <mark key={j}>{chunk}</mark>
-            ) : (
-              chunk
-            ),
-          );
-        return line.startsWith("# ") ? (
-          <h2 key={i}>{line.slice(2)}</h2>
-        ) : line.startsWith("## ") ? (
-          <h3 key={i}>{line.slice(3)}</h3>
-        ) : (
-          <p key={i}>{content.length && line ? content : "\u00a0"}</p>
-        );
-      })}
-    </div>
   );
 }
 export default function Documents({
@@ -363,11 +340,8 @@ export default function Documents({
               Export Markdown
             </button>
           </div>
-          <p className="inline-note">
-            <Info size={16} />
-            {draft.disclaimer}
-          </p>
-          <DraftText text={draft.markdown} />
+          <DocumentText text={draft.disclaimer} compact />
+          <DocumentText text={draft.markdown} />
           <div className="document-checklist">
             <h3>Review checklist</h3>
             {!draft.statutory_checks.length && (

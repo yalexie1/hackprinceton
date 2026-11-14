@@ -1,6 +1,6 @@
 # Example payloads for the shared contract
 
-One house and two offices, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.3). Lanes build and test against these files until the real doors are live.
+One house and two offices, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.4). Lanes build and test against these files until the real doors are live.
 
 **These files are hand-made examples, not analysis output and not a capture of sponsor data.** No API response and no CoStar kit record is copied here. Three kinds of value appear, and section 2 separates them:
 
@@ -1011,6 +1011,9 @@ all_statuses = set(C.Flag.model_fields["status"].annotation.__args__)
 check(FLAG_STATUSES == all_statuses, "goldens",
       f"Flag statuses not shown: {all_statuses - FLAG_STATUSES}")
 all_reasons = set(C.SkippedItem.model_fields["reason"].annotation.__args__)
+# `not_cost_effective` (contract 0.3.4, SPEC 6.5) is shown once the plans are regenerated under the
+# consultant-practice rule (#279); until then the goldens predate it.
+all_reasons -= {"not_cost_effective"}
 check(SKIP_REASONS == all_reasons, "goldens", f"skip reasons not shown: {all_reasons - SKIP_REASONS}")
 search = load("search_results.json", TOP["search_results.json"])
 if search is not None:

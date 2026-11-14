@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.3"
+SCHEMA_VERSION = "0.3.4"
 
 # ---------- primitives ----------
 
@@ -520,7 +520,8 @@ class PlanItem(BaseModel):
 
 class SkippedItem(BaseModel):
     measure_id: MeasureId
-    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done", "no_cost_data"]
+    reason: Literal["over_budget", "role", "feasibility", "no_savings", "not_cost_effective",
+                    "already_done", "no_cost_data"]
     detail: str
 
 class ValueUplift(BaseModel):

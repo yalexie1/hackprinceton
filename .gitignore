@@ -12,3 +12,4 @@ CLAUDE.local.md
 # downloaded sponsor data and caches (hackathon-only licence, never commit)
 mp_out/
 data/cache/
+data/fixtures/

@@ -80,7 +80,7 @@ def test_nothing_is_offered_that_has_no_template_file():
 
 
 def test_a_request_with_no_template_is_refused_rather_than_faked():
-    for doc_type in ("retrofit_contract_commercial", "cpace_package", "bid_package_rfp"):
+    for doc_type in ("cpace_package", "bid_package_rfp", "solar_installation_agreement"):
         with pytest.raises(LookupError) as caught:
             api.fill_template(_request(doc_type, "CA"), _run())
         assert doc_type in str(caught.value)

@@ -24,6 +24,7 @@ from typing import Any, AsyncIterator, Callable, Optional
 from backend.agent.ask import AskSession, make_ask_user
 from backend.agent.graph import build_auditor, detect_fallbacks
 from backend.agent.narrative import check_narrative
+from backend.agent.runtime.replan import PatchError, replan
 from backend.agent.runtime.runtime import DEFAULT_RUNS_DIR, RunStore, build_result, execute_run
 from backend.agent.tools import Doors, ToolContext, build_tools
 from backend.schema import (Choice, DocumentDraft, DocumentRequest, PropertyBundle, Question,
@@ -129,6 +130,7 @@ class LiveRun:
         # Tools share the run files (read-modify-write of measures.json, model.json), and
         # the model may issue parallel tool calls: one tool at a time per run.
         self._tool_lock = threading.RLock()
+        self._update_lock = threading.Lock()
         self._memo: dict[str, Any] = {}      # (tool, args, run state) -> result
         self.memo_hits = 0
         self._stage: Optional[str] = None
@@ -391,6 +393,17 @@ class LiveRun:
         self.pending = None
         self.active = True
         self._inbox.put(Command(resume={"value": value}))
+
+    def update(self, budget_usd: Optional[float], overrides: Optional[dict]) -> None:
+        """G11: a new budget and/or assumption values on a finished run; the plan is re-run by the
+        analysis door (no model call) and the events of the re-run join the stream."""
+        with self._update_lock:
+            if self.active or not self.closed:
+                raise PatchError(409, "run_not_done", f"run {self.run_id} is still running; adjust a finished run")
+            result = self.store.load(self.run_id)
+            new, events = replan(result, self.files, self.store, self.doors, budget_usd, overrides)
+            self.request = new.request
+            self.events.extend(events)
 
     def result(self) -> RunResult:
         if not self.active:

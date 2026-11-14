@@ -1,0 +1,52 @@
+"""Invented UI fixtures, never sponsor data or physics results. Regenerate explicitly."""
+import json
+import re
+from pathlib import Path
+OUT = Path(__file__).resolve().parents[1] / 'fixtures'
+VERSION = re.search(r'export const SCHEMA_VERSION = "([^"]+)"', (OUT.parent / 'src/lib/types.ts').read_text()).group(1)
+def r(n, unit='USD', spread=.18):
+    ends = sorted([n*(1-spread), n*(1+spread)])
+    return dict(low=round(ends[0],2), expected=n, high=round(ends[1],2), unit=unit)
+def energy(e, g, cost, co2): return dict(electricity_kwh=r(e,'kWh'), gas_kwh=r(g,'kWh'), cost_usd=r(cost), co2_kg=r(co2,'kg'))
+def flag(key): return dict(key=key,status='unknown',message='Requires an on-site inspection; not established by the illustrative fixture.',evidence=[])
+def measure(mid,title,cost,savings,kwh,co2,desc,office=False):
+    f=dict(installed_cost_usd=r(cost),cost_source='Illustrative UI fixture; no verified contractor pricing',incentives=[],net_upfront_usd=r(cost),annual_savings_usd=r(savings),annual_om_change_usd=0,useful_life_years=20,simple_payback_years=r(round(cost/savings,1),'years') if cost else None,discounted_payback_years=None,npv_usd=r(round(savings*12.46-cost)),sir=round(savings*12.46/cost,2) if cost else None,irr=None,discount_rate=.05,electricity_escalation=.02,gas_escalation=.02,analysis_period_years=20,financing=[dict(kind='cash',eligible=True,financed_usd=0,annual_payment_usd=0,net_cashflow_year1_usd=r(savings),notes=['Illustrative values for interface development.'])])
+    if office and cost: f['financing'].append(dict(kind='cpace',eligible=False,financed_usd=cost,rate=.075,term_years=20,annual_payment_usd=round(cost*.0981),net_cashflow_year1_usd=r(round(savings-cost*.0981)),notes=['Illustrative scenario only; eligibility has not been verified.','Assessment is a lien that runs with the property. Existing mortgage holder consent is normally required.']))
+    m=dict(measure_id=mid,title=title,applicable=True,description=desc,params={},savings=energy(kwh,0,savings,co2),finance=f,flags=[],anchors=[dict(room_id='work' if office else 'living',x=2,y=3,z=1.4,label=title)],evidence=[dict(kind='default_table',ref='illustrative-fixture',note='Invented for UI development; not measured or verified.')],formula_ids=[],warnings=['Illustrative estimate, not an energy audit.'])
+    return m
+for kind,office in [('house',False),('office',True)]:
+    sid='demo-office' if office else 'demo-house'
+    prop=dict(sid=sid,name='Westside workspace' if office else 'Silver Lake house',segment='commercial' if office else 'residential',use_type='office' if office else 'single_family',address='Illustrative office property' if office else 'Illustrative residential property',city='Houston' if office else 'Los Angeles',state='TX' if office else 'CA',lat=29.76 if office else 34.09,lon=-95.37 if office else -118.27,has_splat=not office,has_defurnished=True,pano_count=18 if office else 24,room_count=5 if office else 7,floor_count=1)
+    measures=[measure('LAYOUT','Daylight-first workspace',0,140,700,180,'Move work areas closer to useful daylight while avoiding glare.',office),measure('LGT_LED','Switch to LED lighting',850,320,1600,410,'Replace the existing fixtures with efficient LED lighting.',office),measure('ENV_AIRSEAL','Seal the envelope',1600,280,1400,360,'Reduce air leakage around doors, windows, and service penetrations.',office),measure('PV_ROOF','Put your roof to work',11200,1580,7900,2020,'A rooftop solar system sized to the available roof and annual demand.',office),measure('HVAC_RTU' if office else 'HVAC_HP','Upgrade the rooftop unit' if office else 'Install a heat pump',9600,920,4600,1180,'Replace aging equipment with a more efficient heating and cooling system.',office),measure('ROOF_COOL','Choose a cooler roof',5200,260,1300,330,'A reflective roof surface reduces summer heat gain.',office)]
+    pv=measures[3]
+    pv['solar']=dict(system_kw_dc=5.6,panel_count=14,panels=[dict(plane_id='roof-south',polygon_wkt=f'POLYGON (({x} {y}, {x+1} {y}, {x+1} {y+1.7}, {x} {y+1.7}, {x} {y}))',annual_kwh=564,shading_loss_fraction=.06) for y in [1,3] for x in range(1,8)],annual_kwh=r(7900,'kWh'),self_consumption_fraction=.76,electrical=flag('electrical.service'),structural=flag('roof.structure'))
+    measures[0]['layout']=dict(desks_requested=3 if office else 1,candidates=[dict(room_id='work',x=x,y=y,daylight=round(.9-x*.08,2),glare_risk=.16,comfort_ppd=9,score=round(.94-x*.065-y*.01,2),recommended=(x==1 and (office or y==1))) for y in range(1,4) for x in range(1,6)])
+    assumptions=[dict(key='wall.u_value',label='Wall insulation',value=r(.65,'W/m²K',.45),source='vintage_default',confidence=.45,evidence=[dict(kind='default_table',ref='illustrative-fixture')],user_editable=True),dict(key='hvac.cooling_cop',label='Cooling efficiency',value=r(2.8,'COP',.3),source='vintage_default',confidence=.55,evidence=[],user_editable=True),dict(key='electricity.rate',label='Electricity rate',value=r(.20,'USD/kWh',.1),source='vintage_default',confidence=.6,evidence=[],user_editable=True)]
+    model=dict(schema_version=VERSION,sid=sid,north_offset_deg=r(0,'degrees'),zones=[dict(id='work' if office else 'living',room_ids=['work' if office else 'living'],use='office' if office else 'living',floor_area_m2=186 if office else 158,volume_m3=520 if office else 426,conditioned=True)],surfaces=[dict(id='south-wall',zone_id='work' if office else 'living',kind='wall',boundary='exterior',area_m2=32,azimuth_deg=180,tilt_deg=90,u_value=r(.65,'W/m²K'))],systems=dict(hvac_type='rooftop_unit' if office else 'central_ac_furnace',heating_fuel='gas',cooling_cop=r(2.8,'COP'),heating_efficiency=r(.8,'fraction'),dhw_type='storage',dhw_fuel='gas',dhw_efficiency=r(.7,'fraction'),lighting_w_per_m2=r(10,'W/m²'),plug_w_per_m2=r(8,'W/m²'),infiltration_ach=r(.6,'ACH'),occupancy_schedule='office' if office else 'home'),roof_planes=[dict(id='roof-south',polygon_wkt='POLYGON ((0 0, 10 0, 10 7, 0 7, 0 0))',area_m2=70,tilt_deg=r(20,'degrees'),azimuth_deg=180,usable_area_m2=54,obstructions=[],geometry_source='assumed')],assumptions=assumptions,flags=[flag('electrical.service')])
+    outputs={}
+    for budget in [5000,15000,30000]:
+        # Generate canned response snapshots offline, never in the browser.
+        selected=[];spent=0;remaining=measures.copy()
+        # Canned UI-only scenarios follow the product's loading order. These
+        # invented values do not simulate interactions or size actual equipment.
+        def order(m):
+            step = 1 if m['measure_id'] == 'LAYOUT' else 4 if m['measure_id'] == 'PV_ROOF' else 3 if m['measure_id'].startswith('HVAC_') else 2
+            cost = m['finance']['net_upfront_usd']['expected']
+            return step, -m['finance']['npv_usd']['expected'] / max(cost, 1)
+        for m in sorted(measures, key=order):
+            if m['finance']['sir'] is not None and m['finance']['sir'] < 1:
+                continue
+            cost=m['finance']['net_upfront_usd']['expected']
+            if spent+cost<=budget:
+                spent+=cost
+                selected.append(dict(rank=len(selected)+1,measure=m,cumulative_upfront_usd=spent,remaining_budget_usd=budget-spent))
+                remaining.remove(m)
+        savings=sum(i['measure']['finance']['annual_savings_usd']['expected'] for i in selected)
+        kwh=sum(i['measure']['savings']['electricity_kwh']['expected'] for i in selected)
+        co2=sum(i['measure']['savings']['co2_kg']['expected'] for i in selected)
+        eligible = [m for m in remaining if m['finance']['sir'] is None or m['finance']['sir'] >= 1]
+        skipped = [dict(measure_id=m['measure_id'], reason='over_budget' if m in eligible else 'not_cost_effective', detail='Expected upfront cost exceeds the remaining cash budget.' if m in eligible else f"Not cost-effective: SIR {m['finance']['sir']:.2f} in this invented scenario.") for m in remaining]
+        plan=dict(budget_usd=budget,selected=selected,financeable=eligible,skipped=skipped,total_upfront_usd=r(spent),total_annual_savings_usd=r(savings),total_co2_kg=r(co2,'kg'),baseline_after=energy(22000-kwh,6000,5200-savings,8200-co2))
+        outputs[str(budget)]=dict(schema_version=VERSION,run_id=f'demo-{kind}-{budget}',status='done',request=dict(sid=sid,budget_usd=budget,role='owner_occupier'),property=prop,building_model=model,baseline=dict(annual=energy(22000,6000,5200,8200),end_use_kwh=dict(cooling=8500,heating=6000,lighting=4200,plug_loads=5300,water_heating=4000),monthly_electricity_kwh=[1300,1250,1400,1500,1900,2300,2600,2500,2200,1900,1650,1500],monthly_gas_kwh=[1100,950,700,450,250,150,100,100,200,400,650,950],peak_cooling_w=6500,peak_heating_w=8000,calibrated_to_bills=False),measures=measures,plan=plan,questions=[],narrative_md='Start with operations, then reduce loads, upgrade equipment, and consider solar last. Review every assumption before making a decision. All results in this demo are invented UI fixtures, not building analysis.',warnings=['Illustrative UI fixture: no sponsor data, verified costs, physics simulation, or legal review.'])
+    (OUT/f'{kind}.json').write_text(json.dumps(dict(illustrative=True,property=prop,runs=outputs),indent=2)+'\n')
+print('Generated two illustrative fixture sets (six complete run snapshots).')

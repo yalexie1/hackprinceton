@@ -1,0 +1,735 @@
+/* Readable at ordinary browser zoom, including the dense energy explorer. */
+:root {
+  font-size: 18px;
+  --muted: #536149;
+}
+body {
+  font-size: 18px;
+}
+main p,
+main small,
+.eyebrow,
+.fineprint,
+.section-description,
+.profile small,
+.breadcrumbs,
+.sidebar-note p,
+.workspace-label,
+.property-meta,
+.property-copy > p,
+.fixture-source,
+.coverage,
+.source-footer,
+.source-footer small,
+.source-footer p,
+.page-footer,
+.hero-intro p,
+.hero-copy .eyebrow,
+.perspective-strip,
+.energy-plan-summary,
+.energy-plan-summary > small,
+.energy-plan-summary > strong > small,
+.energy-hover-hint,
+.energy-tooltip > p,
+.energy-tooltip footer,
+.energy-tooltip-grid span,
+.energy-tooltip-grid > div > small,
+.energy-tooltip > p.energy-caveat,
+.energy-idle-card small,
+.energy-idle-card p,
+.scene-bottomline,
+.explorer-caption small,
+.scene-label {
+  color: #536149;
+}
+small {
+  line-height: 1.5;
+}
+.sidebar {
+  overflow-y: auto;
+}
+.brand > span:last-child > span {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+.brand {
+  margin-bottom: 30px;
+}
+.workspace-label {
+  letter-spacing: 0.08em;
+  font-size: 14px;
+}
+.nav-item {
+  font-size: 17px;
+  min-height: 48px;
+  padding: 12px;
+  gap: 10px;
+}
+.profile > div {
+  min-width: 0;
+}
+.profile small {
+  font-size: 14px;
+}
+.sidebar-note p {
+  max-width: none;
+}
+.breadcrumbs {
+  min-width: 0;
+}
+.breadcrumbs strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-right {
+  flex-shrink: 0;
+}
+.mode-switch button {
+  font-size: 16px;
+  min-height: 40px;
+}
+.mode-notice {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  line-height: 1.5;
+  gap: 8px;
+}
+.mode-notice > span:nth-of-type(2) {
+  font-size: 16px;
+  color: #536149;
+}
+.hero-intro {
+  width: 340px;
+}
+.hero-intro p {
+  font-size: 17px;
+  line-height: 1.7;
+}
+.hero-copy .eyebrow {
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+}
+.hero-property-link {
+  font-size: 17px;
+}
+.perspective-strip {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.strip-number {
+  font-size: 18px;
+}
+.property-meta {
+  flex-wrap: wrap;
+  gap: 8px 0;
+  font-size: 16px;
+}
+.property-type {
+  font-size: 14px;
+}
+.fixture-source {
+  font-size: 15px;
+  margin: 8px 0;
+}
+.search-box input,
+.filter-select select {
+  font-size: 16px;
+}
+.search-toolbar {
+  align-items: stretch;
+}
+.search-box,
+.filter-select {
+  min-height: 50px;
+}
+.house-explorer {
+  height: 820px;
+}
+.explorer-topbar {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  z-index: 7;
+}
+.explorer-caption {
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+}
+.explorer-caption small {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  max-width: 300px;
+}
+.view-switch button {
+  font-size: 16px;
+  min-height: 44px;
+  padding: 10px 13px;
+}
+.view-switch svg {
+  width: 18px;
+  height: 18px;
+}
+.scene-tools {
+  top: 145px;
+}
+.scene-tools button {
+  width: 40px;
+  height: 40px;
+}
+.scene-bottomline {
+  min-height: 70px;
+  height: auto;
+  gap: 12px;
+  padding: 12px 0;
+}
+.scene-bottomline > span,
+.scene-bottomline > small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.scene-bottomline > span {
+  flex-wrap: wrap;
+}
+.scene-room-panel {
+  bottom: 90px;
+}
+.scene-room-buttons button {
+  font-size: 16px;
+  min-height: 44px;
+}
+.scene-room-buttons button > span,
+.scene-label {
+  font-size: 14px;
+}
+.scene-insight {
+  width: 340px;
+  bottom: 90px;
+}
+.scene-insight strong {
+  font-size: 26px;
+}
+.scene-insight p,
+.scene-insight small {
+  font-size: 16px;
+}
+.energy-plan-summary {
+  top: 140px;
+  max-width: 280px;
+  gap: 8px;
+}
+.energy-plan-summary .scene-label {
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+.energy-plan-summary > strong {
+  font-size: 44px;
+}
+.energy-plan-summary > strong > small {
+  font-size: 18px;
+}
+.energy-plan-summary > span:not(.scene-label),
+.energy-plan-summary > small {
+  font-size: 16px;
+}
+.energy-legend {
+  width: 310px;
+  bottom: 90px;
+}
+.energy-scope button {
+  font-size: 16px;
+  min-height: 44px;
+  padding: 10px;
+}
+.energy-scope button span {
+  font-size: 16px;
+}
+.energy-hover-hint {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.energy-findings {
+  max-height: 190px;
+}
+.energy-findings > button {
+  font-size: 16px;
+  min-height: 48px;
+  line-height: 1.4;
+  padding: 10px;
+}
+.energy-findings > button > span,
+.energy-findings > button > small {
+  font-size: 14px;
+}
+.energy-hotspot > span {
+  width: 34px;
+  height: 34px;
+}
+.energy-hotspot > span > svg {
+  width: 17px;
+  height: 17px;
+}
+.energy-hotspot > small {
+  font-size: 16px;
+  color: #405b2e;
+}
+.energy-detail-host {
+  width: 390px;
+  bottom: 90px;
+  z-index: 10;
+}
+.energy-tooltip {
+  padding: 22px;
+  max-height: 510px;
+}
+.energy-tooltip-top {
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+}
+.energy-tooltip-top button {
+  width: 36px;
+  height: 36px;
+}
+.energy-tooltip h3 {
+  font-size: 29px;
+}
+.energy-tooltip > p {
+  font-size: 16px;
+  line-height: 1.65;
+}
+.energy-tooltip-grid {
+  gap: 18px 14px;
+}
+.energy-tooltip-grid span {
+  font-size: 15px;
+  line-height: 1.45;
+}
+.energy-tooltip-grid strong {
+  font-size: 27px;
+}
+.energy-tooltip-grid strong small,
+.energy-tooltip-grid > div > small {
+  font-size: 14px;
+}
+.energy-design-note,
+.energy-tooltip > p.energy-caveat,
+.energy-tooltip footer {
+  font-size: 15px;
+  line-height: 1.65;
+}
+.energy-related button {
+  font-size: 15px;
+  padding: 10px;
+}
+.energy-idle-card {
+  width: 330px;
+  bottom: 90px;
+}
+.energy-idle-card small,
+.energy-idle-card p {
+  font-size: 15px;
+}
+.energy-idle-card strong {
+  font-size: 27px;
+}
+.house-explorer.house-embedded {
+  height: 580px;
+}
+.house-embedded .view-switch button {
+  font-size: 14px;
+}
+.house-embedded .energy-plan-summary {
+  top: 85px;
+  max-width: 240px;
+}
+.house-embedded .energy-plan-summary > strong {
+  font-size: 32px;
+}
+.house-embedded .energy-plan-summary > span:not(.scene-label) {
+  font-size: 14px;
+}
+.house-embedded .energy-legend {
+  width: 230px;
+  bottom: 85px;
+}
+.house-embedded .energy-scope button {
+  font-size: 14px;
+  padding: 8px;
+}
+.house-embedded .scene-tools {
+  bottom: 85px;
+}
+.house-embedded .scene-bottomline {
+  min-height: 70px;
+  flex-wrap: wrap;
+}
+.house-embedded .scene-bottomline > span,
+.house-embedded .scene-bottomline > small {
+  font-size: 14px;
+}
+.house-embedded .energy-detail-host {
+  bottom: 145px;
+}
+.house-embedded .energy-tooltip {
+  max-height: 370px;
+  padding: 18px;
+}
+.house-embedded .energy-tooltip h3 {
+  font-size: 25px;
+}
+@media (max-height: 950px) {
+  .sidebar-note {
+    display: none;
+  }
+}
+@media (max-width: 1200px) {
+  .perspective-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .hero-intro {
+    width: auto;
+    max-width: 660px;
+  }
+  .hero-intro p {
+    font-size: 17px;
+  }
+  .house-explorer {
+    height: 900px;
+  }
+  .explorer-caption {
+    width: 100%;
+  }
+  .energy-plan-summary {
+    top: 175px;
+  }
+  .scene-tools {
+    top: 175px;
+  }
+  .energy-detail-host {
+    left: 20px;
+    right: 20px;
+    width: auto;
+    max-width: 610px;
+    bottom: 85px;
+  }
+  .energy-tooltip {
+    max-height: 440px;
+  }
+  .energy-idle-card {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .topbar {
+    gap: 12px;
+    padding: 0 16px;
+  }
+  .breadcrumbs {
+    flex: 1;
+  }
+  .topbar-right {
+    gap: 0;
+  }
+  .topbar-right .avatar {
+    display: none;
+  }
+  .hero-intro {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .hero-intro p {
+    font-size: 17px;
+  }
+  .hero-property-link {
+    width: auto;
+    font-size: 17px;
+  }
+  .house-explorer {
+    height: 900px;
+  }
+  .explorer-caption {
+    font-size: 14px;
+  }
+  .explorer-caption small {
+    font-size: 14px;
+  }
+  .explorer-topbar {
+    left: 14px;
+    right: 14px;
+  }
+  .view-switch {
+    width: 100%;
+  }
+  .view-switch button {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 16px;
+  }
+  .energy-plan-summary {
+    left: 15px;
+    top: 175px;
+    max-width: calc(100% - 85px);
+  }
+  .energy-plan-summary > strong {
+    font-size: 38px;
+  }
+  .energy-plan-summary > span:not(.scene-label),
+  .energy-plan-summary > small {
+    font-size: 15px;
+  }
+  .scene-tools {
+    top: 185px;
+  }
+  .energy-legend {
+    left: 14px;
+    right: 14px;
+    width: auto;
+    bottom: 100px;
+  }
+  .energy-scope {
+    width: 100%;
+  }
+  .energy-scope button {
+    font-size: 16px;
+  }
+  .energy-findings {
+    max-height: 100px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .energy-findings > button {
+    white-space: normal;
+    min-height: 44px;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .energy-findings > button > small {
+    display: none;
+  }
+  .energy-tooltip {
+    max-height: 440px;
+    padding: 18px;
+  }
+  .energy-detail-host {
+    bottom: 105px;
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+  .energy-tooltip h3 {
+    font-size: 26px;
+  }
+  .energy-tooltip > p {
+    font-size: 16px;
+  }
+  .energy-tooltip-grid strong {
+    font-size: 25px;
+  }
+  .energy-tooltip-grid span {
+    font-size: 15px;
+  }
+  .energy-tooltip-grid strong small {
+    font-size: 14px;
+  }
+  .scene-bottomline {
+    left: 15px;
+    right: 15px;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 90px;
+    gap: 6px;
+  }
+  .scene-bottomline > span,
+  .scene-bottomline > small {
+    font-size: 14px;
+  }
+  .perspective-strip {
+    font-size: 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .perspective-strip > span {
+    max-width: none;
+  }
+  .strip-number {
+    display: inline;
+    margin-right: 10px;
+  }
+  .search-toolbar {
+    flex-direction: column;
+  }
+  .search-box,
+  .filter-select {
+    width: 100%;
+  }
+  .property-type {
+    font-size: 14px;
+  }
+  .property-copy > p,
+  .property-meta,
+  .fixture-source {
+    font-size: 16px;
+  }
+  .house-embedded .energy-detail-host {
+    bottom: 145px;
+  }
+  .house-embedded .energy-tooltip > p {
+    font-size: 16px;
+  }
+}
+main svg text {
+  font-size: 16px;
+}
+/* Keep a readable inspector in view even when the taller model is scrolled. */
+.house-viewer .energy-detail-host {
+  position: fixed;
+  left: auto;
+  right: 24px;
+  bottom: 24px;
+  width: 420px;
+  max-width: calc(100vw - 48px);
+  z-index: 30;
+}
+.energy-detail-host .energy-tooltip {
+  max-height: min(75dvh, 620px);
+}
+.energy-tooltip-top {
+  position: sticky;
+  top: -22px;
+  padding: 8px 0;
+  background: #fcfcf5;
+  z-index: 2;
+}
+.energy-tooltip-top button {
+  width: 40px;
+  height: 40px;
+}
+@media (max-width: 760px) {
+  .house-viewer .energy-detail-host {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    max-width: none;
+  }
+  .energy-detail-host .energy-tooltip {
+    max-height: min(72dvh, 560px);
+  }
+  .energy-tooltip-top {
+    top: -18px;
+  }
+}
+
+/* Audit provenance can include long explanations of competing data sources. */
+.run-warnings {
+  min-width: 0;
+}
+.run-warnings h3 {
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+.run-warnings p,
+.warning-detail {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.warning-detail {
+  padding: 16px 0;
+  border-bottom: 1px solid #d6d6c6;
+}
+.warning-detail summary {
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.warning-detail summary svg {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.warning-detail summary span {
+  color: #315641;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.warning-detail p {
+  line-height: 1.75;
+}
+
+.calibration-panel {
+  margin: 0 0 28px;
+  padding: 24px;
+  border: 1px solid #c9d3c4;
+  border-radius: 16px;
+  background: #f4f6ed;
+}
+.calibration-panel h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+.calibration-panel p {
+  line-height: 1.7;
+}
+.calibration-table-wrap {
+  overflow-x: auto;
+}
+.calibration-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+.calibration-panel th,
+.calibration-panel td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px;
+  border-bottom: 1px solid #d2d9cc;
+}
+.calibration-panel summary,
+.roof-detections summary {
+  cursor: pointer;
+  font-weight: 650;
+  padding: 12px 0;
+}
+.roof-layer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+.roof-layer-controls label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+.roof-layer-controls input {
+  width: 20px;
+  height: 20px;
+}
+.roof-layer-controls span {
+  font-size: 16px;
+  color: #344c3d;
+}
+.roof-detections {
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  margin: 16px 0;
+}
+.event progress {
+  width: min(100%, 300px);
+  height: 12px;
+}

@@ -1,0 +1,7 @@
+# The replay server also loads graph descriptors when looking for recorded demos.
+# Use the server owner's declared dependencies; no model calls or keys are needed.
+-r ../../backend/agent/requirements.txt
+pydantic==2.14.3
+fastapi==0.162.7
+uvicorn==0.54.0
+httpx==0.28.1

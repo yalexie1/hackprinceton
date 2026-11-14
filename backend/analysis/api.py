@@ -49,7 +49,7 @@ from backend.analysis.physics.zone import zone_loads
 from backend.analysis.solar.layout import Module, layout_pv
 from backend.analysis.model.benchmark.checks import check_baseline, check_pv
 from backend.analysis.model.geometry import build_geometry
-from backend.analysis.model.registry import (build_registry, merge_assumptions, scanned_floor_area_m2,
+from backend.analysis.model.registry import (build_registry, climate_zone, merge_assumptions, scanned_floor_area_m2,
                                              set_model_assumption)
 from backend.analysis.solar.roof import build_parametric_roof, refine_with_masks
 from backend.analysis.solar.shading import shade_panels
@@ -437,12 +437,23 @@ def _benchmarked(bundle: PropertyBundle, model: BuildingModel, result: BaselineR
     One building in five really does sit outside the 10th-to-90th band, so a warning asks for a
     look at the end uses it names; it is never evidence on its own that the model is wrong.
     """
-    warnings, _ = check_baseline(result, _floor_area(model), bundle.summary.use_type,
-                                 bundle.climate.climate_zone,
+    # The zone comes through the registry, not straight off the bundle: it falls back on the
+    # state (CA to 3B, TX to 2A) and says so. Reading `bundle.climate.climate_zone` directly
+    # meant the benchmark reported `not_checked: no climate zone` for every bundle whose zone
+    # was unset - which was every live one - so the only sanity check on the model was off
+    # exactly when its numbers were real. The registry's own consumers never noticed, because
+    # they had this fallback all along.
+    zone, how = climate_zone(bundle)
+    warnings, _ = check_baseline(result, _floor_area(model), bundle.summary.use_type, zone,
                                  building_area_m2=bundle.costar.building_area_m2 if bundle.costar else None)
+    # Said only when the zone did not come from the site itself: a benchmark cut chosen from the
+    # state is a weaker comparison than one chosen from the building's own weather, and a reader
+    # comparing two properties in one state should know they were put in the same box.
+    assumed = [f"The energy-use benchmark used {how}, not a zone established for this site."] \
+        if zone and not bundle.climate.climate_zone else []
     # The weather note comes first: it says which year produced every number below it, so a
     # reader who stops after one line has read the one that changes how to read the rest.
-    added = [*climate_notes(bundle), *warnings]
+    added = [*climate_notes(bundle), *assumed, *warnings]
     if not added:
         return result
     return result.model_copy(update={"warnings": [*result.warnings, *added]})

@@ -1533,3 +1533,54 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | State without a kit mirror | live, kit hidden | 2026-11-14 | Houston resolves **TX** and 0.0896 USD/kWh; the old default gave CA and 0.3002 |
 | Segment signals without a kit | live, 4 properties | 2026-11-14 | room labels positive-only; `property_classifications` empty on all; **Vexcel `building-type.class` says `condo_apartment` for both offices** |
 | Realignment peak cost (#295, 5.1f) | three random 8,760-h series through `_realign_half_hour` | 2026-11-14 | annual sum preserved (delta ≤ 4.7e-10); **peak reduced ~13 %** (1,114 → 969 W/m²) |
+
+## 9. Every external source this lane uses — D19
+
+Added 2026-11-14 for the "How it works" page (Vignesha's request; the lead's instruction to
+@vinayak-sinha is to render or link this, never to paraphrase the numbers). The endpoints and
+parameters below are read out of the code, not remembered: each row names the module that calls
+it. **Sponsor data is hackathon-licensed and must not leave the team**; only the public sources
+in the lower half may be quoted openly.
+
+### 9.1 Sponsor sources
+
+| What | Endpoint, as the code calls it | Caller | Gives | Cost |
+|---|---|---|---|---|
+| Matterport Model API | `POST https://api.matterport.com/api/models/graph` (GraphQL, read-only; **never a mutation** — one production environment shared by every team) | `matterport.py` | rooms, wall graph with openings, panoramas, floorplans, the georeference, MatterPak and splat availability | ~1 s |
+| Vexcel property extract | `POST https://api.vexcelgroup.com/v2/property/extract`, `include=precomputed`, layers `urban,urban-r,wide-area,urban-g` | `vexcel.py` | parcel polygon, one feature **per capture collection**, structures with footprints and roof attributes | 0.3–1.1 s |
+| Vexcel ortho crop | `POST .../ortho/extract`, layer `urban`, `srid=4326`, `crop=bounding_box` | `imagery.py` | the aerial image under the roof view. **Returns JPEG**, not PNG | 0.52 s |
+| Vexcel obliques | `POST .../oriented/extract`, `product-type=<direction>`, `rotation=natural` | `imagery.py` | four oblique crops. **Not fetched** on a bundle: nothing reads them and the endpoint 429s (2.88 s for four) | — |
+| Vexcel detection | `POST .../elements/detect` (SAM 3, open-vocabulary) | `imagery.py` | roof masks. **Obstruction counts come from Vexcel's precomputed `roof-objects`, not from these masks** — SAM 3 missed a chimney the attributes report and invented two skylights they deny | — |
+| CoStar data kit | the mirrored zip, 42 files / 404 MB; `commercial-property.jsonl` and the starter CSVs | `costar.py`, `index.py` | property record, use type, vintage, storeys, building area, tenancy, market comps | local |
+
+### 9.2 Public sources
+
+| What | Endpoint or file | Caller | Gives | Verified |
+|---|---|---|---|---|
+| TMYx typical year | `https://climate.onebuilding.org` Region 4 USA index, then the station's 2011–25 zip | `tmyx.py` | the hourly weather year. Station rule: ≥25 years of record to 2020 or later, within 100 m of site elevation, nearest within 50 km | 2026-11-14 |
+| Open-Meteo archive | `GET https://archive-api.open-meteo.com/v1/archive` | `external.py` | the fallback year when no TMYx station qualifies; a `fallback` record says why | 2026-11-14 |
+| PVGIS | `GET https://re.jrc.ec.europa.eu/api/v5_3/PVcalc`, `peakpower=1`, `loss=14`, `angle=20`, `aspect=0`, `mountingplace=building` | `external.py` | annual yield per kWp and its inter-annual SD, for the PV-10 cross-check. **The stored figure must be the building-mounted one** — free-standing reads 4.4 % higher | 2026-11-14 |
+| EIA electricity price | `GET https://api.eia.gov/v2/electricity/retail-sales/data/` | `external.py` | state average retail price by sector. A **state average, not a utility schedule**, and the `FetchRecord` says so | 2026-11-14 |
+| EIA gas price | `GET https://api.eia.gov/v2/natural-gas/pri/sum/data/` | `external.py` | state average delivered gas price, USD per thousand cubic feet, converted at 303.915 kWh/MCF (**never** divided by 29.3071, which is the per-therm factor) | 2026-11-14 |
+| US Census geocoder | `GET https://geocoding.geo.census.gov/geocoder/geographies/coordinates`, benchmark `Public_AR_Current`, vintage `Current_Current`, layers `Incorporated Places,Counties` | `places.py` | the serving utility's place and the state FIPS. Used instead of CoStar's `City`, which is a **mailing** city — right 14/14 for Los Angeles and 9 of 16 for Houston | 2026-11-14 |
+| OpenEI utility rates | `GET https://api.openei.org/utility_rates` | `external.py` | tariff lookup; unused where no regulated retail tariff exists (Texas) | 2026-11-14 |
+| ASHRAE 169-2021 zone | computed, no endpoint: CDD10 and HDD18 from the site's own hourly temperatures | `external.py` `climate_zone_from_temperatures` | the climate zone digit. The **letter** needs precipitation this lane does not fetch and is taken from the state, which the record states | 2026-11-14 |
+
+### 9.3 Where the other lanes' sources live
+
+The benchmark distributions (RECS 2020, CBECS 2018, ENERGY STAR national medians) are in
+`specs/physics/02-thermal-systems.md` section 13.1 with their URLs and read dates; the solar,
+thermal, daylight and economics equations are in `specs/physics/01` to `04`; the statutes cited
+by the legal templates are in `specs/legal/`. Those are not this lane's to restate.
+
+### 9.4 What a figure's provenance looks like in the result
+
+Nothing on a page needs to be taken on trust: every number carries its own route back to a source.
+
+| Object | Field | Holds |
+|---|---|---|
+| `PropertyBundle` | `provenance` | one `FetchRecord` per fetch — `layer`, `what`, `status` (`ok`, `missing`, `locked`, `error`, `fallback`), `detail` |
+| `Assumption` | `source`, `evidence` | `user`, `measured`, `costar`, `vexcel`, `vision`, `published_default`, `vintage_default`, each with `EvidenceRef`s naming the pano, attribute key or table |
+| `MeasureResult` | `formula_ids`, `evidence`, `anchors`, `warnings` | the physics entries used (`PV-10`, `BEN-03`, `VAL-01`, `TAR-03`, …), which resolve to `specs/physics/` |
+| `BaselineResult` | `warnings`, `calibration` | the weather year actually used, the benchmark band, and any bill calibration |
+| `RunResult` | `data_source`, `served_by`, `warnings` | whether the property data was `live` or `example`, and whether this answer was computed or replayed |

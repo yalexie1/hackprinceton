@@ -1,6 +1,6 @@
 # Master spec
 
-Status: draft v0.3.3, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.4, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
@@ -11,6 +11,8 @@ v0.3.1 adds `CostarData.parent_ids`: one Matterport scan can be attached to seve
 v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so the area of a detection is the area of its own mask, never a sum of masks, a bounding box or a hull. `mask_wkt` stays `None` until a true polygon is derived from the mask.
 
 v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
+
+v0.3.4 adds `"not_cost_effective"` to `SkippedItem.reason`: the plan follows consultant practice (section 6.5), and a measure whose SIR is below 1 is never recommended or offered for financing.
 
 Companion files:
 
@@ -216,32 +218,58 @@ The home flow uses the same engine for a home-office desk or reading spot.
 
 ### 6.5 Budget algorithm
 
-Exactly as the team specified: rank by annual dollar savings; if the top measure does not fit, go to the next.
+The plan follows what an energy consultant would recommend: fix operations first, then cut the loads, then right-size the equipment against the smaller loads, and only then generate. Within each step the most cost-effective measure goes first, and a measure that costs more over its life than it saves is never recommended. Decided by the lead on 2026-11-14 (`decisions.md`); it replaces "rank by annual dollar savings; solar sized to the budget left", which let solar take 90 % of the house budget.
+
+**Loading order.** Every measure belongs to one step, applied in this order:
+
+| Step | Measures | Why this order |
+|---|---|---|
+| 1 Operations | `LAYOUT`, `CTRL_TSTAT`, `LGT_CTRL`, `PLUG_MGMT`, `HVAC_ECON` | little or no cost, and they change the hours the loads run |
+| 2 Load reduction | `ENV_AIRSEAL`, `ENV_ATTIC`, `ENV_WALL`, `WIN_REPLACE`, `WIN_FILM`, `WIN_SHADE`, `ROOF_COOL`, `LGT_LED`, `HVAC_DUCT` | shrink the heating, cooling and lighting loads before equipment is sized |
+| 3 Equipment | `HVAC_HP`, `HVAC_RTU`, `DHW_HPWH` | sized and evaluated against the loads left after steps 1 and 2 |
+| 4 Generation | `PV_ROOF` | sized against the electricity left after steps 1 to 3 |
+
+**Cost-effectiveness.** For each measure, at expected values (physics 04):
+- `SIR` is the discounted savings-to-investment ratio (ECO-09, `FinancialBreakdown.sir`). A measure is recommended only if `SIR >= 1`. Below 1 it is skipped with reason `not_cost_effective`, and its SIR is quoted in the detail.
+- The ranking key is the profitability index, `PI = NPV / net_upfront_usd`. A measure with `net_upfront_usd <= 0` comes first in its step, ordered by NPV.
 
 ```
 state     = baseline building
 remaining = budget
 plan      = []
-pool      = applicable measures
 
-repeat:
-    for m in pool: evaluate m against state      # savings depend on what is already chosen
-    order pool by annual_savings_usd.expected, highest first
-    pick the first m with net_upfront_usd.expected <= remaining and annual_savings_usd.expected > 0
-    if none: stop
-    plan.append(m); remaining -= m.net_upfront_usd.expected
-    state = state with m applied; pool.remove(m)
+for step in (1 Operations, 2 Load reduction, 3 Equipment):
+    pool = applicable measures of this step
+    repeat:
+        for m in pool: evaluate m against state         # interactions with what is already chosen
+        eligible = [m in pool with SIR(m) >= 1]
+        pick the eligible m with the highest PI and net_upfront_usd.expected <= remaining
+        if none: break
+        plan.append(m); remaining -= m.net_upfront_usd.expected
+        state = state with m applied; pool.remove(m)
 
-financeable = every measure left in pool with positive savings, evaluated against the final state
+# step 4, solar, last
+size PV_ROOF against state: the largest system the roof allows, capped at the state's annual
+    electricity, then the candidate sizes 100 %, 75 % and 50 % of that; keep the one with the highest NPV
+if its SIR >= 1:
+    if net_upfront_usd.expected <= remaining: select it
+    else: shrink it to the largest size that fits remaining; select the shrunk system only if it is at
+          least the minimum practical size (2 kW DC for a home, 10 kW DC otherwise [J]) and its SIR >= 1;
+          otherwise PV_ROOF is financeable at the economic size
+
+financeable = every measure not selected with SIR >= 1, evaluated against the final state,
+              ordered by step and then by PI
 ```
 
 Rules:
 
-- Zero-cost measures are always evaluated first, since they always fit.
 - A measure whose `net_upfront_usd.high` exceeds `remaining` is still picked on its expected cost, and carries the warning "may exceed budget".
-- Each skipped measure records why: over budget, role, feasibility, no positive savings, already done, or no cost data.
+- Each skipped measure records why: over budget, role, feasibility, no positive savings, not cost-effective, already done, or no cost data.
 - A measure with no verified cost source is never priced from a guess. It is skipped with reason `no_cost_data` and the detail "no verified cost; needs a quote", unless the user enters a quote. Today that is `WIN_FILM`, `WIN_SHADE` and `PLUG_MGMT` (`specs/physics/04-economics-emissions-mv.md`, COST-01).
-- Payback, NPV and SIR are shown but do not change the order.
+- The order within a step is by PI, not by annual savings: a measure that saves fewer dollars a year but returns more per dollar invested goes first. Payback is shown but never ranks.
+- Over-budget measures that are cost-effective are the financeable list, the input to the C-PACE and loan views. A measure that is not cost-effective is never offered for financing.
+- The narrative states the loading order and why solar comes last when it is skipped or shrunk.
+- When the bills calibrate the model (A6), every SIR and NPV above uses the calibrated baseline; when they do not, the plan says its savings are uncalibrated estimates.
 
 ### 6.6 Financial breakdown
 
@@ -352,7 +380,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.3"
+SCHEMA_VERSION = "0.3.4"
 
 # ---------- primitives ----------
 
@@ -870,7 +898,8 @@ class PlanItem(BaseModel):
 
 class SkippedItem(BaseModel):
     measure_id: MeasureId
-    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done", "no_cost_data"]
+    reason: Literal["over_budget", "role", "feasibility", "no_savings", "not_cost_effective",
+                    "already_done", "no_cost_data"]
     detail: str
 
 class ValueUplift(BaseModel):

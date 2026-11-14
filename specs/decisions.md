@@ -14,7 +14,7 @@ Status: **in force**, **pending** (decided, not yet implemented), **proposed** (
 
 | Date | Decision | Where | Status |
 |---|---|---|---|
-| 2026-11-14 | **Plan rule follows consultant practice** (loading order: operational and zero-cost first, then efficiency, then generation; rank by cost-effectiveness; a measure must have SIR ≥ 1 to be recommended; solar sized last against the load left). Replaces "rank by annual dollar savings; solar sized to the budget left". | SPEC 6.5 (rewrite pending), `finance/plan/` (Srihaan, A26) | pending |
+| 2026-11-14 | **Plan rule follows consultant practice** (loading order: operational and zero-cost first, then efficiency, then generation; rank by cost-effectiveness; a measure must have SIR ≥ 1 to be recommended; solar sized last against the load left). Replaces "rank by annual dollar savings; solar sized to the budget left". | SPEC 6.5 and contract 0.3.4 (`not_cost_effective`) (#279); implementation in `finance/plan/` and `api._design` (Srihaan, A26), then the examples are regenerated | pending (code) |
 | 2026-11-14 | **Build A6 bill calibration now.** With bills, calibrate the baseline within each assumption's range to physics 04 MV-04 (monthly NMBE ±5 %, CV(RMSE) ≤ 15 %); without bills, results say they are uncalibrated. | #276, physics 04 MV | pending |
 | 2026-11-14 | **Roof: the floor plate decides the building and the extent.** Design roof = structure containing the CoStar address point; disagreements broken by `building_area_m2 / stories`; georeference as fallback; tower over podium designs on the tower; a larger outline is a `PV_ROOF` warning, never the design roof. Designing on the podium is not supported. | SPEC 6.3 step 3 (#262, #263); D16 #247; A19 #251; data-integration 4.5a (#264) | in force |
 | 2026-11-14 | **Roof mask check stays symmetric ±15 % for every roof.** The flat-roof 40 % floor (#242) was calibrated on wrong-building data and is reverted. | `solar/roof/masks.py` (#251) | in force |
@@ -40,7 +40,7 @@ Status: **in force**, **pending** (decided, not yet implemented), **proposed** (
 
 | Date | Decision | Where | Status |
 |---|---|---|---|
-| 2026-11-14 | **The LA office example is Culver Connect** (Matterport `ZSPaQbkGcJJ`, CoStar 27120), chosen for its scan (17 rooms, 339 panoramas), replacing 246899 / `jfiEvosX974`; Houston moves to its D16 structure (1,104.5 m²). | #253, PR #275 | pending (merge) |
+| 2026-11-14 | **The LA office example is Culver Connect** (Matterport `ZSPaQbkGcJJ`, CoStar 27120), chosen for its scan (17 rooms, 339 panoramas), replacing 246899 / `jfiEvosX974`; Houston moves to its D16 structure (1,104.5 m²). | #253, #275 | in force |
 | 2026-11-14 | **LA example budgets $150,000 (landlord) and $75,000 (tenant)**, sized to the 2,312 m² full-floor suite; made by the rebuild, not yet confirmed by the lead. | PR #275 | proposed |
 
 ## Team, demo and process

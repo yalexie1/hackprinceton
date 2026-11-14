@@ -1194,6 +1194,7 @@ export default function App() {
                     <AuditNarrative
                       text={run.narrative_md}
                       warnings={run.warnings}
+                      concise
                     />
                     <button
                       className="text-button"

@@ -30,21 +30,50 @@ export default function Warnings({ warnings }: { warnings: string[] }) {
   );
 }
 
+/**
+ * The first paragraph that says something, and the rest of the report.
+ *
+ * The report is 2,800 to 3,000 characters across seven to nine paragraphs. On the plan page a
+ * reader wants the short version; the detail belongs where they go looking for it. The split is
+ * on the report's own paragraphs, and not one word is rewritten - the numbers in it are the
+ * backend's, and the specs are the record.
+ */
+export function splitNarrative(text: string): { lead: string; rest: string } {
+  const paragraphs = text.split(/\n{2,}/).filter((p) => p.trim());
+  const first = paragraphs.findIndex((p) => !p.trim().startsWith("#"));
+  if (first < 0) return { lead: text, rest: "" };
+  return {
+    lead: paragraphs.slice(0, first + 1).join("\n\n"),
+    rest: paragraphs.slice(first + 1).join("\n\n"),
+  };
+}
+
 export function AuditNarrative({
   text,
   warnings,
+  concise = false,
 }: {
   text: string;
   warnings: string[];
+  concise?: boolean;
 }) {
-  const content = (
-    <DocumentText
-      variant="report"
-      text={
-        text ||
-        "Review the selected measures and their evidence before moving ahead."
-      }
-    />
+  const fallback = "Read the selected measures and their evidence before you start work.";
+  const { lead, rest } = splitNarrative(text || fallback);
+  const content = concise ? (
+    <>
+      <DocumentText variant="report" text={lead} />
+      {rest && (
+        <details className="narrative-rest">
+          <summary>Read the rest of the report</summary>
+          <DocumentText variant="report" text={rest} />
+        </details>
+      )}
+      <p className="fineprint">
+        Every input behind these numbers is in the Assumptions tab, with where it came from.
+      </p>
+    </>
+  ) : (
+    <DocumentText variant="report" text={text || fallback} />
   );
   return warnings.some((warning) => warning.startsWith("re-run:")) ? (
     <>

@@ -819,6 +819,34 @@ def _responsive_plan(bundle: PropertyBundle, base: BuildingModel, request: RunRe
     return plan
 
 
+_FORK: dict = {}
+
+
+def _fork_job(i: int):
+    return _FORK["plan"](_FORK["models"][i])
+
+
+def _run_all(plan_fn: Callable, models: list) -> list:
+    """The plans of `models`, in the same order as a plain loop would give them. The runs do not depend
+    on one another and are pure Python, so they are spread over worker processes forked from this one
+    (they inherit the bundle and the caches; ANALYSIS_WORKERS=1 turns it off). Any failure falls back
+    to the loop, so the answer is the same either way."""
+    import concurrent.futures as cf
+    import multiprocessing
+    import os
+    workers = min(int(os.environ.get("ANALYSIS_WORKERS") or (os.cpu_count() or 1)), 8, len(models))
+    if workers < 2 or len(models) < 4:
+        return [plan_fn(m) for m in models]
+    try:
+        _FORK.update(plan=plan_fn, models=models)
+        with cf.ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("fork")) as pool:
+            return list(pool.map(_fork_job, range(len(models)), timeout=300))
+    except Exception:
+        return [plan_fn(m) for m in models]
+    finally:
+        _FORK.clear()
+
+
 @_with_state
 def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> list[Question]:
     """REAL (A27) once the envelope, lighting and heating-and-cooling plug-ins are registered, so
@@ -826,7 +854,7 @@ def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunReques
     rule demonstrable."""
     core = ("ENV_ATTIC", "LGT_LED", "HVAC_HP" if engine.flow_of(bundle.summary) == "home" else "HVAC_RTU")
     if all(m in engine.REGISTRY.plugins for m in core):
-        return _ask_questions(model, _responsive_plan(bundle, model, request))
+        return _ask_questions(model, _responsive_plan(bundle, model, request), run_all=_run_all)
     if not _has_example(bundle.summary.sid):
         return []
     return [Question.model_validate(q)

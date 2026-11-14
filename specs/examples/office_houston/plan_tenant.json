@@ -385,9 +385,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 1771.42,
-            "expected": 3557.18,
-            "high": 5416.52,
+            "low": 1770.8,
+            "expected": 3555.94,
+            "high": 5415.19,
             "unit": "USD"
           },
           "co2_kg": {
@@ -436,9 +436,9 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 1771.42,
-            "expected": 3557.18,
-            "high": 5416.52,
+            "low": 1770.8,
+            "expected": 3555.94,
+            "high": 5415.19,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
@@ -446,19 +446,19 @@
           "simple_payback_years": {
             "low": 5.32,
             "expected": 12.28,
-            "high": 25.29,
+            "high": 25.3,
             "unit": "years"
           },
           "discounted_payback_years": null,
           "npv_usd": {
-            "low": -26638.81,
-            "expected": -549.67,
-            "high": 29586.28,
+            "low": -26648.16,
+            "expected": -565.89,
+            "high": 29568.63,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": -10821.49,
+          "npv_sensitivity_usd": -10833.76,
           "sir": 0.987,
-          "irr": 0.0283,
+          "irr": 0.0282,
           "airr": 0.0291,
           "discount_rate": 0.03,
           "electricity_escalation": 0.0022,
@@ -473,9 +473,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 1771.42,
-                "expected": 3557.18,
-                "high": 5416.52,
+                "low": 1770.8,
+                "expected": 3555.94,
+                "high": 5415.19,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -491,12 +491,12 @@
               "term_years": 15,
               "annual_payment_usd": 4645.49,
               "net_cashflow_year1_usd": {
-                "low": -2874.07,
-                "expected": -1088.31,
-                "high": 771.03,
+                "low": -2874.69,
+                "expected": -1089.55,
+                "high": 769.7,
                 "unit": "USD"
               },
-              "program_sir": 0.766,
+              "program_sir": 0.765,
               "notes": [
                 "C-PACE is available to the property owner, not to a tenant.",
                 "Program SIR 0.77: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
@@ -604,9 +604,9 @@
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 1801.67,
-    "expected": 3587.81,
-    "high": 5460.93,
+    "low": 1801.05,
+    "expected": 3586.57,
+    "high": 5459.6,
     "unit": "USD"
   },
   "total_co2_kg": {
@@ -629,9 +629,9 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 6743.64,
-      "expected": 9471.19,
-      "high": 16309.95,
+      "low": 6755.03,
+      "expected": 9482.59,
+      "high": 16321.24,
       "unit": "USD"
     },
     "co2_kg": {
@@ -645,8 +645,8 @@
   "value_uplift": {
     "value_usd": {
       "low": 0.0,
-      "expected": 19932.28,
-      "high": 78013.29,
+      "expected": 19925.39,
+      "high": 77994.29,
       "unit": "USD"
     },
     "method": "VAL-01",

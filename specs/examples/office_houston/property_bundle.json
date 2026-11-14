@@ -902,11 +902,11 @@
   "tariff": {
     "utility": "Retail electric provider not known (CenterPoint Energy Houston Electric delivery area)",
     "electricity_usd_per_kwh": 0.09,
-    "gas_usd_per_kwh": 0.035,
+    "gas_usd_per_kwh": 0.036129,
     "export_usd_per_kwh": null,
     "export_regime": "none",
     "fixed_usd_per_month": 0.0,
-    "source": "Electricity: published default, not a tariff. EIA Electric Power Monthly Table 5.6.A, Texas commercial average for August 2026, 8.96 cents per kWh (physics 04 TAR-06). Gas: ILLUSTRATIVE, no source opened.",
+    "source": "Electricity: published default, not a tariff. EIA Electric Power Monthly Table 5.6.A, Texas commercial average for August 2026, 8.96 cents per kWh (physics 04 TAR-06). Gas: EIA state average delivered gas price, TX COM, 2025 (10.98 $/MCF, EIA N3020TX3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content), 0.036129 USD/kWh, a state average and not the CenterPoint Energy schedule (data-integration 5.1e).",
     "retrieved": "2026-11-14"
   },
   "provenance": [
@@ -993,6 +993,12 @@
       "what": "electricity price",
       "status": "fallback",
       "detail": "no regulated retail tariff exists in the CenterPoint area; the published default of physics 04 TAR-06 is used until the user gives a bill"
+    },
+    {
+      "layer": "tariff",
+      "what": "eia/natural-gas-price",
+      "status": "fallback",
+      "detail": "EIA state average delivered gas price, TX COM, 2025 (10.98 $/MCF, EIA N3020TX3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)"
     }
   ]
 }

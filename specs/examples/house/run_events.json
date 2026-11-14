@@ -69,6 +69,16 @@
   {
     "type": "fallback",
     "stage": "S2",
+    "message": "Gas priced at the EIA California state average, not a SoCalGas schedule",
+    "payload": {
+      "layer": "tariff",
+      "from": "gas utility tariff",
+      "to": "EIA state average (CA RES, 2025)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
     "message": "MatterPak resources are unavailable; using the wall graph",
     "payload": {
       "layer": "matterport",
@@ -142,9 +152,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 1868.72,
-        "expected": 2159.0,
-        "high": 2521.04,
+        "low": 1918.54,
+        "expected": 2212.44,
+        "high": 2579.01,
         "unit": "USD"
       }
     }

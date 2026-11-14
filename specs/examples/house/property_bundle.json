@@ -911,11 +911,11 @@
   "tariff": {
     "utility": "LADWP (electricity), SoCalGas (gas)",
     "electricity_usd_per_kwh": 0.2975,
-    "gas_usd_per_kwh": 0.065,
+    "gas_usd_per_kwh": 0.072422,
     "export_usd_per_kwh": null,
     "export_regime": "net_metering",
     "fixed_usd_per_month": 12.0,
-    "source": "Electricity: EIA state average retail price, CA RES, 2026-08 (0.2975 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas and the fixed charge: ILLUSTRATIVE, no source opened.",
+    "source": "Electricity: EIA state average retail price, CA RES, 2026-08 (0.2975 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas: EIA state average delivered gas price, CA RES, 2025 (22.01 $/MCF, EIA N3010CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content), 0.072422 USD/kWh, a state average and not the SoCalGas schedule (data-integration 5.1e). The fixed charge: ILLUSTRATIVE, no source opened.",
     "retrieved": "2026-11-14"
   },
   "provenance": [
@@ -996,6 +996,12 @@
       "what": "electricity price (EIA retail sales, CA RES)",
       "status": "fallback",
       "detail": "EIA state average retail price, CA RES, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)"
+    },
+    {
+      "layer": "tariff",
+      "what": "eia/natural-gas-price",
+      "status": "fallback",
+      "detail": "EIA state average delivered gas price, CA RES, 2025 (22.01 $/MCF, EIA N3010CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)"
     }
   ]
 }

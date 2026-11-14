@@ -13,9 +13,9 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 11063.7,
-      "expected": 13059.0,
-      "high": 19660.42,
+      "low": 11073.76,
+      "expected": 13069.16,
+      "high": 19670.63,
       "unit": "USD"
     },
     "co2_kg": {

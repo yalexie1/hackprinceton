@@ -1158,9 +1158,9 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 13617.24,
-        "expected": 16600.96,
-        "high": 20294.1,
+        "low": 13603.5,
+        "expected": 16587.18,
+        "high": 20280.28,
         "unit": "USD"
       },
       "co2_kg": {
@@ -1627,9 +1627,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 2495.85,
-          "expected": 5097.41,
-          "high": 6242.63,
+          "low": 2496.84,
+          "expected": 5099.34,
+          "high": 6244.91,
           "unit": "USD"
         },
         "co2_kg": {
@@ -1682,9 +1682,9 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 2495.85,
-          "expected": 5097.41,
-          "high": 6242.63,
+          "low": 2496.84,
+          "expected": 5099.34,
+          "high": 6244.91,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
@@ -1697,14 +1697,14 @@
         },
         "discounted_payback_years": 4.1,
         "npv_usd": {
-          "low": 7719.64,
-          "expected": 37129.46,
-          "high": 52848.5,
+          "low": 7730.92,
+          "expected": 37151.24,
+          "high": 52873.91,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": 24233.19,
-        "sir": 2.983,
-        "irr": 0.2495,
+        "npv_sensitivity_usd": 24249.9,
+        "sir": 2.985,
+        "irr": 0.2496,
         "airr": 0.1079,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0116,
@@ -1719,9 +1719,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 2495.85,
-              "expected": 5097.41,
-              "high": 6242.63,
+              "low": 2496.84,
+              "expected": 5099.34,
+              "high": 6244.91,
               "unit": "USD"
             },
             "program_sir": null,
@@ -1737,12 +1737,12 @@
             "term_years": 15,
             "annual_payment_usd": 1990.92,
             "net_cashflow_year1_usd": {
-              "low": 504.93,
-              "expected": 3106.49,
-              "high": 4251.71,
+              "low": 505.92,
+              "expected": 3108.42,
+              "high": 4253.99,
               "unit": "USD"
             },
-            "program_sir": 2.56,
+            "program_sir": 2.561,
             "notes": [
               "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
               "Program SIR 2.56: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
@@ -1818,9 +1818,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 75.31,
-          "expected": 153.09,
-          "high": 230.87,
+          "low": 74.48,
+          "expected": 151.44,
+          "high": 228.4,
           "unit": "USD"
         },
         "co2_kg": {
@@ -1871,30 +1871,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 75.31,
-          "expected": 153.09,
-          "high": 230.87,
+          "low": 74.48,
+          "expected": 151.44,
+          "high": 228.4,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 9.59,
-          "expected": 19.21,
-          "high": 49.96,
+          "low": 9.7,
+          "expected": 19.42,
+          "high": 50.51,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -4956.09,
-          "expected": -1257.42,
-          "high": 133.21,
+          "low": -4972.54,
+          "expected": -1276.04,
+          "high": 108.78,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -1646.59,
-        "sir": 0.572,
+        "npv_sensitivity_usd": -1660.87,
+        "sir": 0.566,
         "irr": null,
-        "airr": -0.0076,
+        "airr": -0.0083,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0116,
         "gas_escalation": -0.0076,
@@ -1908,9 +1908,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 75.31,
-              "expected": 153.09,
-              "high": 230.87,
+              "low": 74.48,
+              "expected": 151.44,
+              "high": 228.4,
               "unit": "USD"
             },
             "program_sir": null,
@@ -1926,16 +1926,16 @@
             "term_years": 15,
             "annual_payment_usd": 312.77,
             "net_cashflow_year1_usd": {
-              "low": -237.46,
-              "expected": -159.68,
-              "high": -81.9,
+              "low": -238.29,
+              "expected": -161.33,
+              "high": -84.37,
               "unit": "USD"
             },
-            "program_sir": 0.489,
+            "program_sir": 0.484,
             "notes": [
               "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
-              "Program SIR 0.49: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
-              "Savings-to-debt-service ratio 0.49.",
+              "Program SIR 0.48: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
+              "Savings-to-debt-service ratio 0.48.",
               "Term of 15 years does not exceed the useful life of 15 years: a programme rule for a new commercial assessment in California, not a statutory condition (CA-PACE-11).",
               "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
               "Statutory test for commercial property: annual property taxes plus assessments, with this one, may not exceed 5 percent of market value at approval (Streets and Highways Code 5898.15; CA-PACE-07). The new annual assessment of $313 is 0.0002 percent of an estimated market value of $156,959,400 (illustrative comparable sale price times the gross building area). The current tax bill and existing assessments are not known, so the test cannot be completed.",
@@ -2509,9 +2509,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 211.33,
-          "expected": 431.69,
-          "high": 652.05,
+          "low": 211.5,
+          "expected": 432.02,
+          "high": 652.54,
           "unit": "USD"
         },
         "co2_kg": {
@@ -3187,9 +3187,9 @@
               "unit": "kWh"
             },
             "cost_usd": {
-              "low": 2488.66,
-              "expected": 5082.7,
-              "high": 6224.61,
+              "low": 2489.63,
+              "expected": 5084.6,
+              "high": 6226.85,
               "unit": "USD"
             },
             "co2_kg": {
@@ -3242,9 +3242,9 @@
               "unit": "USD"
             },
             "annual_savings_usd": {
-              "low": 2488.66,
-              "expected": 5082.7,
-              "high": 6224.61,
+              "low": 2489.63,
+              "expected": 5084.6,
+              "high": 6226.85,
               "unit": "USD"
             },
             "annual_om_change_usd": 0.0,
@@ -3252,20 +3252,20 @@
             "simple_payback_years": {
               "low": 1.89,
               "expected": 3.68,
-              "high": 7.71,
+              "high": 7.7,
               "unit": "years"
             },
             "discounted_payback_years": 4.1,
             "npv_usd": {
-              "low": 7639.86,
-              "expected": 36968.37,
-              "high": 52655.13,
+              "low": 7650.92,
+              "expected": 36989.81,
+              "high": 52680.11,
               "unit": "USD"
             },
-            "npv_sensitivity_usd": 24109.29,
-            "sir": 2.975,
-            "irr": 0.2487,
-            "airr": 0.1076,
+            "npv_sensitivity_usd": 24125.74,
+            "sir": 2.976,
+            "irr": 0.2488,
+            "airr": 0.1077,
             "discount_rate": 0.03,
             "electricity_escalation": -0.0116,
             "gas_escalation": -0.0076,
@@ -3279,9 +3279,9 @@
                 "term_years": null,
                 "annual_payment_usd": 0.0,
                 "net_cashflow_year1_usd": {
-                  "low": 2488.66,
-                  "expected": 5082.7,
-                  "high": 6224.61,
+                  "low": 2489.63,
+                  "expected": 5084.6,
+                  "high": 6226.85,
                   "unit": "USD"
                 },
                 "program_sir": null,
@@ -3297,12 +3297,12 @@
                 "term_years": 15,
                 "annual_payment_usd": 1990.92,
                 "net_cashflow_year1_usd": {
-                  "low": 497.74,
-                  "expected": 3091.78,
-                  "high": 4233.69,
+                  "low": 498.71,
+                  "expected": 3093.68,
+                  "high": 4235.93,
                   "unit": "USD"
                 },
-                "program_sir": 2.553,
+                "program_sir": 2.554,
                 "notes": [
                   "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
                   "Program SIR 2.55: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
@@ -3698,9 +3698,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 75.31,
-            "expected": 153.09,
-            "high": 230.87,
+            "low": 74.48,
+            "expected": 151.44,
+            "high": 228.4,
             "unit": "USD"
           },
           "co2_kg": {
@@ -3751,30 +3751,30 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 75.31,
-            "expected": 153.09,
-            "high": 230.87,
+            "low": 74.48,
+            "expected": 151.44,
+            "high": 228.4,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
           "useful_life_years": 15,
           "simple_payback_years": {
-            "low": 9.59,
-            "expected": 19.21,
-            "high": 49.96,
+            "low": 9.7,
+            "expected": 19.42,
+            "high": 50.51,
             "unit": "years"
           },
           "discounted_payback_years": null,
           "npv_usd": {
-            "low": -4956.09,
-            "expected": -1257.42,
-            "high": 133.21,
+            "low": -4972.54,
+            "expected": -1276.04,
+            "high": 108.78,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": -1646.59,
-          "sir": 0.572,
+          "npv_sensitivity_usd": -1660.87,
+          "sir": 0.566,
           "irr": null,
-          "airr": -0.0076,
+          "airr": -0.0083,
           "discount_rate": 0.03,
           "electricity_escalation": -0.0116,
           "gas_escalation": -0.0076,
@@ -3788,9 +3788,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 75.31,
-                "expected": 153.09,
-                "high": 230.87,
+                "low": 74.48,
+                "expected": 151.44,
+                "high": 228.4,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -3806,16 +3806,16 @@
               "term_years": 15,
               "annual_payment_usd": 312.77,
               "net_cashflow_year1_usd": {
-                "low": -237.46,
-                "expected": -159.68,
-                "high": -81.9,
+                "low": -238.29,
+                "expected": -161.33,
+                "high": -84.37,
                 "unit": "USD"
               },
-              "program_sir": 0.489,
+              "program_sir": 0.484,
               "notes": [
                 "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
-                "Program SIR 0.49: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
-                "Savings-to-debt-service ratio 0.49.",
+                "Program SIR 0.48: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
+                "Savings-to-debt-service ratio 0.48.",
                 "Term of 15 years does not exceed the useful life of 15 years: a programme rule for a new commercial assessment in California, not a statutory condition (CA-PACE-11).",
                 "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
                 "Statutory test for commercial property: annual property taxes plus assessments, with this one, may not exceed 5 percent of market value at approval (Streets and Highways Code 5898.15; CA-PACE-07). The new annual assessment of $313 is 0.0002 percent of an estimated market value of $156,959,400 (illustrative comparable sale price times the gross building area). The current tax bill and existing assessments are not known, so the test cannot be completed.",
@@ -3903,9 +3903,9 @@
       "unit": "USD"
     },
     "total_annual_savings_usd": {
-      "low": 3439.39,
-      "expected": 6057.49,
-      "high": 7253.13,
+      "low": 3440.37,
+      "expected": 6059.39,
+      "high": 7255.36,
       "unit": "USD"
     },
     "total_co2_kg": {
@@ -3928,9 +3928,9 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 7345.52,
-        "expected": 10543.47,
-        "high": 15058.83,
+        "low": 7329.75,
+        "expected": 10527.79,
+        "high": 15043.65,
         "unit": "USD"
       },
       "co2_kg": {
@@ -3944,8 +3944,8 @@
     "value_uplift": {
       "value_usd": {
         "low": 0.0,
-        "expected": 41360.48,
-        "high": 130780.18,
+        "expected": 41373.59,
+        "high": 130820.73,
         "unit": "USD"
       },
       "method": "VAL-01",
@@ -3990,7 +3990,7 @@
       "impact_note": "No rooftop unit is visible from the air, which proves little on a tower. The answer decides whether unit replacement and an economizer are evaluated at all, and who could do them."
     }
   ],
-  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for the suite: 54,800 kWh of electricity and 2,500 kWh of gas a year, about $16,601 (range $13,617 to $20,294). Electricity is on LADWP with net metering, priced at the EIA California commercial average rather than a LADWP schedule. Office hot water is not modelled.\n\nWithin the $25,000 budget the plan selects desk placement, the LED retrofit ($18,720) and a 1.72 kW rooftop array with the money left, for $24,482 upfront, saving about $6,057 a year (range $3,439 to $7,253). The LADWP lighting rebate is paid after installation and is not counted until its conditions are confirmed.\n\nAir sealing does not fit the budget. A C-PACE scenario is shown for it, but it is hypothetical: no programme taking commercial applications in Los Angeles has been confirmed. Financed at $2,941 over 15 years the annual assessment would be $313. An assessment is a lien on the parcel until paid, collected with the property taxes.\n\nNo rooftop unit was confirmed, so unit replacement and an economizer were not evaluated; a tower like this is most likely on a central plant.\n\nValue uplift: capitalised at the rates of 18 comparable sales, the plan's savings correspond to about $41,360 of property value (range $0 to $130,780). This is an estimate shown beside the totals; it is not added to the savings.\n",
+  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for the suite: 54,800 kWh of electricity and 2,500 kWh of gas a year, about $16,587 (range $13,604 to $20,280). Electricity is on LADWP with net metering, priced at the EIA California commercial average rather than a LADWP schedule; gas is priced at the EIA California commercial average too. Office hot water is not modelled.\n\nWithin the $25,000 budget the plan selects desk placement, the LED retrofit ($18,720) and a 1.72 kW rooftop array with the money left, for $24,482 upfront, saving about $6,059 a year (range $3,440 to $7,255). The LADWP lighting rebate is paid after installation and is not counted until its conditions are confirmed.\n\nAir sealing does not fit the budget. A C-PACE scenario is shown for it, but it is hypothetical: no programme taking commercial applications in Los Angeles has been confirmed. Financed at $2,941 over 15 years the annual assessment would be $313. An assessment is a lien on the parcel until paid, collected with the property taxes.\n\nNo rooftop unit was confirmed, so unit replacement and an economizer were not evaluated; a tower like this is most likely on a central plant.\n\nValue uplift: capitalised at the rates of 18 comparable sales, the plan's savings correspond to about $41,374 of property value (range $0 to $130,821). This is an estimate shown beside the totals; it is not added to the savings.\n",
   "warnings": [
     "PV_ROOF may exceed budget at the high end of its cost range.",
     "The HVAC system type is unknown (flag hvac.system_type).",

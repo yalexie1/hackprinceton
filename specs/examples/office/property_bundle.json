@@ -1045,11 +1045,11 @@
   "tariff": {
     "utility": "LADWP (electricity), SoCalGas (gas)",
     "electricity_usd_per_kwh": 0.3002,
-    "gas_usd_per_kwh": 0.06,
+    "gas_usd_per_kwh": 0.054489,
     "export_usd_per_kwh": null,
     "export_regime": "net_metering",
     "fixed_usd_per_month": 0.0,
-    "source": "Electricity: EIA state average retail price, CA COM, 2026-08 (0.3002 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas: ILLUSTRATIVE, no source opened. Demand charges are not modelled (TAR-02).",
+    "source": "Electricity: EIA state average retail price, CA COM, 2026-08 (0.3002 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas: EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content), 0.054489 USD/kWh, a state average and not the SoCalGas schedule (data-integration 5.1e). Demand charges are not modelled (TAR-02).",
     "retrieved": "2026-11-14"
   },
   "provenance": [
@@ -1142,6 +1142,12 @@
       "what": "electricity price (EIA retail sales, CA COM)",
       "status": "fallback",
       "detail": "EIA state average retail price, CA COM, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)"
+    },
+    {
+      "layer": "tariff",
+      "what": "eia/natural-gas-price",
+      "status": "fallback",
+      "detail": "EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)"
     }
   ]
 }

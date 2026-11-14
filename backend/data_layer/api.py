@@ -22,8 +22,16 @@ Two deliberate choices, both from `specs/data-integration.md`:
   anything keyed on a literal sid would break (noted by @yalexie1 on the board).
 - **`search_properties` unions `search_results.json` with every folder's own
   summary**, deduped by sid. That keeps the golden properties findable while that
-  file is mid-switch, and answers workplan R4: search works before `D7`, which only
-  adds radius ranking on top.
+  file is mid-switch, and answered workplan R4 before `D7` landed.
+
+`D7` now backs search with the whole CoStar kit - 14,932 scanned models over 5,098
+properties - through `index.py`. The fixtures still come first and the kit is added
+behind them, so:
+
+- a checkout with **no kit mirror** behaves exactly as it did before `D7` (the kit is
+  49 MB of licensed sponsor data and is not committed);
+- the golden properties stay findable and keep their fixture summaries, which carry
+  real room and panorama counts that the kit cannot supply.
 """
 from __future__ import annotations
 
@@ -41,11 +49,11 @@ from backend.schema import (
     VexcelDetection,
 )
 
+from . import index
+
 _ROOT = Path(__file__).resolve().parents[2]
 _EXAMPLES = _ROOT / "specs" / "examples"
 _CACHE = _ROOT / "data" / "cache"
-
-_EARTH_RADIUS_M = 6_371_000.0
 
 #: The calendar year fetched for the hourly weather file. One real year, not a TMY -
 #: see D9. Pinned so a bundle is reproducible.
@@ -76,6 +84,25 @@ def _load(folder: Path, name: str):
     return json.loads((folder / name).read_text())
 
 
+def _fixture_summaries() -> list[PropertySummary]:
+    """Every example folder's own summary, in folder order, then the rest of
+    `search_results.json`, deduped by sid. Folder order first keeps the golden
+    properties at the head of a search and ahead of the invented examples."""
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for folder in _folders():
+        row = _load(folder, "property_summary.json")
+        rows.append(row)
+        seen.add(row["sid"])
+    extra_path = _EXAMPLES / "search_results.json"
+    if extra_path.is_file():
+        for row in json.loads(extra_path.read_text()):
+            if row["sid"] not in seen:
+                rows.append(row)
+                seen.add(row["sid"])
+    return [PropertySummary.model_validate(r) for r in rows]
+
+
 def _folder_for_sid(sid: str) -> Path:
     for folder in _folders():
         if _load(folder, "property_summary.json")["sid"] == sid:
@@ -93,45 +120,85 @@ def search_properties(
     lon: Optional[float] = None,
     radius_m: Optional[float] = None,
     limit: int = 20,
+    *,
+    all_scans: bool = False,
 ) -> list[PropertySummary]:
-    """Stage S1. Matches on name, address and city; `use_type="office"` means CoStar
-    property type 5 once `D1` is live. Ordering is deterministic: golden properties
-    first, in folder order, then the rest of `search_results.json` as written."""
-    rows: list[dict] = []
-    seen: set[str] = set()
-    for folder in _folders():
-        row = _load(folder, "property_summary.json")
-        rows.append(row)
-        seen.add(row["sid"])
-    extra_path = _EXAMPLES / "search_results.json"
-    if extra_path.is_file():
-        for row in json.loads(extra_path.read_text()):
-            if row["sid"] not in seen:
-                rows.append(row)
-                seen.add(row["sid"])
+    """Stage S1. Matches on name, address and city; `use_type="office"` is CoStar
+    property type 5, read from the property record and never from which starter CSV
+    the row sat in - 2,765 of the kit's 3,339 commercial properties are Multifamily.
 
-    out = [PropertySummary.model_validate(r) for r in rows]
+    Ordering is deterministic: the fixture properties first, in folder order, then
+    the rest of `search_results.json` as written, then the kit index. With a `lat`
+    and `lon` the whole result is ranked nearest-first instead.
 
-    if q:
-        needle = q.casefold()
-        out = [
-            s for s in out
-            if needle in s.name.casefold()
-            or needle in (s.address or "").casefold()
-            or needle in (s.city or "").casefold()
-        ]
-    if segment is not None:
-        out = [s for s in out if s.segment == segment]
-    if use_type is not None:
-        out = [s for s in out if s.use_type == use_type]
-    if lat is not None and lon is not None and radius_m is not None:
-        out = [s for s in out if _within(s, lat, lon, radius_m)]
+    **The kit contributes one row per property, not per scan.** A property averages
+    three Matterport models and one apartment complex in the kit has 32, so without
+    collapsing, a search for Houston offices returns "333 Northbelt" five times - the
+    same building, once per scan. `all_scans=True` returns every model instead, and
+    `scans_for_property` lists the siblings of one result.
+
+    The fixture rows are **not** collapsed, because the sibling scans there are the
+    point: `specs/examples/search_results.json` deliberately carries three suites of
+    the Los Angeles tower, one of which (`BkjvwqdchVY`, 2 rooms and 93 panoramas) is
+    the open-plan scan the desk-placement demo needs. Collapsing a curated set of
+    nine would throw that away to tidy up a list that is already short.
+    """
+    out = index.filter_summaries(
+        _fixture_summaries(), q, segment, use_type, lat, lon, radius_m
+    )
+    golden = {s.sid for s in out}
+
+    # The kit goes behind the fixtures, and a kit row for a property a fixture
+    # already represents is dropped - otherwise the Los Angeles office would appear
+    # twice, once as `jfiEvosX974` with its real room counts and once as a sibling
+    # scan of the same tower with zeros.
+    kit = index.filter_summaries(index.summaries(), q, segment, use_type, lat, lon, radius_m)
+    if kit:
+        combined = index.collapse(out + kit, prefer=golden) if not all_scans else out + kit
+        taken = {s.sid for s in out}
+        out = out + [s for s in combined if s.sid not in taken]
+
+    out = index.rank(out, lat=lat, lon=lon)
     return out[: max(0, limit)]
 
 
 def get_property_summary(sid: str) -> PropertySummary:
-    """Stage S1, workplan R3. Answers `GET /api/properties/{sid}`."""
-    return PropertySummary.model_validate(_load(_folder_for_sid(sid), "property_summary.json"))
+    """Stage S1, workplan R3. Answers `GET /api/properties/{sid}`.
+
+    The fixtures first, then the kit index, so any of the 14,932 scanned models has a
+    summary and not only the golden five.
+    """
+    for folder in _folders():
+        row = _load(folder, "property_summary.json")
+        if row["sid"] == sid:
+            return PropertySummary.model_validate(row)
+    for summary in index.summaries():
+        if summary.sid == sid:
+            return summary
+    raise LookupError(f"unknown sid: {sid}")
+
+
+def scans_for_property(sid: str) -> list[PropertySummary]:
+    """Every Matterport scan of the property `sid` belongs to, that one first.
+
+    This is what `search_properties` collapses away, and it is the D5 criterion that
+    an office with several models reports the alternatives. The LA tower has nine
+    scans and they are not interchangeable: one has 36 panoramas over 8 rooms and
+    another has 93 over 2, which is a different answer to "where do the desks go".
+    """
+    here = get_property_summary(sid)
+    key = index.property_key(here)
+    siblings = [
+        s for s in _fixture_summaries() + list(index.summaries())
+        if s.sid != sid and index.property_key(s) == key
+    ]
+    seen: set[str] = set()
+    out = [here]
+    for s in siblings:
+        if s.sid not in seen:
+            seen.add(s.sid)
+            out.append(s)
+    return out
 
 
 def _bundle_cache_path(sid: str) -> Path:
@@ -247,25 +314,21 @@ def _assemble(sid: str) -> PropertyBundle:
     )
 
 
-_USE_TYPE_BY_COSTAR: dict[str, UseType] = {
-    "Office": "office",
-    "GeneralRetail": "retail",
-    "Multifamily": "multifamily_unit",
-    "Detached": "single_family",
-    "Townhouse": "single_family",
-}
-
-
 def _summary_from(sid, matterport, costar, row) -> PropertySummary:
     geo = matterport.georeference
     commercial = bool(row.get("property_id")) or (
         costar is not None and costar.kind == "commercial_property")
-    use_type: UseType = "unknown"
-    if costar and costar.property_type:
-        use_type = _USE_TYPE_BY_COSTAR.get(costar.property_type, "other")
+    # One use-type table for the lane, in `index.py`. A second one here, keyed by
+    # enum *name* instead of code, is how the two quietly stop agreeing.
+    use_type: UseType = (
+        index.use_type_for(costar.kind, costar.property_type_code) if costar else "unknown"
+    )
+    # The index knows the building's name ("Executive Tower"); the starter CSV row
+    # only knows its street address.
+    indexed = index.by_sid().get(sid)
     return PropertySummary(
         sid=sid,
-        name=row.get("address") or sid,
+        name=(indexed.name if indexed else None) or row.get("address") or sid,
         segment="commercial" if commercial else "residential",
         use_type=use_type,
         address=row.get("address"),
@@ -322,15 +385,3 @@ def get_asset(path: str) -> bytes:
         raise FileNotFoundError(f"not cached: {path}")
     return target.read_bytes()
 
-
-# ---------- helpers ----------
-
-def _within(summary: PropertySummary, lat: float, lon: float, radius_m: float) -> bool:
-    if summary.lat is None or summary.lon is None:
-        return False
-    from math import asin, cos, radians, sin, sqrt
-
-    dlat = radians(summary.lat - lat)
-    dlon = radians(summary.lon - lon)
-    h = sin(dlat / 2) ** 2 + cos(radians(lat)) * cos(radians(summary.lat)) * sin(dlon / 2) ** 2
-    return 2 * _EARTH_RADIUS_M * asin(sqrt(h)) <= radius_m

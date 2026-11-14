@@ -58,9 +58,13 @@ def map_chunk(chunk) -> list[RunEvent]:
     if not isinstance(chunk, dict):
         return []
     if "todos" in chunk:                       # write_todos update
-        todos = chunk["todos"]
-        return [RunEvent(type="todo", message=f"{len(todos)} todo items",
-                         payload={"todos": todos})]
+        todos = [{"content": str(t.get("content", "")), "status": t.get("status", "pending")}
+                 for t in chunk["todos"] if isinstance(t, dict)]
+        done = sum(t["status"] == "completed" for t in todos)
+        current = next((t["content"] for t in todos if t["status"] == "in_progress"), None)
+        message = f"{done} of {len(todos)} done" + (f": {current}" if current else "")
+        return [RunEvent(type="todo", message=message,
+                         payload={"todos": todos, "total": len(todos), "done": done, "current": current})]
     if "tool_call" in chunk:
         tc = chunk["tool_call"]
         return [RunEvent(type="tool_call", stage=chunk.get("stage"), message=tc.get("name", ""),
@@ -69,9 +73,14 @@ def map_chunk(chunk) -> list[RunEvent]:
         return [RunEvent(type="fallback", stage=chunk.get("stage"), message=str(chunk["fallback"]),
                          payload=chunk.get("payload", {}))]
     if "question" in chunk:
+        # kind "question" is an ask_user question about an assumption; kind "approval" is the counsel's
+        # gate before a document is drafted (payload.approval holds the proposal). Both are answered
+        # the same way: POST the choice value for payload.question.id.
+        payload = {"question": chunk["question"], "kind": chunk.get("kind", "question")}
+        if chunk.get("approval") is not None:
+            payload["approval"] = chunk["approval"]
         return [RunEvent(type="question", stage=chunk.get("stage"),
-                         message=chunk["question"].get("prompt", ""),
-                         payload={"question": chunk["question"]})]
+                         message=chunk["question"].get("prompt", ""), payload=payload)]
     for key, kind in (("stage_started", "stage_started"), ("stage_done", "stage_done")):
         if key in chunk:
             return [RunEvent(type=kind, stage=chunk[key], message=chunk.get("message", ""))]

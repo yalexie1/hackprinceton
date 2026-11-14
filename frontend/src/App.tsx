@@ -54,6 +54,7 @@ import Assumptions from "./components/Assumptions";
 import Documents from "./components/Documents";
 import Warnings, { AuditNarrative } from "./components/Warnings";
 import Calibration from "./components/Calibration";
+import RunSource from "./components/RunSource";
 type View =
   | "find"
   | "setup"
@@ -900,6 +901,7 @@ export default function App() {
                     {run.property.name} · {money(run.request.budget_usd)} cash
                     budget
                   </p>
+                  <RunSource run={run} />
                 </div>
                 {done && (
                   <button
@@ -1114,6 +1116,7 @@ export default function App() {
                       Audit complete
                     </span>
                   </p>
+                  <RunSource run={run} />
                 </div>
                 <button
                   className="secondary-button"

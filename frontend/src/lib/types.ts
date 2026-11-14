@@ -1,5 +1,5 @@
 // Browser contract mirrors specs/SPEC.md section 9. Checked by check:contract.
-export const SCHEMA_VERSION = "0.3.6";
+export const SCHEMA_VERSION = "0.3.7";
 export interface CalibrationSummary {
   calibrated: boolean;
   fits: {
@@ -258,6 +258,8 @@ export interface RunEvent {
   payload: Record<string, unknown>;
 }
 export interface RunResult {
+  data_source?: "live" | "example" | null;
+  served_by?: "live" | "replay" | null;
   schema_version: string;
   run_id: string;
   status: "running" | "waiting_for_user" | "done" | "error";

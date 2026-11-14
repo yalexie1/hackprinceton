@@ -10,6 +10,8 @@ every unverified or expired entry are reported but left out of every total.
 from __future__ import annotations
 
 import json
+import warnings
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -24,15 +26,57 @@ def registry() -> list[dict]:
     return json.loads((_DATA / "incentives.json").read_text())
 
 
-def utility_of(summary: PropertySummary) -> Optional[str]:
-    """The utility a registry region refers to, from the property's city. LADWP serves the
-    City of Los Angeles only; CenterPoint is the Houston Electric territory."""
+@lru_cache(maxsize=1)
+def utility_regions() -> frozenset[str]:
+    """The utility names the registry actually keys on, read from the registry itself.
+
+    Data-driven so this cannot drift from `incentives.json`: a region that is neither
+    `US` nor a two-letter state code is a utility.
+    """
+    regions = {str(e.get("region") or "") for e in registry()}
+    return frozenset(r for r in regions if r and r != "US" and len(r) != 2)
+
+
+def utility_of(summary: PropertySummary, resolved: Optional[str] = None) -> Optional[str]:
+    """The utility a registry region refers to.
+
+    `resolved` is `Tariff.utility` from the data lane, which determines it from the
+    Census incorporated-place layer. Prefer it: the city field this used to rely on is
+    a **mailing** city, and the data lane measured it as right 14/14 for Los Angeles
+    but only 9 of 16 for Houston - 6 unincorporated Harris County, 1 Nassau Bay. Since
+    8 LADWP and 4 CenterPoint registry entries key on this value, a wrong answer hands
+    a property rebates it is not eligible for.
+
+    A `resolved` string that names no utility the registry knows (the data lane's
+    honest `"CA state average (COM)"` label, for instance) is **unconfirmed**, not a
+    licence to guess: per the lead, an unnamed utility is not LADWP. The city fallback
+    stays for callers that have no tariff, and warns when it is used.
+    """
+    if resolved:
+        for name in utility_regions():
+            if name.casefold() in resolved.casefold():
+                return name
+        warnings.warn(
+            f"utility_of: {resolved!r} names no utility in the registry, so no "
+            f"utility-specific incentive applies. Unconfirmed is not LADWP.",
+            stacklevel=2,
+        )
+        return None
+
     city, state = (summary.city or "").strip().lower(), (summary.state or "").strip().upper()
+    guess = None
     if city == "los angeles" and state == "CA":
-        return "LADWP"
-    if city == "houston" and state == "TX":
-        return "CenterPoint"
-    return None
+        guess = "LADWP"
+    elif city == "houston" and state == "TX":
+        guess = "CenterPoint"
+    if guess:
+        warnings.warn(
+            f"utility_of: guessed {guess!r} from the city field because no resolved "
+            f"utility was passed. CoStar's City is a mailing city - right 14/14 for "
+            f"Los Angeles but 9 of 16 for Houston. Pass Tariff.utility instead.",
+            stacklevel=2,
+        )
+    return guess
 
 
 def _usd(low: float, expected: float, high: float) -> Ranged:
@@ -136,11 +180,15 @@ def _applies(entry: dict, measure_id: str, sector: str, utility: Optional[str], 
 
 
 def incentives_for(measure: MeasureResult, summary: PropertySummary, quantity: Optional[float] = None,
-                   cost: Optional[Ranged] = None, extra: Optional[dict] = None) -> list[Incentive]:
+                   cost: Optional[Ranged] = None, extra: Optional[dict] = None,
+                   utility: Optional[str] = None) -> list[Incentive]:
     """Every registry entry that can apply to this measure at this property, in registry order.
     `extra` carries facts the measure result does not hold (sri_3yr, roof_slope, existing_r_value,
-    owner_is_business, ...). INC-40: each amount is capped at the installed cost."""
-    utility = utility_of(summary)
+    owner_is_business, ...). INC-40: each amount is capped at the installed cost.
+
+    `utility` is `Tariff.utility` from the data lane. Pass it: without it this falls back
+    to guessing from the city field, which is a mailing city - see `utility_of`."""
+    utility = utility_of(summary, utility)
     state = (summary.state or "").upper()
     out: list[Incentive] = []
     for entry in registry():

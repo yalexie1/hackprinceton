@@ -659,6 +659,73 @@ California and `none` for Texas. This is the contract's own rule — the field's
 comment reads "None where no export price is mandated (Texas)" — and ERCOT mandates
 no export compensation, so leaving it unset was losing data the schema asked for.
 
+### 5.1d D14: which place, and therefore which utility
+
+`backend/data_layer/places.py`, 2026-11-14. [V] This closes the `Tariff.utility`
+question 5.1c left open, and answers a second one nobody had assigned to a package.
+
+**CoStar's `City` is a mailing city, and the error rate is not small.** Measured
+against the US Census Bureau geocoder's `Incorporated Places` layer:
+
+| CoStar `City` | sample | actually |
+|---|---|---|
+| `"Houston"`, TX | 16 | **9 Houston city, 6 unincorporated, 1 Nassau Bay city** |
+| `"Los Angeles"`, CA | 14 | **14 Los Angeles city** |
+
+So the field is reliable for Los Angeles and wrong **7 times in 16** for Houston. This
+is a **sample, not a census** — enough to justify the lookup, not a figure to quote as
+the kit's true error rate. It confirms at scale what §2.4 caught on one property.
+
+**Two consumers, both of which were getting a wrong answer rather than no answer:**
+
+1. **C-PACE.** A28's `cpace_scenario(..., in_pace_region=...)` sets `eligible = False`
+   for Texas unless it is `True`, and nothing supplied it, so the Houston golden
+   office — the only property that demonstrates the Texas route — reported ineligible.
+2. **`Tariff.utility`.** `incentives.py` inferred it from the CoStar city field, with
+   8 `LADWP` and 4 `CenterPoint` registry entries keyed on the result.
+
+One keyless Census call answers both: `Incorporated Places` and `Counties` come back
+together. Verified live — a point off land returns no place rather than an error, and
+Burbank, Glendale and Pasadena return their own names, which is what lets the module
+decline to guess for the Los Angeles County cities that run their own utilities
+(`california.md:1001`).
+
+**The rule is the lead's, from the board.** City of Los Angeles → `LADWP`; elsewhere
+in LA County → `SCE`, status `fallback`, flagged as needing confirmation; a city with
+its own utility → **neither**; California outside LA County → not guessed, since the
+state has about forty publicly owned utilities; **outside California → unchanged**.
+The price always stays on the EIA fallback: `Tariff.source` carries the price
+provenance and `utility` names who serves the meter.
+
+**Texas gets no utility from this.** CenterPoint is the Houston wires utility but its
+delivery area is not the city limit, so an incorporation test is the wrong instrument
+— it says nothing about a property in unincorporated Harris County that CenterPoint
+does serve. The field keeps its honest label there.
+
+**`None` is not `False`.** A failed lookup returns `None` from both
+`in_pace_region` and `utility_for`. A28 treats anything other than `True` as not
+eligible, which is the right default — but "we could not check" must never be reported
+to a user as "your property is not in a PACE region". The records distinguish them.
+
+#### What this did and did not fix
+
+Verified live on the Houston office: the region blocker is **cleared for all seven
+priced measures**. Eligibility does not follow, and it is worth being precise about
+why, because it is not a data gap:
+
+1. `config.CPACE_RATE` and `CPACE_TERM_YEARS` are deliberately `None` — a rate is a
+   market quote, so no payment is computed.
+2. Supplying an illustrative 7 % over 20 years, every measure then fails Texas's
+   `SIR >= 1` rule (ECO-12b): LGT_LED 0.74, PV_ROOF 0.25, HVAC_RTU 0.17.
+
+That second result is the 3.35x price gap of 5.2 showing up exactly where this
+document predicted it would. **Houston C-PACE may simply not pencil at 8.96 ¢/kWh**,
+which is a real finding for the demo script rather than a bug to fix.
+
+Also closed: the live-versus-fixture mismatch. `specs/examples/README.md:593` checks
+`"LADWP" in tariff["utility"]`, which passed on the fixtures and would have failed on
+live data. All three golden properties now pass it **live**.
+
 ### 5.2 What is blocked, and the caveats
 
 - **`developer.nrel.gov` and `nsrdb.nrel.gov` both fail DNS resolution from this environment** (`curl: (6) Could not resolve host`). So **PVWatts v8 and NSRDB PSM3 are unusable here**, although `api.openei.org` — also NREL-operated — resolves fine. `handoff-plan.md` names PVWatts as a reference implementation for the test plan; use **pvlib locally** instead, with PVGIS as an independent cross-check. [V]
@@ -709,6 +776,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
 | D12 | P1 | Splat + drone photos (track site) | `data-matterport` | `backend/data_layer/tracksite.py` | `splat_path`, `drone_photo_paths` |
 | D13 | P2 | Portfolio screening by Vexcel filters | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
+| D14 | P1 | Incorporated place, utility and PACE region — **done**, see 5.1d | `data-costar` | `backend/data_layer/places.py` | `Tariff.utility`, `in_pace_region` |
 | D11 | — | this file | lane owner | `specs/data-integration.md` | — |
 
 **Critical path:** D0 (kit mirror) → D1 / D2 / D3 in parallel → D5 → D6. D4 can be stubbed from the contract and hardened later. D7–D10 come strictly after the walking skeleton.
@@ -869,6 +937,12 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Mask ground areas | 13 masks, pixel counts | 2026-11-14 | largest **180.9 m²** vs 190.4 m² precomputed (**−5 %**); sum 485.8 (**+155 %**) |
 | Mask nesting | pixel-box containment, 12 pairs | 2026-11-14 | 8 **100 %** contained in the largest, 3 at 81–97 %, 3 disjoint — never sum |
 | Highest-confidence detection | same response | 2026-11-14 | 0.695 is 38.8 m² and **0 % inside** the largest — the secondary structure |
+| CoStar `City` vs incorporation, Houston (D14) | Census geocoder, 16 sampled | 2026-11-14 | **9 Houston city, 6 unincorporated, 1 Nassau Bay** — 7 of 16 wrong |
+| CoStar `City` vs incorporation, Los Angeles | Census geocoder, 14 sampled | 2026-11-14 | **14/14 Los Angeles city** — reliable there |
+| Census edge cases | Burbank, Glendale, Pasadena, Santa Monica, off-land | 2026-11-14 | municipal-utility cities return their own names; the Pacific returns no place, not an error |
+| Golden properties placed | live, all three | 2026-11-14 | both LA → `Los Angeles city` → **LADWP**; Houston → `Houston city` → **`in_pace_region` True** |
+| A28 region blocker cleared | live, all 7 priced Houston measures | 2026-11-14 | blocker gone for every one; eligibility then fails **SIR ≥ 1** (0.74, 0.25, 0.17) |
+| Golden tariff check on live data | `README.md:593` rule | 2026-11-14 | **passes live** for all three, where it previously only passed on fixtures |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; resolved by the lead's EIA decision, 5.1c |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |

@@ -329,6 +329,7 @@ def _assemble(sid: str) -> PropertyBundle:
     from backend.data_layer import costar as d1
     from backend.data_layer import external as d9
     from backend.data_layer import matterport as d2
+    from backend.data_layer import places as d14
     from backend.data_layer import vexcel as d3
 
     provenance: list[FetchRecord] = []
@@ -373,7 +374,15 @@ def _assemble(sid: str) -> PropertyBundle:
 
     state = row.get("state")
     sector = "RES" if (costar and costar.kind == "residential_listing") else "COM"
-    tariff, tnotes = d9.get_tariff(state or "CA", sector)
+
+    # D14: who serves the meter, from the Census incorporated-place layer rather than
+    # the CoStar `City` field, which is a *mailing* city - right 14/14 for Los Angeles
+    # and only 9 of 16 for Houston. `None` means "do not guess", and `get_tariff` then
+    # keeps its own honest label rather than being handed a wrong utility name.
+    utility, ploc = d14.utility_for(lat, lon, state or "CA")
+    provenance.append(ploc)
+
+    tariff, tnotes = d9.get_tariff(state or "CA", sector, utility=utility)
     provenance += tnotes
     if tariff is None:
         raise IncompleteBundle(
@@ -485,6 +494,30 @@ def roof_area_m2(sid: str, *, live: Optional[bool] = None) -> Optional[float]:
         return None
     area, _ = d8.roof_area_m2(parcel, sid=sid)
     return area
+
+
+def in_pace_region(sid: str, *, live: Optional[bool] = None) -> Optional[bool]:
+    """Whether the property sits in a PACE region, for `cpace_scenario` (A28).
+
+    **Three answers, and the third is not the second.** `True` positively inside,
+    `False` positively elsewhere, `None` could not be checked. A28 treats anything
+    other than `True` as not eligible, which is right - but the caller must not report
+    "not eligible" to a user when the real answer is that a geocoder was unreachable.
+
+    `None` offline, because the check is a network call and SPEC 14 requires the
+    analysis lane to run without one. The Houston golden office returns `True` live.
+    """
+    if live is None:
+        live = os.environ.get("DATA_LAYER_LIVE") == "1"
+    if not live:
+        return None
+
+    from backend.data_layer import places as d14
+
+    summary = get_property_summary(sid)
+    if summary.lat is None or summary.lon is None or not summary.state:
+        return None
+    return d14.in_pace_region(summary.lat, summary.lon, summary.state)[0]
 
 
 def get_asset(path: str) -> bytes:

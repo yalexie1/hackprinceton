@@ -19,6 +19,16 @@ from backend.schema import FetchRecord, VexcelData
 WKT = "POLYGON ((-118.3172 34.0932, -118.3170 34.0932, -118.3170 34.0937, -118.3172 34.0932))"
 
 
+def _bundle_with(vex: VexcelData):
+    """A bundle carrying this VexcelData, read from the house example so the rest is real."""
+    import json
+    from pathlib import Path
+    from backend.schema import PropertyBundle
+    root = Path(__file__).resolve().parents[3] / "specs" / "examples" / "house"
+    raw = json.loads((root / "property_bundle.json").read_text())
+    return PropertyBundle.model_validate(raw).model_copy(update={"vexcel": vex})
+
+
 def parcel(**kw) -> VexcelData:
     return VexcelData(collection="us-ca-losangeles-2025", parcel_wkt=WKT, **kw)
 
@@ -48,15 +58,16 @@ def test_the_ortho_path_is_filled_from_the_cache(fake_imagery):
     assert filled.ortho_path == "data/cache/vexcel-image/sid-ortho/abc.jpg"
 
 
-def test_the_obliques_are_not_fetched_and_the_record_says_why(fake_imagery):
-    """The lead's call: nothing reads `oblique_paths`, four directions cost about 2.9 s on a cold
-    bundle, and `oriented/extract` is the endpoint most prone to 429. An empty mapping with no
-    record would read as a failed fetch, so the record says it was a decision."""
+def test_assembly_does_not_fetch_obliques_and_points_at_the_door_that_does(fake_imagery):
+    """Four directions cost about 2.9 s on a cold bundle at the endpoint most prone to 429, and
+    no *run* needs them, so assembly leaves them alone. There is a screen that shows them now
+    (#374), so the record points at `get_obliques` rather than saying nothing reads them - an
+    empty mapping with no record would read as a failed fetch."""
     filled, notes = api._with_imagery("sid", parcel())
     assert filled.oblique_paths == {}
     said = [n for n in notes if n.what == "oriented/extract"]
     assert len(said) == 1 and said[0].status == "missing"
-    assert "no consumer" in (said[0].detail or "")
+    assert "get_obliques" in (said[0].detail or ""), "the record names the on-demand door"
 
 
 def test_no_ortho_is_a_record_and_never_an_exception(fake_imagery):
@@ -158,3 +169,66 @@ def test_the_assembly_actually_calls_the_imagery_step(monkeypatch, fake_imagery)
     with pytest.raises(api.IncompleteBundle):
         api._assemble("sid")
     assert seen == ["sid"], "_assemble never reached the imagery step"
+
+
+# ---------- obliques on demand, for a screen that shows them (#374) ----------
+
+def test_obliques_are_keyed_by_direction_and_only_when_fetched(monkeypatch):
+    """@vinayak-sinha now has a screen that shows them, which is the condition the assembly
+    comment named. They stay out of `_assemble`: a run never needs them, and four directions
+    cost about 2.9 s at the endpoint most prone to 429."""
+    monkeypatch.setattr(api, "get_property_bundle",
+                        lambda sid, live=None: _bundle_with(parcel()))
+    monkeypatch.setattr(vexcel, "oblique_directions", lambda wkt, **k: ["north", "south"])
+    monkeypatch.setattr(imagery, "fetch_oblique", lambda wkt, d, **k: (
+        (f"data/cache/vexcel-image/sid-{d}/x.jpg", []) if d == "north" else (None, [])))
+
+    paths, notes = api.get_obliques("sid", live=True)
+    assert paths == {"north": "data/cache/vexcel-image/sid-north/x.jpg"}
+    assert "south" not in paths, "a direction that could not be fetched is left out"
+    assert any(n.what == "oriented/collections" for n in notes)
+
+
+def test_a_property_with_no_parcel_asks_for_nothing(monkeypatch):
+    monkeypatch.setattr(api, "get_property_bundle",
+                        lambda sid, live=None: _bundle_with(parcel().model_copy(
+                            update={"parcel_wkt": None})))
+
+    def refuse(*a, **k):
+        raise AssertionError("no parcel means no crop can be cut, so nothing may be fetched")
+    monkeypatch.setattr(vexcel, "oblique_directions", refuse)
+    monkeypatch.setattr(imagery, "fetch_oblique", refuse)
+
+    paths, notes = api.get_obliques("sid", live=True)
+    assert paths == {} and notes[0].status == "missing"
+
+
+def test_a_failing_coverage_call_is_recorded_rather_than_raised(monkeypatch):
+    """A property preview must degrade to no imagery, never 500."""
+    monkeypatch.setattr(api, "get_property_bundle",
+                        lambda sid, live=None: _bundle_with(parcel()))
+    monkeypatch.setattr(vexcel, "oblique_directions",
+                        lambda wkt, **k: (_ for _ in ()).throw(RuntimeError("HTTP 429")))
+
+    paths, notes = api.get_obliques("sid", live=True)
+    assert paths == {} and notes[0].status == "error" and "429" in (notes[0].detail or "")
+
+
+def test_asking_for_named_directions_skips_the_coverage_call(monkeypatch):
+    """A caller that already knows which direction it wants should not pay for a lookup."""
+    monkeypatch.setattr(api, "get_property_bundle",
+                        lambda sid, live=None: _bundle_with(parcel()))
+
+    def refuse(*a, **k):
+        raise AssertionError("the coverage service must not be asked when directions are given")
+    monkeypatch.setattr(vexcel, "oblique_directions", refuse)
+    monkeypatch.setattr(imagery, "fetch_oblique",
+                        lambda wkt, d, **k: (f"data/cache/vexcel-image/sid-{d}/x.jpg", []))
+
+    paths, _ = api.get_obliques("sid", directions=["north"], live=True)
+    assert paths == {"north": "data/cache/vexcel-image/sid-north/x.jpg"}
+
+
+def test_the_bundle_rule_version_does_not_move_for_an_on_demand_fetch():
+    """This adds no field to a cached bundle, so a warm cache stays valid."""
+    assert api.BUNDLE_RULE_VERSION == EXPECTED_BUNDLE_RULE

@@ -417,9 +417,9 @@ def _with_imagery(sid: str, vexcel: VexcelData) -> tuple[VexcelData, list[FetchR
 
     notes.append(FetchRecord(
         layer="vexcel", what="oriented/extract", status="missing",
-        detail=("not fetched: no consumer. Nothing reads oblique_paths, and four directions "
-                "cost about 2.9 s on a cold bundle at the endpoint most prone to 429. Fetch "
-                "them on demand if a screen ever needs them")))
+        detail=("not fetched during assembly: four directions cost about 2.9 s on a cold bundle "
+                "at the endpoint most prone to 429, and no run needs them. `get_obliques(sid)` "
+                "fetches them on demand for a screen that does")))
 
     return (vexcel.model_copy(update=update) if update else vexcel), notes
 
@@ -795,6 +795,58 @@ def in_pace_region(sid: str, *, live: Optional[bool] = None) -> Optional[bool]:
     if summary.lat is None or summary.lon is None or not summary.state:
         return None
     return d14.in_pace_region(summary.lat, summary.lon, summary.state)[0]
+
+
+def get_obliques(sid: str, *, directions: Optional[list[str]] = None,
+                 live: Optional[bool] = None) -> tuple[dict[str, str], list[FetchRecord]]:
+    """Cached oblique crops of a property's parcel, `{direction: path}`, fetched on demand.
+
+    Deliberately **not** part of bundle assembly. @vinayak-sinha now has a screen that shows
+    them, which is the condition the assembly comment named; but the reason the lead kept them
+    out of `_assemble` has not changed - four directions cost about 2.9 s on a cold bundle at
+    the endpoint most prone to 429, and no *run* needs them. A property preview asks for them
+    once, the cache answers afterwards, and a demo run never pays for them at all.
+
+    `directions` defaults to whatever the coverage service says exists here: obliques live only
+    in the `urban` layer and not every direction exists everywhere, so asking beats guessing.
+    A direction that 403s, 404s or 429s is left out of the mapping and recorded - a path that
+    points at nothing would make `/api/assets` 404 for something the response promised.
+
+    The bundle is not modified and `BUNDLE_RULE_VERSION` does not move: this adds no field to a
+    cached bundle, so a warm cache stays valid.
+    """
+    if live is None:
+        live = os.environ.get("DATA_LAYER_LIVE") == "1"
+
+    from backend.data_layer import imagery as d8
+    from backend.data_layer import vexcel as d3
+
+    bundle = get_property_bundle(sid, live=live)
+    parcel = bundle.vexcel.parcel_wkt if bundle.vexcel else None
+    if not parcel:
+        return {}, [FetchRecord(layer="vexcel", what="oriented/extract", status="missing",
+                                detail="no parcel polygon for this property, so no crop can be cut")]
+
+    notes: list[FetchRecord] = []
+    wanted = directions
+    if wanted is None:
+        try:
+            wanted = d3.oblique_directions(parcel)
+        except Exception as exc:                    # a preview must not fail on a coverage call
+            return {}, [FetchRecord(layer="vexcel", what="oriented/collections", status="error",
+                                    detail=str(exc)[:200])]
+        notes.append(FetchRecord(
+            layer="vexcel", what="oriented/collections", status="ok" if wanted else "missing",
+            detail=(f"{len(wanted)} oblique direction(s) over this parcel: {', '.join(wanted)}"
+                    if wanted else "no oblique coverage over this parcel")))
+
+    paths: dict[str, str] = {}
+    for direction in wanted:
+        path, records = d8.fetch_oblique(parcel, direction, sid=sid)
+        notes += records
+        if path:
+            paths[direction] = path
+    return paths, notes
 
 
 def get_asset(path: str) -> bytes:

@@ -277,3 +277,16 @@ def test_a_document_type_with_no_template_is_a_404_not_a_500(recorded_run):
         assert r.status_code == 404, f"{doc_type}: {r.status_code} {r.text[:120]}"
         assert r.json()["error"]["code"] == "template_not_available"
         assert doc_type in r.json()["error"]["message"]
+
+
+def test_an_answer_for_a_run_that_closed_meanwhile_is_a_409(monkeypatch):
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    api.get_run(run_id).status = "waiting_for_user"
+    q = api.get_run(run_id).questions[0]
+
+    def closed(*a, **k):
+        raise LookupError("run is closed; it cannot take an answer")
+    monkeypatch.setattr(api, "answer", closed)
+    value = next(c.value for c in q.choices if c.value is not None)
+    r = client.post(f"/api/runs/{run_id}/answers", json={"question_id": q.id, "value": value})
+    assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_waiting"

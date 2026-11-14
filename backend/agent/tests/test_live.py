@@ -591,3 +591,20 @@ def test_an_answer_that_lands_in_the_window_still_resumes_the_run(live_mode, mon
         f"the run ended on {events[-1].type!r}: the answer was dropped and the run closed "
         f"instead of resuming")
     assert api.get_run(run_id).status == "done"
+
+
+def test_an_answer_to_a_closed_run_is_an_error_not_a_silent_queue(live_mode):
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    pending = run.pending
+    run.closed = True                       # the run ended while the client still held the question
+    assert pending is not None
+    with pytest.raises(LookupError, match="closed"):
+        api.answer(run_id, pending[1].id, None)
+    assert run._inbox.empty()               # nothing was queued for a reader that is gone
+    run.closed = False                      # let the run finish, so its worker thread is not left waiting
+    api.answer(run_id, pending[1].id, None)
+    assert drain(run_id)[-1].type == "done"

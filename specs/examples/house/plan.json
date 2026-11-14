@@ -362,9 +362,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 102.56,
-            "expected": 131.87,
-            "high": 161.18,
+            "low": 102.31,
+            "expected": 131.57,
+            "high": 160.83,
             "unit": "USD"
           },
           "co2_kg": {
@@ -396,9 +396,9 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 102.56,
-            "expected": 131.87,
-            "high": 161.18,
+            "low": 102.31,
+            "expected": 131.57,
+            "high": 160.83,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
@@ -411,15 +411,15 @@
           },
           "discounted_payback_years": 2.2,
           "npv_usd": {
-            "low": 513.16,
-            "expected": 791.29,
-            "high": 1066.35,
+            "low": 511.17,
+            "expected": 788.95,
+            "high": 1063.65,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": 606.33,
-          "sir": 3.905,
-          "irr": 0.4584,
-          "airr": 0.1803,
+          "npv_sensitivity_usd": 604.4,
+          "sir": 3.896,
+          "irr": 0.4573,
+          "airr": 0.1801,
           "discount_rate": 0.03,
           "electricity_escalation": -0.0108,
           "gas_escalation": -0.0174,
@@ -433,9 +433,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 102.56,
-                "expected": 131.87,
-                "high": 161.18,
+                "low": 102.31,
+                "expected": 131.57,
+                "high": 160.83,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -504,9 +504,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 115.13,
-          "expected": 165.33,
-          "high": 215.53,
+          "low": 121.89,
+          "expected": 174.93,
+          "high": 227.98,
           "unit": "USD"
         },
         "co2_kg": {
@@ -558,30 +558,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 115.13,
-          "expected": 165.33,
-          "high": 215.53,
+          "low": 121.89,
+          "expected": 174.93,
+          "high": 227.98,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 25,
         "simple_payback_years": {
-          "low": 9.01,
-          "expected": 13.47,
-          "high": 22.48,
+          "low": 8.51,
+          "expected": 12.73,
+          "high": 21.24,
           "unit": "years"
         },
-        "discounted_payback_years": 18.2,
+        "discounted_payback_years": 16.9,
         "npv_usd": {
-          "low": -893.25,
-          "expected": 547.21,
-          "high": 1595.72,
+          "low": -766.1,
+          "expected": 705.66,
+          "high": 1798.49,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -359.16,
-        "sir": 1.246,
-        "irr": 0.0512,
-        "airr": 0.0391,
+        "npv_sensitivity_usd": -252.2,
+        "sir": 1.317,
+        "irr": 0.0569,
+        "airr": 0.0414,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0018,
         "gas_escalation": -0.0047,
@@ -595,9 +595,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 115.13,
-              "expected": 165.33,
-              "high": 215.53,
+              "low": 121.89,
+              "expected": 174.93,
+              "high": 227.98,
               "unit": "USD"
             },
             "program_sir": null,
@@ -665,9 +665,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 69.81,
-          "expected": 105.68,
-          "high": 136.98,
+          "low": 93.25,
+          "expected": 137.89,
+          "high": 176.24,
           "unit": "USD"
         },
         "co2_kg": {
@@ -719,30 +719,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 69.81,
-          "expected": 105.68,
-          "high": 136.98,
+          "low": 93.25,
+          "expected": 137.89,
+          "high": 176.24,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 68.09,
-          "expected": 126.95,
-          "high": 202.36,
+          "low": 52.7,
+          "expected": 97.29,
+          "high": 152.16,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -13276.89,
-          "expected": -9259.84,
-          "high": -3837.44,
+          "low": -12932.65,
+          "expected": -8904.82,
+          "high": -3476.63,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -9623.26,
-        "sir": 0.106,
+        "npv_sensitivity_usd": -9350.37,
+        "sir": 0.14,
         "irr": null,
-        "airr": -0.1131,
+        "airr": -0.0964,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0062,
         "gas_escalation": -0.0108,
@@ -756,9 +756,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 69.81,
-              "expected": 105.68,
-              "high": 136.98,
+              "low": 93.25,
+              "expected": 137.89,
+              "high": 176.24,
               "unit": "USD"
             },
             "program_sir": null,
@@ -819,152 +819,6 @@
       "warnings": [
         "The electrical service may need an upgrade for a heat pump (electrical.service is likely_upgrade)."
       ]
-    },
-    {
-      "measure_id": "ROOF_COOL",
-      "title": "Cool roof coating",
-      "applicable": true,
-      "not_applicable_reason": null,
-      "description": "Reflective coating on the roof to cut solar heat gain.",
-      "params": {
-        "absorptance_after": 0.3
-      },
-      "savings": {
-        "electricity_kwh": {
-          "low": 30.0,
-          "expected": 60.0,
-          "high": 90.0,
-          "unit": "kWh"
-        },
-        "gas_kwh": {
-          "low": -390.0,
-          "expected": -260.0,
-          "high": -130.0,
-          "unit": "kWh"
-        },
-        "cost_usd": {
-          "low": -0.81,
-          "expected": 0.95,
-          "high": 2.71,
-          "unit": "USD"
-        },
-        "co2_kg": {
-          "low": -53.13,
-          "expected": -35.42,
-          "high": -17.71,
-          "unit": "kg"
-        },
-        "co2_nonbaseload_kg": {
-          "low": -31.44,
-          "expected": -20.96,
-          "high": -10.48,
-          "unit": "kg"
-        }
-      },
-      "finance": {
-        "installed_cost_usd": {
-          "low": 1109.18,
-          "expected": 1662.95,
-          "high": 2217.54,
-          "unit": "USD"
-        },
-        "cost_source": "EPA-2008 section 3.3 (2006 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 20.27 USD per m2 of roof x 82.04",
-        "incentives": [
-          {
-            "name": "LADWP Consumer Rebate Program, cool roof",
-            "kind": "rebate_after_install",
-            "amount_usd": {
-              "low": 0.0,
-              "expected": 0.0,
-              "high": 529.84,
-              "unit": "USD"
-            },
-            "status": "verified",
-            "eligibility": "needs_confirmation",
-            "conditions": [
-              "steep slope: 3-year SRI of 20 earns 0.20, 35 earns 0.60 USD per sq ft",
-              "CRRC-rated product",
-              "finalled building permit"
-            ],
-            "citation": "physics 04 INC-10: 0.20 or 0.60 USD per sq ft of cool roof over conditioned space, paid after installation"
-          }
-        ],
-        "net_upfront_usd": {
-          "low": 1109.18,
-          "expected": 1662.95,
-          "high": 2217.54,
-          "unit": "USD"
-        },
-        "annual_savings_usd": {
-          "low": -0.81,
-          "expected": 0.95,
-          "high": 2.71,
-          "unit": "USD"
-        },
-        "annual_om_change_usd": 0.0,
-        "useful_life_years": 20,
-        "simple_payback_years": null,
-        "discounted_payback_years": null,
-        "npv_usd": {
-          "low": -2197.64,
-          "expected": -1641.65,
-          "high": -1086.47,
-          "unit": "USD"
-        },
-        "npv_sensitivity_usd": -1648.4,
-        "sir": 0.013,
-        "irr": null,
-        "airr": -0.1716,
-        "discount_rate": 0.03,
-        "electricity_escalation": -0.0036,
-        "gas_escalation": -0.007,
-        "analysis_period_years": 20,
-        "financing": [
-          {
-            "kind": "cash",
-            "eligible": true,
-            "financed_usd": 0.0,
-            "rate": null,
-            "term_years": null,
-            "annual_payment_usd": 0.0,
-            "net_cashflow_year1_usd": {
-              "low": -0.81,
-              "expected": 0.95,
-              "high": 2.71,
-              "unit": "USD"
-            },
-            "program_sir": null,
-            "notes": [
-              "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
-            ]
-          }
-        ]
-      },
-      "flags": [],
-      "anchors": [],
-      "evidence": [
-        {
-          "kind": "vexcel_attr",
-          "ref": "roof-characteristics.material.class"
-        },
-        {
-          "kind": "default_table",
-          "ref": "DEF-02",
-          "note": "shingle 0.85, cool roof 0.30"
-        }
-      ],
-      "formula_ids": [
-        "ENV-05",
-        "ZON-04",
-        "ECO-07",
-        "EMI-01"
-      ],
-      "solar": null,
-      "layout": null,
-      "value_uplift": null,
-      "warnings": [
-        "Vented attic: the result is an upper bound (SPEC.md section 6.2). Even the upper bound barely breaks even here: the winter heating penalty almost cancels the cooling saving."
-      ]
     }
   ],
   "skipped": [
@@ -979,14 +833,14 @@
       "detail": "Net upfront cost is above the whole budget; listed as financeable."
     },
     {
-      "measure_id": "ROOF_COOL",
-      "reason": "over_budget",
-      "detail": "Net upfront cost is above the budget left after rooftop solar; listed as financeable."
-    },
-    {
       "measure_id": "DHW_HPWH",
       "reason": "feasibility",
       "detail": "Flag dhw.space is blocked: the water heater is in a small closet inside the conditioned space."
+    },
+    {
+      "measure_id": "ROOF_COOL",
+      "reason": "no_savings",
+      "detail": "The heating penalty outweighs the cooling saving, even as an upper bound."
     },
     {
       "measure_id": "CTRL_TSTAT",
@@ -1006,9 +860,9 @@
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 1114.1,
-    "expected": 1252.94,
-    "high": 1383.13,
+    "low": 1113.81,
+    "expected": 1252.64,
+    "high": 1382.81,
     "unit": "USD"
   },
   "total_co2_kg": {
@@ -1031,9 +885,9 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 592.24,
-      "expected": 906.06,
-      "high": 1290.28,
+      "low": 642.63,
+      "expected": 959.8,
+      "high": 1348.28,
       "unit": "USD"
     },
     "co2_kg": {

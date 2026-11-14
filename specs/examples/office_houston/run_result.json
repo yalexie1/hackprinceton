@@ -1332,9 +1332,9 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 11063.7,
-        "expected": 13059.0,
-        "high": 19660.42,
+        "low": 11073.76,
+        "expected": 13069.16,
+        "high": 19670.63,
         "unit": "USD"
       },
       "co2_kg": {
@@ -1414,9 +1414,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 1773.58,
-          "expected": 3561.5,
-          "high": 5423.16,
+          "low": 1772.95,
+          "expected": 3560.26,
+          "high": 5421.82,
           "unit": "USD"
         },
         "co2_kg": {
@@ -1465,28 +1465,28 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 1773.58,
-          "expected": 3561.5,
-          "high": 5423.16,
+          "low": 1772.95,
+          "expected": 3560.26,
+          "high": 5421.82,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
           "low": 5.31,
-          "expected": 12.26,
-          "high": 25.26,
+          "expected": 12.27,
+          "high": 25.27,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -26608.65,
-          "expected": -497.36,
-          "high": 29660.07,
+          "low": -26618.15,
+          "expected": -513.66,
+          "high": 29642.23,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -10781.63,
-        "sir": 0.989,
+        "npv_sensitivity_usd": -10793.96,
+        "sir": 0.988,
         "irr": 0.0284,
         "airr": 0.0292,
         "discount_rate": 0.03,
@@ -1502,9 +1502,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 1773.58,
-              "expected": 3561.5,
-              "high": 5423.16,
+              "low": 1772.95,
+              "expected": 3560.26,
+              "high": 5421.82,
               "unit": "USD"
             },
             "program_sir": null,
@@ -1520,12 +1520,12 @@
             "term_years": 15,
             "annual_payment_usd": 4645.49,
             "net_cashflow_year1_usd": {
-              "low": -2871.91,
-              "expected": -1083.99,
-              "high": 777.67,
+              "low": -2872.54,
+              "expected": -1085.23,
+              "high": 776.33,
               "unit": "USD"
             },
-            "program_sir": 0.767,
+            "program_sir": 0.766,
             "notes": [
               "Program SIR 0.77: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
               "Savings-to-debt-service ratio 0.77.",
@@ -2475,9 +2475,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 50.87,
-          "expected": 102.0,
-          "high": 166.02,
+          "low": 51.21,
+          "expected": 102.68,
+          "high": 166.97,
           "unit": "USD"
         },
         "co2_kg": {
@@ -2509,30 +2509,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 50.87,
-          "expected": 102.0,
-          "high": 166.02,
+          "low": 51.21,
+          "expected": 102.68,
+          "high": 166.97,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 31.44,
-          "expected": 67.56,
-          "high": 174.5,
+          "low": 31.26,
+          "expected": 67.11,
+          "high": 173.34,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -14083.2,
-          "expected": -5632.14,
-          "high": -2959.37,
+          "low": -14074.65,
+          "expected": -5623.25,
+          "high": -2949.37,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -5933.47,
-        "sir": 0.183,
+        "npv_sensitivity_usd": -5926.75,
+        "sir": 0.184,
         "irr": null,
-        "airr": -0.0803,
+        "airr": -0.0799,
         "discount_rate": 0.03,
         "electricity_escalation": 0.0022,
         "gas_escalation": 0.0126,
@@ -2546,9 +2546,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 50.87,
-              "expected": 102.0,
-              "high": 166.02,
+              "low": 51.21,
+              "expected": 102.68,
+              "high": 166.97,
               "unit": "USD"
             },
             "program_sir": null,
@@ -2564,12 +2564,12 @@
             "term_years": 15,
             "annual_payment_usd": 732.85,
             "net_cashflow_year1_usd": {
-              "low": -681.98,
-              "expected": -630.85,
-              "high": -566.83,
+              "low": -681.64,
+              "expected": -630.17,
+              "high": -565.88,
               "unit": "USD"
             },
-            "program_sir": 0.139,
+            "program_sir": 0.14,
             "notes": [
               "Program SIR 0.14: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
               "Savings-to-debt-service ratio 0.14.",
@@ -3157,9 +3157,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 113.9,
-          "expected": 228.75,
-          "high": 388.69,
+          "low": 113.82,
+          "expected": 228.58,
+          "high": 388.46,
           "unit": "USD"
         },
         "co2_kg": {
@@ -3740,9 +3740,9 @@
               "unit": "kWh"
             },
             "cost_usd": {
-              "low": 1771.42,
-              "expected": 3557.18,
-              "high": 5416.52,
+              "low": 1770.8,
+              "expected": 3555.94,
+              "high": 5415.19,
               "unit": "USD"
             },
             "co2_kg": {
@@ -3791,9 +3791,9 @@
               "unit": "USD"
             },
             "annual_savings_usd": {
-              "low": 1771.42,
-              "expected": 3557.18,
-              "high": 5416.52,
+              "low": 1770.8,
+              "expected": 3555.94,
+              "high": 5415.19,
               "unit": "USD"
             },
             "annual_om_change_usd": 0.0,
@@ -3801,19 +3801,19 @@
             "simple_payback_years": {
               "low": 5.32,
               "expected": 12.28,
-              "high": 25.29,
+              "high": 25.3,
               "unit": "years"
             },
             "discounted_payback_years": null,
             "npv_usd": {
-              "low": -26638.81,
-              "expected": -549.67,
-              "high": 29586.28,
+              "low": -26648.16,
+              "expected": -565.89,
+              "high": 29568.63,
               "unit": "USD"
             },
-            "npv_sensitivity_usd": -10821.49,
+            "npv_sensitivity_usd": -10833.76,
             "sir": 0.987,
-            "irr": 0.0283,
+            "irr": 0.0282,
             "airr": 0.0291,
             "discount_rate": 0.03,
             "electricity_escalation": 0.0022,
@@ -3828,9 +3828,9 @@
                 "term_years": null,
                 "annual_payment_usd": 0.0,
                 "net_cashflow_year1_usd": {
-                  "low": 1771.42,
-                  "expected": 3557.18,
-                  "high": 5416.52,
+                  "low": 1770.8,
+                  "expected": 3555.94,
+                  "high": 5415.19,
                   "unit": "USD"
                 },
                 "program_sir": null,
@@ -3846,12 +3846,12 @@
                 "term_years": 15,
                 "annual_payment_usd": 4645.49,
                 "net_cashflow_year1_usd": {
-                  "low": -2874.07,
-                  "expected": -1088.31,
-                  "high": 771.03,
+                  "low": -2874.69,
+                  "expected": -1089.55,
+                  "high": 769.7,
                   "unit": "USD"
                 },
-                "program_sir": 0.766,
+                "program_sir": 0.765,
                 "notes": [
                   "Program SIR 0.77: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
                   "Savings-to-debt-service ratio 0.77.",
@@ -4633,9 +4633,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 50.87,
-            "expected": 102.0,
-            "high": 166.02,
+            "low": 51.21,
+            "expected": 102.68,
+            "high": 166.97,
             "unit": "USD"
           },
           "co2_kg": {
@@ -4667,30 +4667,30 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 50.87,
-            "expected": 102.0,
-            "high": 166.02,
+            "low": 51.21,
+            "expected": 102.68,
+            "high": 166.97,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
           "useful_life_years": 15,
           "simple_payback_years": {
-            "low": 31.44,
-            "expected": 67.56,
-            "high": 174.5,
+            "low": 31.26,
+            "expected": 67.11,
+            "high": 173.34,
             "unit": "years"
           },
           "discounted_payback_years": null,
           "npv_usd": {
-            "low": -14083.2,
-            "expected": -5632.14,
-            "high": -2959.37,
+            "low": -14074.65,
+            "expected": -5623.25,
+            "high": -2949.37,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": -5933.47,
-          "sir": 0.183,
+          "npv_sensitivity_usd": -5926.75,
+          "sir": 0.184,
           "irr": null,
-          "airr": -0.0803,
+          "airr": -0.0799,
           "discount_rate": 0.03,
           "electricity_escalation": 0.0022,
           "gas_escalation": 0.0126,
@@ -4704,9 +4704,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 50.87,
-                "expected": 102.0,
-                "high": 166.02,
+                "low": 51.21,
+                "expected": 102.68,
+                "high": 166.97,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -4722,12 +4722,12 @@
               "term_years": 15,
               "annual_payment_usd": 732.85,
               "net_cashflow_year1_usd": {
-                "low": -681.98,
-                "expected": -630.85,
-                "high": -566.83,
+                "low": -681.64,
+                "expected": -630.17,
+                "high": -565.88,
                 "unit": "USD"
               },
-              "program_sir": 0.139,
+              "program_sir": 0.14,
               "notes": [
                 "Program SIR 0.14: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
                 "Savings-to-debt-service ratio 0.14.",
@@ -4830,9 +4830,9 @@
       "unit": "USD"
     },
     "total_annual_savings_usd": {
-      "low": 1996.41,
-      "expected": 3783.4,
-      "high": 5743.32,
+      "low": 1995.78,
+      "expected": 3782.16,
+      "high": 5742.0,
       "unit": "USD"
     },
     "total_co2_kg": {
@@ -4855,9 +4855,9 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 6546.42,
-        "expected": 9275.6,
-        "high": 16114.38,
+        "low": 6557.8,
+        "expected": 9287.0,
+        "high": 16125.66,
         "unit": "USD"
       },
       "co2_kg": {
@@ -4871,8 +4871,8 @@
     "value_uplift": {
       "value_usd": {
         "low": 0.0,
-        "expected": 20684.33,
-        "high": 81187.14,
+        "expected": 20677.44,
+        "high": 81168.29,
         "unit": "USD"
       },
       "method": "VAL-01",
@@ -4917,7 +4917,7 @@
       "impact_note": "Unit size sets the cost of replacement and the economizer saving; at the low end the economizer moves closer to the budget."
     }
   ],
-  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for Suite 500: 141,600 kWh of electricity and 9,000 kWh of gas a year, about $13,059 (range $11,064 to $19,660). Office hot water is not modelled. The electricity price is a published Texas average, not your tariff.\n\nWithin the $50,000 budget the plan selects desk placement, the LED retrofit and a 1.72 kW rooftop array with the money left, for $49,442 upfront, saving about $3,783 a year (range $1,996 to $5,743).\n\nVexcel counts two rooftop units, so unit replacement and an economizer were evaluated. Neither fits the budget. With C-PACE the units would be financed at $68,910 over 20 years (program savings ratio 0.16) and the economizer at $12,088 over 15 years (ratio 0.19). Both are below the 1.0 the Texas program requires, so neither is eligible as it stands. The property is inside the City of Houston PACE region. An assessment is a first lien that runs with the land, and a mortgage holder's written consent is a precondition.\n\nValue uplift: capitalised at the rates of 16 comparable sales, the plan's savings correspond to about $20,684 of property value (range $0 to $81,187). This is an estimate shown beside the totals; it is not added to the savings.\n",
+  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for Suite 500: 141,600 kWh of electricity and 9,000 kWh of gas a year, about $13,069 (range $11,074 to $19,671). Office hot water is not modelled. The electricity price is a published Texas average, not your tariff, and gas is priced at the EIA Texas commercial average.\n\nWithin the $50,000 budget the plan selects desk placement, the LED retrofit and a 1.72 kW rooftop array with the money left, for $49,442 upfront, saving about $3,782 a year (range $1,996 to $5,742).\n\nVexcel counts two rooftop units, so unit replacement and an economizer were evaluated. Neither fits the budget. With C-PACE the units would be financed at $68,910 over 20 years (program savings ratio 0.16) and the economizer at $12,088 over 15 years (ratio 0.19). Both are below the 1.0 the Texas program requires, so neither is eligible as it stands. The property is inside the City of Houston PACE region. An assessment is a first lien that runs with the land, and a mortgage holder's written consent is a precondition.\n\nValue uplift: capitalised at the rates of 16 comparable sales, the plan's savings correspond to about $20,677 of property value (range $0 to $81,168). This is an estimate shown beside the totals; it is not added to the savings.\n",
   "warnings": [
     "LGT_LED and PV_ROOF may exceed budget at the high end of their cost ranges.",
     "Windows were read from panoramas: the scan has no openings.",

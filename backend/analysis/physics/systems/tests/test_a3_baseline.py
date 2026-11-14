@@ -161,8 +161,9 @@ def test_price_range_from_the_registry_is_used():
     rows = [r for r in res.sensitivity if r.key == "tariff.electricity_usd_per_kwh" and r.output == "cost_usd"]
     assert len(rows) == 1
     e = res.baseline.annual.electricity_kwh.expected
-    assert rows[0].y_low_run == pytest.approx(e * 0.086 + res.baseline.annual.gas_kwh.expected * 0.035, rel=1e-9)
-    assert rows[0].y_high_run == pytest.approx(e * 0.133 + res.baseline.annual.gas_kwh.expected * 0.035, rel=1e-9)
+    gas_usd = res.baseline.annual.gas_kwh.expected * bundle.tariff.gas_usd_per_kwh   # D15 EIA TX COM
+    assert rows[0].y_low_run == pytest.approx(e * 0.086 + gas_usd, rel=1e-9)
+    assert rows[0].y_high_run == pytest.approx(e * 0.133 + gas_usd, rel=1e-9)
     assert res.baseline.annual.cost_usd.high >= rows[0].y_high_run - 1e-9
 
 

@@ -26,9 +26,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 102.56,
-            "expected": 131.87,
-            "high": 161.18,
+            "low": 102.31,
+            "expected": 131.57,
+            "high": 160.83,
             "unit": "USD"
           },
           "co2_kg": {
@@ -60,9 +60,9 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 102.56,
-            "expected": 131.87,
-            "high": 161.18,
+            "low": 102.31,
+            "expected": 131.57,
+            "high": 160.83,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
@@ -75,15 +75,15 @@
           },
           "discounted_payback_years": 2.2,
           "npv_usd": {
-            "low": 513.16,
-            "expected": 791.29,
-            "high": 1066.35,
+            "low": 511.17,
+            "expected": 788.95,
+            "high": 1063.65,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": 606.33,
-          "sir": 3.905,
-          "irr": 0.4584,
-          "airr": 0.1803,
+          "npv_sensitivity_usd": 604.4,
+          "sir": 3.896,
+          "irr": 0.4573,
+          "airr": 0.1801,
           "discount_rate": 0.03,
           "electricity_escalation": -0.0108,
           "gas_escalation": -0.0174,
@@ -97,9 +97,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 102.56,
-                "expected": 131.87,
-                "high": 161.18,
+                "low": 102.31,
+                "expected": 131.57,
+                "high": 160.83,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -188,9 +188,9 @@
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 102.56,
-    "expected": 131.87,
-    "high": 161.18,
+    "low": 102.31,
+    "expected": 131.57,
+    "high": 160.83,
     "unit": "USD"
   },
   "total_co2_kg": {
@@ -213,9 +213,9 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 1735.37,
-      "expected": 2027.13,
-      "high": 2390.35,
+      "low": 1785.52,
+      "expected": 2080.87,
+      "high": 2448.61,
       "unit": "USD"
     },
     "co2_kg": {

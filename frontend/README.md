@@ -1,6 +1,6 @@
 # Evergreen frontend
 
-Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.7**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
+Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.8**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
 
 ## Run
 

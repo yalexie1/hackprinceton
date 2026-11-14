@@ -1,5 +1,5 @@
 // Browser contract mirrors specs/SPEC.md section 9. Checked by check:contract.
-export const SCHEMA_VERSION = "0.3.7";
+export const SCHEMA_VERSION = "0.3.8";
 export interface CalibrationSummary {
   calibrated: boolean;
   fits: {
@@ -224,6 +224,7 @@ export interface Plan {
 }
 export type Role = "owner_occupier" | "landlord" | "tenant";
 export interface RunRequest {
+  mode?: "agent" | "analysis" | null;
   sid: string;
   budget_usd: number;
   role: Role;
@@ -259,7 +260,7 @@ export interface RunEvent {
 }
 export interface RunResult {
   data_source?: "live" | "example" | null;
-  served_by?: "live" | "replay" | null;
+  served_by?: "live" | "replay" | "analysis" | null;
   schema_version: string;
   run_id: string;
   status: "running" | "waiting_for_user" | "done" | "error";

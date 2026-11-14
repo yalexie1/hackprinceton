@@ -1,12 +1,14 @@
 # Master spec
 
-Status: draft v0.3.1, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.2, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
 v0.3 (contract 0.3.0) adds what the physics and legal specs needed, all additive: incentive eligibility and a rebate-after-install kind, real-rate and AIRR fields on the financial breakdown, the export regime on the tariff, a `published_default` source, a `no_cost_data` skip reason, the non-baseload CO2 figure, desk-score and layout detail, visible transmittance on windows, room polygons, and value uplift on the rooftop solar measure for homes.
 
 v0.3.1 adds `CostarData.parent_ids`: one Matterport scan can be attached to several CoStar records, so the alternatives travel with the bundle.
+
+v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so the area of a detection is the area of its own mask, never a sum of masks, a bounding box or a hull. `mask_wkt` stays `None` until a true polygon is derived from the mask.
 
 Companion files:
 
@@ -343,7 +345,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.1"
+SCHEMA_VERSION = "0.3.2"
 
 # ---------- primitives ----------
 
@@ -516,6 +518,7 @@ class VexcelDetection(BaseModel):
     pixel_bbox: Optional[tuple[int, int, int, int]] = None   # x, y, w, h in the image
     mask_png_path: Optional[str] = None         # cached pixel mask, cropped to pixel_bbox
     mask_wkt: Optional[str] = None              # map polygon derived from the pixel mask
+    mask_area_m2: Optional[float] = None        # ground area of the mask itself (pixel count x pixel ground area), not of its box or hull
 
 class VexcelData(BaseModel):
     collection: Optional[str] = None

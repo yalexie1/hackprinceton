@@ -70,7 +70,7 @@ html {
 }
 .hero-copy .eyebrow {
   margin-bottom: 18px;
-  font-size: 8px;
+  font-size: 16px;
   letter-spacing: 1.65px;
   color: #7a816c;
 }
@@ -93,7 +93,7 @@ html {
   flex-shrink: 0;
 }
 .hero-intro p {
-  font-size: 11px;
+  font-size: 16px;
   line-height: 1.9;
   color: #7a7f72;
 }
@@ -101,7 +101,7 @@ html {
   display: inline-flex;
   gap: 20px;
   align-items: center;
-  font-size: 10px;
+  font-size: 16px;
   margin-top: 19px;
   font-weight: 600;
   border-bottom: 1px solid #b5bea3;
@@ -169,7 +169,7 @@ html {
   display: flex;
   gap: 9px;
   align-items: flex-start;
-  font-size: 9px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 1.35px;
   color: #53604a;
@@ -182,7 +182,7 @@ html {
 .explorer-caption small {
   display: block;
   margin-top: 6px;
-  font-size: 6px;
+  font-size: 16px;
   font-weight: 400;
   letter-spacing: 1.3px;
   color: #8c9181;
@@ -202,7 +202,7 @@ html {
   gap: 6px;
   padding: 9px 12px;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 16px;
   transition:
     background 0.2s,
     color 0.2s;
@@ -224,7 +224,7 @@ html {
   pointer-events: none;
 }
 .scene-compass > span {
-  font-size: 7px;
+  font-size: 16px;
 }
 .scene-compass > div {
   font-size: 29px;
@@ -274,7 +274,7 @@ html {
 }
 .scene-label {
   display: block;
-  font-size: 7px;
+  font-size: 16px;
   letter-spacing: 1.4px;
   color: #7b856b;
   margin-bottom: 9px;
@@ -291,7 +291,7 @@ html {
   border-radius: 4px;
   text-align: left;
   min-width: 147px;
-  font-size: 9px;
+  font-size: 16px;
   padding: 10px;
   display: flex;
   gap: 9px;
@@ -301,7 +301,7 @@ html {
   transition: background 0.2s;
 }
 .scene-room-buttons button > span {
-  font-size: 7px;
+  font-size: 16px;
   color: #99a18b;
 }
 .scene-room-buttons button > svg {
@@ -338,7 +338,7 @@ html {
 }
 .scene-insight small {
   display: block;
-  font-size: 5px;
+  font-size: 16px;
   line-height: 1.6;
   letter-spacing: 1px;
   color: #92987f;
@@ -353,7 +353,7 @@ html {
   letter-spacing: -0.3px;
 }
 .scene-insight p {
-  font-size: 8px;
+  font-size: 16px;
   line-height: 1.75;
   margin-top: 8px;
   color: #858b78;
@@ -378,7 +378,7 @@ html {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 7px;
+  font-size: 16px;
 }
 .scene-bottomline i {
   width: 2px;
@@ -388,7 +388,7 @@ html {
   margin: 0 2px;
 }
 .scene-bottomline > small {
-  font-size: 7px;
+  font-size: 16px;
   letter-spacing: 0.2px;
 }
 .house-thumbnail {
@@ -409,7 +409,7 @@ html {
   align-items: center;
   gap: 15px;
   color: #7c8967;
-  font-size: 10px;
+  font-size: 16px;
   pointer-events: none;
 }
 .house-fallback {
@@ -424,7 +424,7 @@ html {
 }
 .house-fallback p {
   max-width: 270px;
-  font-size: 10px;
+  font-size: 16px;
 }
 .loading-orbit {
   width: 35px;
@@ -444,7 +444,7 @@ html {
   justify-content: space-between;
   gap: 15px;
   padding: 20px 2px;
-  font-size: 9px;
+  font-size: 16px;
   color: #818975;
   border-bottom: 1px solid var(--line);
 }
@@ -452,7 +452,7 @@ html {
   margin-right: 10px;
   color: #a0a58f;
   font-family: Georgia, serif;
-  font-size: 12px;
+  font-size: 16px;
   font-style: italic;
 }
 .find-heading {
@@ -523,7 +523,7 @@ html {
     width: 300px;
   }
   .hero-intro p {
-    font-size: 12px;
+    font-size: 16px;
   }
 }
 @media (max-width: 1100px) {
@@ -539,7 +539,7 @@ html {
     width: 205px;
   }
   .hero-intro p {
-    font-size: 10px;
+    font-size: 16px;
   }
   .house-explorer {
     height: 570px;
@@ -571,7 +571,7 @@ html {
     letter-spacing: -1.6px;
   }
   .hero-copy .eyebrow {
-    font-size: 6px;
+    font-size: 16px;
     letter-spacing: 1.1px;
     line-height: 1.7;
   }
@@ -587,15 +587,15 @@ html {
     top: 18px;
   }
   .explorer-caption {
-    font-size: 7px;
+    font-size: 16px;
     letter-spacing: 1px;
   }
   .explorer-caption small {
-    font-size: 5px;
+    font-size: 16px;
   }
   .view-switch button {
     padding: 8px;
-    font-size: 8px;
+    font-size: 16px;
   }
   .view-switch button svg {
     display: none;
@@ -618,7 +618,7 @@ html {
     right: 17px;
   }
   .perspective-strip {
-    font-size: 8px;
+    font-size: 16px;
     gap: 8px;
   }
   .strip-number {
@@ -649,12 +649,12 @@ html {
     gap: 14px;
   }
   .hero-intro p {
-    font-size: 10px;
+    font-size: 16px;
     line-height: 1.7;
     flex: 1;
   }
   .hero-property-link {
-    font-size: 9px;
+    font-size: 16px;
     width: 100px;
     flex-shrink: 0;
     margin-top: 0;
@@ -668,13 +668,13 @@ html {
     align-items: flex-start;
   }
   .explorer-caption {
-    font-size: 6px;
+    font-size: 16px;
     letter-spacing: 0.7px;
     gap: 5px;
     padding-top: 8px;
   }
   .explorer-caption small {
-    font-size: 4px;
+    font-size: 16px;
     letter-spacing: 0.7px;
   }
   .view-switch {
@@ -682,7 +682,7 @@ html {
     padding: 3px;
   }
   .view-switch button {
-    font-size: 7px;
+    font-size: 16px;
     padding: 8px 7px;
     min-height: 32px;
   }
@@ -703,7 +703,7 @@ html {
     bottom: 78px;
   }
   .scene-label {
-    font-size: 6px;
+    font-size: 16px;
   }
   .scene-room-buttons {
     flex-direction: row;
@@ -713,7 +713,7 @@ html {
     min-width: 0;
     flex: 1;
     gap: 4px;
-    font-size: 8px;
+    font-size: 16px;
     padding: 10px 7px;
     min-height: 38px;
   }
@@ -721,7 +721,7 @@ html {
     display: none;
   }
   .scene-room-buttons button > span {
-    font-size: 6px;
+    font-size: 16px;
   }
   .scene-insight {
     display: none;
@@ -735,14 +735,14 @@ html {
     padding: 10px;
   }
   .scene-insight.is-selected strong {
-    font-size: 15px;
+    font-size: 16px;
   }
   .scene-insight.is-selected p {
-    font-size: 8px;
+    font-size: 16px;
     margin-top: 5px;
   }
   .scene-insight.is-selected small {
-    font-size: 5px;
+    font-size: 16px;
     margin-bottom: 3px;
   }
   .scene-bottomline {
@@ -755,13 +755,13 @@ html {
     right: 14px;
   }
   .scene-bottomline > span {
-    font-size: 7px;
+    font-size: 16px;
   }
   .scene-bottomline > small {
-    font-size: 6px;
+    font-size: 16px;
   }
   .perspective-strip {
-    font-size: 7px;
+    font-size: 16px;
     line-height: 1.5;
     padding: 16px 0;
   }
@@ -771,7 +771,7 @@ html {
   .strip-number {
     display: block;
     margin-bottom: 3px;
-    font-size: 11px;
+    font-size: 16px;
   }
   .find-heading {
     margin-top: 32px;
@@ -815,7 +815,7 @@ html {
   display: none;
 }
 .house-embedded .view-switch button {
-  font-size: 8px;
+  font-size: 16px;
   padding: 8px 10px;
 }
 .house-embedded .scene-tools {
@@ -843,10 +843,10 @@ html {
   align-items: center;
 }
 .house-embedded .scene-bottomline > span {
-  font-size: 6px;
+  font-size: 16px;
 }
 .house-embedded .scene-bottomline > small {
-  font-size: 5px;
+  font-size: 16px;
 }
 
 /* Energy findings stay attached to the moving layers of the concept house. */
@@ -881,7 +881,7 @@ html {
   color: #657156;
 }
 .energy-plan-summary .scene-label {
-  font-size: 7px;
+  font-size: 16px;
   margin: 0;
   letter-spacing: 1.4px;
 }
@@ -900,16 +900,16 @@ html {
 }
 .energy-plan-summary > strong > small {
   font-family: "DM Sans", sans-serif;
-  font-size: 10px;
+  font-size: 16px;
   letter-spacing: 0;
   color: #8b927f;
 }
 .energy-plan-summary > span:not(.scene-label) {
-  font-size: 8px;
+  font-size: 16px;
   line-height: 1.6;
 }
 .energy-plan-summary > small {
-  font-size: 7px;
+  font-size: 16px;
   color: #929782;
 }
 .energy-legend {
@@ -928,7 +928,7 @@ html {
 }
 .energy-scope button {
   flex: 1;
-  font-size: 8px;
+  font-size: 16px;
   white-space: nowrap;
   padding: 8px 5px;
   border-radius: 3px;
@@ -942,11 +942,11 @@ html {
   color: #f4f5e9;
 }
 .energy-scope button span {
-  font-size: 6px;
+  font-size: 16px;
   opacity: 0.65;
 }
 .energy-hover-hint {
-  font-size: 7px;
+  font-size: 16px;
   color: #7c8869;
   display: flex;
   gap: 5px;
@@ -972,11 +972,11 @@ html {
   border: 1px solid #dce1cd;
   border-radius: 3px;
   text-align: left;
-  font-size: 8px;
+  font-size: 16px;
   color: #66764f;
 }
 .energy-findings > button > span {
-  font-size: 6px;
+  font-size: 16px;
   opacity: 0.5;
 }
 .energy-findings > button > i {
@@ -988,7 +988,7 @@ html {
   margin-left: auto;
 }
 .energy-findings > button > small {
-  font-size: 7px;
+  font-size: 16px;
   white-space: nowrap;
 }
 .energy-findings > button.opportunity > i {
@@ -1039,7 +1039,7 @@ html {
   box-shadow: 0 0 0 5px #98b47627;
 }
 .energy-hotspot > small {
-  font-size: 8px;
+  font-size: 16px;
   font-weight: 550;
   padding: 0 2px;
 }
@@ -1078,7 +1078,7 @@ html {
   justify-content: space-between;
   align-items: center;
   gap: 6px;
-  font-size: 6px;
+  font-size: 16px;
   font-weight: 650;
   letter-spacing: 1.2px;
   color: #6d854c;
@@ -1110,7 +1110,7 @@ html {
   letter-spacing: -0.5px;
 }
 .energy-tooltip > p {
-  font-size: 9px;
+  font-size: 16px;
   line-height: 1.7;
   color: #7e8771;
   margin-top: 10px;
@@ -1130,7 +1130,7 @@ html {
   gap: 5px;
 }
 .energy-tooltip-grid span {
-  font-size: 7px;
+  font-size: 16px;
   color: #8c947c;
 }
 .energy-tooltip-grid strong {
@@ -1140,16 +1140,16 @@ html {
   color: #4b6339;
 }
 .energy-tooltip-grid strong small {
-  font-size: 7px;
+  font-size: 16px;
   font-weight: 400;
   letter-spacing: 0;
 }
 .energy-tooltip-grid > div > small {
-  font-size: 7px;
+  font-size: 16px;
   color: #929a84;
 }
 .energy-design-note {
-  font-size: 8px;
+  font-size: 16px;
   background: #eaf0dd;
   padding: 9px;
   line-height: 1.6;
@@ -1157,14 +1157,14 @@ html {
   color: #748260;
 }
 .energy-tooltip > p.energy-caveat {
-  font-size: 8px;
+  font-size: 16px;
   padding-left: 8px;
   border-left: 2px solid #ced8b9;
   line-height: 1.7;
   color: #8c947d;
 }
 .energy-tooltip footer {
-  font-size: 6px;
+  font-size: 16px;
   line-height: 1.7;
   color: #9da48e;
   margin-top: 12px;
@@ -1180,7 +1180,7 @@ html {
   border: 1px solid #dce1cf;
   border-radius: 3px;
   padding: 7px;
-  font-size: 7px;
+  font-size: 16px;
   text-align: left;
   flex: 1;
 }
@@ -1206,7 +1206,7 @@ html {
   margin-top: 5px;
 }
 .energy-idle-card small {
-  font-size: 6px;
+  font-size: 16px;
   letter-spacing: 0.8px;
   display: block;
   color: #9aa38a;
@@ -1222,7 +1222,7 @@ html {
   color: #536343;
 }
 .energy-idle-card p {
-  font-size: 8px;
+  font-size: 16px;
   line-height: 1.75;
   color: #8e9880;
   margin-top: 8px;
@@ -1239,7 +1239,7 @@ html {
   font-size: 25px;
 }
 .house-embedded .energy-plan-summary > span:not(.scene-label) {
-  font-size: 6px;
+  font-size: 16px;
 }
 .house-embedded .energy-plan-summary > small {
   display: none;
@@ -1255,7 +1255,7 @@ html {
   display: none;
 }
 .house-embedded .energy-scope button {
-  font-size: 6px;
+  font-size: 16px;
   padding: 8px 3px;
 }
 .house-embedded .energy-hotspot > small {
@@ -1315,7 +1315,7 @@ html {
     width: 240px;
   }
   .energy-hotspot > small {
-    font-size: 7px;
+    font-size: 16px;
   }
   .energy-idle-card {
     right: 17px;
@@ -1330,16 +1330,16 @@ html {
     gap: 4px;
   }
   .energy-plan-summary .scene-label {
-    font-size: 5px;
+    font-size: 16px;
   }
   .energy-plan-summary > strong {
     font-size: 26px;
   }
   .energy-plan-summary > span:not(.scene-label) {
-    font-size: 6px;
+    font-size: 16px;
   }
   .energy-plan-summary > small {
-    font-size: 5px;
+    font-size: 16px;
   }
   .energy-legend {
     left: 13px;
@@ -1364,7 +1364,7 @@ html {
     white-space: nowrap;
     min-height: 33px;
     flex-shrink: 0;
-    font-size: 7px;
+    font-size: 16px;
   }
   .energy-findings > button small,
   .energy-hover-hint {
@@ -1399,7 +1399,7 @@ html {
     margin-top: 10px;
   }
   .energy-tooltip > p {
-    font-size: 8px;
+    font-size: 16px;
   }
   .energy-tooltip-grid strong {
     font-size: 18px;

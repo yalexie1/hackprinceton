@@ -144,14 +144,14 @@ p {
 .brand > span:last-child > span {
   display: block;
   font-family: "DM Sans", sans-serif;
-  font-size: 7.5px;
+  font-size: 16px;
   letter-spacing: 1.3px;
   margin-top: 4px;
   font-weight: 550;
   color: #778372;
 }
 .workspace-label {
-  font-size: 9px;
+  font-size: 16px;
   letter-spacing: 1.6px;
   color: #8d9589;
   padding: 0 13px;
@@ -170,7 +170,7 @@ nav {
   gap: 12px;
   width: 100%;
   padding: 13px 14px;
-  font-size: 12px;
+  font-size: 16px;
   border-radius: 7px;
   color: #707d70;
 }
@@ -194,7 +194,7 @@ nav {
 }
 .audit-nav {
   margin-top: 20px;
-  font-size: 11px;
+  font-size: 16px;
   text-align: left;
   display: flex;
   align-items: center;
@@ -224,7 +224,7 @@ nav {
   font-weight: 550;
 }
 .sidebar-note p {
-  font-size: 10px;
+  font-size: 16px;
   color: #7a8771;
   line-height: 1.7;
   margin-top: 10px;
@@ -236,7 +236,7 @@ nav {
   align-items: center;
   gap: 10px;
   padding: 12px 9px 23px;
-  font-size: 11px;
+  font-size: 16px;
   color: #788174;
 }
 .help-button svg:last-child {
@@ -254,7 +254,7 @@ nav {
   border: 1px solid #dedfce;
   background: #ece9db;
   color: #6b7057;
-  font-size: 10px;
+  font-size: 16px;
   display: grid;
   place-items: center;
   width: 31px;
@@ -263,12 +263,12 @@ nav {
   font-weight: 600;
 }
 .profile > div {
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 550;
 }
 .profile small {
   display: block;
-  font-size: 8px;
+  font-size: 16px;
   font-weight: 400;
   color: #92968a;
   margin-top: 4px;
@@ -297,7 +297,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 16px;
-  font-size: 11px;
+  font-size: 16px;
   color: #92978e;
 }
 .breadcrumbs strong {
@@ -317,7 +317,7 @@ nav {
   border-radius: 6px;
 }
 .mode-switch button {
-  font-size: 10px;
+  font-size: 16px;
   padding: 6px 12px;
   color: #7b8373;
   border-radius: 4px;
@@ -340,7 +340,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 8px;
+  font-size: 16px;
   letter-spacing: 1px;
   font-weight: 600;
   color: #7c866f;
@@ -348,7 +348,7 @@ nav {
 }
 .mode-notice > span:nth-of-type(2) {
   letter-spacing: 0;
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 400;
   color: #8f9488;
   border-left: 1px solid #d6dccf;
@@ -372,7 +372,7 @@ nav {
   flex-shrink: 0;
 }
 .eyebrow {
-  font-size: 9px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 1.5px;
   color: #788d6b;
@@ -396,7 +396,7 @@ nav {
   z-index: 1;
 }
 .hero-copy .eyebrow {
-  font-size: 8px;
+  font-size: 16px;
   letter-spacing: 1.1px;
   margin-bottom: 24px;
 }
@@ -410,14 +410,14 @@ nav {
   letter-spacing: -2px;
 }
 .hero-copy > p {
-  font-size: 12px;
+  font-size: 16px;
   max-width: 330px;
   color: #7d8777;
   margin-top: 22px;
   line-height: 1.9;
 }
 .hero-footnote {
-  font-size: 9px;
+  font-size: 16px;
   color: #7e8e71;
   display: flex;
   gap: 9px;
@@ -456,13 +456,13 @@ nav {
   bottom: 33px;
   right: 25px;
   box-shadow: 0 5px 20px #31422b0a;
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 550;
   white-space: nowrap;
 }
 .floating-card small {
   display: block;
-  font-size: 8px;
+  font-size: 16px;
   color: #89907f;
   font-weight: 400;
   margin-top: 4px;
@@ -490,11 +490,11 @@ nav {
   font-size: 23px;
 }
 .find-heading .eyebrow {
-  font-size: 8px;
+  font-size: 16px;
   margin-bottom: 8px;
 }
 .coverage {
-  font-size: 9px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -525,7 +525,7 @@ nav {
   width: 100%;
   color: var(--green);
   background: none;
-  font-size: 11px;
+  font-size: 16px;
 }
 .search-box input::placeholder {
   color: #9ca392;
@@ -542,7 +542,7 @@ nav {
   height: 46px;
 }
 .filter-select select {
-  font-size: 10px;
+  font-size: 16px;
   background: none;
   border: 0;
   color: #637258;
@@ -585,7 +585,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 8px;
+  font-size: 16px;
   background: #fcfdf5e8;
   padding: 6px 10px;
   border-radius: 5px;
@@ -620,7 +620,7 @@ nav {
   width: 17px;
 }
 .property-copy > p {
-  font-size: 10px;
+  font-size: 16px;
   color: #8b9483;
   display: flex;
   align-items: center;
@@ -630,7 +630,7 @@ nav {
 .property-meta {
   display: flex;
   gap: 0;
-  font-size: 9px;
+  font-size: 16px;
   color: #87947e;
   padding: 13px 0;
   border-top: 1px solid #edf0e7;
@@ -644,7 +644,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 16px;
   color: #668155;
   padding-top: 10px;
 }
@@ -659,7 +659,7 @@ nav {
   border-bottom: 1px solid var(--line);
 }
 .source-footer > div {
-  font-size: 10px;
+  font-size: 16px;
   color: #7a8970;
   display: flex;
   gap: 9px;
@@ -667,7 +667,7 @@ nav {
 }
 .source-footer > p {
   font-family: "Manrope", sans-serif;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 650;
   color: #7f8c75;
   letter-spacing: -0.3px;
@@ -677,7 +677,7 @@ nav {
   color: #bdc5b5;
 }
 .source-footer > small {
-  font-size: 8px;
+  font-size: 16px;
   color: #969e8e;
   flex-basis: 100%;
   margin-top: 5px;
@@ -687,7 +687,7 @@ nav {
   align-items: center;
   justify-content: space-between;
   color: #9ca391;
-  font-size: 8px;
+  font-size: 16px;
   padding: 21px 0 23px;
   margin-top: 25px;
   border-top: 1px solid var(--line);
@@ -708,7 +708,7 @@ nav {
   gap: 8px;
   border-radius: 6px;
   padding: 12px 16px;
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 550;
   transition: background 0.15s;
 }
@@ -732,7 +732,7 @@ nav {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 500;
   color: #627f50;
   padding: 4px 0;
@@ -759,7 +759,7 @@ nav {
   align-items: center;
   gap: 7px;
   color: #8a957f;
-  font-size: 10px;
+  font-size: 16px;
   padding: 0;
   margin: 23px 0;
 }
@@ -777,7 +777,7 @@ nav {
   font-size: 51px;
 }
 .section-description {
-  font-size: 11px;
+  font-size: 16px;
   color: #86927d;
   line-height: 1.8;
   margin: 12px 0 24px;
@@ -802,7 +802,7 @@ nav {
   display: flex;
   gap: 4px;
   align-items: center;
-  font-size: 10px;
+  font-size: 16px;
   color: #8c9682;
   margin-top: 7px;
 }
@@ -817,7 +817,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 16px;
   gap: 10px;
 }
 .card-heading > div {
@@ -829,7 +829,7 @@ nav {
   color: #869a78;
 }
 .step-label {
-  font-size: 8px;
+  font-size: 16px;
   color: #98a18e;
   letter-spacing: 1px;
 }
@@ -839,14 +839,14 @@ nav {
   margin-bottom: 22px;
 }
 label {
-  font-size: 10px;
+  font-size: 16px;
   color: #66775b;
   display: flex;
   flex-direction: column;
   gap: 9px;
 }
 label > small {
-  font-size: 9px;
+  font-size: 16px;
   color: #949d8c;
   line-height: 1.7;
 }
@@ -859,7 +859,7 @@ textarea {
   padding: 12px 13px;
   border-radius: 5px;
   width: 100%;
-  font-size: 11px;
+  font-size: 16px;
 }
 textarea {
   resize: vertical;
@@ -868,7 +868,7 @@ textarea {
   margin-top: 23px;
 }
 .setup-form > label > select {
-  font-size: 14px;
+  font-size: 16px;
   padding: 14px 12px;
 }
 .currency-input {
@@ -888,7 +888,7 @@ textarea {
   border-top: 1px solid var(--line);
   padding: 20px 0 0;
   margin-top: 24px;
-  font-size: 10px;
+  font-size: 16px;
 }
 .bills-form summary {
   cursor: pointer;
@@ -896,11 +896,11 @@ textarea {
 }
 .bills-form summary span {
   float: right;
-  font-size: 8px;
+  font-size: 16px;
   color: #929d86;
 }
 .bills-form p {
-  font-size: 9px;
+  font-size: 16px;
   color: #8b987d;
   margin: 15px 0;
 }
@@ -913,7 +913,7 @@ textarea {
   gap: 12px;
   margin: 25px 0;
   color: #8a987e;
-  font-size: 10px;
+  font-size: 16px;
 }
 .audit-includes > span {
   display: flex;
@@ -928,7 +928,7 @@ textarea {
   margin-top: 14px;
 }
 .fineprint {
-  font-size: 9px;
+  font-size: 16px;
   color: #8c9780;
   line-height: 1.8;
 }
@@ -940,7 +940,7 @@ textarea {
   margin: 29px 0 27px;
 }
 .page-title .eyebrow {
-  font-size: 8px;
+  font-size: 16px;
   margin-bottom: 14px;
 }
 .page-title h1 {
@@ -955,7 +955,7 @@ textarea {
   align-items: center;
   gap: 5px;
   color: #8b9680;
-  font-size: 10px;
+  font-size: 16px;
   margin-top: 12px;
   flex-wrap: wrap;
 }
@@ -969,7 +969,7 @@ textarea {
   align-items: center;
   gap: 4px;
   color: #6f8c5f;
-  font-size: 9px;
+  font-size: 16px;
 }
 .result-grid {
   display: grid;
@@ -1005,7 +1005,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 8px;
+  font-size: 16px;
   color: #80916e;
   white-space: nowrap;
 }
@@ -1022,25 +1022,25 @@ textarea {
   color: #3b5533;
 }
 .range-value small {
-  font-size: 8px;
+  font-size: 16px;
   color: #87977b;
 }
 .metric .range-value {
   margin: 15px 0 8px;
 }
 .metric > small {
-  font-size: 7.5px;
+  font-size: 16px;
   color: #97a18c;
 }
 .recommendations .section-heading h2 {
   font-size: 22px;
 }
 .recommendations .eyebrow {
-  font-size: 8px;
+  font-size: 16px;
   margin-bottom: 8px;
 }
 .count-pill {
-  font-size: 8px;
+  font-size: 16px;
   color: #8b9c7b;
   white-space: nowrap;
   background: #eaf0e0;
@@ -1061,7 +1061,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: 16px;
   color: #9ca78e;
   padding: 0 0 13px;
   border-bottom: 2px solid transparent;
@@ -1073,7 +1073,7 @@ textarea {
   font-weight: 550;
 }
 .tabs > button > span {
-  font-size: 8px;
+  font-size: 16px;
   color: #8da178;
   background: #edf1e6;
   border-radius: 4px;
@@ -1123,7 +1123,7 @@ textarea {
   min-width: 0;
 }
 .measure-title > span {
-  font-size: 11px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -1131,11 +1131,11 @@ textarea {
 }
 .rank {
   color: #a4b096;
-  font-size: 8px;
+  font-size: 16px;
 }
 .measure-title > small {
   color: #9ca58f;
-  font-size: 8px;
+  font-size: 16px;
 }
 .measure-saving {
   display: flex;
@@ -1148,19 +1148,19 @@ textarea {
 }
 .measure-saving > strong {
   font-family: "Manrope", sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 650;
   color: #59744b;
   letter-spacing: -0.3px;
 }
 .measure-saving > strong > small {
-  font-size: 8px;
+  font-size: 16px;
   font-weight: 400;
   color: #95a187;
   margin-left: 3px;
 }
 .measure-saving > small {
-  font-size: 7px;
+  font-size: 16px;
   color: #9ca78f;
 }
 .measure-summary > svg:last-child {
@@ -1173,7 +1173,7 @@ textarea {
 .measure-details {
   border-top: 1px solid #eaf0e2;
   padding: 18px;
-  font-size: 11px;
+  font-size: 16px;
   color: #748669;
 }
 .measure-details > p {
@@ -1194,49 +1194,49 @@ textarea {
   min-width: 0;
 }
 .detail-grid > div > span:first-child {
-  font-size: 8px;
+  font-size: 16px;
   color: #929e84;
 }
 .detail-grid > div > strong,
 .detail-grid .range-value strong {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 550;
   letter-spacing: 0;
 }
 .detail-grid > div > small {
-  font-size: 8px;
+  font-size: 16px;
   color: #929e84;
 }
 .detail-grid .range-value small {
-  font-size: 8px;
+  font-size: 16px;
 }
 .incentives {
   padding-top: 14px;
   border-top: 1px solid var(--line);
   margin-top: 13px;
-  font-size: 10px;
+  font-size: 16px;
 }
 .incentives p {
-  font-size: 9px;
+  font-size: 16px;
   margin-top: 7px;
 }
 .incentives small {
   display: block;
-  font-size: 8px;
+  font-size: 16px;
 }
 .finance-box {
   background: #f2f5eb;
   border-radius: 5px;
   padding: 13px;
   margin-top: 15px;
-  font-size: 9px;
+  font-size: 16px;
 }
 .finance-box p {
   margin-top: 8px;
 }
 .finance-box small {
   display: block;
-  font-size: 8px;
+  font-size: 16px;
   color: #8b9b7b;
   margin-top: 8px;
 }
@@ -1246,23 +1246,23 @@ textarea {
   border-top: 1px solid var(--line);
 }
 .evidence > span {
-  font-size: 9px;
+  font-size: 16px;
   font-weight: 600;
 }
 .evidence p {
-  font-size: 9px;
+  font-size: 16px;
   margin: 8px 0;
 }
 .evidence small {
   display: block;
-  font-size: 8px;
+  font-size: 16px;
 }
 .skipped-item {
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: #fff;
-  font-size: 10px;
+  font-size: 16px;
 }
 .skipped-item > span {
   display: flex;
@@ -1271,14 +1271,14 @@ textarea {
 }
 .skipped-item > strong {
   display: block;
-  font-size: 8px;
+  font-size: 16px;
   font-weight: 500;
   margin: 8px 0;
   color: #9c9678;
   text-transform: capitalize;
 }
 .skipped-item p {
-  font-size: 9px;
+  font-size: 16px;
   color: #95a08a;
 }
 .next-step {
@@ -1295,18 +1295,18 @@ textarea {
   color: #83a16c;
 }
 .next-step h3 {
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0;
   font-weight: 550;
 }
 .next-step p {
-  font-size: 8px;
+  font-size: 16px;
   color: #9aa98a;
   margin-top: 6px;
 }
 .next-step > .text-button {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 16px;
   white-space: nowrap;
 }
 .tour-card {
@@ -1317,7 +1317,7 @@ textarea {
 }
 .tour-card > .card-heading {
   padding: 14px 13px;
-  font-size: 10px;
+  font-size: 16px;
 }
 .tour-card .card-heading .icon-button {
   padding: 1px;
@@ -1341,7 +1341,7 @@ textarea {
   position: absolute;
   bottom: 9px;
   left: 10px;
-  font-size: 7px;
+  font-size: 16px;
   color: #79926b;
   background: #f9fbf2df;
   border: 1px solid #f9fbf2;
@@ -1358,7 +1358,7 @@ textarea {
 .tour-pin {
   position: absolute;
   background: #fbfdf4e6;
-  font-size: 6px;
+  font-size: 16px;
   padding: 4px 6px 4px 3px;
   border-radius: 4px;
   display: flex;
@@ -1371,7 +1371,7 @@ textarea {
 .tour-pin > span {
   background: #799568;
   color: white;
-  font-size: 6px;
+  font-size: 16px;
   width: 11px;
   height: 11px;
   display: grid;
@@ -1392,7 +1392,7 @@ textarea {
   gap: 6px;
   padding: 11px 12px;
   color: #9ba78e;
-  font-size: 7px;
+  font-size: 16px;
 }
 .tour-caption svg {
   width: 11px;
@@ -1418,19 +1418,19 @@ textarea {
 }
 .budget-card .card-heading {
   margin-bottom: 16px;
-  font-size: 10px;
+  font-size: 16px;
 }
 .budget-card label {
-  font-size: 8px;
+  font-size: 16px;
 }
 .budget-card input,
 .budget-card select {
   padding: 10px 11px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
 }
 .budget-card form > small {
-  font-size: 7px;
+  font-size: 16px;
   color: #98a38b;
   display: block;
   margin-top: 8px;
@@ -1443,7 +1443,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 8px;
+  font-size: 16px;
   color: #8a9c78;
   border-top: 1px solid var(--line);
   padding-top: 14px;
@@ -1460,17 +1460,17 @@ textarea {
   margin-bottom: 14px;
 }
 .insight-card .eyebrow {
-  font-size: 7px;
+  font-size: 16px;
   margin-bottom: 8px;
 }
 .insight-card > p {
-  font-size: 9px;
+  font-size: 16px;
   line-height: 1.9;
   color: #819370;
   white-space: pre-line;
 }
 .insight-card .text-button {
-  font-size: 8px;
+  font-size: 16px;
   margin-top: 14px;
 }
 .baseline-card {
@@ -1480,7 +1480,7 @@ textarea {
   padding: 18px 15px;
 }
 .baseline-card .eyebrow {
-  font-size: 7px;
+  font-size: 16px;
 }
 .baseline-card h3 {
   font-size: 22px;
@@ -1488,13 +1488,13 @@ textarea {
   letter-spacing: -0.8px;
 }
 .baseline-card h3 > small {
-  font-size: 9px;
+  font-size: 16px;
   font-weight: 400;
   letter-spacing: 0;
   color: #98a98a;
 }
 .baseline-card > p {
-  font-size: 8px;
+  font-size: 16px;
   color: #9da98f;
   margin-top: 7px;
 }
@@ -1519,13 +1519,13 @@ textarea {
 .chart-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 6px;
+  font-size: 16px;
   color: #a5af99;
   margin-top: 6px;
   letter-spacing: 1px;
 }
 .baseline-card > small {
-  font-size: 7px;
+  font-size: 16px;
   color: #9ea991;
   margin-top: 16px;
   display: block;
@@ -1540,7 +1540,7 @@ textarea {
   align-items: center;
   gap: 6px;
   color: #a5ac97;
-  font-size: 8px;
+  font-size: 16px;
 }
 .audit-grid {
   display: grid;
@@ -1596,13 +1596,13 @@ textarea {
   color: #a89c65;
 }
 .event small {
-  font-size: 8px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
   color: #99a88c;
 }
 .event p {
-  font-size: 10px;
+  font-size: 16px;
   color: #738765;
   margin-top: 5px;
 }
@@ -1611,7 +1611,7 @@ textarea {
   align-items: center;
   gap: 8px;
   color: #a1af95;
-  font-size: 9px;
+  font-size: 16px;
   margin: 0 0 22px 38px;
 }
 .question-card {
@@ -1620,14 +1620,14 @@ textarea {
   padding: 23px;
 }
 .question-card .eyebrow {
-  font-size: 8px;
+  font-size: 16px;
 }
 .question-card h3 {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
 }
 .question-card p {
-  font-size: 10px;
+  font-size: 16px;
   color: #90a17e;
   margin: 12px 0 18px;
 }
@@ -1637,7 +1637,7 @@ textarea {
   flex-wrap: wrap;
 }
 .question-card .secondary-button {
-  font-size: 10px;
+  font-size: 16px;
 }
 .reconnect {
   margin: 20px;
@@ -1686,7 +1686,7 @@ textarea {
   background: #f2f4e9;
   padding: 12px;
   border-radius: 5px;
-  font-size: 9px;
+  font-size: 16px;
   color: #899678;
   line-height: 1.8;
   margin-top: 15px;
@@ -1712,7 +1712,7 @@ textarea {
   gap: 12px;
 }
 .measure-checks legend {
-  font-size: 10px;
+  font-size: 16px;
   color: #839771;
   padding: 0 7px;
 }
@@ -1720,14 +1720,14 @@ textarea {
   flex-direction: row;
   align-items: center;
   gap: 10px;
-  font-size: 10px;
+  font-size: 16px;
 }
 .approval {
   flex-direction: row;
   align-items: flex-start;
   line-height: 1.8;
   margin: 20px 0;
-  font-size: 9px;
+  font-size: 16px;
   color: #8f9d80;
 }
 input[type="checkbox"] {
@@ -1762,11 +1762,11 @@ input[type="checkbox"] {
   margin-bottom: 20px;
 }
 .draft-text h3 {
-  font-size: 13px;
+  font-size: 16px;
   margin: 15px 0;
 }
 .draft-text p {
-  font-size: 10px;
+  font-size: 16px;
   color: #879579;
   white-space: pre-wrap;
 }
@@ -1780,7 +1780,7 @@ input[type="checkbox"] {
   margin-top: 20px;
 }
 .document-checklist h3 {
-  font-size: 12px;
+  font-size: 16px;
 }
 .document-checklist > p {
   margin: 10px 0;
@@ -1789,14 +1789,14 @@ input[type="checkbox"] {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 10px;
+  font-size: 16px;
   color: #929e81;
   line-height: 1.8;
   margin-top: 12px;
 }
 .document-checklist small {
   display: block;
-  font-size: 8px;
+  font-size: 16px;
   margin-top: 4px;
 }
 .check-pending > svg {
@@ -1824,7 +1824,7 @@ input[type="checkbox"] {
 }
 .source-badge {
   display: inline-block;
-  font-size: 7px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
   background: #edf2e4;
@@ -1834,7 +1834,7 @@ input[type="checkbox"] {
   margin-bottom: 10px;
 }
 .assumption h3 {
-  font-size: 13px;
+  font-size: 16px;
 }
 .assumption-body {
   display: flex;
@@ -1854,7 +1854,7 @@ input[type="checkbox"] {
   color: #6f885c;
 }
 .assumption-body small {
-  font-size: 9px;
+  font-size: 16px;
   color: #a2ac94;
 }
 .confidence {
@@ -1865,7 +1865,7 @@ input[type="checkbox"] {
   gap: 9px;
 }
 .confidence span {
-  font-size: 8px;
+  font-size: 16px;
   color: #9eaa90;
 }
 .confidence progress {
@@ -1918,7 +1918,7 @@ input[type="checkbox"] {
   color: #748d5e;
 }
 .empty-state p {
-  font-size: 11px;
+  font-size: 16px;
   max-width: 370px;
 }
 .empty-state.small {
@@ -1933,7 +1933,7 @@ input[type="checkbox"] {
   border: 1px solid #e5d6bb;
   background: #f6f0df;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 16px;
   line-height: 1.8;
   color: #9a8450;
 }
@@ -1941,7 +1941,7 @@ input[type="checkbox"] {
   margin-left: auto;
 }
 .success-message {
-  font-size: 10px;
+  font-size: 16px;
   color: #82946d;
   padding: 12px 0;
 }
@@ -1997,7 +1997,7 @@ input[type="checkbox"] {
   margin-bottom: 23px;
 }
 .help-modal > .eyebrow {
-  font-size: 8px;
+  font-size: 16px;
 }
 .help-modal h2 {
   font-size: 27px;
@@ -2010,14 +2010,14 @@ input[type="checkbox"] {
 .help-modal li {
   padding-left: 8px;
   margin: 18px 0;
-  font-size: 11px;
+  font-size: 16px;
 }
 .help-modal li strong {
   color: #547644;
   font-weight: 550;
 }
 .help-modal li p {
-  font-size: 10px;
+  font-size: 16px;
   color: #96a387;
   margin-top: 4px;
 }
@@ -2051,7 +2051,7 @@ input[type="checkbox"] {
     font-size: 65px;
   }
   .hero-copy > p {
-    font-size: 14px;
+    font-size: 16px;
     max-width: 380px;
   }
   .property-image {
@@ -2077,16 +2077,16 @@ input[type="checkbox"] {
     padding: 20px;
   }
   .measure-title > span {
-    font-size: 13px;
+    font-size: 16px;
   }
   .measure-title > small {
-    font-size: 10px;
+    font-size: 16px;
   }
   .measure-saving > strong {
     font-size: 17px;
   }
   .measure-saving > small {
-    font-size: 9px;
+    font-size: 16px;
   }
 }
 @media (max-width: 1200px) {
@@ -2114,11 +2114,11 @@ input[type="checkbox"] {
     font-size: 46px;
   }
   .hero-copy .eyebrow {
-    font-size: 7px;
+    font-size: 16px;
     letter-spacing: 0.8px;
   }
   .hero-copy > p {
-    font-size: 11px;
+    font-size: 16px;
   }
   .floating-card {
     right: 15px;
@@ -2126,7 +2126,7 @@ input[type="checkbox"] {
     padding: 11px;
   }
   .floating-card small {
-    font-size: 7px;
+    font-size: 16px;
   }
   .result-grid {
     grid-template-columns: minmax(0, 1fr) 265px;
@@ -2139,7 +2139,7 @@ input[type="checkbox"] {
     padding: 16px 10px;
   }
   .metric > span:first-child {
-    font-size: 7px;
+    font-size: 16px;
   }
   .metric > span:first-child > svg {
     width: 12px;
@@ -2148,17 +2148,17 @@ input[type="checkbox"] {
     font-size: 20px;
   }
   .metric > small {
-    font-size: 6.5px;
+    font-size: 16px;
   }
   .tabs {
     gap: 15px;
   }
   .tabs > button {
-    font-size: 8px;
+    font-size: 16px;
     gap: 4px;
   }
   .measure-title > span {
-    font-size: 10px;
+    font-size: 16px;
   }
   .measure-summary {
     padding: 14px 11px;
@@ -2175,10 +2175,10 @@ input[type="checkbox"] {
     display: none;
   }
   .measure-saving > strong {
-    font-size: 12px;
+    font-size: 16px;
   }
   .measure-saving > small {
-    font-size: 6px;
+    font-size: 16px;
   }
   .next-step {
     flex-wrap: wrap;
@@ -2196,7 +2196,7 @@ input[type="checkbox"] {
     font-size: 28px;
   }
   .page-title > .secondary-button {
-    font-size: 9px;
+    font-size: 16px;
     padding: 11px;
   }
   .detail-grid {
@@ -2223,10 +2223,10 @@ input[type="checkbox"] {
     grid-row: span 2;
   }
   .metric > span:first-child {
-    font-size: 9px;
+    font-size: 16px;
   }
   .metric > small {
-    font-size: 8px;
+    font-size: 16px;
   }
   .range-value strong {
     font-size: 26px;
@@ -2235,19 +2235,19 @@ input[type="checkbox"] {
     padding: 22px 18px;
   }
   .tabs > button {
-    font-size: 10px;
+    font-size: 16px;
   }
   .measure-title > span {
-    font-size: 12px;
+    font-size: 16px;
   }
   .measure-title > small {
-    font-size: 9px;
+    font-size: 16px;
   }
   .measure-saving > strong {
-    font-size: 15px;
+    font-size: 16px;
   }
   .measure-saving > small {
-    font-size: 8px;
+    font-size: 16px;
   }
   .measure-summary {
     padding: 19px 16px;
@@ -2258,7 +2258,7 @@ input[type="checkbox"] {
   .floating-card {
     right: 12px;
     bottom: 25px;
-    font-size: 8px;
+    font-size: 16px;
     gap: 5px;
     padding: 9px;
   }
@@ -2277,13 +2277,13 @@ input[type="checkbox"] {
     font-size: 41px;
   }
   .hero-copy > p {
-    font-size: 10px;
+    font-size: 16px;
   }
   .hero-footnote {
-    font-size: 8px;
+    font-size: 16px;
   }
   .hero-copy .eyebrow {
-    font-size: 6px;
+    font-size: 16px;
     max-width: 190px;
     line-height: 1.8;
     letter-spacing: 0.7px;
@@ -2295,10 +2295,10 @@ input[type="checkbox"] {
     padding: 16px 14px;
   }
   .property-copy h3 {
-    font-size: 14px;
+    font-size: 16px;
   }
   .property-meta {
-    font-size: 7px;
+    font-size: 16px;
     flex-wrap: wrap;
     gap: 6px;
   }
@@ -2306,16 +2306,16 @@ input[type="checkbox"] {
     padding: 0 6px;
   }
   .source-footer > div {
-    font-size: 8px;
+    font-size: 16px;
   }
   .source-footer > p {
-    font-size: 10px;
+    font-size: 16px;
   }
   .find-heading {
     gap: 10px;
   }
   .coverage {
-    font-size: 7px;
+    font-size: 16px;
   }
   .find-heading h2 {
     font-size: 20px;
@@ -2393,7 +2393,7 @@ input[type="checkbox"] {
   }
   .breadcrumbs {
     gap: 9px;
-    font-size: 9px;
+    font-size: 16px;
   }
   .breadcrumbs > span {
     display: none;
@@ -2405,18 +2405,18 @@ input[type="checkbox"] {
     gap: 13px;
   }
   .mode-switch button {
-    font-size: 9px;
+    font-size: 16px;
     padding: 5px 10px;
   }
   .main-shell main {
     padding: 18px 22px 0;
   }
   .mode-notice {
-    font-size: 7px;
+    font-size: 16px;
     gap: 6px;
   }
   .mode-notice > span:nth-of-type(2) {
-    font-size: 8px;
+    font-size: 16px;
     margin-left: 0;
     padding-left: 7px;
   }
@@ -2434,18 +2434,18 @@ input[type="checkbox"] {
     font-size: 41px;
   }
   .hero-copy .eyebrow {
-    font-size: 6px;
+    font-size: 16px;
     letter-spacing: 0.6px;
     margin-bottom: 19px;
     max-width: 190px;
   }
   .hero-copy > p {
     max-width: 250px;
-    font-size: 10px;
+    font-size: 16px;
     margin-top: 18px;
   }
   .hero-footnote {
-    font-size: 7px;
+    font-size: 16px;
     margin-top: 20px;
   }
   .hero-art .building-art {
@@ -2470,10 +2470,10 @@ input[type="checkbox"] {
     font-size: 16px;
   }
   .property-meta {
-    font-size: 8px;
+    font-size: 16px;
   }
   .source-footer > div {
-    font-size: 9px;
+    font-size: 16px;
   }
   .page-title {
     margin-top: 25px;
@@ -2482,7 +2482,7 @@ input[type="checkbox"] {
     font-size: 27px;
   }
   .page-title > div > p {
-    font-size: 9px;
+    font-size: 16px;
   }
   .page-title > .secondary-button {
     font-size: 0;
@@ -2490,7 +2490,7 @@ input[type="checkbox"] {
     padding: 10px;
   }
   .page-title .completed-label {
-    font-size: 8px;
+    font-size: 16px;
   }
   .setup-grid {
     gap: 14px;
@@ -2525,14 +2525,14 @@ input[type="checkbox"] {
   .avatar {
     width: 25px;
     height: 25px;
-    font-size: 8px;
+    font-size: 16px;
   }
   .mode-notice {
-    font-size: 6px;
+    font-size: 16px;
     letter-spacing: 0.7px;
   }
   .mode-notice > span:nth-of-type(2) {
-    font-size: 7px;
+    font-size: 16px;
     max-width: 210px;
     line-height: 1.6;
   }
@@ -2552,16 +2552,16 @@ input[type="checkbox"] {
     font-size: 50px;
   }
   .hero-copy > p {
-    font-size: 11px;
+    font-size: 16px;
     max-width: 290px;
   }
   .hero-copy .eyebrow {
-    font-size: 6.5px;
+    font-size: 16px;
     max-width: none;
     margin-bottom: 20px;
   }
   .hero-footnote {
-    font-size: 8px;
+    font-size: 16px;
     margin: 19px 0 0;
   }
   .hero-art {
@@ -2584,7 +2584,7 @@ input[type="checkbox"] {
     font-size: 23px;
   }
   .coverage {
-    font-size: 8px;
+    font-size: 16px;
     margin-top: 12px;
   }
   .search-toolbar {
@@ -2596,7 +2596,7 @@ input[type="checkbox"] {
     gap: 8px;
   }
   .search-box input {
-    font-size: 9px;
+    font-size: 16px;
   }
   .search-box svg {
     width: 16px;
@@ -2610,7 +2610,7 @@ input[type="checkbox"] {
     display: none;
   }
   .filter-select select {
-    font-size: 8px;
+    font-size: 16px;
     max-width: 100px;
     padding: 10px 0;
   }
@@ -2628,33 +2628,33 @@ input[type="checkbox"] {
     font-size: 18px;
   }
   .property-copy > p {
-    font-size: 10px;
+    font-size: 16px;
   }
   .property-meta {
-    font-size: 9px;
+    font-size: 16px;
   }
   .property-meta > span + span:before {
     padding: 0 10px;
   }
   .property-action {
-    font-size: 10px;
+    font-size: 16px;
   }
   .source-footer {
     padding: 23px 0 15px;
     gap: 13px;
   }
   .source-footer > div {
-    font-size: 9px;
+    font-size: 16px;
   }
   .source-footer > p {
-    font-size: 12px;
+    font-size: 16px;
   }
   .source-footer > small {
-    font-size: 8px;
+    font-size: 16px;
     line-height: 1.8;
   }
   .app-footer {
-    font-size: 7px;
+    font-size: 16px;
     margin-top: 22px;
     gap: 9px;
   }
@@ -2676,7 +2676,7 @@ input[type="checkbox"] {
     font-size: 24px;
   }
   .page-title > div > p {
-    font-size: 8px;
+    font-size: 16px;
     gap: 4px;
     line-height: 1.9;
   }
@@ -2684,14 +2684,14 @@ input[type="checkbox"] {
     margin: 0 4px;
   }
   .page-title .completed-label {
-    font-size: 7px;
+    font-size: 16px;
   }
   .page-title {
     gap: 12px;
     align-items: start;
   }
   .page-title > .primary-button {
-    font-size: 9px;
+    font-size: 16px;
     padding: 10px;
     max-width: 105px;
     line-height: 1.5;
@@ -2704,7 +2704,7 @@ input[type="checkbox"] {
     padding: 15px 9px;
   }
   .metric > span:first-child {
-    font-size: 7px;
+    font-size: 16px;
     gap: 4px;
     white-space: normal;
     line-height: 1.5;
@@ -2721,10 +2721,10 @@ input[type="checkbox"] {
     white-space: nowrap;
   }
   .metric .range-value small {
-    font-size: 7px;
+    font-size: 16px;
   }
   .metric > small {
-    font-size: 6px;
+    font-size: 16px;
     line-height: 1.6;
     display: block;
   }
@@ -2736,44 +2736,44 @@ input[type="checkbox"] {
     gap: 8px;
   }
   .recommendations .eyebrow {
-    font-size: 7px;
+    font-size: 16px;
   }
   .count-pill {
-    font-size: 7px;
+    font-size: 16px;
     padding: 5px 7px;
   }
   .section-description {
-    font-size: 10px;
+    font-size: 16px;
     line-height: 1.9;
   }
   .tabs {
     gap: 16px;
   }
   .tabs > button {
-    font-size: 8px;
+    font-size: 16px;
     gap: 5px;
   }
   .tabs > button > span {
-    font-size: 7px;
+    font-size: 16px;
   }
   .measure-summary {
     padding: 15px 11px;
     gap: 8px;
   }
   .measure-title > span {
-    font-size: 10px;
+    font-size: 16px;
   }
   .measure-title > small {
-    font-size: 7px;
+    font-size: 16px;
   }
   .measure-saving > strong {
-    font-size: 12px;
+    font-size: 16px;
   }
   .measure-saving > small {
-    font-size: 6px;
+    font-size: 16px;
   }
   .measure-saving > strong > small {
-    font-size: 6px;
+    font-size: 16px;
   }
   .measure-symbol {
     width: 31px;
@@ -2794,24 +2794,24 @@ input[type="checkbox"] {
     gap: 19px 12px;
   }
   .detail-grid > div > span:first-child {
-    font-size: 8px;
+    font-size: 16px;
   }
   .detail-grid .range-value strong {
-    font-size: 11px;
+    font-size: 16px;
   }
   .next-step {
     padding: 17px 13px;
     gap: 10px;
   }
   .next-step h3 {
-    font-size: 10px;
+    font-size: 16px;
   }
   .next-step p {
-    font-size: 8px;
+    font-size: 16px;
   }
   .next-step > .text-button {
     margin-left: 33px;
-    font-size: 9px;
+    font-size: 16px;
   }
   .result-aside {
     display: flex;
@@ -2821,16 +2821,16 @@ input[type="checkbox"] {
     height: 270px;
   }
   .tour-card > .card-heading {
-    font-size: 11px;
+    font-size: 16px;
   }
   .tour-caption {
-    font-size: 8px;
+    font-size: 16px;
   }
   .image-label {
-    font-size: 8px;
+    font-size: 16px;
   }
   .tour-pin {
-    font-size: 7px;
+    font-size: 16px;
   }
   .pin-one {
     left: 20%;
@@ -2842,33 +2842,33 @@ input[type="checkbox"] {
     padding: 20px;
   }
   .budget-card label {
-    font-size: 9px;
+    font-size: 16px;
   }
   .budget-card form > small,
   .budget-rule {
-    font-size: 8px;
+    font-size: 16px;
   }
   .insight-card {
     padding: 22px;
   }
   .insight-card > p {
-    font-size: 10px;
+    font-size: 16px;
   }
   .insight-card .eyebrow {
-    font-size: 8px;
+    font-size: 16px;
   }
   .insight-card .text-button {
-    font-size: 9px;
+    font-size: 16px;
   }
   .baseline-card {
     padding: 22px;
   }
   .baseline-card > p,
   .baseline-card > small {
-    font-size: 9px;
+    font-size: 16px;
   }
   .run-warnings p {
-    font-size: 8px;
+    font-size: 16px;
     align-items: start;
   }
   .geometry-panel,
@@ -2881,7 +2881,7 @@ input[type="checkbox"] {
   }
   .geometry-panel .eyebrow,
   .documents-panel .eyebrow {
-    font-size: 7px;
+    font-size: 16px;
   }
   .geometry-panel .section-heading > svg,
   .documents-panel .section-heading > svg {
@@ -2891,10 +2891,10 @@ input[type="checkbox"] {
     grid-template-columns: 1fr;
   }
   .document-preview > .card-heading {
-    font-size: 10px;
+    font-size: 16px;
   }
   .document-preview .text-button {
-    font-size: 9px;
+    font-size: 16px;
   }
   .draft-text {
     padding: 19px;
@@ -2904,7 +2904,7 @@ input[type="checkbox"] {
   }
   .audit-timeline > .card-heading {
     padding: 17px;
-    font-size: 10px;
+    font-size: 16px;
   }
   .event-list {
     padding: 20px 16px 5px;
@@ -2913,22 +2913,22 @@ input[type="checkbox"] {
     gap: 10px;
   }
   .event p {
-    font-size: 10px;
+    font-size: 16px;
   }
   .event small {
-    font-size: 7px;
+    font-size: 16px;
   }
   .question-card {
     padding: 20px;
   }
   .question-card h3 {
-    font-size: 14px;
+    font-size: 16px;
   }
   .question-card p {
-    font-size: 9px;
+    font-size: 16px;
   }
   .question-card .secondary-button {
-    font-size: 9px;
+    font-size: 16px;
   }
   .assumption {
     padding: 20px;
@@ -2937,7 +2937,7 @@ input[type="checkbox"] {
     gap: 15px;
   }
   .assumption-body strong {
-    font-size: 15px;
+    font-size: 16px;
   }
   .confidence {
     width: 38%;
@@ -2949,7 +2949,7 @@ input[type="checkbox"] {
     font-size: 24px;
   }
   .help-modal .eyebrow {
-    font-size: 7px;
+    font-size: 16px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2969,7 +2969,7 @@ input[type="checkbox"] {
 .search-box input {
   padding: 0;
   background: transparent;
-  font-size: 11px;
+  font-size: 16px;
 }
 .filter-select select {
   padding: 0;
@@ -2994,7 +2994,7 @@ input[type="checkbox"] {
 }
 @media (max-width: 500px) {
   .search-box input {
-    font-size: 9px;
+    font-size: 16px;
   }
   .filter-select select {
     padding: 0;
@@ -3015,7 +3015,7 @@ input[type="checkbox"] {
 .fixture-source {
   display: block;
   margin: 3px 0 5px;
-  font-size: 8px;
+  font-size: 16px;
   color: #7b916c;
 }
 .value-uplift {
@@ -3027,7 +3027,7 @@ input[type="checkbox"] {
 }
 .value-uplift h3 {
   margin-bottom: 15px;
-  font-size: 13px;
+  font-size: 16px;
 }
 .value-uplift .range-value {
   margin-bottom: 13px;
@@ -3045,14 +3045,14 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: 16px;
   line-height: 1.8;
   margin-top: 7px;
   color: #81936f;
 }
 .event-todos li small {
   margin-left: auto;
-  font-size: 7px;
+  font-size: 16px;
   text-transform: none;
   white-space: nowrap;
 }

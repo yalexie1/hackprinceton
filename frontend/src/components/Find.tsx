@@ -122,12 +122,12 @@ export default function Find({
             <summary>How this order is determined</summary>
             <p>
               The reviewed order is the house, Culver, then Houston. The house
-              has measured walls, window openings and room outlines. Both
-              offices rely on an aerial footprint and image-based window
-              estimates; Culver has more scan views available. Unassessed
-              properties follow the reviewed ones. Review the actual audit’s
-              assumptions, weather source and utility-bill calibration before
-              relying on an estimate.
+              has measured walls and window openings. None of the three has
+              measured room outlines. Both offices rely on an aerial footprint
+              and image-based window estimates; Culver has more scan views
+              available. Unassessed properties follow the reviewed ones. Review
+              the actual audit’s assumptions, weather source and utility-bill
+              calibration before relying on an estimate.
             </p>
           </details>
         </div>
@@ -208,15 +208,17 @@ export default function Find({
       </div>
       {properties.length > 0 && (
         <p className="property-imagery-note">
-          Aerial images show geospatial context around a scan, street-address or
-          reported listing location, not a surveyed property boundary. Imagery
-          may predate current conditions.{" "}
+          Side-angle aerial photos are shown when available from Vexcel.
+          Otherwise, an overhead image shows geospatial context around a scan,
+          street-address or reported listing location, not a surveyed property
+          boundary. Imagery may predate current conditions. Scan locations are
+          computed by Matterport, not surveyed.{" "}
           <a
             href="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer"
             target="_blank"
             rel="noreferrer"
           >
-            Imagery source &amp; attribution
+            Overhead imagery &amp; attribution
           </a>
           {" · "}
           <a
@@ -228,11 +230,11 @@ export default function Find({
           </a>
           {" · "}
           <a
-            href="https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=3000%20S%20Robertson%20Blvd%2C%20Los%20Angeles%2C%20CA&amp;benchmark=Public_AR_Current&amp;format=json"
+            href="https://github.com/yalexie1/hackprinceton/issues/1#issuecomment-6883308835"
             target="_blank"
             rel="noreferrer"
           >
-            Culver address location
+            Live scan-location verification
           </a>
         </p>
       )}

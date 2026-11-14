@@ -2,6 +2,7 @@ import type {
   DocumentDraft,
   DocumentRequest,
   PropertySummary,
+  PropertyPreview,
   RunEvent,
   RunRequest,
   RunResult,
@@ -59,6 +60,10 @@ export const api = {
       `/properties/search?${new URLSearchParams({ q: query, ...(segment ? { segment } : {}), limit: "30" })}`,
       { signal },
     ),
+  preview: (sid: string, signal?: AbortSignal) =>
+    request<PropertyPreview>(`/properties/${encodeURIComponent(sid)}/preview`, {
+      signal,
+    }),
   start: (body: RunRequest) =>
     request<{ run_id: string }>("/runs", {
       method: "POST",

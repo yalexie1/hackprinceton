@@ -2,7 +2,8 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { demoProperties } from "../lib/fixtures";
-import PropertyPreview from "./PropertyPreview";
+import PropertyPreview, { PropertyPreviewImage } from "./PropertyPreview";
+import { propertyObliques } from "../lib/property-imagery";
 
 describe("property-specific imagery", () => {
   it("can use a connected listing’s reported coordinates without marking them as a verified scan", () => {
@@ -28,8 +29,24 @@ describe("property-specific imagery", () => {
       expect(html).toContain("Esri, Vantor");
       expect(html).not.toContain("house-canvas");
     }
-    expect(images.join("")).toContain("address location");
     expect(images.join("")).toContain("scan location");
+  });
+  it("prefers an actual side-angle photo and does not put a north-up pin on it", () => {
+    const html = renderToStaticMarkup(
+      <PropertyPreviewImage
+        property={demoProperties[0]}
+        obliques={propertyObliques({
+          "oblique-south": "data/cache/vexcel-image/house/south.jpg",
+        })}
+      />,
+    );
+    expect(html).toContain(
+      "/api/assets/data/cache/vexcel-image/house/south.jpg",
+    );
+    expect(html).toContain("Side-angle aerial · south view");
+    expect(html).toContain("Vexcel aerial imagery");
+    expect(html).not.toContain("property-location-pin");
+    expect(html).not.toContain("MapServer/export?");
   });
   it("does not substitute a generic model or invented location when a property is unverified", () => {
     const html = renderToStaticMarkup(

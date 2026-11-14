@@ -129,6 +129,30 @@ describe("audit event transport", () => {
   });
 });
 describe("backend contract", () => {
+  it("reads cached property previews without starting an audit and forwards cancellation", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            sid: "a/b",
+            available: true,
+            oblique_paths: { "oblique-north": "data/cache/north.jpg" },
+          }),
+        ),
+      );
+    vi.stubGlobal("fetch", fetch);
+    const controller = new AbortController();
+    const preview = await api.preview("a/b", controller.signal);
+    expect(preview.oblique_paths).toEqual({
+      "oblique-north": "data/cache/north.jpg",
+    });
+    expect(fetch).toHaveBeenCalledExactlyOnceWith(
+      "/api/properties/a%2Fb/preview",
+      expect.objectContaining({ signal: controller.signal }),
+    );
+    expect(fetch.mock.calls[0][1].method).toBeUndefined();
+  });
   it("forwards computed-analysis mode together with the requested constraints", async () => {
     const fetch = vi
       .fn()

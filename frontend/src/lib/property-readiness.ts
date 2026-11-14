@@ -6,8 +6,9 @@ const readiness = {
   zvKHR9DHNjJ: {
     order: 1,
     label: "Most measured inputs",
-    evidence: "Measured walls, window openings and room outlines.",
-    limitation: "Utility bills and contractor pricing still need verification.",
+    evidence: "Measured walls and window openings.",
+    limitation:
+      "No measured room outlines. Utility bills and contractor pricing still need verification.",
   },
   ZSPaQbkGcJJ: {
     order: 2,

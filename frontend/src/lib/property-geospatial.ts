@@ -17,11 +17,11 @@ const locations: Record<string, PropertyLocation> = {
       "https://github.com/yalexie1/hackprinceton/blob/main/specs/data-integration.md#32-geocoordinates--this-answers-the-specs-top-risk",
   },
   ZSPaQbkGcJJ: {
-    lat: 34.032827502845,
-    lon: -118.38990083201,
-    source: "address",
+    lat: 34.032445385978065,
+    lon: -118.38941475137618,
+    source: "scan",
     citation:
-      "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=3000%20S%20Robertson%20Blvd%2C%20Los%20Angeles%2C%20CA&benchmark=Public_AR_Current&format=json",
+      "https://github.com/yalexie1/hackprinceton/issues/1#issuecomment-6883308835",
   },
   L3266YcPPvd: {
     lat: 29.746027599,

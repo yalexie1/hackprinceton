@@ -21,6 +21,13 @@
   object-fit: cover;
   display: block;
 }
+.property-geospatial.has-oblique {
+  background: #dce4df;
+}
+.property-geospatial.has-oblique > img {
+  object-fit: contain;
+  height: calc(100% - 65px);
+}
 .property-location-pin {
   position: absolute;
   top: 50%;

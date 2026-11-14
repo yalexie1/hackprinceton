@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 import { aerialImageUrl, propertyLocation } from "./property-geospatial";
 
 describe("actual property geospatial context", () => {
-  it("uses verified scan points and the matched Census street address, never illustrative office coordinates", () => {
+  it("uses owner-verified live scan points, never illustrative office coordinates", () => {
     expect(propertyLocation("zvKHR9DHNjJ")).toMatchObject({
       lat: 34.093491667,
       lon: -118.3171,
       source: "scan",
     });
     expect(propertyLocation("ZSPaQbkGcJJ")).toMatchObject({
-      lat: 34.032827502845,
-      lon: -118.38990083201,
-      source: "address",
+      lat: 34.032445385978065,
+      lon: -118.38941475137618,
+      source: "scan",
     });
     expect(propertyLocation("L3266YcPPvd")).toMatchObject({
       lat: 29.746027599,

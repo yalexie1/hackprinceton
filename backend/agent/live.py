@@ -37,7 +37,7 @@ from backend.schema import (BuildingModel, Choice, DocumentDraft, DocumentReques
 STAGE_OF = {
     "search_properties": "S1", "get_property_bundle": "S2", "get_asset": "S2",
     "observe_interior": "S3", "detect_roof_elements": "S3",
-    "build_building_model": "S4", "set_assumption": "S4", "run_baseline": "S5",
+    "build_building_model": "S4", "set_assumption": "S4", "calibrate_model": "S5", "run_baseline": "S5",
     "evaluate_measure": "S6", "design_pv": "S6", "score_desk_positions": "S6",
     "price_measure": "S7", "lookup_incentives": "S7", "build_plan": "S7",
     "cpace_scenario": "S7", "sensitivity": "S7",

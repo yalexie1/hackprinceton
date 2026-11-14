@@ -114,7 +114,7 @@ def build_result(run_id: str, request: RunRequest, files: RunFiles, status: str,
     report = files.path("report.md")
     return RunResult(
         run_id=run_id, status=status, request=request, property=summary,
-        data_source=data_source_of(bundle), served_by="live",
+        data_source=data_source_of(bundle), served_by="analysis" if request.mode == "analysis" else "live",
         building_model=BuildingModel.model_validate(model) if model else None,
         baseline=BaselineResult.model_validate(baseline) if baseline else None,
         measures=[MeasureResult.model_validate(m) for m in measures],

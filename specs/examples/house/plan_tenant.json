@@ -4,6 +4,317 @@
     {
       "rank": 1,
       "measure": {
+        "measure_id": "LAYOUT",
+        "title": "Desk placement for daylight",
+        "applicable": true,
+        "not_applicable_reason": null,
+        "description": "Move five desks to the positions along the north glazing with the best daylight, low glare risk and good comfort. The lighting has no daylight control, so the saving depends on people switching lights off and is shown as a range from zero.",
+        "params": {
+          "grid_m": 0.5,
+          "wall_clearance_m": 0.6,
+          "min_spacing_m": 2.0,
+          "manual_switch_fraction": {
+            "low": 0.0,
+            "expected": 0.5,
+            "high": 1.0,
+            "unit": "-"
+          },
+          "auto_on_off_saved_fraction": 0.8403,
+          "controlled_power_w": 280.0,
+          "candidates_scored": 63
+        },
+        "savings": {
+          "electricity_kwh": {
+            "low": 0.0,
+            "expected": 305.87,
+            "high": 961.31,
+            "unit": "kWh"
+          },
+          "gas_kwh": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "kWh"
+          },
+          "cost_usd": {
+            "low": 0.0,
+            "expected": 91.0,
+            "high": 285.99,
+            "unit": "USD"
+          },
+          "co2_kg": {
+            "low": 0.0,
+            "expected": 59.66,
+            "high": 187.49,
+            "unit": "kg"
+          },
+          "co2_nonbaseload_kg": {
+            "low": 0.0,
+            "expected": 133.36,
+            "high": 419.12,
+            "unit": "kg"
+          }
+        },
+        "finance": {
+          "installed_cost_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "cost_source": "Zero cost by definition (SPEC.md section 6.4); physics 04 COST-01: 0 USD per desk layout x 1",
+          "incentives": [],
+          "net_upfront_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "annual_savings_usd": {
+            "low": 0.0,
+            "expected": 91.0,
+            "high": 285.99,
+            "unit": "USD"
+          },
+          "annual_om_change_usd": 0.0,
+          "useful_life_years": 5,
+          "simple_payback_years": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "years"
+          },
+          "discounted_payback_years": 0.0,
+          "npv_usd": {
+            "low": 0.0,
+            "expected": 403.7,
+            "high": 1268.73,
+            "unit": "USD"
+          },
+          "npv_sensitivity_usd": 361.73,
+          "sir": null,
+          "irr": null,
+          "airr": null,
+          "discount_rate": 0.03,
+          "electricity_escalation": -0.0108,
+          "gas_escalation": -0.0174,
+          "analysis_period_years": 5,
+          "financing": [
+            {
+              "kind": "cash",
+              "eligible": true,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": 0.0,
+                "expected": 91.0,
+                "high": 285.99,
+                "unit": "USD"
+              },
+              "program_sir": null,
+              "notes": [
+                "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12).",
+                "electricity escalation held at the N=10 value for N=5 (ECO-06 table covers 10 to 30)",
+                "gas escalation held at the N=10 value for N=5 (ECO-06 table covers 10 to 30)"
+              ]
+            }
+          ]
+        },
+        "flags": [],
+        "anchors": [
+          {
+            "room_id": "room_dining",
+            "pano_id": "pano_02",
+            "x": 8.5,
+            "y": 2.0,
+            "z": 0.75,
+            "label": "Recommended desk 1"
+          },
+          {
+            "room_id": "room_living",
+            "pano_id": "pano_01",
+            "x": 1.5,
+            "y": 1.5,
+            "z": 0.75,
+            "label": "Recommended desk 2"
+          },
+          {
+            "room_id": "room_living",
+            "pano_id": "pano_01",
+            "x": 1.5,
+            "y": 4.0,
+            "z": 0.75,
+            "label": "Recommended desk 3"
+          },
+          {
+            "room_id": "room_bedroom",
+            "pano_id": "pano_03",
+            "x": 1.5,
+            "y": 8.5,
+            "z": 0.75,
+            "label": "Recommended desk 4"
+          },
+          {
+            "room_id": "room_living",
+            "pano_id": "pano_01",
+            "x": 3.5,
+            "y": 4.5,
+            "z": 0.75,
+            "label": "Recommended desk 5"
+          }
+        ],
+        "evidence": [],
+        "formula_ids": [
+          "DAY-08",
+          "DAY-09",
+          "GLR-05",
+          "CMF-08",
+          "LCT-03",
+          "LCT-02",
+          "EMI-01",
+          "COST-01",
+          "COST-02",
+          "ECO-05",
+          "ECO-06",
+          "ECO-07",
+          "ECO-09",
+          "ECO-10",
+          "ECO-11",
+          "ECO-13",
+          "INC-40"
+        ],
+        "solar": null,
+        "layout": {
+          "candidates": [
+            {
+              "room_id": "room_dining",
+              "x": 8.5,
+              "y": 2.0,
+              "daylight": 0.9233716475095786,
+              "glare_risk": 0.0,
+              "comfort_ppd": 7.845827312796905,
+              "score": 0.9267,
+              "recommended": true,
+              "daylight_factor": 6.590696014757996,
+              "view_azimuth_deg": 266.396491,
+              "direct_sun_hours": 87.0,
+              "max_dt_pr_k": 1.2093566316275002,
+              "warnings": [
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water"
+              ]
+            },
+            {
+              "room_id": "room_living",
+              "x": 1.5,
+              "y": 1.5,
+              "daylight": 0.9130268199233716,
+              "glare_risk": 0.0,
+              "comfort_ppd": 8.630836447703517,
+              "score": 0.9107,
+              "recommended": true,
+              "daylight_factor": 5.256320477944504,
+              "view_azimuth_deg": 356.396491,
+              "direct_sun_hours": 481.0,
+              "max_dt_pr_k": 0.7227994760055623,
+              "warnings": [
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water"
+              ]
+            },
+            {
+              "room_id": "room_living",
+              "x": 1.5,
+              "y": 4.0,
+              "daylight": 0.8996168582375479,
+              "glare_risk": 0.004597701149425287,
+              "comfort_ppd": 8.558711611452035,
+              "score": 0.8996,
+              "recommended": true,
+              "daylight_factor": 3.912919479171813,
+              "view_azimuth_deg": 266.396491,
+              "direct_sun_hours": 369.0,
+              "max_dt_pr_k": 1.8408300363375503,
+              "warnings": [
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water"
+              ]
+            },
+            {
+              "room_id": "room_bedroom",
+              "x": 1.5,
+              "y": 8.5,
+              "daylight": 0.8448275862068966,
+              "glare_risk": 0.0,
+              "comfort_ppd": 9.488151683792786,
+              "score": 0.8706,
+              "recommended": true,
+              "daylight_factor": 2.988096640694243,
+              "view_azimuth_deg": 176.39649099999997,
+              "direct_sun_hours": 234.0,
+              "max_dt_pr_k": 0.7527503338952357,
+              "warnings": [
+                "room room_bedroom: no ceiling height in the scan; 2.7 m assumed",
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
+                "facing the window the glare risk is 0.09 (GLR-05)"
+              ]
+            },
+            {
+              "room_id": "room_living",
+              "x": 3.5,
+              "y": 4.5,
+              "daylight": 0.6206896551724138,
+              "glare_risk": 0.0,
+              "comfort_ppd": 8.66361889975597,
+              "score": 0.7933,
+              "recommended": true,
+              "daylight_factor": 1.2604110197873484,
+              "view_azimuth_deg": 266.396491,
+              "direct_sun_hours": 0.0,
+              "max_dt_pr_k": 0.640705222702266,
+              "warnings": [
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water"
+              ]
+            }
+          ],
+          "desks_requested": 8,
+          "window_source": "measured",
+          "target_lux": 300.0,
+          "setpoint_lux": 300.0,
+          "control_type": "none",
+          "score_weights": {
+            "daylight": 0.4,
+            "glare": 0.3,
+            "comfort": 0.3
+          },
+          "occupied_hours_per_year": 2600.0,
+          "lighting_kwh_saved": {
+            "low": 0.0,
+            "expected": 305.87,
+            "high": 961.31,
+            "unit": "kWh"
+          },
+          "warnings": [
+            "No desk count was given; 8 desks assumed from 8 m2 of work area per desk.",
+            "Only 5 of the 8 desks requested fit at 2 m spacing on positions clear of walls and doors.",
+            "depends on occupants switching lights off",
+            "The expected value uses a manual-switching share of 0.5, which has no published source."
+          ]
+        },
+        "value_uplift": null,
+        "warnings": [
+          "No desk count was given; 8 desks assumed from 8 m2 of work area per desk.",
+          "Only 5 of the 8 desks requested fit at 2 m spacing on positions clear of walls and doors.",
+          "depends on occupants switching lights off",
+          "The expected value uses a manual-switching share of 0.5, which has no published source.",
+          "useful life of 5 years is judgement (physics 04 COST-02)"
+        ]
+      },
+      "cumulative_upfront_usd": 0.0,
+      "remaining_budget_usd": 1000.0
+    },
+    {
+      "rank": 2,
+      "measure": {
         "measure_id": "LGT_LED",
         "title": "LED lamps throughout",
         "applicable": true,
@@ -14,33 +325,33 @@
         },
         "savings": {
           "electricity_kwh": {
-            "low": 361.6,
-            "expected": 452.0,
-            "high": 542.4,
+            "low": 360.65,
+            "expected": 418.44,
+            "high": 479.28,
             "unit": "kWh"
           },
           "gas_kwh": {
-            "low": -48.0,
-            "expected": -40.0,
-            "high": -32.0,
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 102.31,
-            "expected": 131.57,
-            "high": 160.83,
+            "low": 114.28,
+            "expected": 124.48,
+            "high": 137.48,
             "unit": "USD"
           },
           "co2_kg": {
-            "low": 64.73,
-            "expected": 80.91,
-            "high": 97.09,
+            "low": 80.09,
+            "expected": 81.61,
+            "high": 84.29,
             "unit": "kg"
           },
           "co2_nonbaseload_kg": {
-            "low": 151.85,
-            "expected": 189.82,
-            "high": 227.78,
+            "low": 175.32,
+            "expected": 182.44,
+            "high": 193.82,
             "unit": "kg"
           }
         },
@@ -60,30 +371,30 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 102.31,
-            "expected": 131.57,
-            "high": 160.83,
+            "low": 114.28,
+            "expected": 124.48,
+            "high": 137.48,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
           "useful_life_years": 10,
           "simple_payback_years": {
-            "low": 1.02,
-            "expected": 2.07,
-            "high": 3.26,
+            "low": 1.14,
+            "expected": 2.19,
+            "high": 3.3,
             "unit": "years"
           },
-          "discounted_payback_years": 2.2,
+          "discounted_payback_years": 2.3,
           "npv_usd": {
-            "low": 511.17,
-            "expected": 788.95,
-            "high": 1063.65,
+            "low": 571.94,
+            "expected": 731.05,
+            "high": 896.76,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": 604.4,
-          "sir": 3.896,
-          "irr": 0.4573,
-          "airr": 0.1801,
+          "npv_sensitivity_usd": 556.6,
+          "sir": 3.684,
+          "irr": 0.4299,
+          "airr": 0.1735,
           "discount_rate": 0.03,
           "electricity_escalation": -0.0108,
           "gas_escalation": -0.0174,
@@ -97,9 +408,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 102.31,
-                "expected": 131.57,
-                "high": 160.83,
+                "low": 114.28,
+                "expected": 124.48,
+                "high": 137.48,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -112,32 +423,45 @@
         "flags": [],
         "anchors": [
           {
-            "room_id": "room_kitchen",
-            "pano_id": "pano_02",
-            "x": 7.4,
-            "y": 6.3,
-            "z": 2.6,
-            "label": "Kitchen ceiling fixtures"
+            "room_id": "room_living",
+            "pano_id": "pano_01",
+            "x": 2.5,
+            "y": 2.8,
+            "z": 2.67,
+            "label": "Ceiling fixtures"
           }
         ],
-        "evidence": [
-          {
-            "kind": "pano",
-            "ref": "pano_02",
-            "note": "halogen downlights"
-          }
-        ],
+        "evidence": [],
         "formula_ids": [
           "LGT-01",
           "LGT-03",
+          "ZON-01",
           "ZON-04",
+          "ENV-03",
+          "INF-01",
+          "HVAC-01",
+          "TAR-01",
+          "EMI-01",
+          "UNC-02",
+          "COST-01",
+          "COST-02",
+          "ECO-05",
+          "ECO-06",
           "ECO-07",
-          "EMI-01"
+          "ECO-09",
+          "ECO-10",
+          "ECO-11",
+          "ECO-13",
+          "INC-40"
         ],
         "solar": null,
         "layout": null,
         "value_uplift": null,
-        "warnings": []
+        "warnings": [
+          "Uses the LED efficacy ratio 15/90 = 0.17 for current lamps instead of the source's 0.30 (physics 02 LGT-01): home lighting falls to 0.4851 of the benchmark-mix baseline.",
+          "Lamp count estimated at one lamp per 2.75 m2 of floor, not counted from the panoramas.",
+          "useful life of 10 years is unverified (physics 04 COST-02)"
+        ]
       },
       "cumulative_upfront_usd": 272.4,
       "remaining_budget_usd": 727.6
@@ -146,34 +470,59 @@
   "financeable": [],
   "skipped": [
     {
-      "measure_id": "PV_ROOF",
+      "measure_id": "DHW_HPWH",
       "reason": "role",
-      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
     },
     {
       "measure_id": "ENV_ATTIC",
       "reason": "role",
-      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
+    },
+    {
+      "measure_id": "ENV_WALL",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
+    },
+    {
+      "measure_id": "HVAC_DUCT",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
     },
     {
       "measure_id": "HVAC_HP",
       "reason": "role",
-      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
+    },
+    {
+      "measure_id": "PV_ROOF",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
     },
     {
       "measure_id": "ROOF_COOL",
       "reason": "role",
-      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
     },
     {
-      "measure_id": "DHW_HPWH",
+      "measure_id": "WIN_REPLACE",
       "reason": "role",
-      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+      "detail": "Owner-only measure (SPEC.md section 6.2); the tenant cannot do it."
+    },
+    {
+      "measure_id": "ENV_AIRSEAL",
+      "reason": "not_cost_effective",
+      "detail": "SIR 0.66 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
     },
     {
       "measure_id": "CTRL_TSTAT",
       "reason": "already_done",
-      "detail": "A smart thermostat is already installed (pano_01)."
+      "detail": "Already done: a smart thermostat is installed."
+    },
+    {
+      "measure_id": "WIN_FILM",
+      "reason": "no_cost_data",
+      "detail": "no verified cost; needs a quote"
     },
     {
       "measure_id": "WIN_SHADE",
@@ -188,40 +537,40 @@
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 102.31,
-    "expected": 131.57,
-    "high": 160.83,
+    "low": 122.61,
+    "expected": 215.48,
+    "high": 411.43,
     "unit": "USD"
   },
   "total_co2_kg": {
-    "low": 64.73,
-    "expected": 80.91,
-    "high": 97.09,
+    "low": 81.59,
+    "expected": 141.27,
+    "high": 269.13,
     "unit": "kg"
   },
   "baseline_after": {
     "electricity_kwh": {
-      "low": 3962.78,
-      "expected": 4748.0,
-      "high": 5791.92,
+      "low": 3576.62,
+      "expected": 4638.42,
+      "high": 6066.39,
       "unit": "kWh"
     },
     "gas_kwh": {
-      "low": 5799.98,
-      "expected": 7240.0,
-      "high": 9040.02,
+      "low": 7390.31,
+      "expected": 13446.7,
+      "high": 19156.32,
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 1785.52,
-      "expected": 2080.87,
-      "high": 2448.61,
+      "low": 1897.87,
+      "expected": 2497.77,
+      "high": 3200.97,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 1935.65,
-      "expected": 2238.15,
-      "high": 2622.63,
+      "low": 2192.92,
+      "expected": 3341.66,
+      "high": 4502.22,
       "unit": "kg"
     },
     "co2_nonbaseload_kg": null

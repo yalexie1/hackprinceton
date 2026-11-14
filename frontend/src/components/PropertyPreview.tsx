@@ -1,9 +1,8 @@
 import { MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PropertySummary } from "../lib/types";
-import { api } from "../lib/api";
 import {
-  propertyObliques,
+  loadPropertyObliques,
   type PropertyOblique,
 } from "../lib/property-imagery";
 import {
@@ -27,18 +26,12 @@ export default function PropertyPreview({
     setObliques([]);
     // This endpoint only reads cached imagery; browsing cards must not start an
     // audit or expose a sponsor API key to the client.
-    void api
-      .preview(
-        property.sid,
-        AbortSignal.any([controller.signal, AbortSignal.timeout(6000)]),
-      )
-      .then((preview) => {
-        if (
-          !controller.signal.aborted &&
-          preview.available &&
-          preview.sid === property.sid
-        )
-          setObliques(propertyObliques(preview.oblique_paths || {}));
+    void loadPropertyObliques(
+      property.sid,
+      AbortSignal.any([controller.signal, AbortSignal.timeout(6000)]),
+    )
+      .then((images) => {
+        if (!controller.signal.aborted) setObliques(images);
       })
       .catch(() => undefined);
     return () => controller.abort();

@@ -199,6 +199,14 @@ def test_win_replace_home_in_zone_3_gets_r402_u_value():
     assert WIN.replacement_glazing(at("office", "3B")).u == 2.16
 
 
+@pytest.mark.parametrize("zone", ["4A", "5B", "7"])
+def test_win_replace_home_in_zone_4_and_above_gets_r402_u_value(zone):
+    g = WIN.replacement_glazing(at("house", zone))
+    assert (g.u, g.shgc) == (1.70, 0.44)
+    assert "U-0.30" in g.basis and "R402.1.2" in g.basis
+    assert WIN.replacement_glazing(at("office", zone)).u == 2.16
+
+
 def test_win_replace_missing_zone_south_of_36_in_ca_is_low_shgc_with_warning():
     b, m = at("office", None, lat=34.05), bare("office")          # Los Angeles
     g = WIN.replacement_glazing(b)

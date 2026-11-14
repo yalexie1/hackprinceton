@@ -1350,7 +1350,7 @@ A panorama reading of pane count and frame material replaces the default type. `
 
 - **SHGC.** 0.25 in climate zones 0 to 3, the code value of both tables in zones 2 and 3, where every CA and TX site below 36° N lies (commercial zones 0–1 ask 0.23; neither state has them). Zone 4 and above keep the S17 0.44 of the default type. The zone is `ClimateSite.climate_zone`, read by its thermal digit ("3B", "3B-CA" and "2A" give 3, 3 and 2), as the benchmark check reads it.
 - **Never higher than now.** Each replaced window gets `min(climate SHGC, present SHGC)`: glass that already admits less sun (the DEF-11 office baselines of 0.25) keeps its SHGC, so the measure never raises cooling through solar gain.
-- **U.** 2.16 W/(m²·K) (0.38) as before: it meets C402.4 in zones 0 to 3 and R402.1.2 in zones 0 to 2. A home in zone 3 gets R402.1.2's U-0.30, 1.70 W/(m²·K). Above zone 3 the default type is kept, although R402.1.2 asks U-0.30 there too.
+- **U.** 2.16 W/(m²·K) (0.38) as before: it meets C402.4 in zones 0 to 3 and R402.1.2 in zones 0 to 2. A home in zone 3 or above gets R402.1.2's U-0.30, 1.70 W/(m²·K) (lead's decision, 2026-11-14); offices keep 2.16 in every zone.
 - **No zone in the bundle.** A CA or TX site south of 36° N is taken as zones 0 to 3 (SHGC 0.25), anything else keeps 0.44; either way the card says the zone was missing. The 36° line is a fallback of this file, not a sourced boundary.
 
 Window area: measured openings, ±5 %. From vision when no window openings exist: ±30 %. With neither: window-to-wall ratio 0.15 / 0.18 / 0.25 of exterior wall area for homes and 0.20 / 0.30 / 0.40 for offices; these ratios are **not sourced** (section 10, tier A) and exist only so the pipeline does not stop.

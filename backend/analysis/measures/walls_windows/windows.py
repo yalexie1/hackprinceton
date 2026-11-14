@@ -37,9 +37,10 @@ REPLACE_SHGC = 0.44        # IECC climate zones 4 and above, and an unknown zone
 # and 3; zones 0-1 ask 0.23, not reached in CA or TX). Never above the window's present SHGC.
 REPLACE_SHGC_HOT = 0.25
 HOT_MAX_ZONE = 3           # thermal digit of the last "hot" IECC zone
-# R402.1.2 caps a home's fenestration at U-0.30 (1.70 W/m2K) in zone 3; the DEF-03 U-0.38 meets
-# R402.1.2 in zones 0-2 (U-0.50, U-0.40) and C402.4 in zones 0-3 (fixed U-0.50, 0.45, 0.42).
-REPLACE_U_HOME_ZONE3 = 1.70
+# R402.1.2 caps a home's fenestration at U-0.30 (1.70 W/m2K) in zones 3 to 8; the DEF-03 U-0.38
+# meets R402.1.2 in zones 0-2 (U-0.50, U-0.40) and C402.4 in zones 0-3 (fixed U-0.50, 0.45, 0.42).
+REPLACE_U_HOME = 1.70
+HOME_U_MIN_ZONE = 3        # first IECC zone where R402.1.2 asks U-0.30 of a home
 # With no climate zone in the bundle: CA and TX south of this latitude are IECC zones 0-3
 # (a fallback of this package; the zone maps put the 3/4 line near 36 N in both states).
 HOT_FALLBACK_LAT = 36.0
@@ -150,19 +151,20 @@ def _zone_digit(code: Optional[str]) -> Optional[int]:
 
 def replacement_glazing(bundle: PropertyBundle) -> Glazing:
     """DEF-03 by climate (S18): SHGC 0.25 in IECC zones 0-3, else the DEF-03 0.44; U 2.16, or 1.70
-    for a home in zone 3. A missing zone counts as 0-3 only in CA or TX south of 36 N."""
+    for a home in zone 3 and above (R402.1.2). A missing zone counts as 0-3 only in CA or TX south
+    of 36 N."""
     code = bundle.climate.climate_zone if bundle.climate else None
     digit = _zone_digit(code)
     if digit is not None:
         hot = digit <= HOT_MAX_ZONE
-        u = REPLACE_U_HOME_ZONE3 if (hot and digit == 3 and is_home(bundle)) else REPLACE_U
+        u = REPLACE_U_HOME if (digit >= HOME_U_MIN_ZONE and is_home(bundle)) else REPLACE_U
         if hot:
             basis = (f"IECC climate zone {code.strip()}: IECC 2021 prescriptive SHGC "
                      f"{REPLACE_SHGC_HOT} in zones 0-3 (Tables R402.1.2 and C402.4)")
-            if u != REPLACE_U:
-                basis += f", and U-0.30 ({u} W/m2K) for a home in zone 3 (R402.1.2)"
         else:
             basis = f"IECC climate zone {code.strip()}: the DEF-03 double low-e glass"
+        if u != REPLACE_U:
+            basis += f", and U-0.30 ({u} W/m2K) for a home in zone 3 and above (R402.1.2)"
         return Glazing(u, REPLACE_SHGC_HOT if hot else REPLACE_SHGC, code.strip(), basis)
     state = bundle.summary.state
     lat = bundle.climate.lat if bundle.climate else bundle.summary.lat

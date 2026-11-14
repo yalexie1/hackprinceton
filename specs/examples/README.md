@@ -1,10 +1,10 @@
 # Example payloads for the shared contract
 
-One house and one office, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.0). Lanes build and test against these files until the real doors are live.
+One house and two offices, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.0). Lanes build and test against these files until the real doors are live.
 
 **These files are hand-made examples, not analysis output and not a capture of sponsor data.** No API response and no CoStar kit record is copied here. Three kinds of value appear, and section 2 separates them:
 
-1. a short list of **real facts** about the two golden properties (identifiers, the georeference, a few Vexcel and PVGIS values that `specs/data-integration.md` already records);
+1. a short list of **real facts** about the three golden properties (identifiers, CoStar building facts, georeferences, a few Vexcel and PVGIS values that `specs/data-integration.md` or the Data lane already records);
 2. **published figures** taken as they stand from the physics and legal specs (emission factors, unit costs, discount rate, default tables, incentive rules);
 3. everything else, which is **ILLUSTRATIVE**: invented to be internally consistent, and saying nothing about the real buildings.
 
@@ -12,9 +12,9 @@ Every energy quantity (kWh used, kWh saved) is in the third group, so every doll
 
 ## 1. Files
 
-`house/` is the golden house, Matterport model `zvKHR9DHNjJ`. `office/` is the golden office, model `HjEyXryhRLk`. Each folder holds the same thirteen files.
+`house/` is the golden house, Matterport model `zvKHR9DHNjJ`. `office/` is the golden office in Los Angeles, model `jfiEvosX974` (CoStar `PropertyId` 246899). `office_houston/` is the third golden property, the Houston office, model `L3266YcPPvd` (`PropertyId` 234088). Each folder holds the same thirteen files.
 
-| File (in `house/` and in `office/`) | Contract type | Produced by | Where it appears in the API (SPEC section 10) |
+| File (in each folder) | Contract type | Produced by | Where it appears in the API (SPEC section 10) |
 |---|---|---|---|
 | `property_summary.json` | `PropertySummary` | S1 Locate, Data | `GET /api/properties/{sid}` |
 | `property_bundle.json` | `PropertyBundle` | S2 Ingest, Data | not served; `get_property_bundle(sid)`, agent file `/run/bundle.json` |
@@ -29,13 +29,13 @@ Every energy quantity (kWh used, kWh saved) is in the third group, so every doll
 | `document_draft.json` | `DocumentDraft` | S9 Draft, Agent | returned by the two `documents` routes |
 | `plan_tenant.json`, `run_request_tenant.json` | `Plan`, `RunRequest` | as above | the same property run with `role: "tenant"`, to show measures skipped for the role |
 
-`search_results.json` (top level) is a `PropertySummary[]`, the response of `GET /api/properties/search`. It holds the two golden properties, the two other models of the golden office property (real model ids, same `costar_property_id`), and four invented entries whose `sid` starts with `EXAMPLE`.
+`search_results.json` (top level) is a `PropertySummary[]`, the response of `GET /api/properties/search`. It holds the three golden properties, two other models of the Los Angeles office property (real model ids, same `costar_property_id`), and four invented entries whose `sid` starts with `EXAMPLE`. The Houston property has nine models, but the ids of the other eight are not recorded on main, so none is listed.
 
 ## 2. Which values are real, which are published, which are illustrative
 
-### 2.1 Real facts about the two properties
+### 2.1 Real facts about the three properties
 
-Real means: stated in the brief for this folder or verified live by the Data lane (`specs/data-integration.md`, 2026-11-14).
+Real means: verified live by the Data lane (`specs/data-integration.md`, 2026-11-14, or the Data lane's brief for this folder on the same date).
 
 **House, `zvKHR9DHNjJ`**
 
@@ -54,76 +54,98 @@ Real means: stated in the brief for this folder or verified live by the Data lan
 | PVGIS for this lot, 4 kWp, 14 % loss, tilt 20, south: 7,016.92 kWh a year, standard deviation 161.45 kWh | `ClimateSite.pvgis_annual_kwh_per_kw` 1754.23, `pvgis_sd_fraction` 0.02301 | data-integration 5.1 |
 | The electric utility is LADWP; hourly weather comes from Open-Meteo with each value the mean over the hour ending at the stamp | `Tariff.utility`, `ClimateSite.weather_source`, `weather_time_convention` | data-integration 5.1; Data lane |
 
-**Office, `HjEyXryhRLk`**
+**Office, Los Angeles, `jfiEvosX974`**
 
 | Value | Where | Source |
 |---|---|---|
-| Model id, name "Suite A - 2,000SF", CoStar `PropertyId` 354635, address 9050 Emnora Ln, Houston, TX, no splat; `record_id` equals the `PropertyId` | `PropertySummary`, `CostarData` | brief; data-integration 2.6, 3.2 |
-| The property has two more models, `B9b1hGuh61v` and `cpBz4ivmcTN` | `search_results.json` | data-integration 2.6. Their names and counts are invented |
-| Georeference: latitude 29.816116896197208, longitude -95.51538273549774, altitude 25.039, rotation z 0.6964351 and w 0.7176198, source `processing` | `MatterportData.georeference` | data-integration 3.2, 4.5. z and w are the seven digits recorded there; x = y = 0 is assumed; `translation` is null |
-| The model has five openings, all doorways, and no window openings | `WallEdge.openings`; windows come from vision | Data lane. Which edges carry the doorways, and their sizes, are invented |
-| Vexcel: 1 structure, footprint 1,215.91 m2, ground elevation 26.5176, gable, metal, roof tree cover 1, 0 AC units, 0 skylights, no solar, `building-type.class` commercial, roof elevation 30.456892, height 3.939292 | `VexcelData`, `VexcelStructure.attributes`, `RoofPlane.obstruction_counts` | data-integration 4.3, 4.5 |
-| PVGIS for this lot, 4 kWp, 14 % loss, tilt 0: 4,944.09 kWh a year, standard deviation 191.78 kWh | `ClimateSite.pvgis_annual_kwh_per_kw` 1236.02, `pvgis_sd_fraction` 0.03879 | data-integration 5.1 |
-| No regulated retail tariff exists for the address (CenterPoint delivery area) | `Tariff.source`, a `FetchRecord` with layer `tariff`, status `fallback` | physics 04 TAR-06 |
+| Model id, name "Executive Tower - Suite 140 - 4,410 SF", CoStar `PropertyId` 246899, address 11400 Olympic Blvd, Los Angeles, CA 90064; 8 rooms, 36 panoramas, 1 floor; no splat, no drone photos, no defurnished view; `record_id` equals the `PropertyId` | `PropertySummary`, `CostarData`, `MatterportData` | data-integration 2.6, 3.4 |
+| CoStar: `propertyType` 5 Office, class A, Existing, built 1989 (construction-complete event), gross building area = rentable area = 259,923 sq ft (24,147.6 m2), 17 storeys above grade | `CostarData` normalised fields | data-integration 2.6 |
+| The property has eight other models; `BkjvwqdchVY` (Suite 1100, 2 rooms, 93 panoramas, open plan) and `2cLAWCVj1tA` (Suite 1530, 6 rooms) are listed | `search_results.json` | data-integration 2.6. "Executive Tower -" in their names and the 24 panoramas of `2cLAWCVj1tA` are invented |
+| No openings at all on any of the property's models: no windows and no doors from the scan | `WallEdge.openings` empty; windows from vision | data-integration 3.3 |
+| All eight rooms have empty classifications (no room label) | `Room.label` null | data-integration 3.4 |
+| The largest room's `areaFloor` 157.82 m2 against width 1.46 m and depth 1.34 m; one room has no depth; room heights 2.90 to 3.21 m | `room_01`, `room_08`, `Room.height_m` | data-integration 3.4. Which room has no depth, and the other rooms' areas and heights inside that range, are invented |
+| Georeference: latitude 34.036533907520074, longitude -118.44311817454468, altitude 0.0 (not terrain), rotation z -0.3548537 and w 0.9349218, source `processing` | `MatterportData.georeference` | data-integration 3.2. z and w are the seven digits recorded there (negative z: the opposite sense to the house); x = y = 0 is assumed; `translation` is null |
+| MatterPak resources not available | `FetchRecord` with status `missing` | Data lane |
+| Vexcel: 1 structure, footprint 2,207.43 m2 (probably a podium, about 1.7 times the CoStar floor plate), ground elevation 54.5592, flat, membrane, condition 3.17, roof tree cover 0, parcel tree cover 5, 0 AC units (a detection limit), 0 skylights, no solar, `building-type.class` null, roof elevation 70.056587 and height -15.497387 (ground minus roof; unusable for building height) | `VexcelData`, `VexcelStructure.attributes`, `RoofPlane.obstruction_counts` | data-integration 4.3, 4.5 |
+| Electric utility LADWP, net energy metering, eGRID subregion CAMX | `Tariff.utility`, `Tariff.export_regime`, every `co2_kg` | data-integration 5.1, 5.1b; physics 04 TAR-03, EMI-01 |
 
-Real as vocabulary, in both examples: the opening types `divider`, `doorway`, `opening`, `window`; the edge types `wall` and `invisible`; the georeference sources; CoStar `propertyType` 5 = Office and the construction event name `ConstructionComplete`; the Vexcel attribute keys used; the SAM 3 label `roof` and image ids of the form `ortho-1`, `oriented-1`. That the golden office itself has `propertyType` 5 is not verified.
+**Office, Houston, `L3266YcPPvd`**
+
+| Value | Where | Source |
+|---|---|---|
+| Model id, name "2100 West Loop S Fwy - Full Floor Suite 500", CoStar `PropertyId` 234088, address 2100 West Loop S, Houston, TX 77027; 88 panoramas; nine models for the property; no splat, no drone photos, no defurnished view | `PropertySummary`, `CostarData` | Data lane; data-integration 3.3 (candidate table) |
+| CoStar: `propertyType` 5 Office, class A, Existing, built 1974, gross building area 162,540 sq ft (15,100.5 m2), 16 storeys | `CostarData` normalised fields | Data lane |
+| A 761.9 m2 open plate plus five side rooms; no room labels | `room_plate` area; `Room.label` null | Data lane. The side rooms' sizes are invented |
+| No openings on any of the nine models | `WallEdge.openings` empty; windows from vision | Data lane |
+| `altitude` is unusable | `GeoReference.altitude_m` null | Data lane |
+| The address is inside the City of Houston (Census incorporated place "Houston city"), so inside the Texas PACE region. CoStar `cityId` is only the mailing city and is **not** used for PACE eligibility | C-PACE notes, `TX-PACE-04` check | Data lane; legal texas 6.4 |
+| Vexcel: flat membrane roof, condition 2.88, 2 AC units; the footprint outlines a podium or garage (1.7 to 4.6 times the CoStar floor plate); `roof-characteristics.height` unusable | `VexcelStructure.attributes`, `systems.hvac_type` `rooftop_unit` | Data lane |
+| CenterPoint is the wires company; no regulated retail tariff and no mandated export price; eGRID ERCT | `Tariff`, a `FetchRecord` with layer `tariff`, status `fallback`, every `co2_kg` | physics 04 TAR-03, TAR-06, EMI-01 |
+
+Real as vocabulary, in every example: the opening types `divider`, `doorway`, `opening`, `window`; the edge types `wall` and `invisible`; the georeference sources; CoStar `propertyType` 5 = Office and the construction event name `ConstructionComplete`; the Vexcel attribute keys used; the SAM 3 label `roof` and image ids of the form `ortho-1`, `oriented-1`.
 
 ### 2.2 Published figures, used as the specs give them
 
-These are not facts about the two buildings. They are the defaults and rules of the spec files, applied to illustrative quantities. The entry id is where to check each one.
+These are not facts about the buildings. They are the defaults and rules of the spec files, applied to illustrative quantities. The entry id is where to check each one.
 
 | Figure | Value in the examples | Spec entry |
 |---|---|---|
-| Grid emission factors, kg CO2e per kWh | CAMX 0.19504 (non-baseload 0.43599), ERCT 0.33413 (0.56586) | physics 04 EMI-01 |
+| Grid emission factors, kg CO2e per kWh | CAMX 0.19504 (non-baseload 0.43599) for the house and the Los Angeles office, ERCT 0.33413 (0.56586) for the Houston office | physics 04 EMI-01 |
 | Gas emission factor | 0.18123 kg CO2e per kWh | physics 04 EMI-02 |
-| Houston electricity price, commercial | 0.086 / 0.090 / 0.133 USD per kWh, source `published_default`, fixed charge 0 | physics 04 TAR-06 |
-| Export | Los Angeles (LADWP): net metering, kWh netted at the energy price. Houston: regime `none`, no export price | physics 04 TAR-03 |
+| Houston electricity price, commercial | 0.086 / 0.090 / 0.133 USD per kWh, source `published_default`, fixed charge 0 (EIA Texas commercial average 8.96 cents for August 2026 lands on the expected 0.090) | physics 04 TAR-06 |
+| Export | Los Angeles (LADWP): net metering, kWh netted at the energy price, no separate export price. Houston: regime `none`, no export price, only the self-consumed share is valued | physics 04 TAR-03 |
 | Real discount rate, sensitivity rate | 0.03, and NPV at 0.07 in `npv_sensitivity_usd` | physics 04 ECO-05 |
-| Real energy price escalation | Los Angeles residential and Houston commercial rows of the table, by analysis period | physics 04 ECO-06 |
-| NPV, SIR, AIRR, IRR, simple and discounted payback, level payment, program SIR | formulas as written; the generator reproduces the spec's worked example A and the 100,000 USD payment example | physics 04 ECO-07 to ECO-12b |
-| Unit costs | attic 20.75 / 27.14 / 40.93 USD per m2; air sealing 4.83 / 7.67 / 17.05 USD per m2; cool roof 13.52 / 20.27 / 27.03 USD per m2; heat pump 2,668 / 4,472 / 5,805 USD per ton; office LED 214 / 390 / 517 USD per luminaire; home LED 4.80 / 9.08 / 13.62 USD per lamp; thermostat 234 / 312 / 467 USD; solar 2.68 / 4.20 / 5.20 (home) and 2.60 / 3.35 / 4.10 (office) USD per W; solar O&M 35.01 USD per kW a year | physics 04 COST-01 |
+| Real energy price escalation | Los Angeles residential (house), Los Angeles commercial (LA office) and Houston commercial rows of the table, by analysis period | physics 04 ECO-06 |
+| NPV, SIR, AIRR, IRR, simple and discounted payback, level payment, program SIR | formulas as written | physics 04 ECO-07 to ECO-12b |
+| Unit costs | attic 20.75 / 27.14 / 40.93 USD per m2; air sealing 4.83 / 7.67 / 17.05 USD per m2; cool roof 13.52 / 20.27 / 27.03 USD per m2; heat pump 2,668 / 4,472 / 5,805 USD per ton; rooftop unit 2,090 / 2,297 / 2,713 USD per ton; economizer and controls 4,274 / 6,044 / 7,088 USD per unit; office LED 214 / 390 / 517 USD per luminaire; home LED 4.80 / 9.08 / 13.62 USD per lamp; thermostat 234 / 312 / 467 USD; solar 2.68 / 4.20 / 5.20 (home) and 2.60 / 3.35 / 4.10 (office, under 100 kW) USD per W; solar O&M 35.01 USD per kW a year | physics 04 COST-01 |
 | No verified cost | `WIN_FILM`, `WIN_SHADE`, `PLUG_MGMT`: savings but no finance block, skipped as `no_cost_data` | physics 04 COST-01, SPEC 6.5 |
-| Useful lives | solar 25, attic 25, cool roof 20, heat pump 15, office LED 15, air sealing 15, home LED 10, thermostat 10, layout 5 | physics 04 COST-02 |
-| Incentives | 25D expired (home solar); LADWP heat pump rebate 1,050 USD per ton, attic rebate 0.50 USD per sq ft, cool roof up to 0.60 USD per sq ft, all paid after installation; CenterPoint commercial programme with no verified amount; 48E at 30 percent for business-owned solar with three conditions | physics 04 INC-02, INC-13, INC-17, INC-10, INC-32, INC-05 |
-| Value uplift | office plan: low 0, expected half capitalisation at the highest cap rate, high full capitalisation at the lowest; home solar: up to 4.00 USD per W, expected capped at net cost | physics 04 VAL-01, VAL-03 |
+| Useful lives | solar 25, attic 25, rooftop unit 21, cool roof 20, heat pump 15, office LED 15, air sealing 15, economizer 15, home LED 10, thermostat 10, layout 5 | physics 04 COST-02 |
+| Incentives | 25D expired (home solar); LADWP heat pump rebate 1,050 USD per ton, attic rebate 0.50 USD per sq ft, cool roof up to 0.60 USD per sq ft (house); LADWP CLIP 0.20 USD per kWh for office LED fixtures and BOSS up to 0.65 USD per kWh for envelope work, both `needs_confirmation` (pre-approval; CLIP needs an account over 200 kW); CenterPoint commercial programme with no verified amount; 48E at 30 percent for business-owned solar with three conditions; all utility rebates paid after installation | physics 04 INC-02, INC-13, INC-17, INC-10, INC-18, INC-19, INC-32, INC-05 |
+| Value uplift | office plans: low 0, expected half capitalisation at the highest cap rate, high full capitalisation at the lowest; home solar: up to 4.00 USD per W, expected capped at net cost | physics 04 VAL-01, VAL-03 |
 | Solar defaults | 430 W module of 1.722 by 1.134 m, DC/AC ratio 1.2, losses 14.08 percent (11.42 where shading is ray-cast), degradation 0.005 a year, weather band 1.2816 times the PVGIS deviation | physics 01 PV-04, PV-05, PV-07, PV-08, PV-09 |
-| Roof | office pitch range 1.2 / 15.8 / 28.4 degrees (gable, medium footprint); setbacks 0.9144 and 0.4572 m (house), 1.2192 m perimeter (office); obstruction allowances per counted object | physics 01 ROOF-03, ROOF-04, ROOF-06 |
-| Envelope and systems | house: wall U 0.625 / 2.021 / 2.021, attic 0.182 / 0.403 / 1.703, single clear windows 4.77 to 6.59 with SHGC 0.63 to 0.76, ACH50 6 / 15 / 30, SEER 10 / 13 / 14, AFUE 0.64 / 0.78 / 0.80, duct efficiency 0.80 / 0.867 / 0.933, gas water heater 0.54 / 0.58 / 0.64, setpoints 21.7 and 24.4 C. Office: wall 0.852 / 1.931 / 1.931, roof 0.375, window 6.93 and SHGC 0.25, SEER 11.06 minus 10 plus 15 percent, heating 0.80, leakage 2.0 / 7.5 / 7.5 L/s.m2 at 75 Pa, 0.00944 m3/s of outdoor air per person, lighting 10.76 / 19.48 / 19.48 and plug 8.61 / 10.76 / 10.76 W/m2, setpoints 21 and 24 C with 15.6 and 26.7 C unoccupied. Slab floors by the two-method range. Absorptance and emittance by surface | physics 02 DEF-01 to DEF-11, INF-05, ENV-04 |
+| Roof | flat roofs (both offices): pitch 0 / 1.2 / 9.5 degrees, modules on racks at 15 degrees facing south at a ground coverage ratio of 0.70; 4 ft (1.2192 m) commercial perimeter, plus one interior pathway on the LA roof whose long side exceeds 45.72 m; 9 m2 per counted AC unit. House: setbacks 0.9144 and 0.4572 m, obstruction allowances per counted object | physics 01 ROOF-03 to ROOF-06, LAY-02 |
+| Envelope and systems | house: as DEF-01 to DEF-08 (wall U 0.625 / 2.021 / 2.021, attic 0.182 / 0.403 / 1.703, single clear windows, ACH50 6 / 15 / 30, SEER 10 / 13 / 14, AFUE 0.64 / 0.78 / 0.80). LA office (3B-CA, 1980 to 2004): wall 1.249 / 1.249 / 5.678 (steel frame, the mass-wall "no requirement" value as the high), window 6.93 with SHGC 0.44, SEER 11.06 minus 10 plus 15 percent. Houston office (2A, before 1980): wall 1.306 / 1.306 / 1.931, window 6.93 with SHGC 0.54, EER 9.63 minus 10 plus 15 percent. Both offices: heating 0.80, leakage 2.0 / 7.5 / 7.5 L/s.m2 at 75 Pa, 0.00944 m3/s of outdoor air per person, lighting 10.76 / 19.48 / 19.48 and plug 8.61 / 10.76 / 10.76 W/m2, setpoints 21 and 24 C with 15.6 and 26.7 C unoccupied; window-to-wall default 0.20 / 0.30 / 0.40 named as the fallback behind vision | physics 02 DEF-01 to DEF-11, INF-05, ENV-04, HVAC-00 |
 | Daylight | visible transmittance 0.40 / 0.68 / 0.80; target 300 lux, setpoint 500 lux; 2,600 occupied hours; score weights 0.4 / 0.3 / 0.3 with the 0.20 glare and 25 percent PPD limits; manual switching share 0 / 0.5 / 1.0 | physics 03 sections 0.3, 0.4, LCT-02, LCT-03 |
-| Legal checks | requirement ids and citations | `specs/legal/california.md` section 2, `specs/legal/texas.md` section 6 |
+| Legal checks | requirement ids and citations; the CSLB notice in the LA office contract is the verbatim text of CA-COM-03 | `specs/legal/california.md` sections 2, 3 and 7; `specs/legal/texas.md` section 6 |
 
 ### 2.3 Illustrative, stated plainly
 
 - **Every energy quantity**: the baseline end uses, monthly values, peaks, heating and cooling needs, and the kWh each measure saves. So are all the figures computed from them.
-- **Prices with no published default**: the Los Angeles electricity and gas prices and fixed charge, and the Houston gas price. `Tariff.source` says so.
-- **All CoStar normalised values**: year built, building class, areas, stories. **All tenants and the market data** in the office (`occupancy`, `market`): the names carry "(illustrative)". `CostarData.raw` holds only a `_note`.
-- **The wall graphs**: vertex positions, which rooms touch, which edges carry openings, every opening's size and position, the invisible edge. House rooms are rectangles from the real width and depth, so a polygon's area differs a little from the real `area_m2`. The office suite (15.0 m by 12.4 m, five rooms, 2.74 m ceilings) is invented apart from its 2,000 sq ft size.
-- **Windows read by vision**: the office's five window surfaces (one per exterior edge, 23 m2 in all), and the house bedroom's one. Their sizes are invented.
-- **Panorama positions, the office's pano and room counts, floor plans, all cache paths.** No file behind any path exists.
-- **Roof geometry**: every WKT polygon is a rectangle invented in the model frame and rotated to the map with the real georeference. Only the footprint areas are real. The house planes "fitted from the splat" (tilt 17 / 20 / 23), the ridge directions and the solar panel positions are invented.
-- **Solar yield**: the examples use the real PVGIS annual figure as a stand-in for the hourly model's yield. The per-panel shading values, the self-consumption fractions (0.42 and 0.95) and the tilt and ridge factors of the range are invented.
+- **Prices with no published default**: the Los Angeles electricity prices (house 0.25 flat; LA office 0.19 / 0.22 / 0.26 USD per kWh, standing for which LADWP commercial schedule applies), the gas prices and the house's fixed charge. `Tariff.source` says so. Demand charges are not modelled.
+- **PVGIS for the two offices**: no PVGIS run is recorded for either lot, so 1,690 (LA) and 1,330 (Houston) kWh per kW at a 15-degree rack, and their deviations, are invented. The house's PVGIS figure is real.
+- **The Houston georeference**: its rotation is not recorded on main, so the quaternion (a 30-degree turn, north offset 330.00) and the coordinates (approximate for the address) are invented.
+- **CoStar tenants and market data** (`occupancy`, `market`): the names carry "(illustrative)". `CostarData.raw` holds only a `_note`. The CoStar building facts in section 2.1 are real.
+- **The wall graphs**: vertex positions, which rooms touch, the invisible edge, wall thicknesses. The LA suite is a 28.0 m by 14.0 m corner suite on floor 1 with two exterior walls (south-west and south-east under the real rotation); the Houston suite is a 36 m by 27 m full floor (floor 5) with the core on the north side. House rooms are rectangles from the real width and depth.
+- **Windows read by vision**: every office window surface (one per exterior edge; 64.2 m2 and a window-to-wall ratio of 0.51 in Los Angeles, 123.5 m2 and 0.40 in Houston) and the house bedroom's one. Their sizes are invented.
+- **Roof surfaces of the suites**: neither office suite has a roof surface (each sits under conditioned floors); the LA suite has a ground floor slab and the Houston floor slab is not modelled (conditioned floor below). Which floor each suite is on is read from the suite number, not verified.
+- **Panorama positions and labels, floor plans, all cache paths.** No file behind any path exists.
+- **Roof geometry**: every WKT polygon is a rectangle invented in the model frame and rotated to the map with the georeference. The LA plane is the real Vexcel footprint area; the Houston plane is the tower roof derived from gross building area / 16 storeys (943.8 m2), because the Vexcel footprint is a podium. The house planes "fitted from the splat", ridge directions and panel positions are invented.
+- **Solar yield**: the per-panel shading values, the self-consumption fractions and the rack and weather factors of the range are invented.
 - **Desk scores**: every daylight, glare, comfort, daylight-factor, sun-hour and asymmetry value. Only the score formula is the spec's.
 - **SAM 3 detections**: invented, shaped like the live behaviour on the house.
-- **Values with no default table**: door and partition U-values, the home lighting and plug densities, `infiltration_ach`, the duct location, `bedrooms`, the plus or minus 1 degree on `north_offset_deg`, the C-PACE rate and term (6.5 percent, 20 years), the capacity and efficiency of the proposed heat pump.
+- **HVAC sizes and counts**: the Houston rooftop units' 30 tons together, luminaire counts (48 and 112), thermostat counts.
+- **Values with no default table**: partition U-values, the home lighting and plug densities, `infiltration_ach`, the duct location, `bedrooms`, the plus or minus 1 degree on `north_offset_deg`, the C-PACE rate and term (6.5 percent, up to 20 years), the capacity and efficiency of the proposed heat pump, the LA office's market value used in the 5 percent test (comparable sale price times gross building area).
 - **Escalation for a 5-year period** (`LAYOUT`): the ECO-06 table has no 5-year column, so the 10-year column is used.
-- **Documents**: the draft text is a sketch. Each `satisfied` value is illustrative. Placeholder names are examples.
+- **Documents**: the draft text is a sketch. Each `satisfied` value is illustrative. The Houston tenant's lease clause on alterations is invented.
 - **Shared string keys**: assumption keys follow the lists suggested in physics 02 section 12, physics 03 section 0.4 and physics 04 TAR-06 where one exists; the rest, and the flag keys, are this folder's guesses (workplan open item O10).
 
 ## 3. Conventions these examples assume
 
 Where the contract or a spec leaves a choice open, the examples take one reading. Treat each as a proposal until its owner confirms it.
 
-1. **North.** `north_offset_deg` is `atan2(R[0][1], R[1][1]) mod 360` of the georeference quaternion (physics 01 ROOF-02): 266.40 for the house, 271.72 for the office, each carried with plus or minus 1 degree. A surface's azimuth is `atan2(n_x, n_y) + north_offset_deg` for its outward normal in the model frame. Which way the quaternion rotates is still to be confirmed by the Data lane; if it is the inverse, the offsets become 93.60 and 88.28 and every azimuth here changes.
+1. **North.** `north_offset_deg` is `atan2(R[0][1], R[1][1]) mod 360` of the georeference quaternion (physics 01 ROOF-02): 266.40 for the house, 41.57 for the LA office (negative z), 330.00 for the Houston office (illustrative quaternion), each carried with plus or minus 1 degree. A surface's azimuth is `atan2(n_x, n_y) + north_offset_deg` for its outward normal in the model frame. Which way the quaternion rotates is still to be confirmed by the Data lane; if it is the inverse, the offsets become 93.60, 318.43 and 30.00 and every azimuth here changes.
 2. **`Opening.relative_center`** is measured from the first id in `vertex_ids`. The Data lane has not confirmed the end.
-3. **Surfaces follow the wall graph.** One wall `Surface` per exterior or demising edge (`source_edge_id`), one window per `window` opening and one door per `doorway` on such an edge (`source_opening_id`). A window read by vision has `source_opening_id` null and sits on the edge named in `source_edge_id`; the office has one such surface per exterior edge, standing for all the windows seen on it.
+3. **Surfaces follow the wall graph.** One wall `Surface` per exterior or demising edge (`source_edge_id`), one window per `window` opening and one door per `doorway` on such an edge (`source_opening_id`). A window read by vision has `source_opening_id` null and sits on the edge named in `source_edge_id`; the offices have one such surface per exterior edge, standing for all the windows seen on it.
 4. **`RoofPlane.obstruction_counts`** repeats the whole roof's Vexcel counts on every plane, because the counts have no positions. Do not add them across planes.
-5. **`end_use_kwh`** has the six keys `heating`, `cooling`, `water_heating`, `lighting`, `plug`, `appliances`. Fan energy is inside heating and cooling, as physics 02 has it.
-6. **Solar in `EnergyUse`.** `savings.electricity_kwh` and `co2_kg` use the whole generation. `savings.cost_usd` uses only what earns the retail price: the netted kWh under net metering, the self-consumed share where there is no export price. `co2_nonbaseload_kg` is filled on measure savings only.
-7. **Ranges** (physics 04 UNC-02, simplified). A measure's saving in dollars combines two independent groups in quadrature: the measure's own effect and the price level. A plan's expected totals are sums. Its cost range is the sum of the items' ranges (one correlation group); its savings and CO2 ranges combine the measures in quadrature, so they are narrower than the sums. NPV combines savings, cost and a plus or minus 1 point escalation band.
-8. **Incentives** (SPEC 6.6, physics 04 ECO-13). Only `upfront_rebate` reduces `net_upfront_usd`. A verified rebate paid after installation, or a tax credit, enters NPV one year later and nothing else. An incentive whose `eligibility` is `needs_confirmation` has the amount range 0 / 0 / rule amount. `unverified` and `expired` entries are listed and carry zero.
-9. **Money formulas.** Simple payback is net upfront divided by (annual savings minus the change in operation and maintenance). The cash scenario's first-year net cash flow is that same difference; the C-PACE one subtracts the level payment. `program_sir` is undiscounted savings over the term divided by all payments, and `eligible` is false when it is below 1.
-10. **Skipped and not applicable.** A measure that is not applicable to the building type is left out of `skipped`. `HVAC_RTU` and `HVAC_ECON` in the office are not applicable because no packaged rooftop unit is confirmed, and are listed in `skipped` with reason `feasibility`.
-11. **`RunEvent.stage`** is one of `S1` to `S9` or null. `RunEvent.payload` shapes used here:
+5. **Flat roofs.** ROOF-05 gives a flat plane no azimuth, but `RoofPlane.azimuth_deg` is required, so it carries the rack azimuth (180) and `params.rack_tilt_deg` carries the rack tilt. `eave_length_m` and `slope_length_m` are null.
+6. **`end_use_kwh`** has the six keys `heating`, `cooling`, `water_heating`, `lighting`, `plug`, `appliances`. Fan energy is inside heating and cooling, as physics 02 has it.
+7. **Solar in `EnergyUse`.** `savings.electricity_kwh` and `co2_kg` use the whole generation. `savings.cost_usd` uses only what earns the retail price: the netted kWh under net metering, the self-consumed share where there is no export price. A tower-roof array feeds the building's own service; the suite's baseline is only the floor for the netting. `co2_nonbaseload_kg` is filled on measure savings only.
+8. **Ranges** (physics 04 UNC-02, simplified). A measure's saving in dollars combines two independent groups in quadrature: the measure's own effect and the price level. A plan's expected totals are sums. Its cost range is the sum of the items' ranges (one correlation group); its savings and CO2 ranges combine the measures in quadrature. NPV combines savings, cost and a plus or minus 1 point escalation band.
+9. **Incentives** (SPEC 6.6, physics 04 ECO-13). Only `upfront_rebate` reduces `net_upfront_usd`. A verified rebate paid after installation, or a tax credit, enters NPV one year later and nothing else. An incentive whose `eligibility` is `needs_confirmation` has the amount range 0 / 0 / rule amount. `unverified` and `expired` entries are listed and carry zero.
+10. **Money formulas.** Simple payback is net upfront divided by (annual savings minus the change in operation and maintenance). The cash scenario's first-year net cash flow is that same difference; the C-PACE one subtracts the level payment. `program_sir` is undiscounted savings over the term divided by all payments. In Texas, `eligible` is false when it is below 1 (program rule TX-PACE-30). California has no statutory SIR test, so there the ratio is a screen; a Los Angeles scenario is `eligible: false` because no programme taking commercial applications is confirmed (SPEC 6.6), and its notes give the 5 percent tax-plus-assessment test (Streets and Highways Code 5898.15) and say lender consent is programme practice.
+11. **Who can do what in a tower suite.** Rooftop solar, rooftop units, economizers and the roof are the building owner's; a tenant plan skips them with reason `role`. Air sealing of the exterior wall needs the owner's consent (SPEC 6.2 "tenant with consent"). A measure that is not applicable to the building type, or not part of the suite's envelope (`ROOF_COOL` under 16 floors), is left out of `skipped`.
+12. **Rooftop units.** `HVAC_RTU` and `HVAC_ECON` are evaluated only where a packaged unit is confirmed. Houston: Vexcel counts 2 AC units, so both are evaluated and priced, as owner measures, with a flag that which floors the units serve is not shown. Los Angeles: Vexcel counts none, which on a tower is a detection limit, so both are not applicable, `hvac_type` is `unknown` with a flag, and both are listed in `skipped` with reason `feasibility`.
+13. **`RunEvent.stage`** is one of `S1` to `S9` or null. `RunEvent.payload` shapes used here:
 
    | `type` | `payload` |
    |---|---|
@@ -141,11 +163,13 @@ Where the contract or a spec leaves a choice open, the examples take one reading
 
 **House** (`role: owner_occupier`, budget $10,000). Measured windows: seven `window` openings with a window `Surface` each, plus one bedroom window read by vision, the single labelled case of the fallback. Selected: `PV_ROOF` (five modules on the splat-fitted south plane, sized by the budget, shading by ray casting, net metering, the warning "may exceed budget", a `value_uplift` on the measure) and `LGT_LED`. `ENV_ATTIC` and `HVAC_HP` save more than the LED lamps but do not fit, so they are skipped as `over_budget` and listed as financeable. Skipped: `DHW_HPWH` (`feasibility`, a `blocked` flag), `ROOF_COOL` (`no_savings`, an upper bound on a vented attic), `CTRL_TSTAT` (`already_done`), `WIN_SHADE` (`no_cost_data`). `HVAC_DUCT` and `HVAC_RTU` are not applicable. No federal tax credit; the LADWP rebates are `rebate_after_install`, one confirmed and two `needs_confirmation`. One question, on the electrical service size. The tenant variant selects only `LGT_LED` and skips the owner-only measures with reason `role`. Document: `retrofit_contract_residential`, California.
 
-**Office** (`role: landlord`, budget $25,000). No measured windows: `window_source` is `vision`, the window surfaces have no opening behind them, and the layout carries the warning. Selected: `LAYOUT` (zero cost, eight scored desk positions, four recommended; no daylight control, so the saving runs from zero) and `PV_ROOF` (17 modules on the parametric roof: `ridge_confirmed` false, tilt range by roof shape, 3 percent default shading, no drawn positions, no export value, the 48E credit as `needs_confirmation`). `LGT_LED` and `ENV_AIRSEAL` do not fit and are financeable, each with a C-PACE scenario that is not eligible because its program SIR is below 1. `HVAC_RTU` and `HVAC_ECON` are not evaluated: `hvac_type` is `unknown` with a flag, and the run's question asks about it. `CTRL_TSTAT` has `no_savings`, `WIN_SHADE` is `already_done`, `WIN_FILM` and `PLUG_MGMT` are `no_cost_data`. The bundle has CoStar occupancy with three tenancies (one ended) and market data; the plan has a `ValueUplift`. The electricity price is the `published_default` assumption. Document: `cpace_package`, Texas, for the LED retrofit, with the failing program test shown.
+**Office, Los Angeles** (`role: landlord`, budget $25,000). Suite 140 of a 17-storey Class A tower. No openings: `window_source` is `vision`, the window surfaces have no opening behind them, and the layout carries the warning. Selected, in order: `LAYOUT` (zero cost, eight scored desk positions along the south-west glazing, four recommended; no daylight control, so the saving runs from zero), `LGT_LED` (48 troffers, $18,720; the LADWP CLIP rebate listed at zero until confirmed) and `PV_ROOF` sized to the $6,280 left: 4 modules, 1.72 kW on racks on the flat roof, net metered at LADWP, 48E as `needs_confirmation`, with "may exceed budget". `ENV_AIRSEAL` does not fit and is financeable; its C-PACE scenario is hypothetical and not eligible (no Los Angeles programme confirmed), and its notes carry the 5 percent test, which cannot be completed without the tax bill. `HVAC_RTU` and `HVAC_ECON` are not evaluated (`feasibility`): `hvac_type` is `unknown` with a flag, and the run's question asks about it. `CTRL_TSTAT` has `no_savings`, `WIN_SHADE` is `already_done`, `WIN_FILM` and `PLUG_MGMT` are `no_cost_data`, `ROOF_COOL` is not applicable (no roof over the suite). The tenant variant (budget $20,000) selects `LAYOUT` and `LGT_LED`, lists air sealing as financeable with the owner's consent, and skips solar and the rooftop measures for `role`. Document: `retrofit_contract_commercial`, California, for the LED retrofit, the work the owner can sign for now; a C-PACE package would be mostly blanks (no confirmed programme, and the assessment contract is the public agency's own form, CA-PACE-05), and even under C-PACE the installation contract is this section 3 contract (CA-PACE-06).
 
-Two things in the office plan follow from the rules as written and are worth knowing before the demo. Ranking is by annual savings alone, and rooftop solar is sized to whatever budget is left, so solar takes almost the whole budget although its life-cycle SIR is 0.35. And with the published Texas price and the published unit costs, no office measure here reaches a program SIR of 1, so the example has no eligible C-PACE scenario.
+**Office, Houston** (`role: landlord`, budget $50,000). Full-floor Suite 500 of a 16-storey Class A tower. No openings: windows from vision on all four sides. Two rooftop AC units confirmed by Vexcel, so `hvac_type` is `rooftop_unit` and `HVAC_RTU` (30 tons, $68,910) and `HVAC_ECON` ($12,088) are evaluated and priced. Selected: `LAYOUT`, `LGT_LED` (112 troffers, $43,680, "may exceed budget") and `PV_ROOF` with the $6,320 left (4 modules on the tower roof, self-consumption only, no export value). Financeable: `HVAC_RTU`, `HVAC_ECON`, `ENV_AIRSEAL`, each with a Texas C-PACE scenario whose program SIR is far below 1 (0.16, 0.19, 0.14), so none is eligible although the property is in the City of Houston PACE region. Skipped: those three `over_budget`, `CTRL_TSTAT` `no_savings`, `WIN_SHADE` `already_done`, `WIN_FILM` and `PLUG_MGMT` `no_cost_data`. The tenant variant (budget $45,000) selects `LAYOUT` and `LGT_LED`, skips solar and both rooftop measures for `role`, and skips air sealing for `feasibility` (a `blocked` lease-consent flag). The electricity price is the TAR-06 `published_default` with a `fallback` record. Document: `cpace_package`, Texas, for the two rooftop measures, with the failing program test shown and `TX-PACE-04` satisfied from the Census place, not the CoStar mailing city.
 
-Both examples have assumptions from all seven sources, a not-applicable measure with its reason, and every `RunEvent` type. Each folder shows all six skip reasons across its two plans.
+Things worth knowing before the demo, all following from the rules as written. Ranking is by annual savings alone and rooftop solar is sized to whatever budget is left, so both office plans end with a 1.72 kW array on a tower roof. With the published Texas price and unit costs no Houston measure reaches a program SIR of 1. In Los Angeles the LED retrofit and solar would pass a program SIR screen (1.87 and 1.11) but no programme exists to apply it.
+
+Every example has assumptions from all seven sources, a not-applicable measure with its reason, and every `RunEvent` type. Each folder shows all six skip reasons across its two plans.
 
 ## 5. Re-run the validation
 
@@ -155,14 +179,14 @@ The script below takes the contract block from the current `specs/SPEC.md`, vali
 - wall graph: ids resolve, every room boundary is a closed loop and `Room.polygon` follows it, openings fit their edge and do not overlap;
 - surfaces: `source_edge_id` and `source_opening_id` resolve, a window's area equals its opening, each azimuth is perpendicular to its edge under `north_offset_deg`, windows without an opening have a vision assumption; `north_offset_deg` matches the quaternion;
 - every `room_id`, `zone_id`, `plane_id`, `pano_id`, `parent_surface_id`, evidence panorama and roof obstruction that is referenced exists;
-- tariff: Texas has no export price and a `fallback` record; `weather_time_convention` is `hour_end`;
+- tariff: Texas has no export price and a `fallback` record; LADWP is net metering with no export price; the house and the LA office are LADWP in CAMX, and the Houston office uses the TAR-06 commercial default in the CenterPoint area, in ERCT, with the TAR-06 price range as its assumption; `weather_time_convention` is `hour_end`;
 - baseline: twelve monthly values that sum to the annual figure; end uses sum to electricity plus gas and use only the six allowed keys; cost equals energy times the tariff;
-- emissions: every `co2_kg` equals its kWh times the eGRID and gas factors of physics 04;
-- measures: no finance block on a measure with no verified cost; only verified upfront rebates in `net_upfront_usd`; no federal tax benefit on a home; 48E only on commercial solar, unconfirmed, with conditions; analysis period, payback, AIRR, level payment, program SIR and C-PACE eligibility follow physics 04; `HVAC_RTU` and `HVAC_ECON` only with a confirmed rooftop unit; `HVAC_DUCT` never; `HVAC_HP` with its three ratings; solar defaults filled, 3 percent shading on a parametric roof, home solar uplift by VAL-03;
+- emissions: every `co2_kg`, and explicitly the baseline's, equals its kWh times the eGRID factor of the property's subregion and the gas factor of physics 04;
+- measures: no finance block on a measure with no verified cost; only verified upfront rebates in `net_upfront_usd`; no federal tax benefit on a home; 48E only on commercial solar, unconfirmed, with conditions; analysis period, payback, AIRR, level payment and program SIR follow physics 04; C-PACE eligibility follows the state: in Texas a program SIR of at least 1 and notes on lender consent (399.010) and the PACE region, in California a hypothetical, ineligible scenario whose notes carry the 5 percent test and do not call lender consent statutory; `HVAC_RTU` and `HVAC_ECON` only with a confirmed rooftop unit, and evaluated and priced on an office whose Vexcel AC-unit count is above 0; `HVAC_DUCT` never; `HVAC_HP` with its three ratings; solar defaults filled, 3 percent shading on a parametric roof, home solar uplift by VAL-03;
 - desk layout: metrics in range, score by LCT-03, `window_source` matches the bundle, a saving from zero where there is no daylight control;
-- plans: each pick fits the remaining budget, zero-cost measures come first, the "may exceed budget" warning matches the cost range, expected totals equal the sum of the items and ranges stay inside the sums, `baseline_after` equals the baseline minus the selected savings, no unpriced measure is selected, `no_cost_data` carries its fixed detail, the plan value uplift follows VAL-01 and exists only for the office;
+- plans: each pick fits the remaining budget, zero-cost measures come first, the "may exceed budget" warning matches the cost range, expected totals equal the sum of the items and ranges stay inside the sums, `baseline_after` equals the baseline minus the selected savings, no unpriced measure is selected, `no_cost_data` carries its fixed detail, the plan value uplift follows VAL-01 and exists only for the offices; a tenant plan skips every applicable owner-only measure with reason `role`;
 - `run_result.json` embeds the other files unchanged; questions point at existing assumptions; events cover every type; the question event carries a valid `Question`;
-- documents: run id, measures, state, and the list of unfilled placeholders match the text.
+- documents: run id, measures, state, and the list of unfilled placeholders match the text; every `requirement_id` exists in `specs/legal/california.md` or `specs/legal/texas.md` for the document's state; residential and commercial document types match the property.
 
 Run it from the repository root. It needs Python 3.9 or later and `pydantic>=2`, reads only, and writes nothing.
 
@@ -228,13 +252,21 @@ PER_PROPERTY = {
 OPTIONAL = {"plan_tenant.json": C.Plan, "run_request_tenant.json": C.RunRequest}
 # Figures the examples must agree with (specs/physics/04-economics-emissions-mv.md, 02, 03).
 EF_GRID = {"CA": (0.19504, 0.43599), "TX": (0.33413, 0.56586)}   # EMI-01: average, non-baseload
+EGRID = {"CA": "CAMX", "TX": "ERCT"}                              # EMI-01 subregion by golden city
+TX_COMMERCIAL_PRICE = (0.086, 0.090, 0.133)                       # TAR-06 commercial default
+# What each golden folder's tariff must be (data-integration.md 5.1b; physics 04 TAR-03, TAR-06)
+GOLDEN_TARIFF = {"house": "LADWP", "office": "LADWP", "office_houston": "TX_DEFAULT"}
+OWNER_ONLY = {"PV_ROOF", "HVAC_RTU", "HVAC_ECON", "ENV_ATTIC", "HVAC_HP", "ROOF_COOL",
+              "DHW_HPWH", "WIN_REPLACE", "ENV_WALL", "HVAC_DUCT"}   # SPEC 6.2 "owner" only
 EF_GAS = 0.18123                                                  # EMI-02
 NO_COST = {"WIN_FILM", "WIN_SHADE", "PLUG_MGMT"}                  # COST-01: no verified cost
 NO_QUOTE = "no verified cost; needs a quote"                      # SPEC 6.5
 END_USES = {"heating", "cooling", "water_heating", "lighting", "plug", "appliances"}
 DISCOUNT_RATE = 0.03                                              # ECO-05 default
 TOP = {"search_results.json": list[C.PropertySummary]}
-FOLDERS = ("house", "office")
+FOLDERS = ("house", "office", "office_houston")
+LEGAL = {st: (ROOT / "specs" / "legal" / f"{name}.md").read_text(encoding="utf-8")
+         for st, name in (("CA", "california"), ("TX", "texas"))}
 
 errors, checks = [], 0
 
@@ -355,6 +387,20 @@ def check_finance(w, m, summary):
             check(close(ncf, sav - om), w, "cash first-year net cash flow != savings - O&M")
             continue
         check(not (home and sc["eligible"]), w, "C-PACE cannot be eligible on a home")
+        notes = " ".join(sc["notes"])
+        if sc["financed_usd"] <= 0:
+            pass
+        elif summary["state"] == "CA":     # SPEC 6.6, specs/legal/california.md sections 7.3-7.6
+            check(not sc["eligible"] and "Hypothetical" in notes, w,
+                  "a Los Angeles C-PACE scenario is hypothetical and not eligible until a "
+                  "programme is confirmed")
+            check("5 percent" in notes and "5898.15" in notes, w,
+                  "California C-PACE notes must report the 5 percent tax-plus-assessment test")
+            check("statutory precondition" not in notes, w,
+                  "California lender consent is programme practice, not a statutory condition")
+        else:                              # specs/legal/texas.md section 6
+            check("399.010" in notes and "PACE region" in notes, w,
+                  "Texas C-PACE notes must state lender consent (399.010) and the PACE region")
         if sc["financed_usd"] > 0:
             i, t = sc["rate"], sc["term_years"]
             pay = sc["financed_usd"] * i * (1 + i) ** t / ((1 + i) ** t - 1)
@@ -365,8 +411,8 @@ def check_finance(w, m, summary):
             check(sc["program_sir"] is not None
                   and close(sc["program_sir"], t * (sav - om) / (t * pay + net - sc["financed_usd"]),
                             2e-3), w, "program_sir != savings over the term / total cost")
-            check(not sc["eligible"] or sc["program_sir"] >= 1.0, w,
-                  "C-PACE marked eligible with a program SIR below 1")
+            check(summary["state"] != "TX" or not sc["eligible"] or sc["program_sir"] >= 1.0,
+                  w, "Texas C-PACE marked eligible with a program SIR below 1 (ECO-12b)")
         else:
             check(not sc["eligible"], w, "C-PACE eligible with nothing financed")
 
@@ -432,6 +478,11 @@ def check_plan(w, plan, request, baseline, measures, summary, market):
           f"applicable measures missing from the plan: {applicable_ids - set(ids_sel + ids_fin + ids_skip)}")
     # SPEC 6.5 and physics 04 COST-01: a measure with no verified cost is never priced
     check(not NO_COST & set(ids_sel + ids_fin), w, "a measure with no verified cost is in the plan")
+    if request["role"] == "tenant":        # SPEC 6.2: owner-only measures are skipped for role
+        for mid in OWNER_ONLY & applicable_ids:
+            check({"measure_id": mid, "reason": "role"}.items()
+                  <= next((s for s in plan["skipped"] if s["measure_id"] == mid), {}).items(),
+                  w, f"{mid} is owner-only and must be skipped for a tenant with reason role")
     for sk in plan["skipped"]:
         if sk["reason"] == "no_cost_data":
             check(sk["measure_id"] in NO_COST and NO_QUOTE in sk["detail"], w,
@@ -539,8 +590,21 @@ def check_property(folder):
               "Texas tariff must have export_regime 'none' and no export price")
         check(any(f["layer"] == "tariff" and f["status"] == "fallback"
                   for f in bundle["provenance"]), w, "no tariff FetchRecord with status fallback")
-    else:
-        check(tariff["export_regime"] == "net_metering", w, "LADWP is net metering")
+    if "LADWP" in tariff["utility"]:       # TAR-03: LADWP Service Rider NEM, kWh netted
+        check(state == "CA" and tariff["export_regime"] == "net_metering"
+              and tariff["export_usd_per_kwh"] is None, w,
+              "LADWP is net metering with no separate export price")
+    want = GOLDEN_TARIFF.get(folder)
+    if want == "LADWP":                    # both Los Angeles goldens: LADWP, net metering, CAMX
+        check("LADWP" in tariff["utility"] and tariff["export_regime"] == "net_metering"
+              and state == "CA" and EGRID[state] == "CAMX", w,
+              "this golden's tariff must be LADWP with net metering, in eGRID CAMX")
+    elif want == "TX_DEFAULT":             # Houston golden: TAR-06 commercial default, ERCT
+        check(state == "TX" and EGRID[state] == "ERCT" and "CenterPoint" in tariff["utility"]
+              and close(tariff["electricity_usd_per_kwh"], TX_COMMERCIAL_PRICE[1], 1e-9)
+              and tariff["fixed_usd_per_month"] == 0, w,
+              "the Houston golden uses the TAR-06 commercial default (0.090 USD/kWh, no fixed "
+              "charge) in the CenterPoint area, eGRID ERCT")
     check(bundle["climate"]["weather_time_convention"] == "hour_end", w,
           "weather_time_convention must be hour_end (Open-Meteo)")
     check(mp["mesh_path"] is None or mp["matterpak_available"], w, "mesh without a MatterPak")
@@ -627,6 +691,14 @@ def check_property(folder):
           "end uses do not sum to electricity + gas")
     check(set(baseline["end_use_kwh"]) <= END_USES, w,
           f"end_use_kwh keys outside the allowed set: {set(baseline['end_use_kwh']) - END_USES}")
+    check(close(a["co2_kg"]["expected"], a["electricity_kwh"]["expected"] * ef_avg
+                + a["gas_kwh"]["expected"] * EF_GAS, 0.05), w,
+          f"baseline co2_kg does not use the {EGRID[state]} factor {ef_avg}")
+    if GOLDEN_TARIFF.get(folder) == "TX_DEFAULT":
+        pa = next((x["value"] for x in model["assumptions"]
+                   if x["key"] == "tariff.electricity_usd_per_kwh"), None)
+        check(isinstance(pa, dict) and (pa["low"], pa["expected"], pa["high"])
+              == TX_COMMERCIAL_PRICE, w, "price assumption is not the TAR-06 commercial range")
     p_e, p_g = tariff["electricity_usd_per_kwh"], tariff["gas_usd_per_kwh"] or 0.0
     check(close(a["cost_usd"]["expected"], a["electricity_kwh"]["expected"] * p_e
                 + a["gas_kwh"]["expected"] * p_g + 12 * tariff["fixed_usd_per_month"], 0.05), w,
@@ -639,6 +711,17 @@ def check_property(folder):
     check(any(not m["applicable"] for m in measures), w, "no not-applicable measure")
     planes = {p["id"]: p for p in model["roof_planes"]}
     has_windows = bool(measured)
+    # SPEC 6.2 and physics 02 HVAC-00: a Vexcel-counted rooftop unit on an office confirms a
+    # packaged unit, so HVAC_RTU and HVAC_ECON are evaluated and priced there
+    prim = next((st for st in (bundle["vexcel"] or {}).get("structures", []) if st["primary"]),
+                None)
+    ac_count = (prim or {}).get("attributes", {}).get("roof-objects.ac-unit.count") or 0
+    if summary["use_type"] == "office" and ac_count > 0:
+        for mid in ("HVAC_RTU", "HVAC_ECON"):
+            m = next((x for x in measures if x["measure_id"] == mid), None)
+            check(m is not None and m["applicable"] and m["finance"] is not None
+                  and sy["hvac_type"] == "rooftop_unit", w,
+                  f"{mid} must be evaluated and priced: Vexcel counts {ac_count:g} AC units")
     for m in measures:
         mid = m["measure_id"]
         mw = f"{w} {mid}"
@@ -796,6 +879,15 @@ def check_property(folder):
     check(blanks == set(draft["unfilled_placeholders"]), w,
           "unfilled_placeholders != {{placeholders}} left in the markdown")
     check(draft["statutory_checks"] and draft["disclaimer"], w, "no checks or no disclaimer")
+    for sc in draft["statutory_checks"]:   # ids must exist in the state's legal spec
+        rid = sc["requirement_id"]
+        check(rid is None or (rid.startswith(req["state"] + "-")
+                              and re.search(rf"\b{re.escape(rid)}\b", LEGAL[req["state"]])),
+              w, f"requirement_id {rid} is not in specs/legal for {req['state']}")
+    check(draft["doc_type"] != "retrofit_contract_residential"
+          or summary["segment"] == "residential", w, "residential contract on a commercial property")
+    check(draft["doc_type"] not in ("cpace_package", "retrofit_contract_commercial")
+          or summary["segment"] == "commercial", w, "commercial document on a home")
     return summary
 
 

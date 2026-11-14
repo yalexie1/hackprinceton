@@ -1,34 +1,34 @@
 {
   "schema_version": "0.3.0",
   "summary": {
-    "sid": "HjEyXryhRLk",
-    "name": "Suite A - 2,000SF",
+    "sid": "jfiEvosX974",
+    "name": "Executive Tower - Suite 140 - 4,410 SF",
     "segment": "commercial",
     "use_type": "office",
-    "address": "9050 Emnora Ln, Houston, TX",
-    "city": "Houston",
-    "state": "TX",
-    "lat": 29.8161169,
-    "lon": -95.5153827,
-    "costar_property_id": "354635",
+    "address": "11400 Olympic Blvd, Los Angeles, CA 90064",
+    "city": "Los Angeles",
+    "state": "CA",
+    "lat": 34.0365339,
+    "lon": -118.4431182,
+    "costar_property_id": "246899",
     "costar_listing_id": null,
     "costar_residential_listing_id": null,
     "has_splat": false,
     "has_defurnished": false,
-    "pano_count": 12,
-    "room_count": 5,
+    "pano_count": 36,
+    "room_count": 8,
     "floor_count": 1
   },
   "matterport": {
     "georeference": {
-      "latitude": 29.816116896197208,
-      "longitude": -95.51538273549774,
-      "altitude_m": 25.039,
+      "latitude": 34.036533907520074,
+      "longitude": -118.44311817454468,
+      "altitude_m": 0.0,
       "rotation": {
         "x": 0.0,
         "y": 0.0,
-        "z": 0.6964351,
-        "w": 0.7176198
+        "z": -0.3548537,
+        "w": 0.9349218
       },
       "translation": null,
       "source": "processing"
@@ -45,65 +45,100 @@
           },
           {
             "id": "v02",
-            "x": 10.0,
+            "x": 21.0,
             "y": 0.0
           },
           {
             "id": "v03",
-            "x": 15.0,
+            "x": 28.0,
             "y": 0.0
           },
           {
             "id": "v04",
-            "x": 15.0,
-            "y": 5.0
+            "x": 28.0,
+            "y": 6.0
           },
           {
             "id": "v05",
-            "x": 15.0,
-            "y": 8.4
+            "x": 28.0,
+            "y": 10.0
           },
           {
             "id": "v06",
-            "x": 15.0,
-            "y": 12.4
+            "x": 28.0,
+            "y": 14.0
           },
           {
             "id": "v07",
-            "x": 9.0,
-            "y": 12.4
+            "x": 21.0,
+            "y": 14.0
           },
           {
             "id": "v08",
-            "x": 0.0,
-            "y": 12.4
+            "x": 12.0,
+            "y": 14.0
           },
           {
             "id": "v09",
-            "x": 0.0,
-            "y": 8.4
+            "x": 6.0,
+            "y": 14.0
           },
           {
             "id": "v10",
-            "x": 9.0,
-            "y": 8.4
+            "x": 0.0,
+            "y": 14.0
           },
           {
             "id": "v11",
-            "x": 10.0,
-            "y": 8.4
+            "x": 0.0,
+            "y": 9.5
           },
           {
             "id": "v12",
-            "x": 10.0,
-            "y": 5.0
+            "x": 0.0,
+            "y": 6.0
+          },
+          {
+            "id": "v13",
+            "x": 6.0,
+            "y": 6.0
+          },
+          {
+            "id": "v14",
+            "x": 12.0,
+            "y": 6.0
+          },
+          {
+            "id": "v15",
+            "x": 21.0,
+            "y": 6.0
+          },
+          {
+            "id": "v16",
+            "x": 21.0,
+            "y": 10.0
+          },
+          {
+            "id": "v17",
+            "x": 6.0,
+            "y": 9.5
+          },
+          {
+            "id": "v18",
+            "x": 12.0,
+            "y": 9.5
+          },
+          {
+            "id": "v19",
+            "x": 21.0,
+            "y": 9.5
           }
         ],
         "edges": [
           {
             "id": "e01",
             "type": "wall",
-            "thickness_m": 0.25,
+            "thickness_m": 0.3,
             "vertex_ids": [
               "v01",
               "v02"
@@ -113,7 +148,7 @@
           {
             "id": "e02",
             "type": "wall",
-            "thickness_m": 0.25,
+            "thickness_m": 0.3,
             "vertex_ids": [
               "v02",
               "v03"
@@ -123,7 +158,7 @@
           {
             "id": "e03",
             "type": "wall",
-            "thickness_m": 0.25,
+            "thickness_m": 0.3,
             "vertex_ids": [
               "v03",
               "v04"
@@ -133,7 +168,7 @@
           {
             "id": "e04",
             "type": "wall",
-            "thickness_m": 0.25,
+            "thickness_m": 0.3,
             "vertex_ids": [
               "v04",
               "v05"
@@ -143,7 +178,7 @@
           {
             "id": "e05",
             "type": "wall",
-            "thickness_m": 0.25,
+            "thickness_m": 0.3,
             "vertex_ids": [
               "v05",
               "v06"
@@ -168,17 +203,7 @@
               "v07",
               "v08"
             ],
-            "openings": [
-              {
-                "id": "op_e07_1",
-                "type": "doorway",
-                "label": null,
-                "width_m": 1.0,
-                "height_m": 2.0,
-                "lower_elevation_m": 0.0,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e08",
@@ -196,57 +221,37 @@
             "thickness_m": 0.2,
             "vertex_ids": [
               "v09",
-              "v01"
+              "v10"
             ],
             "openings": []
           },
           {
             "id": "e10",
             "type": "wall",
-            "thickness_m": 0.12,
+            "thickness_m": 0.2,
             "vertex_ids": [
-              "v02",
-              "v12"
+              "v10",
+              "v11"
             ],
-            "openings": [
-              {
-                "id": "op_e10_1",
-                "type": "doorway",
-                "label": null,
-                "width_m": 0.9,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.0,
-                "relative_center": 0.8
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e11",
             "type": "wall",
-            "thickness_m": 0.12,
+            "thickness_m": 0.2,
             "vertex_ids": [
-              "v12",
-              "v11"
+              "v11",
+              "v12"
             ],
-            "openings": [
-              {
-                "id": "op_e11_1",
-                "type": "doorway",
-                "label": null,
-                "width_m": 0.9,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.0,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e12",
             "type": "wall",
-            "thickness_m": 0.12,
+            "thickness_m": 0.2,
             "vertex_ids": [
               "v12",
-              "v04"
+              "v01"
             ],
             "openings": []
           },
@@ -255,28 +260,18 @@
             "type": "wall",
             "thickness_m": 0.12,
             "vertex_ids": [
-              "v09",
-              "v10"
+              "v02",
+              "v15"
             ],
-            "openings": [
-              {
-                "id": "op_e13_1",
-                "type": "doorway",
-                "label": null,
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.0,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e14",
             "type": "wall",
             "thickness_m": 0.12,
             "vertex_ids": [
-              "v10",
-              "v11"
+              "v15",
+              "v19"
             ],
             "openings": []
           },
@@ -285,8 +280,8 @@
             "type": "wall",
             "thickness_m": 0.12,
             "vertex_ids": [
-              "v11",
-              "v05"
+              "v19",
+              "v16"
             ],
             "openings": []
           },
@@ -295,41 +290,133 @@
             "type": "wall",
             "thickness_m": 0.12,
             "vertex_ids": [
-              "v10",
+              "v16",
               "v07"
             ],
-            "openings": [
-              {
-                "id": "op_e16_1",
-                "type": "doorway",
-                "label": null,
-                "width_m": 0.9,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.0,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
+          },
+          {
+            "id": "e17",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v04",
+              "v15"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e18",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v05",
+              "v16"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e19",
+            "type": "invisible",
+            "thickness_m": null,
+            "vertex_ids": [
+              "v19",
+              "v18"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e20",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v18",
+              "v14"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e21",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v14",
+              "v13"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e22",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v13",
+              "v12"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e23",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v13",
+              "v17"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e24",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v17",
+              "v11"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e25",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v17",
+              "v09"
+            ],
+            "openings": []
+          },
+          {
+            "id": "e26",
+            "type": "wall",
+            "thickness_m": 0.12,
+            "vertex_ids": [
+              "v18",
+              "v08"
+            ],
+            "openings": []
           }
         ]
       }
     ],
     "rooms": [
       {
-        "id": "room_open_office",
+        "id": "room_01",
         "floor_id": "floor_1",
-        "label": "Office",
-        "label_confidence": 0.9,
-        "area_m2": 84.0,
-        "width_m": 10.0,
-        "depth_m": 8.4,
-        "height_m": 2.74,
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 157.82,
+        "width_m": 1.46,
+        "depth_m": 1.34,
+        "height_m": 2.9,
         "boundary_edge_ids": [
           "e01",
-          "e10",
-          "e11",
-          "e14",
           "e13",
-          "e09"
+          "e14",
+          "e19",
+          "e20",
+          "e21",
+          "e22",
+          "e12"
         ],
         "polygon": [
           [
@@ -337,165 +424,290 @@
             0.0
           ],
           [
-            10.0,
+            21.0,
             0.0
           ],
           [
-            10.0,
-            5.0
+            21.0,
+            6.0
           ],
           [
-            10.0,
-            8.4
+            21.0,
+            9.5
           ],
           [
-            9.0,
-            8.4
+            12.0,
+            9.5
+          ],
+          [
+            12.0,
+            6.0
+          ],
+          [
+            6.0,
+            6.0
           ],
           [
             0.0,
-            8.4
+            6.0
           ]
         ]
       },
       {
-        "id": "room_conference",
+        "id": "room_02",
         "floor_id": "floor_1",
-        "label": "Conference Room",
-        "label_confidence": 0.88,
-        "area_m2": 25.0,
-        "width_m": 5.0,
-        "depth_m": 5.0,
-        "height_m": 2.74,
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 40.6,
+        "width_m": 7.0,
+        "depth_m": 6.0,
+        "height_m": 3.05,
         "boundary_edge_ids": [
           "e02",
           "e03",
-          "e12",
-          "e10"
+          "e17",
+          "e13"
         ],
         "polygon": [
           [
-            10.0,
+            21.0,
             0.0
           ],
           [
-            15.0,
+            28.0,
             0.0
           ],
           [
-            15.0,
-            5.0
+            28.0,
+            6.0
           ],
           [
-            10.0,
-            5.0
+            21.0,
+            6.0
           ]
         ]
       },
       {
-        "id": "room_private_office",
+        "id": "room_03",
         "floor_id": "floor_1",
-        "label": "Office",
-        "label_confidence": 0.86,
-        "area_m2": 17.0,
-        "width_m": 5.0,
-        "depth_m": 3.4,
-        "height_m": 2.74,
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 26.9,
+        "width_m": 7.0,
+        "depth_m": 4.0,
+        "height_m": 2.95,
         "boundary_edge_ids": [
-          "e12",
+          "e17",
           "e04",
+          "e18",
           "e15",
-          "e11"
+          "e14"
         ],
         "polygon": [
           [
-            10.0,
-            5.0
+            28.0,
+            6.0
           ],
           [
-            15.0,
-            5.0
+            21.0,
+            6.0
           ],
           [
-            15.0,
-            8.4
+            21.0,
+            9.5
           ],
           [
-            10.0,
-            8.4
+            21.0,
+            10.0
+          ],
+          [
+            28.0,
+            10.0
           ]
         ]
       },
       {
-        "id": "room_reception",
+        "id": "room_04",
         "floor_id": "floor_1",
-        "label": "Lobby",
-        "label_confidence": 0.7,
-        "area_m2": 36.0,
-        "width_m": 9.0,
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 26.9,
+        "width_m": 7.0,
         "depth_m": 4.0,
-        "height_m": 2.74,
+        "height_m": 3.21,
         "boundary_edge_ids": [
-          "e13",
-          "e16",
-          "e07",
-          "e08"
-        ],
-        "polygon": [
-          [
-            0.0,
-            8.4
-          ],
-          [
-            9.0,
-            8.4
-          ],
-          [
-            9.0,
-            12.4
-          ],
-          [
-            0.0,
-            12.4
-          ]
-        ]
-      },
-      {
-        "id": "room_break",
-        "floor_id": "floor_1",
-        "label": "Kitchen",
-        "label_confidence": 0.82,
-        "area_m2": 24.0,
-        "width_m": 6.0,
-        "depth_m": 4.0,
-        "height_m": 2.74,
-        "boundary_edge_ids": [
-          "e14",
-          "e15",
+          "e18",
           "e05",
           "e06",
           "e16"
         ],
         "polygon": [
           [
-            9.0,
-            8.4
+            28.0,
+            10.0
           ],
           [
-            10.0,
-            8.4
+            21.0,
+            10.0
           ],
           [
-            15.0,
-            8.4
+            21.0,
+            14.0
           ],
           [
-            15.0,
-            12.4
+            28.0,
+            14.0
+          ]
+        ]
+      },
+      {
+        "id": "room_05",
+        "floor_id": "floor_1",
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 25.8,
+        "width_m": 6.0,
+        "depth_m": 4.5,
+        "height_m": 3.0,
+        "boundary_edge_ids": [
+          "e24",
+          "e25",
+          "e09",
+          "e10"
+        ],
+        "polygon": [
+          [
+            6.0,
+            9.5
           ],
           [
-            9.0,
-            12.4
+            0.0,
+            9.5
+          ],
+          [
+            0.0,
+            14.0
+          ],
+          [
+            6.0,
+            14.0
+          ]
+        ]
+      },
+      {
+        "id": "room_06",
+        "floor_id": "floor_1",
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 20.1,
+        "width_m": 6.0,
+        "depth_m": 3.5,
+        "height_m": 2.98,
+        "boundary_edge_ids": [
+          "e22",
+          "e23",
+          "e24",
+          "e11"
+        ],
+        "polygon": [
+          [
+            6.0,
+            6.0
+          ],
+          [
+            0.0,
+            6.0
+          ],
+          [
+            0.0,
+            9.5
+          ],
+          [
+            6.0,
+            9.5
+          ]
+        ]
+      },
+      {
+        "id": "room_07",
+        "floor_id": "floor_1",
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 46.4,
+        "width_m": 6.0,
+        "depth_m": 8.0,
+        "height_m": 3.1,
+        "boundary_edge_ids": [
+          "e21",
+          "e20",
+          "e26",
+          "e08",
+          "e25",
+          "e23"
+        ],
+        "polygon": [
+          [
+            12.0,
+            6.0
+          ],
+          [
+            6.0,
+            6.0
+          ],
+          [
+            6.0,
+            9.5
+          ],
+          [
+            6.0,
+            14.0
+          ],
+          [
+            12.0,
+            14.0
+          ],
+          [
+            12.0,
+            9.5
+          ]
+        ]
+      },
+      {
+        "id": "room_08",
+        "floor_id": "floor_1",
+        "label": null,
+        "label_confidence": null,
+        "area_m2": 38.9,
+        "width_m": 9.0,
+        "depth_m": null,
+        "height_m": 2.92,
+        "boundary_edge_ids": [
+          "e19",
+          "e15",
+          "e16",
+          "e07",
+          "e26"
+        ],
+        "polygon": [
+          [
+            21.0,
+            9.5
+          ],
+          [
+            12.0,
+            9.5
+          ],
+          [
+            12.0,
+            14.0
+          ],
+          [
+            21.0,
+            14.0
+          ],
+          [
+            21.0,
+            10.0
           ]
         ]
       }
@@ -503,49 +715,65 @@
     "panos": [
       {
         "id": "pano_01",
-        "label": "Open office",
+        "label": null,
         "x": 5.0,
-        "y": 4.2,
+        "y": 3.0,
         "z": 1.5,
         "face_paths": [
-          "data/cache/HjEyXryhRLk/panos/pano_01/face0.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_01/face1.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_01/face2.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_01/face3.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_01/face4.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_01/face5.jpg"
+          "data/cache/jfiEvosX974/panos/pano_01/face0.jpg",
+          "data/cache/jfiEvosX974/panos/pano_01/face1.jpg",
+          "data/cache/jfiEvosX974/panos/pano_01/face2.jpg",
+          "data/cache/jfiEvosX974/panos/pano_01/face3.jpg",
+          "data/cache/jfiEvosX974/panos/pano_01/face4.jpg",
+          "data/cache/jfiEvosX974/panos/pano_01/face5.jpg"
         ],
         "defurnished_face_paths": []
       },
       {
         "id": "pano_02",
-        "label": "Conference room",
-        "x": 12.5,
-        "y": 2.5,
+        "label": null,
+        "x": 24.5,
+        "y": 3.0,
         "z": 1.5,
         "face_paths": [
-          "data/cache/HjEyXryhRLk/panos/pano_02/face0.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_02/face1.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_02/face2.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_02/face3.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_02/face4.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_02/face5.jpg"
+          "data/cache/jfiEvosX974/panos/pano_02/face0.jpg",
+          "data/cache/jfiEvosX974/panos/pano_02/face1.jpg",
+          "data/cache/jfiEvosX974/panos/pano_02/face2.jpg",
+          "data/cache/jfiEvosX974/panos/pano_02/face3.jpg",
+          "data/cache/jfiEvosX974/panos/pano_02/face4.jpg",
+          "data/cache/jfiEvosX974/panos/pano_02/face5.jpg"
         ],
         "defurnished_face_paths": []
       },
       {
         "id": "pano_03",
-        "label": "Reception",
-        "x": 4.5,
-        "y": 10.4,
+        "label": null,
+        "x": 3.0,
+        "y": 11.8,
         "z": 1.5,
         "face_paths": [
-          "data/cache/HjEyXryhRLk/panos/pano_03/face0.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_03/face1.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_03/face2.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_03/face3.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_03/face4.jpg",
-          "data/cache/HjEyXryhRLk/panos/pano_03/face5.jpg"
+          "data/cache/jfiEvosX974/panos/pano_03/face0.jpg",
+          "data/cache/jfiEvosX974/panos/pano_03/face1.jpg",
+          "data/cache/jfiEvosX974/panos/pano_03/face2.jpg",
+          "data/cache/jfiEvosX974/panos/pano_03/face3.jpg",
+          "data/cache/jfiEvosX974/panos/pano_03/face4.jpg",
+          "data/cache/jfiEvosX974/panos/pano_03/face5.jpg"
+        ],
+        "defurnished_face_paths": []
+      },
+      {
+        "id": "pano_04",
+        "label": null,
+        "x": 16.5,
+        "y": 3.0,
+        "z": 1.5,
+        "face_paths": [
+          "data/cache/jfiEvosX974/panos/pano_04/face0.jpg",
+          "data/cache/jfiEvosX974/panos/pano_04/face1.jpg",
+          "data/cache/jfiEvosX974/panos/pano_04/face2.jpg",
+          "data/cache/jfiEvosX974/panos/pano_04/face3.jpg",
+          "data/cache/jfiEvosX974/panos/pano_04/face4.jpg",
+          "data/cache/jfiEvosX974/panos/pano_04/face5.jpg"
         ],
         "defurnished_face_paths": []
       }
@@ -554,14 +782,14 @@
       {
         "format": "png",
         "flags": [],
-        "path": "data/cache/HjEyXryhRLk/floorplans/floor_1.png",
+        "path": "data/cache/jfiEvosX974/floorplans/floor_1.png",
         "resolution_px_per_m": 50.0,
         "origin_x": -1.0,
         "origin_y": -1.0
       }
     ],
     "ai_summary": null,
-    "capture_notes": "Example subset: 3 of 12 panoramas are carried here.",
+    "capture_notes": "Example subset: 4 of 36 panoramas are carried here.",
     "property_classifications": [
       "commercial"
     ],
@@ -574,187 +802,190 @@
   },
   "vexcel": {
     "collection": "illustrative-collection-id",
-    "parcel_wkt": "POLYGON((-95.5152725 29.8157081, -95.5152508 29.8163389, -95.5157889 29.8163530, -95.5158106 29.8157222, -95.5152725 29.8157081))",
+    "parcel_wkt": "POLYGON((-118.4434884 34.0366623, -118.4428801 34.0362137, -118.4423982 34.0366656, -118.4430065 34.0371142, -118.4434884 34.0366623))",
     "attributes": {
-      "structure.count": 1.0
+      "structure.count": 1.0,
+      "parcel-tree-cover.percent": 5.0
     },
     "structures": [
       {
         "primary": true,
-        "footprint_wkt": "POLYGON((-95.5153916 29.8157973, -95.5153759 29.8162538, -95.5156243 29.8162603, -95.5156400 29.8158038, -95.5153916 29.8157973))",
-        "footprint_area_m2": 1215.91,
+        "footprint_wkt": "POLYGON((-118.4433127 34.0366749, -118.4428909 34.0363639, -118.4425856 34.0366502, -118.4430073 34.0369613, -118.4433127 34.0366749))",
+        "footprint_area_m2": 2207.43,
         "attributes": {
           "primary-structure": true,
-          "footprint.area": 1215.91,
-          "ground-elevation.value": 26.5176,
-          "roof-characteristics.shape.value": "gable",
-          "roof-characteristics.material.class": "metal",
-          "roof-characteristics.tree-cover.percent": 1.0,
-          "roof-characteristics.elevation": 30.456892,
-          "roof-characteristics.height": 3.939292,
+          "footprint.area": 2207.43,
+          "ground-elevation.value": 54.5592,
+          "roof-characteristics.shape.value": "flat",
+          "roof-characteristics.material.class": "membrane",
+          "roof-characteristics.condition.precise-value": 3.17,
+          "roof-characteristics.tree-cover.percent": 0.0,
+          "roof-characteristics.elevation": 70.056587,
+          "roof-characteristics.height": -15.497387,
           "roof-objects.ac-unit.count": 0.0,
           "roof-objects.skylight.count": 0.0,
           "roof-objects.solar.value": false,
-          "building-type.class": "commercial"
+          "building-type.class": null
         }
       }
     ],
-    "ortho_path": "data/cache/HjEyXryhRLk/vexcel/ortho.png",
+    "ortho_path": "data/cache/jfiEvosX974/vexcel/ortho.png",
     "oblique_paths": {
-      "north": "data/cache/HjEyXryhRLk/vexcel/oblique_north.jpg",
-      "south": "data/cache/HjEyXryhRLk/vexcel/oblique_south.jpg"
+      "north": "data/cache/jfiEvosX974/vexcel/oblique_north.jpg",
+      "east": "data/cache/jfiEvosX974/vexcel/oblique_east.jpg",
+      "south": "data/cache/jfiEvosX974/vexcel/oblique_south.jpg"
     },
     "detections": [
       {
         "label": "roof",
-        "confidence": 0.66,
+        "confidence": 0.63,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.5153916 29.8157973, -95.5153831 29.8160448, -95.5155073 29.8160480, -95.5155158 29.8158005, -95.5153916 29.8157973))",
+        "bbox_wkt": "POLYGON((-118.4433127 34.0366749, -118.4431034 34.0365206, -118.4429509 34.0366636, -118.4431602 34.0368179, -118.4433127 34.0366749))",
         "pixel_bbox": [
-          629,
-          902,
-          171,
-          371
+          561,
+          380,
+          445,
+          440
         ],
-        "mask_png_path": "data/cache/HjEyXryhRLk/vexcel/masks/ortho-1_det01.png",
-        "mask_wkt": "POLYGON((-95.5153926 29.8157982, -95.5153842 29.8160439, -95.5155063 29.8160471, -95.5155148 29.8158014, -95.5153926 29.8157982))"
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det01.png",
+        "mask_wkt": "POLYGON((-118.4433111 34.0366750, -118.4431035 34.0365219, -118.4429525 34.0366635, -118.4431601 34.0368166, -118.4433111 34.0366750))"
       },
       {
         "label": "roof",
-        "confidence": 0.61,
+        "confidence": 0.57,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.5153831 29.8160448, -95.5153759 29.8162538, -95.5155001 29.8162571, -95.5155073 29.8160480, -95.5153831 29.8160448))",
+        "bbox_wkt": "POLYGON((-118.4431034 34.0365206, -118.4428909 34.0363639, -118.4427384 34.0365069, -118.4429509 34.0366636, -118.4431034 34.0365206))",
         "pixel_bbox": [
-          640,
-          593,
-          169,
-          314
+          818,
+          608,
+          449,
+          443
         ],
-        "mask_png_path": "data/cache/HjEyXryhRLk/vexcel/masks/ortho-1_det02.png",
-        "mask_wkt": "POLYGON((-95.5153841 29.8160457, -95.5153770 29.8162529, -95.5154991 29.8162561, -95.5155062 29.8160489, -95.5153841 29.8160457))"
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det02.png",
+        "mask_wkt": "POLYGON((-118.4431019 34.0365207, -118.4428910 34.0363651, -118.4427400 34.0365068, -118.4429508 34.0366623, -118.4431019 34.0365207))"
       },
       {
         "label": "roof",
-        "confidence": 0.49,
+        "confidence": 0.44,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.5155158 29.8158005, -95.5155001 29.8162571, -95.5156243 29.8162603, -95.5156400 29.8158038, -95.5155158 29.8158005))",
+        "bbox_wkt": "POLYGON((-118.4431602 34.0368179, -118.4427384 34.0365069, -118.4425856 34.0366502, -118.4430073 34.0369613, -118.4431602 34.0368179))",
         "pixel_bbox": [
-          469,
-          588,
-          180,
-          680
+          748,
+          168,
+          707,
+          672
         ],
-        "mask_png_path": "data/cache/HjEyXryhRLk/vexcel/masks/ortho-1_det03.png",
-        "mask_wkt": "POLYGON((-95.5155168 29.8158014, -95.5155012 29.8162562, -95.5156233 29.8162594, -95.5156389 29.8158046, -95.5155168 29.8158014))"
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det03.png",
+        "mask_wkt": "POLYGON((-118.4431586 34.0368180, -118.4427385 34.0365081, -118.4425871 34.0366501, -118.4430072 34.0369600, -118.4431586 34.0368180))"
       },
       {
         "label": "roof",
-        "confidence": 0.34,
+        "confidence": 0.33,
         "image_id": "oriented-1",
-        "bbox_wkt": "POLYGON((-95.5153916 29.8157973, -95.5153759 29.8162538, -95.5155001 29.8162571, -95.5155158 29.8158005, -95.5153916 29.8157973))",
+        "bbox_wkt": "POLYGON((-118.4433127 34.0366749, -118.4428909 34.0363639, -118.4425856 34.0366502, -118.4430073 34.0369613, -118.4433127 34.0366749))",
         "pixel_bbox": [
-          629,
-          593,
-          180,
-          680
+          561,
+          168,
+          894,
+          884
         ],
-        "mask_png_path": "data/cache/HjEyXryhRLk/vexcel/masks/oriented-1_det01.png",
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/oriented-1_det01.png",
         "mask_wkt": null
       }
     ]
   },
   "costar": {
     "kind": "commercial_property",
-    "matterport_model_id": "HjEyXryhRLk",
-    "property_id": "354635",
+    "matterport_model_id": "jfiEvosX974",
+    "property_id": "246899",
     "listing_id": null,
     "residential_listing_id": null,
-    "record_id": "354635",
+    "record_id": "246899",
     "raw": {},
     "property_type": "Office",
     "property_type_code": 5,
-    "year_built": 1984,
+    "year_built": 1989,
     "year_built_event": "ConstructionComplete",
     "year_renovated": null,
-    "building_class": "B",
-    "building_area_m2": 1200.0,
-    "rentable_area_m2": 1150.0,
-    "stories": 1,
+    "building_class": "A",
+    "building_area_m2": 24147.6,
+    "rentable_area_m2": 24147.6,
+    "stories": 17,
     "owner_name": null,
     "occupancy": {
       "tenancies": [
         {
           "tenant_name": "Example Tenant A (illustrative)",
-          "industry": "Professional services (illustrative)",
-          "employees": 12,
-          "area_m2": 186.0,
+          "industry": "Legal services (illustrative)",
+          "employees": 20,
+          "area_m2": 409.7,
           "floor": "1",
-          "move_in": "2021-03-01",
+          "move_in": "2022-02-01",
           "move_out": null
         },
         {
           "tenant_name": "Example Tenant B (illustrative)",
-          "industry": "Medical office (illustrative)",
-          "employees": 20,
-          "area_m2": 420.0,
-          "floor": "1",
-          "move_in": "2019-07-01",
+          "industry": "Investment management (illustrative)",
+          "employees": 45,
+          "area_m2": 1313.4,
+          "floor": "11",
+          "move_in": "2018-09-01",
           "move_out": null
         },
         {
           "tenant_name": "Example Tenant C (illustrative)",
-          "industry": "Insurance (illustrative)",
-          "employees": 9,
-          "area_m2": 186.0,
-          "floor": "1",
-          "move_in": "2016-05-01",
-          "move_out": "2020-12-31"
+          "industry": "Entertainment (illustrative)",
+          "employees": 30,
+          "area_m2": 860.0,
+          "floor": "15",
+          "move_in": "2015-04-01",
+          "move_out": "2023-03-31"
         }
       ],
-      "employees_total": 32,
-      "occupied_area_m2": 606.0
+      "employees_total": 65,
+      "occupied_area_m2": 1723.1
     },
     "market": {
       "cap_rate": {
-        "low": 0.065,
-        "expected": 0.075,
-        "high": 0.085,
+        "low": 0.055,
+        "expected": 0.0625,
+        "high": 0.0725,
         "unit": "1/year"
       },
       "sale_price_usd_per_m2": {
-        "low": 1500.0,
-        "expected": 1900.0,
-        "high": 2400.0,
+        "low": 5400.0,
+        "expected": 6500.0,
+        "high": 7500.0,
         "unit": "USD/m2"
       },
       "asking_rent_usd_per_m2_year": {
-        "low": 180.0,
-        "expected": 215.0,
-        "high": 250.0,
+        "low": 560.0,
+        "expected": 640.0,
+        "high": 720.0,
         "unit": "USD/m2/year"
       },
-      "comp_count": 14
+      "comp_count": 18
     }
   },
   "climate": {
-    "lat": 29.8161169,
-    "lon": -95.5153827,
-    "timezone": "America/Chicago",
-    "climate_zone": "2A",
-    "weather_path": "data/cache/HjEyXryhRLk/weather/typical_year_hourly.csv",
+    "lat": 34.0365339,
+    "lon": -118.4431182,
+    "timezone": "America/Los_Angeles",
+    "climate_zone": "3B",
+    "weather_path": "data/cache/jfiEvosX974/weather/typical_year_hourly.csv",
     "weather_source": "Open-Meteo archive API: hourly GHI, DNI, DHI, temperature, relative humidity and wind. The cached file is not part of this example.",
     "weather_time_convention": "hour_end",
-    "pvgis_annual_kwh_per_kw": 1236.02,
-    "pvgis_sd_fraction": 0.03879
+    "pvgis_annual_kwh_per_kw": 1690.0,
+    "pvgis_sd_fraction": 0.023
   },
   "tariff": {
-    "utility": "Retail electric provider not known (CenterPoint Energy Houston Electric delivery area)",
-    "electricity_usd_per_kwh": 0.09,
-    "gas_usd_per_kwh": 0.035,
+    "utility": "LADWP (electricity), SoCalGas (gas)",
+    "electricity_usd_per_kwh": 0.22,
+    "gas_usd_per_kwh": 0.06,
     "export_usd_per_kwh": null,
-    "export_regime": "none",
+    "export_regime": "net_metering",
     "fixed_usd_per_month": 0.0,
-    "source": "Electricity: published default, not a tariff. EIA Electric Power Monthly Table 5.6.A, Texas commercial average for August 2026 (physics 04 TAR-06; the residential default there comes from the PUC of Texas Power to Choose export). Gas: ILLUSTRATIVE, no source opened.",
+    "source": "ILLUSTRATIVE flat prices, not a retrieved LADWP commercial schedule. Under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Demand and fixed charges are not modelled (TAR-02).",
     "retrieved": "2026-11-14"
   },
   "provenance": [
@@ -762,31 +993,31 @@
       "layer": "matterport",
       "what": "rooms, wall graph, panoramas (2k skybox)",
       "status": "ok",
-      "detail": null
+      "detail": "all eight rooms have empty classifications; areaFloor is trusted over width x depth, which contradict it on the largest room"
     },
     {
       "layer": "matterport",
       "what": "georeference (Model.geocoordinates)",
       "status": "ok",
-      "detail": "source is 'processing': derived during processing, not set by a person"
+      "detail": "source is 'processing'; altitude reads 0.0 and is not used as terrain"
     },
     {
       "layer": "matterport",
       "what": "wall openings",
-      "status": "ok",
-      "detail": "five openings, all doorways; no window openings, so windows come from vision"
+      "status": "missing",
+      "detail": "no openings at all on any of the property's nine models; windows come from vision"
     },
     {
       "layer": "matterport",
       "what": "MatterPak (mesh and point cloud)",
-      "status": "locked",
-      "detail": "bundle not unlocked for this model; the wall graph is used instead"
+      "status": "missing",
+      "detail": "resources not available; the wall graph is used instead"
     },
     {
       "layer": "matterport",
       "what": "aerial splat and drone photos",
       "status": "missing",
-      "detail": "no splat for this model; the roof comes from Vexcel"
+      "detail": "no exterior assets for any model of this property; the roof comes from Vexcel"
     },
     {
       "layer": "matterport",
@@ -798,7 +1029,7 @@
       "layer": "vexcel",
       "what": "property/extract (include=precomputed,calculated), ortho",
       "status": "ok",
-      "detail": "one structure; roof-objects.ac-unit.count is 0"
+      "detail": "flat membrane roof; footprint 2,207 m2 is probably a podium; roof-characteristics.height is negative and unusable for building height; ac-unit.count 0 is a detection limit"
     },
     {
       "layer": "vexcel",
@@ -808,15 +1039,15 @@
     },
     {
       "layer": "vexcel",
-      "what": "oblique east and west",
+      "what": "oblique west",
       "status": "error",
-      "detail": "HTTP 429 after three retries; two of four obliques cached"
+      "detail": "HTTP 429 after three retries; three of four obliques cached"
     },
     {
       "layer": "costar",
       "what": "commercial property joined on MatterportModelId (commercial-properties.csv)",
       "status": "ok",
-      "detail": "PropertyId 354635; normalised fields only in this example"
+      "detail": "PropertyId 246899; normalised fields only in this example"
     },
     {
       "layer": "costar",
@@ -838,9 +1069,9 @@
     },
     {
       "layer": "tariff",
-      "what": "electricity price",
-      "status": "fallback",
-      "detail": "no regulated retail tariff exists in the CenterPoint area; the published default of physics 04 TAR-06 is used until the user gives a bill"
+      "what": "LADWP commercial rate (URDB lookup, eiaid 11208)",
+      "status": "ok",
+      "detail": "the prices in this example are illustrative"
     }
   ]
 }

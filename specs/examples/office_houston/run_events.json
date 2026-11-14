@@ -1,0 +1,273 @@
+[
+  {
+    "type": "stage_started",
+    "stage": "S1",
+    "message": "Locating the property",
+    "payload": {}
+  },
+  {
+    "type": "stage_done",
+    "stage": "S1",
+    "message": "Found 2100 West Loop S Fwy - Suite 500",
+    "payload": {
+      "sid": "L3266YcPPvd"
+    }
+  },
+  {
+    "type": "todo",
+    "stage": null,
+    "message": "Audit plan",
+    "payload": {
+      "todos": [
+        {
+          "content": "Fetch the three data layers",
+          "status": "in_progress"
+        },
+        {
+          "content": "Read panoramas and the roof",
+          "status": "pending"
+        },
+        {
+          "content": "Build the model and run the baseline",
+          "status": "pending"
+        },
+        {
+          "content": "Score desk positions",
+          "status": "pending"
+        },
+        {
+          "content": "Evaluate measures, build the plan and the C-PACE view",
+          "status": "pending"
+        }
+      ]
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S2",
+    "message": "Fetching Matterport, Vexcel and CoStar",
+    "payload": {}
+  },
+  {
+    "type": "tool_call",
+    "stage": "S2",
+    "message": "scout: get_property_bundle",
+    "payload": {
+      "agent": "scout",
+      "tool": "get_property_bundle",
+      "args": {
+        "sid": "L3266YcPPvd"
+      }
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "No utility tariff for this address; using the published default price",
+    "payload": {
+      "layer": "tariff",
+      "from": "utility tariff",
+      "to": "published default (TAR-06)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "Vexcel footprint is a podium; tower roof area from CoStar",
+    "payload": {
+      "layer": "vexcel",
+      "from": "footprint.area",
+      "to": "gross building area / storeys"
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S2",
+    "message": "Bundle ready: all three layers present",
+    "payload": {}
+  },
+  {
+    "type": "stage_started",
+    "stage": "S3",
+    "message": "Reading panoramas and the roof",
+    "payload": {}
+  },
+  {
+    "type": "error",
+    "stage": "S3",
+    "message": "Vexcel returned 429 for two obliques; continuing without them",
+    "payload": {
+      "code": "vexcel_rate_limited",
+      "message": "HTTP 429",
+      "recoverable": true
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S3",
+    "message": "Observations ready",
+    "payload": {}
+  },
+  {
+    "type": "stage_started",
+    "stage": "S4",
+    "message": "Building the model",
+    "payload": {}
+  },
+  {
+    "type": "fallback",
+    "stage": "S4",
+    "message": "No openings in the wall graph; using window sizes read by vision",
+    "payload": {
+      "layer": "matterport",
+      "from": "measured window openings",
+      "to": "window count and size from vision, wider range"
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S4",
+    "message": "Building model ready",
+    "payload": {
+      "artifact": "/run/model.json"
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S5",
+    "message": "Simulating the baseline",
+    "payload": {}
+  },
+  {
+    "type": "partial_result",
+    "stage": "S5",
+    "message": "Baseline ready",
+    "payload": {
+      "kind": "baseline",
+      "artifact": "/run/baseline.json",
+      "annual_cost_usd": {
+        "low": 11154.82,
+        "expected": 13167.0,
+        "high": 19824.36,
+        "unit": "USD"
+      }
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S5",
+    "message": "Baseline done",
+    "payload": {}
+  },
+  {
+    "type": "stage_started",
+    "stage": "S6",
+    "message": "Evaluating measures",
+    "payload": {}
+  },
+  {
+    "type": "partial_result",
+    "stage": "S6",
+    "message": "Finding: two rooftop units",
+    "payload": {
+      "kind": "finding",
+      "measure_id": "HVAC_RTU",
+      "anchor": {
+        "room_id": "room_plate",
+        "pano_id": "pano_01",
+        "x": 8.0,
+        "y": 3.0,
+        "z": 2.74,
+        "label": "Supply diffuser"
+      }
+    }
+  },
+  {
+    "type": "question",
+    "stage": "S6",
+    "message": "One question on the rooftop units",
+    "payload": {
+      "question": {
+        "id": "q_rtu_capacity",
+        "assumption_key": "hvac.rtu_capacity_tons",
+        "prompt": "How large are the rooftop units that serve this floor?",
+        "choices": [
+          {
+            "label": "About 20 tons together",
+            "value": 20.0
+          },
+          {
+            "label": "About 30 tons together",
+            "value": 30.0
+          },
+          {
+            "label": "About 40 tons together",
+            "value": 40.0
+          },
+          {
+            "label": "I don't know",
+            "value": null
+          }
+        ],
+        "impact_note": "Unit size sets the cost of replacement and the economizer saving; at the low end the economizer moves closer to the budget."
+      }
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S6",
+    "message": "12 measures evaluated",
+    "payload": {
+      "artifact": "/run/measures.json"
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S7",
+    "message": "Building the plan",
+    "payload": {}
+  },
+  {
+    "type": "tool_call",
+    "stage": "S7",
+    "message": "financier: cpace_scenario",
+    "payload": {
+      "agent": "financier",
+      "tool": "cpace_scenario",
+      "args": {
+        "measure_id": "HVAC_RTU"
+      }
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S7",
+    "message": "Plan ready",
+    "payload": {
+      "artifact": "/run/plan.json"
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S8",
+    "message": "Writing the summary",
+    "payload": {}
+  },
+  {
+    "type": "stage_done",
+    "stage": "S8",
+    "message": "Summary passed check_narrative",
+    "payload": {
+      "artifact": "/run/report.md"
+    }
+  },
+  {
+    "type": "done",
+    "stage": null,
+    "message": "Audit complete",
+    "payload": {
+      "run_id": "run_office_houston_example",
+      "status": "done"
+    }
+  }
+]

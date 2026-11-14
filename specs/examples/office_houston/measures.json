@@ -1,0 +1,1965 @@
+[
+  {
+    "measure_id": "LGT_LED",
+    "title": "LED retrofit of ceiling troffers",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Replace the 112 fluorescent 2x4 troffers on the floor with LED luminaires.",
+    "params": {
+      "fixtures": 112,
+      "lpd_after_w_m2": 6.5
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 20000.0,
+        "expected": 40000.0,
+        "high": 48000.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": -1320.0,
+        "expected": -1100.0,
+        "high": -550.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 1773.58,
+        "expected": 3561.5,
+        "high": 5423.16,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 6582.92,
+        "expected": 13165.85,
+        "high": 15799.02,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 11217.52,
+        "expected": 22435.05,
+        "high": 26922.06,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 23968.0,
+        "expected": 43680.0,
+        "high": 57904.0,
+        "unit": "USD"
+      },
+      "cost_source": "EIA-2023 Commercial 4-ft Linear LED Luminaire (2022 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 390 USD per 4-ft luminaire x 112",
+      "incentives": [
+        {
+          "name": "CenterPoint Commercial Standard Offer Program",
+          "kind": "rebate_after_install",
+          "amount_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "status": "unverified",
+          "eligibility": "needs_confirmation",
+          "conditions": [
+            "a project sponsor applies"
+          ],
+          "citation": "physics 04 INC-32: program verified, rates per kW and kWh not opened"
+        }
+      ],
+      "net_upfront_usd": {
+        "low": 23968.0,
+        "expected": 43680.0,
+        "high": 57904.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 1773.58,
+        "expected": 3561.5,
+        "high": 5423.16,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 15,
+      "simple_payback_years": {
+        "low": 5.31,
+        "expected": 12.26,
+        "high": 25.26,
+        "unit": "years"
+      },
+      "discounted_payback_years": null,
+      "npv_usd": {
+        "low": -26608.65,
+        "expected": -497.36,
+        "high": 29660.07,
+        "unit": "USD"
+      },
+      "npv_sensitivity_usd": -10781.63,
+      "sir": 0.989,
+      "irr": 0.0284,
+      "airr": 0.0292,
+      "discount_rate": 0.03,
+      "electricity_escalation": 0.0022,
+      "gas_escalation": 0.0126,
+      "analysis_period_years": 15,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 1773.58,
+            "expected": 3561.5,
+            "high": 5423.16,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 43680.0,
+          "rate": 0.065,
+          "term_years": 15,
+          "annual_payment_usd": 4645.49,
+          "net_cashflow_year1_usd": {
+            "low": -2871.91,
+            "expected": -1083.99,
+            "high": 777.67,
+            "unit": "USD"
+          },
+          "program_sir": 0.767,
+          "notes": [
+            "Program SIR 0.77: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+            "Savings-to-debt-service ratio 0.77.",
+            "Term of 15 years does not exceed the useful life of 15 years.",
+            "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
+            "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
+            "Texas: the property must be commercial, industrial, nonprofit or residential with five or more units, and must lie in a PACE region. The City of Houston is one; this address is inside the Houston city limits (Census incorporated place 'Houston city'). The CoStar city field is only the mailing city and is not used for this test.",
+            "Rate and term are illustrative market inputs, not defaults from a publication."
+          ]
+        }
+      ]
+    },
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_03",
+        "x": 18.0,
+        "y": 15.0,
+        "z": 2.74,
+        "label": "Fluorescent troffers"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_03",
+        "note": "2x4 troffers on a regular grid"
+      },
+      {
+        "kind": "user",
+        "ref": "run_request.overrides.lighting.lamp_type",
+        "note": "fluorescent"
+      }
+    ],
+    "formula_ids": [
+      "LGT-01",
+      "LGT-03",
+      "ZON-04",
+      "ECO-07",
+      "ECO-12b",
+      "EMI-01"
+    ],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "Rests on the lighting power after retrofit, 6.5 W/m2, a placeholder with no opened source (physics 02 DEF-10)."
+    ]
+  },
+  {
+    "measure_id": "PV_ROOF",
+    "title": "Rooftop solar, 14.62 kW",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "34 modules of 430 W on racks at 15 degrees facing south on the flat tower roof (physics 01 LAY-02). The layout stopped at the money available. Texas has no mandated export price, so only the self-consumed share earns anything.",
+    "params": {
+      "stop_reason": "budget",
+      "yield_kwh_per_kw": 1330.0,
+      "sigma_w": 0.039,
+      "rack_tilt_deg": 15.0,
+      "rack_azimuth_deg": 180.0,
+      "ground_coverage_ratio": 0.7,
+      "self_consumed_kwh": 18472.4
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 18103.26,
+        "expected": 19444.6,
+        "high": 20824.82,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 1526.09,
+        "expected": 1662.52,
+        "high": 2465.55,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 6048.84,
+        "expected": 6497.02,
+        "high": 6958.2,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 10243.91,
+        "expected": 11002.92,
+        "high": 11783.93,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 38012.0,
+        "expected": 48977.0,
+        "high": 59942.0,
+        "unit": "USD"
+      },
+      "cost_source": "TTS-2024 executive summary (2023 installs), not CPI-adjusted; physics 04 COST-01: 3.35 USD per W DC x 14620",
+      "incentives": [
+        {
+          "name": "Federal clean electricity investment credit (26 U.S.C. 48E)",
+          "kind": "tax_credit",
+          "amount_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 14693.1,
+            "unit": "USD"
+          },
+          "status": "verified",
+          "eligibility": "needs_confirmation",
+          "conditions": [
+            "placed in service by 2027-12-31",
+            "no material assistance from a prohibited foreign entity: the installer must document equipment sourcing",
+            "the owner is a business taxpayer for whom the system is depreciable property; never a homeowner"
+          ],
+          "citation": "physics 04 INC-05: 30 percent of the qualified investment for a facility under 1 MW AC; Pub. L. 119-21 section 70513"
+        }
+      ],
+      "net_upfront_usd": {
+        "low": 38012.0,
+        "expected": 48977.0,
+        "high": 59942.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 1526.09,
+        "expected": 1662.52,
+        "high": 2465.55,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 511.85,
+      "useful_life_years": 25,
+      "simple_payback_years": {
+        "low": 22.64,
+        "expected": 42.56,
+        "high": 53.68,
+        "unit": "years"
+      },
+      "discounted_payback_years": null,
+      "npv_usd": {
+        "low": -41470.42,
+        "expected": -29886.61,
+        "high": -12143.06,
+        "unit": "USD"
+      },
+      "npv_sensitivity_usd": -36100.72,
+      "sir": 0.39,
+      "irr": null,
+      "airr": -0.0081,
+      "discount_rate": 0.03,
+      "electricity_escalation": 0.0021,
+      "gas_escalation": 0.0109,
+      "analysis_period_years": 25,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 1014.24,
+            "expected": 1150.67,
+            "high": 1953.7,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 48977.0,
+          "rate": 0.065,
+          "term_years": 20,
+          "annual_payment_usd": 4444.98,
+          "net_cashflow_year1_usd": {
+            "low": -3430.73,
+            "expected": -3294.3,
+            "high": -2491.27,
+            "unit": "USD"
+          },
+          "program_sir": 0.259,
+          "notes": [
+            "Program SIR 0.26: undiscounted savings over the 20-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+            "Savings-to-debt-service ratio 0.26.",
+            "Term of 20 years does not exceed the useful life of 25 years.",
+            "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
+            "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
+            "Texas: the property must be commercial, industrial, nonprofit or residential with five or more units, and must lie in a PACE region. The City of Houston is one; this address is inside the Houston city limits (Census incorporated place 'Houston city'). The CoStar city field is only the mailing city and is not used for this test.",
+            "Rate and term are illustrative market inputs, not defaults from a publication."
+          ]
+        }
+      ]
+    },
+    "flags": [
+      {
+        "key": "electrical.service",
+        "status": "likely_ok",
+        "message": "Building electrical room off the core; a few kW of PV is far below the building service.",
+        "evidence": [
+          {
+            "kind": "pano",
+            "ref": "pano_03"
+          }
+        ]
+      },
+      {
+        "key": "roof.structure",
+        "status": "unknown",
+        "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+        "evidence": [
+          {
+            "kind": "vexcel_attr",
+            "ref": "roof-characteristics.condition.precise-value",
+            "note": "2.88"
+          }
+        ]
+      }
+    ],
+    "anchors": [
+      {
+        "room_id": null,
+        "pano_id": null,
+        "x": null,
+        "y": null,
+        "z": null,
+        "label": "Tower roof"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "vexcel_attr",
+        "ref": "roof-characteristics.shape.value",
+        "note": "flat"
+      },
+      {
+        "kind": "costar_field",
+        "ref": "CostarData.building_area_m2",
+        "note": "tower roof 943.8 m2 = gross building area / 16"
+      },
+      {
+        "kind": "ortho",
+        "ref": "ortho-1"
+      }
+    ],
+    "formula_ids": [
+      "SOL-01",
+      "IRR-08",
+      "PV-04",
+      "PV-06",
+      "PV-09",
+      "ROOF-03",
+      "ROOF-04",
+      "ROOF-05",
+      "ROOF-06",
+      "LAY-02",
+      "LAY-03",
+      "TAR-03",
+      "ECO-07",
+      "EMI-01"
+    ],
+    "solar": {
+      "system_kw_dc": 14.62,
+      "panel_count": 34,
+      "panels": [
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        },
+        {
+          "plane_id": "plane_tower_roof",
+          "polygon_wkt": null,
+          "annual_kwh": 571.9,
+          "shading_loss_fraction": 0.03
+        }
+      ],
+      "annual_kwh": {
+        "low": 18103.26,
+        "expected": 19444.6,
+        "high": 20824.82,
+        "unit": "kWh"
+      },
+      "self_consumption_fraction": 0.95,
+      "module_w": 430.0,
+      "dc_ac_ratio": 1.2,
+      "inverter_kw_ac": 12.183,
+      "losses_percent": 14.08,
+      "degradation_rate": 0.005,
+      "electrical": {
+        "key": "electrical.service",
+        "status": "likely_ok",
+        "message": "Building electrical room off the core; a few kW of PV is far below the building service.",
+        "evidence": [
+          {
+            "kind": "pano",
+            "ref": "pano_03"
+          }
+        ]
+      },
+      "structural": {
+        "key": "roof.structure",
+        "status": "unknown",
+        "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+        "evidence": [
+          {
+            "kind": "vexcel_attr",
+            "ref": "roof-characteristics.condition.precise-value",
+            "note": "2.88"
+          }
+        ]
+      }
+    },
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "No export value is assumed: Texas has no mandated buyback, so all savings come from self-consumption.",
+      "Usable area is for the tower roof derived from gross building area / storeys; the Vexcel footprint is a podium or garage and is not used.",
+      "Flat roof: tilt is a racking choice. Shading is the 3 percent default allowance.",
+      "The 48E credit is listed at zero until its three conditions are confirmed."
+    ]
+  },
+  {
+    "measure_id": "HVAC_RTU",
+    "title": "High-efficiency rooftop units",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Replace the two packaged rooftop units (30 tons together) with units at IEER 14.8 or better.",
+    "params": {
+      "capacity_tons": 30,
+      "units": 2,
+      "ieer_after": 14.8
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 7200.0,
+        "expected": 12000.0,
+        "high": 15600.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 645.34,
+        "expected": 1080.0,
+        "high": 1689.29,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 2405.74,
+        "expected": 4009.56,
+        "high": 5212.43,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 4074.19,
+        "expected": 6790.32,
+        "high": 8827.42,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 62700.0,
+        "expected": 68910.0,
+        "high": 81390.0,
+        "unit": "USD"
+      },
+      "cost_source": "EIA-2023 Commercial Rooftop Air Conditioners (2022 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 2297 USD per ton, full replacement x 30",
+      "incentives": [
+        {
+          "name": "CenterPoint Commercial Standard Offer Program",
+          "kind": "rebate_after_install",
+          "amount_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "status": "unverified",
+          "eligibility": "needs_confirmation",
+          "conditions": [
+            "a project sponsor applies"
+          ],
+          "citation": "physics 04 INC-32: program verified, rates per kW and kWh not opened"
+        }
+      ],
+      "net_upfront_usd": {
+        "low": 62700.0,
+        "expected": 68910.0,
+        "high": 81390.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 645.34,
+        "expected": 1080.0,
+        "high": 1689.29,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 21,
+      "simple_payback_years": {
+        "low": 40.08,
+        "expected": 63.81,
+        "high": 108.31,
+        "unit": "years"
+      },
+      "discounted_payback_years": null,
+      "npv_usd": {
+        "low": -66285.41,
+        "expected": -51977.91,
+        "high": -40443.29,
+        "unit": "USD"
+      },
+      "npv_sensitivity_usd": -57034.88,
+      "sir": 0.246,
+      "irr": null,
+      "airr": -0.0365,
+      "discount_rate": 0.03,
+      "electricity_escalation": 0.0017,
+      "gas_escalation": 0.0118,
+      "analysis_period_years": 21,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 645.34,
+            "expected": 1080.0,
+            "high": 1689.29,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 68910.0,
+          "rate": 0.065,
+          "term_years": 20,
+          "annual_payment_usd": 6254.02,
+          "net_cashflow_year1_usd": {
+            "low": -5608.68,
+            "expected": -5174.02,
+            "high": -4564.73,
+            "unit": "USD"
+          },
+          "program_sir": 0.173,
+          "notes": [
+            "Program SIR 0.17: undiscounted savings over the 20-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+            "Savings-to-debt-service ratio 0.17.",
+            "Term of 20 years does not exceed the useful life of 21 years.",
+            "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
+            "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
+            "Texas: the property must be commercial, industrial, nonprofit or residential with five or more units, and must lie in a PACE region. The City of Houston is one; this address is inside the Houston city limits (Census incorporated place 'Houston city'). The CoStar city field is only the mailing city and is not used for this test.",
+            "Rate and term are illustrative market inputs, not defaults from a publication."
+          ]
+        }
+      ]
+    },
+    "flags": [
+      {
+        "key": "hvac.rtu_service",
+        "status": "likely_ok",
+        "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+        "evidence": [
+          {
+            "kind": "vexcel_attr",
+            "ref": "roof-objects.ac-unit.count",
+            "note": "2 as returned"
+          },
+          {
+            "kind": "pano",
+            "ref": "pano_01",
+            "note": "ceiling supply diffusers"
+          }
+        ]
+      }
+    ],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_01",
+        "x": 8.0,
+        "y": 3.0,
+        "z": 2.74,
+        "label": "Supply diffuser"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "vexcel_attr",
+        "ref": "roof-objects.ac-unit.count",
+        "note": "2 as returned"
+      },
+      {
+        "kind": "pano",
+        "ref": "pano_01",
+        "note": "ceiling supply diffusers"
+      }
+    ],
+    "formula_ids": [
+      "HVAC-01",
+      "HVAC-07",
+      "ZON-04",
+      "ECO-07",
+      "ECO-12",
+      "ECO-12b",
+      "EMI-01"
+    ],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "Owner measure: the units are building plant on the roof.",
+      "Which floors the two units serve is not confirmed; the saving assumes they serve this floor.",
+      "Replacement before the end of the units' life is valued on energy alone; no residual value of the old units is credited."
+    ]
+  },
+  {
+    "measure_id": "HVAC_ECON",
+    "title": "Economizer and advanced rooftop controls",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Add an advanced controller with a variable-speed fan and economizer control to each of the two rooftop units.",
+    "params": {
+      "units": 2,
+      "economizer_limit_c": 18.0
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 1400.0,
+        "expected": 2800.0,
+        "high": 4200.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 125.5,
+        "expected": 252.0,
+        "high": 426.28,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 467.78,
+        "expected": 935.56,
+        "high": 1403.35,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 792.2,
+        "expected": 1584.41,
+        "high": 2376.61,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 8548.0,
+        "expected": 12088.0,
+        "high": 14176.0,
+        "unit": "USD"
+      },
+      "cost_source": "PNNL-22656 Table ES-1 (2013 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 6044 USD per rooftop unit x 2",
+      "incentives": [
+        {
+          "name": "CenterPoint Commercial Standard Offer Program",
+          "kind": "rebate_after_install",
+          "amount_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "status": "unverified",
+          "eligibility": "needs_confirmation",
+          "conditions": [
+            "a project sponsor applies"
+          ],
+          "citation": "physics 04 INC-32: program verified, rates per kW and kWh not opened"
+        }
+      ],
+      "net_upfront_usd": {
+        "low": 8548.0,
+        "expected": 12088.0,
+        "high": 14176.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 125.5,
+        "expected": 252.0,
+        "high": 426.28,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 15,
+      "simple_payback_years": {
+        "low": 23.84,
+        "expected": 47.97,
+        "high": 97.02,
+        "unit": "years"
+      },
+      "discounted_payback_years": null,
+      "npv_usd": {
+        "low": -11630.66,
+        "expected": -9029.85,
+        "high": -4899.24,
+        "unit": "USD"
+      },
+      "npv_sensitivity_usd": -9758.36,
+      "sir": 0.253,
+      "irr": null,
+      "airr": -0.0602,
+      "discount_rate": 0.03,
+      "electricity_escalation": 0.0022,
+      "gas_escalation": 0.0126,
+      "analysis_period_years": 15,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 125.5,
+            "expected": 252.0,
+            "high": 426.28,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 12088.0,
+          "rate": 0.065,
+          "term_years": 15,
+          "annual_payment_usd": 1285.59,
+          "net_cashflow_year1_usd": {
+            "low": -1160.09,
+            "expected": -1033.59,
+            "high": -859.31,
+            "unit": "USD"
+          },
+          "program_sir": 0.196,
+          "notes": [
+            "Program SIR 0.20: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+            "Savings-to-debt-service ratio 0.20.",
+            "Term of 15 years does not exceed the useful life of 15 years.",
+            "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
+            "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
+            "Texas: the property must be commercial, industrial, nonprofit or residential with five or more units, and must lie in a PACE region. The City of Houston is one; this address is inside the Houston city limits (Census incorporated place 'Houston city'). The CoStar city field is only the mailing city and is not used for this test.",
+            "Rate and term are illustrative market inputs, not defaults from a publication."
+          ]
+        }
+      ]
+    },
+    "flags": [
+      {
+        "key": "hvac.rtu_service",
+        "status": "likely_ok",
+        "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+        "evidence": [
+          {
+            "kind": "vexcel_attr",
+            "ref": "roof-objects.ac-unit.count",
+            "note": "2 as returned"
+          },
+          {
+            "kind": "pano",
+            "ref": "pano_01",
+            "note": "ceiling supply diffusers"
+          }
+        ]
+      }
+    ],
+    "anchors": [],
+    "evidence": [
+      {
+        "kind": "vexcel_attr",
+        "ref": "roof-objects.ac-unit.count",
+        "note": "2 as returned"
+      }
+    ],
+    "formula_ids": [
+      "INF-06",
+      "INF-07",
+      "HVAC-07",
+      "ZON-04",
+      "ECO-07",
+      "ECO-12b",
+      "EMI-01"
+    ],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "Net of the added latent load of humid Houston air (physics 02 INF-07).",
+      "Owner measure: the controls are fitted to building plant."
+    ]
+  },
+  {
+    "measure_id": "ENV_AIRSEAL",
+    "title": "Air sealing",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Seal window perimeters, spandrel joints and penetrations on the floor's exterior walls.",
+    "params": {
+      "leakage_after_l_s_m2_75pa": 5.0
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 450.0,
+        "expected": 900.0,
+        "high": 1350.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 300.0,
+        "expected": 600.0,
+        "high": 900.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 50.87,
+        "expected": 102.0,
+        "high": 166.02,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 204.73,
+        "expected": 409.45,
+        "high": 614.18,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 309.01,
+        "expected": 618.01,
+        "high": 927.02,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 4339.27,
+        "expected": 6890.73,
+        "high": 15317.72,
+        "unit": "USD"
+      },
+      "cost_source": "LBNL-2021 Table 13 and section 10.2 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 7.67 USD per m2 of conditioned floor x 898.4",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 4339.27,
+        "expected": 6890.73,
+        "high": 15317.72,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 50.87,
+        "expected": 102.0,
+        "high": 166.02,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 15,
+      "simple_payback_years": {
+        "low": 31.44,
+        "expected": 67.56,
+        "high": 174.5,
+        "unit": "years"
+      },
+      "discounted_payback_years": null,
+      "npv_usd": {
+        "low": -14083.2,
+        "expected": -5632.14,
+        "high": -2959.37,
+        "unit": "USD"
+      },
+      "npv_sensitivity_usd": -5933.47,
+      "sir": 0.183,
+      "irr": null,
+      "airr": -0.0803,
+      "discount_rate": 0.03,
+      "electricity_escalation": 0.0022,
+      "gas_escalation": 0.0126,
+      "analysis_period_years": 15,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 50.87,
+            "expected": 102.0,
+            "high": 166.02,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 6890.73,
+          "rate": 0.065,
+          "term_years": 15,
+          "annual_payment_usd": 732.85,
+          "net_cashflow_year1_usd": {
+            "low": -681.98,
+            "expected": -630.85,
+            "high": -566.83,
+            "unit": "USD"
+          },
+          "program_sir": 0.139,
+          "notes": [
+            "Program SIR 0.14: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+            "Savings-to-debt-service ratio 0.14.",
+            "Term of 15 years does not exceed the useful life of 15 years.",
+            "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
+            "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
+            "Texas: the property must be commercial, industrial, nonprofit or residential with five or more units, and must lie in a PACE region. The City of Houston is one; this address is inside the Houston city limits (Census incorporated place 'Houston city'). The CoStar city field is only the mailing city and is not used for this test.",
+            "Rate and term are illustrative market inputs, not defaults from a publication."
+          ]
+        }
+      ]
+    },
+    "flags": [
+      {
+        "key": "lease.alteration_consent",
+        "status": "blocked",
+        "message": "The tenant's lease (illustrative) bars alterations to the exterior wall without the owner's written consent, and none is recorded.",
+        "evidence": [
+          {
+            "kind": "user",
+            "ref": "run_request_tenant.role",
+            "note": "tenant"
+          }
+        ]
+      }
+    ],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_02",
+        "x": 28.0,
+        "y": 0.2,
+        "z": 1.5,
+        "label": "South wall"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "default_table",
+        "ref": "INF-05",
+        "note": "7.5 L/s.m2 at 75 Pa before 2004"
+      }
+    ],
+    "formula_ids": [
+      "INF-05",
+      "ZON-04",
+      "ECO-07",
+      "ECO-12b",
+      "EMI-01"
+    ],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "Rests on the leakage after sealing, a parameter with no opened source (SPEC.md section 6.2)."
+    ]
+  },
+  {
+    "measure_id": "LAYOUT",
+    "title": "Desk placement for daylight",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Move four desks to the positions along the south windows of the open plate with the best daylight, low glare risk and good comfort. The lighting has no daylight control, so the saving is shown as a range from zero.",
+    "params": {
+      "grid_m": 0.5,
+      "wall_clearance_m": 0.6,
+      "min_spacing_m": 2.0,
+      "manual_switch_fraction": {
+        "low": 0.0,
+        "expected": 0.5,
+        "high": 1.0,
+        "unit": "-"
+      },
+      "auto_on_off_saved_fraction": 0.42,
+      "controlled_power_w": 623.4
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 0.0,
+        "expected": 340.35,
+        "high": 680.7,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 0.0,
+        "expected": 30.63,
+        "high": 64.58,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 0.0,
+        "expected": 113.72,
+        "high": 227.44,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 0.0,
+        "expected": 192.59,
+        "high": 385.18,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "USD"
+      },
+      "cost_source": "Zero cost by definition (SPEC.md section 6.4)",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 0.0,
+        "expected": 30.63,
+        "high": 64.58,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 5,
+      "simple_payback_years": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "years"
+      },
+      "discounted_payback_years": 0.0,
+      "npv_usd": {
+        "low": 0.0,
+        "expected": 142.57,
+        "high": 300.65,
+        "unit": "USD"
+      },
+      "npv_sensitivity_usd": 127.59,
+      "sir": null,
+      "irr": null,
+      "airr": null,
+      "discount_rate": 0.03,
+      "electricity_escalation": 0.0055,
+      "gas_escalation": 0.0133,
+      "analysis_period_years": 5,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 0.0,
+            "expected": 30.63,
+            "high": 64.58,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 0.0,
+            "expected": 30.63,
+            "high": 64.58,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Nothing to finance: the measure has no cost."
+          ]
+        }
+      ]
+    },
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_01",
+        "x": 6.0,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 1"
+      },
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_01",
+        "x": 12.0,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 2"
+      },
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_01",
+        "x": 18.0,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 3"
+      },
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_01",
+        "x": 24.0,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 4"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_01",
+        "note": "south strip windows along the open plate"
+      }
+    ],
+    "formula_ids": [
+      "DAY-08",
+      "DAY-09",
+      "GLR-05",
+      "CMF-08",
+      "LCT-02",
+      "LCT-03",
+      "ECO-07",
+      "EMI-01"
+    ],
+    "solar": null,
+    "layout": {
+      "candidates": [
+        {
+          "room_id": "room_plate",
+          "x": 2.0,
+          "y": 1.0,
+          "daylight": 0.8,
+          "glare_risk": 0.24,
+          "comfort_ppd": 17.0,
+          "score": 0.44,
+          "recommended": false,
+          "daylight_factor": 4.6,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 380.0,
+          "max_dt_pr_k": 9.0,
+          "warnings": [
+            "window geometry read from panoramas, not measured",
+            "glare risk above 0.05 when facing the window"
+          ]
+        },
+        {
+          "room_id": "room_plate",
+          "x": 6.0,
+          "y": 2.5,
+          "daylight": 0.7,
+          "glare_risk": 0.045,
+          "comfort_ppd": 8.5,
+          "score": 0.76,
+          "recommended": true,
+          "daylight_factor": 3.0,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 50.0,
+          "max_dt_pr_k": 4.3,
+          "warnings": [
+            "window geometry read from panoramas, not measured"
+          ]
+        },
+        {
+          "room_id": "room_plate",
+          "x": 12.0,
+          "y": 2.5,
+          "daylight": 0.71,
+          "glare_risk": 0.04,
+          "comfort_ppd": 8.0,
+          "score": 0.779,
+          "recommended": true,
+          "daylight_factor": 3.0,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 48.0,
+          "max_dt_pr_k": 4.2,
+          "warnings": [
+            "window geometry read from panoramas, not measured"
+          ]
+        },
+        {
+          "room_id": "room_plate",
+          "x": 18.0,
+          "y": 2.5,
+          "daylight": 0.71,
+          "glare_risk": 0.04,
+          "comfort_ppd": 8.0,
+          "score": 0.779,
+          "recommended": true,
+          "daylight_factor": 3.0,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 46.0,
+          "max_dt_pr_k": 4.2,
+          "warnings": [
+            "window geometry read from panoramas, not measured"
+          ]
+        },
+        {
+          "room_id": "room_plate",
+          "x": 24.0,
+          "y": 2.5,
+          "daylight": 0.69,
+          "glare_risk": 0.035,
+          "comfort_ppd": 8.5,
+          "score": 0.771,
+          "recommended": true,
+          "daylight_factor": 2.9,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 44.0,
+          "max_dt_pr_k": 4.1,
+          "warnings": [
+            "window geometry read from panoramas, not measured"
+          ]
+        },
+        {
+          "room_id": "room_plate",
+          "x": 12.0,
+          "y": 6.0,
+          "daylight": 0.4,
+          "glare_risk": 0.01,
+          "comfort_ppd": 6.0,
+          "score": 0.73,
+          "recommended": false,
+          "daylight_factor": 1.4,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 0.0,
+          "max_dt_pr_k": 2.0,
+          "warnings": [
+            "window geometry read from panoramas, not measured"
+          ]
+        },
+        {
+          "room_id": "room_plate",
+          "x": 18.0,
+          "y": 10.0,
+          "daylight": 0.18,
+          "glare_risk": 0.0,
+          "comfort_ppd": 6.0,
+          "score": 0.657,
+          "recommended": false,
+          "daylight_factor": 0.6,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 0.0,
+          "max_dt_pr_k": 1.0,
+          "warnings": [
+            "window geometry read from panoramas, not measured"
+          ]
+        },
+        {
+          "room_id": "room_plate",
+          "x": 18.0,
+          "y": 15.0,
+          "daylight": 0.08,
+          "glare_risk": 0.0,
+          "comfort_ppd": 6.0,
+          "score": 0.617,
+          "recommended": false,
+          "daylight_factor": 0.3,
+          "view_azimuth_deg": 60.0,
+          "direct_sun_hours": 0.0,
+          "max_dt_pr_k": 0.6,
+          "warnings": [
+            "window geometry read from panoramas, not measured"
+          ]
+        }
+      ],
+      "desks_requested": 4,
+      "window_source": "vision",
+      "target_lux": 300.0,
+      "setpoint_lux": 500.0,
+      "control_type": "none",
+      "score_weights": {
+        "daylight": 0.4,
+        "glare": 0.3,
+        "comfort": 0.3
+      },
+      "occupied_hours_per_year": 2600.0,
+      "lighting_kwh_saved": {
+        "low": 0.0,
+        "expected": 340.35,
+        "high": 680.7,
+        "unit": "kWh"
+      }
+    },
+    "value_uplift": null,
+    "warnings": [
+      "depends on occupants switching lights off",
+      "Window geometry was read from panoramas: this model has no measured openings.",
+      "The expected value uses a manual-switching share of 0.5, which has no published source."
+    ]
+  },
+  {
+    "measure_id": "CTRL_TSTAT",
+    "title": "Smart thermostat and setback",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Connected thermostats with an unoccupied setback.",
+    "params": {
+      "heating_setback_c": 15.6,
+      "cooling_setup_c": 26.7
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 936.0,
+        "expected": 1248.0,
+        "high": 1868.0,
+        "unit": "USD"
+      },
+      "cost_source": "LBNL-2021 Table 13 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 312 USD per thermostat installed x 4",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 936.0,
+        "expected": 1248.0,
+        "high": 1868.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 10,
+      "simple_payback_years": null,
+      "discounted_payback_years": null,
+      "npv_usd": {
+        "low": -1868.0,
+        "expected": -1248.0,
+        "high": -936.0,
+        "unit": "USD"
+      },
+      "npv_sensitivity_usd": -1248.0,
+      "sir": 0.0,
+      "irr": null,
+      "airr": null,
+      "discount_rate": 0.03,
+      "electricity_escalation": 0.0055,
+      "gas_escalation": 0.0133,
+      "analysis_period_years": 10,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "program_sir": null,
+          "notes": [
+            "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 1248.0,
+          "rate": 0.065,
+          "term_years": 10,
+          "annual_payment_usd": 173.6,
+          "net_cashflow_year1_usd": {
+            "low": -173.6,
+            "expected": -173.6,
+            "high": -173.6,
+            "unit": "USD"
+          },
+          "program_sir": 0.0,
+          "notes": [
+            "Program SIR 0.00: undiscounted savings over the 10-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+            "Savings-to-debt-service ratio 0.00.",
+            "Term of 10 years does not exceed the useful life of 10 years.",
+            "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
+            "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
+            "Texas: the property must be commercial, industrial, nonprofit or residential with five or more units, and must lie in a PACE region. The City of Houston is one; this address is inside the Houston city limits (Census incorporated place 'Houston city'). The CoStar city field is only the mailing city and is not used for this test.",
+            "Rate and term are illustrative market inputs, not defaults from a publication."
+          ]
+        }
+      ]
+    },
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_03",
+        "x": 18.0,
+        "y": 20.8,
+        "z": 1.5,
+        "label": "Wall thermostat"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "default_table",
+        "ref": "DEF-08",
+        "note": "the office baseline already runs the unoccupied setback"
+      }
+    ],
+    "formula_ids": [
+      "ZON-04",
+      "ECO-07"
+    ],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "No saving at the proposed setpoints: they equal the unoccupied setback the baseline schedule already has."
+    ]
+  },
+  {
+    "measure_id": "WIN_FILM",
+    "title": "Solar control window film",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Film on the south and west glazing to cut solar heat gain.",
+    "params": {
+      "glazing_area_m2": 123.5
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 1300.0,
+        "expected": 2600.0,
+        "high": 3900.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": -225.0,
+        "expected": -150.0,
+        "high": -75.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 113.9,
+        "expected": 228.75,
+        "high": 388.69,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 420.78,
+        "expected": 841.55,
+        "high": 1262.33,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 722.03,
+        "expected": 1444.05,
+        "high": 2166.08,
+        "unit": "kg"
+      }
+    },
+    "finance": null,
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_02",
+        "x": 28.0,
+        "y": 0.2,
+        "z": 1.5,
+        "label": "South glazing"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_02",
+        "note": "clear strip windows"
+      }
+    ],
+    "formula_ids": [
+      "WIN-02",
+      "ZON-04",
+      "EMI-01"
+    ],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "no verified cost source; get a quote"
+    ]
+  },
+  {
+    "measure_id": "PLUG_MGMT",
+    "title": "Plug load management",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Advanced power strips and scheduled shut-off for workstations.",
+    "params": {
+      "workstations": 48
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 1600.0,
+        "expected": 3200.0,
+        "high": 4800.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 143.43,
+        "expected": 288.0,
+        "high": 487.17,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 534.61,
+        "expected": 1069.22,
+        "high": 1603.82,
+        "unit": "kg"
+      },
+      "co2_nonbaseload_kg": {
+        "low": 905.38,
+        "expected": 1810.75,
+        "high": 2716.13,
+        "unit": "kg"
+      }
+    },
+    "finance": null,
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_01",
+        "x": 12.0,
+        "y": 2.5,
+        "z": 0.4,
+        "label": "Workstation outlets"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_01",
+        "note": "monitors at each desk"
+      }
+    ],
+    "formula_ids": [
+      "LGT-02",
+      "LGT-03",
+      "EMI-01"
+    ],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": [
+      "no verified cost source; get a quote"
+    ]
+  },
+  {
+    "measure_id": "WIN_SHADE",
+    "title": "Exterior or interior shading",
+    "applicable": false,
+    "not_applicable_reason": "Already done: interior blinds are fitted on every window.",
+    "description": "",
+    "params": {},
+    "savings": null,
+    "finance": null,
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_plate",
+        "pano_id": "pano_02",
+        "x": 28.0,
+        "y": 0.2,
+        "z": 1.5,
+        "label": "Existing blinds"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_02",
+        "note": "blinds on the south windows"
+      }
+    ],
+    "formula_ids": [],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": []
+  },
+  {
+    "measure_id": "ROOF_COOL",
+    "title": "Cool roof coating or membrane",
+    "applicable": false,
+    "not_applicable_reason": "The suite is on floor 5 of 16: the roof is not part of its envelope.",
+    "description": "",
+    "params": {},
+    "savings": null,
+    "finance": null,
+    "flags": [],
+    "anchors": [],
+    "evidence": [
+      {
+        "kind": "costar_field",
+        "ref": "CostarData.stories",
+        "note": "16"
+      }
+    ],
+    "formula_ids": [],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": []
+  },
+  {
+    "measure_id": "HVAC_HP",
+    "title": "Heat pump replacing AC and furnace",
+    "applicable": false,
+    "not_applicable_reason": "Home-flow measure (SPEC.md section 6.2); this property is an office suite.",
+    "description": "",
+    "params": {},
+    "savings": null,
+    "finance": null,
+    "flags": [],
+    "anchors": [],
+    "evidence": [],
+    "formula_ids": [],
+    "solar": null,
+    "layout": null,
+    "value_uplift": null,
+    "warnings": []
+  }
+]

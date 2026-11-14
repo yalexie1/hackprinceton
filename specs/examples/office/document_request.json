@@ -1,12 +1,12 @@
 {
   "run_id": "run_office_example",
-  "doc_type": "cpace_package",
-  "state": "TX",
+  "doc_type": "retrofit_contract_commercial",
+  "state": "CA",
   "measure_ids": [
     "LGT_LED"
   ],
   "fields": {
-    "property_address": "9050 Emnora Ln, Houston, TX",
-    "application_date": "2026-11-20"
+    "property_address": "11400 Olympic Blvd, Suite 140, Los Angeles, CA 90064",
+    "transaction_date": "2026-11-20"
   }
 }

@@ -1,0 +1,74 @@
+{
+  "doc_id": "doc_office_houston_example_1",
+  "doc_type": "cpace_package",
+  "state": "TX",
+  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# C-PACE project summary\n\nProperty: 2100 West Loop S, Houston, TX 77027 (CoStar property id 234088), Suite 500. Application date: 2026-11-20. PACE region: City of Houston (the address is inside the city limits by the Census incorporated place; the CoStar mailing city is not used for this test).\n\nProperty owner: {{owner_legal_name}}. Legal description: {{property_legal_description}}.\n\nThis is the owner's energy assessment, not the independent third-party review.\n\n## 1. Qualified improvements\n\n- HVAC_RTU: replacement of the two rooftop units, useful life 21 years, net cost $68,910.\n- HVAC_ECON: economizer and advanced controls, useful life 15 years, net cost $12,088.\n\nCost-weighted useful life: 20.1 years.\n\n## 2. Financing terms\n\nRooftop units: $68,910 over 20 years at 6.5%, annual assessment $6,254. Economizer: $12,088 over 15 years, annual assessment $1,286. Capital provider: {{capital_provider_name}}.\n\n## 3. Savings test (program rule)\n\nProgram savings-to-investment ratio (undiscounted, over the term): 0.16 for the rooftop units and 0.19 for the economizer. The program requires at least 1.0, so neither passes as it stands. The independent third-party reviewer determines the official figure: {{third_party_reviewer_name}}.\n\nDiscounted life-cycle SIR (a different measure): 0.233 and 0.244.\n\n## 4. Lien and lender consent\n\nThe assessment is a first and prior lien with the priority of an ad valorem tax lien, and it runs with the land. Existing mortgage holder: {{mortgage_holder_name}}. Notice sent: {{notice_sent_date}}. Written consent: {{mortgage_holder_consent_date}}.\n",
+  "unfilled_placeholders": [
+    "owner_legal_name",
+    "property_legal_description",
+    "capital_provider_name",
+    "third_party_reviewer_name",
+    "mortgage_holder_name",
+    "notice_sent_date",
+    "mortgage_holder_consent_date"
+  ],
+  "statutory_checks": [
+    {
+      "requirement_id": "TX-PACE-01",
+      "requirement": "Eligible property: commercial, industrial, or residential with five or more units",
+      "citation": "Loc. Gov't Code section 399.002(5)",
+      "satisfied": true,
+      "note": "CoStar property type Office. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-03",
+      "requirement": "Each financed measure is a qualified improvement",
+      "citation": "Loc. Gov't Code section 399.002(3), (4)",
+      "satisfied": true,
+      "note": "Rooftop units and their controls are permanent improvements fixed to the property. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-04",
+      "requirement": "Property lies in a designated PACE region",
+      "citation": "Loc. Gov't Code sections 399.006(a), 399.007, 399.008(a)",
+      "satisfied": true,
+      "note": "Inside the City of Houston by the Census incorporated place; the CoStar city field is the mailing city and was not used. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-11",
+      "requirement": "Assessment period does not exceed the useful life of the qualified project",
+      "citation": "Loc. Gov't Code section 399.009(a)(8)",
+      "satisfied": true,
+      "note": "Terms 20 and 15 years against lives 21 and 15 years. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-15",
+      "requirement": "The lien runs with the land",
+      "citation": "Loc. Gov't Code section 399.014(b)-(e)",
+      "satisfied": true,
+      "note": "Stated in section 4 of the draft. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-08",
+      "requirement": "Mortgage holder notice and written consent",
+      "citation": "Loc. Gov't Code section 399.010",
+      "satisfied": false,
+      "note": "mortgage_holder_name, notice_sent_date and mortgage_holder_consent_date are blank. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-09",
+      "requirement": "Independent review of baseline conditions and projected savings",
+      "citation": "Loc. Gov't Code section 399.011(a), (a-1), (c)",
+      "satisfied": false,
+      "note": "third_party_reviewer_name is blank. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-30",
+      "requirement": "SIR of at least 1 over the life of the assessment, validated by the reviewer",
+      "citation": "Texas PACE Authority Program Guide v4.3, Steps 2, 7, 8",
+      "satisfied": false,
+      "note": "The screen gives program SIRs of 0.16 and 0.19, below 1. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    }
+  ],
+  "disclaimer": "Draft for attorney review, not legal advice. Blanks are left where a party, legal description or date was not supplied."
+}

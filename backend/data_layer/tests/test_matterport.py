@@ -249,11 +249,16 @@ def test_credentials_never_default_to_the_broken_key_set(monkeypatch):
 
 # ---------- live ----------
 
-def _have_keys() -> bool:
-    return bool(os.environ.get("MATTERPORT_API_KEY") and os.environ.get("MATTERPORT_API_TOKEN"))
+def _can_run_live() -> bool:
+    """Network tests are **opt-in**: `pytest backend -q` must stay offline, because
+    the server lane's checkpoint asserts the whole suite makes no network call."""
+    return (os.environ.get("RUN_LIVE_NETWORK") == "1"
+            and bool(os.environ.get("MATTERPORT_API_KEY"))
+            and bool(os.environ.get("MATTERPORT_API_TOKEN")))
 
 
-live = pytest.mark.skipif(not _have_keys(), reason="no Matterport key set in the environment")
+live = pytest.mark.skipif(not _can_run_live(),
+                          reason="set RUN_LIVE_NETWORK=1 and a Matterport key set to run")
 
 
 @live

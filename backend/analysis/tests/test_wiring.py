@@ -576,3 +576,17 @@ def test_the_simulation_cache_ignores_only_what_the_simulation_does_not_read():
     assert api._simulate(bundle, shuffled) is api._simulate(bundle, base)                 # not read by S5
     warmer = api.set_assumption(base, "setpoint.heating", 24.0)
     assert api.run_baseline(bundle, warmer).model_dump_json() != first.model_dump_json()  # read: a new run
+
+
+def test_the_data_lanes_extent_record_reaches_the_pv_measure(monkeypatch):
+    from backend.schema import FetchRecord
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    seen = {}
+    original = api.evaluate_pv
+    monkeypatch.setattr(api, "evaluate_pv", lambda *a, **k: seen.update(k) or original(*a, **k))
+    record = FetchRecord(layer="vexcel", what="property/extract:extent", status="fallback",
+                         detail="a larger roof outline exists at the property")
+    marked = bundle.model_copy(update={"provenance": [*bundle.provenance, record]})
+    api.evaluate_measure(marked, model, "PV_ROOF", request.role)
+    assert record in seen["provenance"]

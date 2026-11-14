@@ -484,7 +484,7 @@ def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: Building
                  for pid, k in kw.items() if pid in planes]
         hourly = sum(parts) if parts else None
     return evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly, existing_solar=bool(existing),
-                       state=bundle.summary.state)
+                       state=bundle.summary.state, provenance=bundle.provenance)
 
 
 _LIGHT_CONTROLS = ("continuous", "continuous_off", "stepped", "auto_on_off")

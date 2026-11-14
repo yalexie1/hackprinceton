@@ -764,7 +764,7 @@ wins among those. `backend/data_layer/locate.py` carries it.
   pre-D16 structure silently. Entries now carry `BUNDLE_RULE_VERSION` and an older
   stamp is a miss.
 
-#### The open question this leaves: a tower against its podium
+#### A tower against its podium — **decided, see SPEC 6.3 step 3**
 
 At the LA office **two captures outline the same building 1.9x apart** — 2,938 m²
 (`us-ca-losangeles-2024`) and 1,566 m² (`us-ca-losangeles-2025`), centroids 9 m apart
@@ -778,10 +778,22 @@ outlines a podium rather than a tower. But D8's mask over the 2025 parcel measur
 - the imagery says the contiguous roof is at least 2,337 m² → 2,938 m².
 
 Both can be true of a 17-storey tower on a podium deck, and panels on the podium with
-none on the tower explains the solar split exactly. **This lane does not resolve it.**
-It picks the building, records the disagreement (`property/extract:extent`, layer
-`vexcel`, status `fallback`) and surfaces it in the runbook. **Which extent A11 and A14
-should model is @yalexie1's call**, and it moves PV capacity by roughly 1.9x.
+none on the tower explains the solar split exactly.
+
+**Decided by the lead on 2026-11-14 and now in `SPEC.md` 6.3 step 3 (#262, #263):
+A11 and A14 design on the plate-matched structure — the tower.** The reasoning is the
+lead's and is worth recording here because it is not something this lane could have
+measured: the podium can belong to a different owner, is often already in use (the old
+LA office's podium is the outline carrying the panels), and is not the building either
+the scan or the CoStar record describes. The larger outline is **reported, never
+designed on** — A19 turns D16's `property/extract:extent` record into a `PV_ROOF`
+warning naming both areas (`extent_warnings`). Designing on the podium is not
+supported: `roof.usable_area_m2` is reported as an assumption, but overriding it does
+not yet resize the solar design.
+
+So this lane's job here is settled and unchanged: pick the building by the plate,
+record the disagreement, surface it in the runbook. The 1.9x is a reported warning,
+not an unresolved question.
 
 ### 4.6 D17: a complete bundle without the kit, and the one-command mirror
 
@@ -1385,7 +1397,7 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | D16 choice, golden three | live after the change | 2026-11-14 | house 191.3 m² / LA 1,566.2 m² / Houston 1,104.5 m²; all three enclose the CoStar address point |
 | D8 mask against D16's footprint | live detection | 2026-11-14 | house **0.95**, Houston **0.96** (was 0.25 against `features[0]`), LA **1.49** → the podium question, §4.5a |
 | `ac-unit.count` across captures of one roof | live, golden house ×5 | 2026-11-14 | **2, 1, 1, 1, 0** — capture-dependent, so never quote one count as the building's |
-| LA office tower vs podium extent | live, 2 captures + mask | 2026-11-14 | **[P] open — 1,566 m² vs 2,938 m², 87 % nested, solar flag differs; @yalexie1 to decide which A11/A14 model** |
+| LA office tower vs podium extent | live, 2 captures + mask | 2026-11-14 | 1,566 m² vs 2,938 m², 87 % nested, solar flag differs — **decided: design on the plate-matched tower, report the larger outline (SPEC 6.3 step 3, #262/#263)** |
 | CoStar kit zip cipher | real archive, 2026-11-14 | 2026-11-14 | **ZipCrypto** (flag 1, method 8, not 99/AES); `zipfile` decrypts at **16 MB/s**, 423 MB in ~26 s |
 | `unzip` password on stdin | real archive | 2026-11-14 | **does not work** - `unable to get password`, every member skipped, exit 5; it reads `/dev/tty` |
 | Kit mirror end to end | live download + extract to a clean target | 2026-11-14 | 52 MB downloaded, 42 files / 404 MB mirrored, lane tests green against it |

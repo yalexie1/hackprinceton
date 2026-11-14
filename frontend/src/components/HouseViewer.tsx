@@ -177,8 +177,8 @@ export default function HouseViewer({
               {run?.plan
                 ? "YOUR BUILDING, REIMAGINED"
                 : office
-                  ? "THE EVERGREEN OFFICE"
-                  : "THE EVERGREEN HOUSE"}
+                  ? "THE LETO OFFICE"
+                  : "THE LETO HOUSE"}
               <small>
                 {run?.plan
                   ? "EXPLORE THE ENERGY UPGRADES"

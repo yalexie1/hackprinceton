@@ -184,7 +184,7 @@ export default function App() {
     [],
   );
   useEffect(() => {
-    document.title = `${view === "find" ? "Your properties" : views.find((v) => v.id === view)?.label || "Building audit"} — Evergreen`;
+    document.title = `${view === "find" ? "Your properties" : views.find((v) => v.id === view)?.label || "Building audit"} — Leto`;
   }, [view]);
   useEffect(() => {
     if (demo) {
@@ -578,7 +578,7 @@ export default function App() {
             <Box size={23} strokeWidth={1.7} />
           </span>
           <span>
-            evergreen<span>BUILDING INTELLIGENCE</span>
+            leto<span>BUILDING INTELLIGENCE</span>
           </span>
         </a>
         <button

@@ -804,7 +804,7 @@ Inputs: `specs/SPEC.md` sha256 13d44a007475, `specs/data-integration.md` sha256 
 | 6 | Inside a lane, a path bound by more than one package is never bound across lanes, and every later package states its order with 'after' (13 shared paths); no bound path lies inside another package's bound folder | 92 | pass |
 | 7 | Every dependency is a type that exists in the contract block of SPEC 9 or a fixture alias of 2.3, and no 'Depends on' cell names a package | 520 | pass |
 | 8 | Every type named in an In or Out cell exists in the contract, and every fixture named is an alias of 2.3 | 344 | pass |
-| 9 | Every `Type.field` reference names a real field of the contract; each of the 7 new types and 10 new fields of contract 0.2.0, and 5 of the fields added to it since, is used in sections 1 to 8; no retired name remains there (the old listing-id join key, the model index file, schema versions 0.1.x) | 110 | pass |
+| 9 | Every `Type.field` reference names a real field of the contract; each of the 7 new types and 10 new fields of contract 0.2.0, and 5 of the fields added to it since, is used in sections 1 to 8; no retired name remains there (the old listing-id join key, the model index file, schema versions 0.1.x) | 111 | pass |
 | 10 | Every contract type is named in the Out cell of at least one package (56 types) or is listed in 9.2 as a type no package outputs (5 types) | 61 | pass |
 | 11 | Every P0 item of SPEC 13 (9 items, split at semicolons) has a row in 9.1 with at least one package, all of them P0; each of the 7 measures the P0 row names is in a P0 package | 9 | pass |
 | 12 | Every MeasureId (18, equal to the rows of SPEC 6.2) is named in the Package cell of an analysis package | 18 | pass |

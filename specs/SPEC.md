@@ -1,6 +1,6 @@
 # Master spec
 
-Status: draft v0.3.4, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.5, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
@@ -13,6 +13,8 @@ v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so
 v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
 
 v0.3.4 adds `"not_cost_effective"` to `SkippedItem.reason`: the plan follows consultant practice (section 6.5), and a measure whose SIR is below 1 is never recommended or offered for financing.
+
+v0.3.5 adds bill calibration to the contract (A6, physics 04 MV-06): `FuelFit` and `CalibrationSummary`, `BuildingModel.calibration` and `BaselineResult.calibration`, and `UtilityBills.first_month`. The analysis door gains `calibrate_model`, which returns the calibrated model, so the measures and the plan run on it.
 
 Companion files:
 
@@ -349,7 +351,7 @@ Built with LangChain `deepagents` on the Anthropic API.
 | `auditor` (orchestrator) | plans the audit, delegates, decides fallbacks, writes the narrative | `task`, filesystem, todo list, `ask_user` |
 | `scout` | finds and ingests the property | `search_properties`, `get_property_bundle`, `get_asset` |
 | `surveyor` | reads imagery, builds the building model | `observe_interior`, `detect_roof_elements`, `build_building_model`, `set_assumption` |
-| `physicist` | runs simulations and measures | `run_baseline`, `evaluate_measure`, `design_pv`, `score_desk_positions` |
+| `physicist` | runs simulations and measures | `calibrate_model`, `run_baseline`, `evaluate_measure`, `design_pv`, `score_desk_positions` |
 | `financier` | prices and plans | `price_measure`, `lookup_incentives`, `build_plan`, `cpace_scenario`, `sensitivity` |
 | `counsel` | drafts documents | `list_templates`, `fill_template`, `check_document` |
 
@@ -380,7 +382,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.4"
+SCHEMA_VERSION = "0.3.5"
 
 # ---------- primitives ----------
 
@@ -728,6 +730,22 @@ class RoofPlane(BaseModel):
     slope_length_m: Optional[float] = None
     geometry_source: Literal["splat", "vexcel_parametric", "assumed"]
 
+class FuelFit(BaseModel):
+    """Fit of the model to one fuel's twelve monthly bills (physics 04 MV-03, MV-04)."""
+    fuel: Literal["electricity", "gas"]
+    nmbe_before: float                         # fraction, simulated minus billed, before calibration
+    cv_rmse_before: float                      # fraction
+    nmbe_after: float
+    cv_rmse_after: float
+    passed: bool                               # MV-04: |NMBE| <= 0.05 and CV(RMSE) <= 0.15 (monthly)
+
+class CalibrationSummary(BaseModel):
+    """What calibrating to the bills did (physics 04 MV-06). Present only when bills were given."""
+    calibrated: bool                           # MV-04 passed for every billed fuel
+    fits: list[FuelFit]
+    moved: list[str] = []                      # assumption keys changed, each within its stated range
+    warnings: list[str] = []                   # e.g. months that disagree, likely unmodelled loads, no billing dates
+
 class BuildingModel(BaseModel):
     schema_version: str = SCHEMA_VERSION
     sid: str
@@ -744,6 +762,7 @@ class BuildingModel(BaseModel):
     roof_planes: list[RoofPlane] = []
     assumptions: list[Assumption]
     flags: list[Flag] = []
+    calibration: Optional[CalibrationSummary] = None   # set by calibrate_model; the assumptions are already calibrated
 
 class EnergyUse(BaseModel):
     electricity_kwh: Ranged
@@ -762,6 +781,7 @@ class BaselineResult(BaseModel):
     peak_cooling_w: float
     peak_heating_w: float
     calibrated_to_bills: bool = False
+    calibration: Optional[CalibrationSummary] = None   # copied from the model; None when no bills were given
     heating_need_kwh: Optional[float] = None   # thermal need before system efficiency
     cooling_need_kwh: Optional[float] = None
     latent_cooling_kwh: float = 0.0
@@ -933,6 +953,7 @@ Role = Literal["owner_occupier", "landlord", "tenant"]
 class UtilityBills(BaseModel):
     electricity_kwh: list[float]               # 12 monthly values
     gas_kwh: Optional[list[float]] = None
+    first_month: Optional[str] = None          # "YYYY-MM" of the first bill; None = January, calendar months
 
 class RunRequest(BaseModel):
     sid: str

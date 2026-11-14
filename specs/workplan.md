@@ -220,8 +220,16 @@ def set_assumption(model: BuildingModel, key: str, value: float | str | bool,
     # a float collapses the range to that value; returns a new model, the input is not changed
 
 # S5 Baseline
+def calibrate_model(bundle: PropertyBundle, model: BuildingModel,
+                    bills: UtilityBills) -> BuildingModel: ...
+    # A6, physics 04 MV-06: moves the uncertain assumptions within their ranges to fit the bills;
+    # sets model.calibration (fit before and after, what moved, warnings). When MV-04 fails the
+    # assumptions are unchanged and calibration.calibrated is false. Call it before run_baseline
+    # whenever RunRequest.bills is given, and use the returned model for every later step.
 def run_baseline(bundle: PropertyBundle, model: BuildingModel,
                  bills: UtilityBills | None = None) -> BaselineResult: ...
+    # copies model.calibration into the result and sets calibrated_to_bills from it; `bills` is kept
+    # for compatibility and is ignored (calibrate with calibrate_model first)
 
 # S6 Measures
 def evaluate_measure(bundle: PropertyBundle, model: BuildingModel, measure_id: MeasureId,

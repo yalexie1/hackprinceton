@@ -63,7 +63,8 @@ from typing import Callable, Iterable, Literal, Optional, Sequence
 import numpy as np
 from scipy.optimize import least_squares
 
-from backend.schema import Assumption, BaselineResult, BuildingModel, EvidenceRef, PropertyBundle, Ranged, UtilityBills
+from backend.schema import (Assumption, BaselineResult, BuildingModel, CalibrationSummary, EvidenceRef, FuelFit,
+                            PropertyBundle, Ranged, UtilityBills)
 
 from .changepoint import DAYS_IN_MONTH, DegreeDayModel, choose_degree_day, fit_degree_day_at, monthly_degree_days
 from .stats import TOLERANCES, FitStats, calibration_ok, fit_statistics
@@ -167,6 +168,25 @@ class CalibrationResult:
                           note="the model is not calibrated to the bills, so savings cannot be verified against "
                                "them (MV-04 not met); " + out.note)
         return out
+
+    def contract_summary(self) -> CalibrationSummary:
+        """The contract's `CalibrationSummary` (0.3.5). NMBE is reported simulated minus billed, the
+        contract's sign, which is the negative of MV-03's measured-minus-predicted `FitStats.nmbe`."""
+        from .stats import TOLERANCES
+        nmbe_tol, cv_tol = TOLERANCES["monthly"]
+        fits = []
+        for f in self.fuels:
+            b, a = self.before[f], self.after[f]
+            ok = abs(a.nmbe) <= nmbe_tol and a.cv_rmse <= cv_tol
+            fits.append(FuelFit(fuel=f, nmbe_before=round(-b.nmbe, 4), cv_rmse_before=round(b.cv_rmse, 4),
+                                nmbe_after=round(-a.nmbe, 4), cv_rmse_after=round(a.cv_rmse, 4), passed=ok))
+        moved = [m.key for m in self.moves] if self.calibrated_to_bills else []
+        return CalibrationSummary(calibrated=self.calibrated_to_bills, fits=fits, moved=moved,
+                                  warnings=[self.summary()] + list(self.warnings))
+
+    def calibrated_model(self) -> BuildingModel:
+        """The model to use for every later step, carrying `calibration` (the door's return value)."""
+        return self.model.model_copy(update={"calibration": self.contract_summary()})
 
     def summary(self) -> str:
         """One paragraph in plain words."""

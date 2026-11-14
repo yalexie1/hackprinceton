@@ -64,7 +64,8 @@ def start_run(request: RunRequest) -> str:
         result, events, bundle = recorded
         result["run_id"] = run_id
         result["served_by"] = "replay"           # the recording keeps the data_source it was made with
-        _runs[run_id] = {"flavor": None, "bundle": bundle, "result": RunResult.model_validate(result),
+        _runs[run_id] = {"flavor": None, "bundle": bundle, "folder": _recording_folder(request.sid),
+                         "result": RunResult.model_validate(result),
                          "events": [RunEvent.model_validate(e) for e in events], "answers": {}, "docs": {}}
         return run_id
     flavor = _flavor_for_sid(request.sid)
@@ -81,6 +82,49 @@ def start_run(request: RunRequest) -> str:
         "docs": {},
     }
     return run_id
+
+
+def _recording_folder(sid: str):
+    from backend.agent.live import demo_dir
+    return demo_dir() / sid
+
+
+RECORDED_REPLAN_WARNING = ("re-run: the plan was rebuilt for the new budget or assumptions; the report describes "
+                           "the recorded run")
+_RUN_FILES = ("bundle.json", "model.json", "baseline.json", "measures.json", "plan.json", "report.md")
+
+
+def _replan_recorded(run: dict, budget_usd, overrides):
+    """A recorded run keeps its bundle, model and baseline, so a new budget re-plans for real: the analysis door
+    builds the plan again (no model call), exactly as a finished live run is adjusted. Raises LookupError when the
+    recording is incomplete or the analysis door is unavailable, and the caller falls back to the replayed shape."""
+    import shutil
+    import tempfile
+    from pathlib import Path
+    from backend.agent.live import default_doors
+    from backend.agent.runtime.replan import replan
+    from backend.agent.runtime.runtime import RunStore
+    folder = run.get("folder")
+    result = run["result"]
+    if folder is None or not all((Path(folder) / n).is_file() for n in _RUN_FILES):
+        raise LookupError("the recording does not keep every run file")
+    doors = default_doors()
+    if doors.degraded:
+        raise LookupError(doors.degraded)
+    tmp = Path(tempfile.mkdtemp(prefix="replan-"))
+    try:
+        store = RunStore(tmp)
+        files = store.files(result.run_id)
+        for name in _RUN_FILES:
+            shutil.copy(Path(folder) / name, files.root / name)
+        new, events = replan(result, files, store, doors, budget_usd, overrides)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    warnings = [w for w in new.warnings if not w.startswith("re-run:")]
+    stale = [w for w in new.warnings if w.startswith("re-run:")]
+    new = new.model_copy(update={"served_by": "replay", "data_source": result.data_source,
+                                 "warnings": [*warnings, RECORDED_REPLAN_WARNING, *stale]})
+    return new, events
 
 
 def _recorded(sid: str):
@@ -134,6 +178,13 @@ def update_run(run_id: str, budget_usd: float | None = None,
     run = _get(run_id)
     result = run["result"]
     validate_patch(result, budget_usd, overrides)
+    if run.get("flavor") is None:
+        try:
+            run["result"], more = _replan_recorded(run, budget_usd, overrides)
+            run["events"] = [*run["events"], *more]
+            return
+        except LookupError:
+            pass                      # an incomplete recording: the replayed shape below
     request = patch_request(result.request, budget_usd, overrides)
     plan = result.plan.model_copy(update={"budget_usd": request.budget_usd}) if result.plan else None
     run["result"] = result.model_copy(update={"request": request, "plan": plan})

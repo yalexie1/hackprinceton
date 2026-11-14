@@ -504,12 +504,20 @@ class LiveRun:
                     self.events.append(last)
                 last = ev
             self._keep_asked_questions()
+            # **Snapshot before the question becomes visible.** Whether this segment
+            # paused is a fact about the segment; `self.pending` is also "a question is
+            # open", and `answer()` clears it. Reading it *after* publishing the question
+            # let a client that answered immediately make this branch say "no question
+            # was asked": the run returned, closed with `question` as its last event, and
+            # left the answer unconsumed in `_inbox`. `_write_usage` puts a disk write
+            # inside that window, which is why it only showed up under multi-lane I/O.
+            paused = self.pending is not None
             self.active = False
             if last is not None:
                 self.events.append(last)
             self.events.extend(deferred)
             self._write_usage()
-            if self.pending is None:
+            if not paused:
                 return
             graph_input = await loop.run_in_executor(None, self._inbox.get)
             self.active = True

@@ -545,3 +545,49 @@ def test_a_degraded_door_becomes_a_run_warning(tmp_path):
                                              legal=object(), degraded="analysis is a stub"))
     run = live.LiveRun("run_degraded", request(), settings)
     assert "analysis is a stub" in run._warnings
+
+
+# ---- answering inside the publish/check window (the flake Yale handed over) ----
+
+def test_an_answer_that_lands_in_the_window_still_resumes_the_run(live_mode, monkeypatch):
+    """A client that answers the moment it sees the question event must not end the run.
+
+    `_main` publishes the question event, writes `usage.json`, and *then* reads
+    `self.pending` to decide whether to wait for an answer. But `answer()` sets
+    `self.pending = None`. So a client that answers inside that window makes `_main` read
+    "no question was asked", return, and close the run - with `question` as the last
+    event and the answer sitting unconsumed in `_inbox`.
+
+    `self.pending` was doing two jobs: "a question is open", which `answer()` clears, and
+    "this segment paused", which is a fact about the segment that `answer()` must not be
+    able to change.
+
+    The window is a few statements wide and `_write_usage` puts a **disk write** in the
+    middle of it, which is why this surfaced only in multi-lane runs: under I/O
+    contention the write takes long enough for a fast client to get in. Observed three
+    times across three different tests of this file, each of which answers as soon as it
+    sees the event.
+
+    Here the window is hit deterministically by answering from inside `_write_usage`.
+    """
+    real_write_usage = live.LiveRun._write_usage
+    answered: list[str] = []
+
+    def answer_inside_the_window(self):
+        real_write_usage(self)
+        if self.pending is not None and not answered:      # the client is this quick
+            answered.append(self.pending[1].id)
+            self.answer(self.pending[1].id, 100.0)
+
+    monkeypatch.setattr(live.LiveRun, "_write_usage", answer_inside_the_window)
+
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    events = drain(run_id)
+
+    assert answered == ["q_service_amps"], "the test did not actually hit the window"
+    assert events[-1].type == "done", (
+        f"the run ended on {events[-1].type!r}: the answer was dropped and the run closed "
+        f"instead of resuming")
+    assert api.get_run(run_id).status == "done"

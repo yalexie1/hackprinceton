@@ -1,0 +1,60 @@
+{
+  "doc_id": "doc_house_example_1",
+  "doc_type": "retrofit_contract_residential",
+  "state": "CA",
+  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# Home Improvement\n\nThis contract is made on 2026-11-20 between Alex Example (illustrative) (\"Owner\") and {{contractor_name}}, {{contractor_business_address}}, Contractors State License Board licence number {{contractor_license_number}} (\"Contractor\"), for work at 5836 La Mirada Ave, Los Angeles, CA 90038.\n\n## Description of the Project and Description of the Significant Materials to be Used and Equipment to be Installed\n\n- ENV_ATTIC: Attic insulation to RSI 6.7 over 82.04 m2 of attic floor.\n- LGT_LED: LED lamps throughout.\n\n## Contract Price\n\n{{contract_price_usd}}\n\n## Downpayment\n\n{{down_payment_usd}}\n\n## Approximate Start Date\n\n{{start_date}}\n\n## Approximate Completion Date\n\n{{completion_date}}\n\n## Note About Extra Work and Change Orders\n\n[statutory text to be inserted from specs/legal/california.md]\n\n## Three-Day Right to Cancel\n\n[statutory notice text to be inserted from specs/legal/california.md]\n\nOwner signature: ____________________  Contractor signature: ____________________\n",
+  "unfilled_placeholders": [
+    "contractor_name",
+    "contractor_business_address",
+    "contractor_license_number",
+    "contract_price_usd",
+    "down_payment_usd",
+    "start_date",
+    "completion_date"
+  ],
+  "statutory_checks": [
+    {
+      "requirement_id": "CA-HIC-07",
+      "requirement": "Heading identifying the contract type, \"Home Improvement.\"",
+      "citation": "BPC 7159(d)(3)",
+      "satisfied": true,
+      "note": "Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-HIC-05",
+      "requirement": "Contractor name, business address and licence number",
+      "citation": "BPC 7159(d)(1)",
+      "satisfied": false,
+      "note": "contractor_name, contractor_business_address and contractor_license_number are blank. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-HIC-09",
+      "requirement": "Heading \"Contract Price,\" followed by the amount in dollars and cents",
+      "citation": "BPC 7159(d)(5); 7159.5(a)(1)",
+      "satisfied": false,
+      "note": "contract_price_usd is blank. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-HIC-13",
+      "requirement": "Downpayment may not exceed $1,000 or 10 percent of the contract amount, whichever is less",
+      "citation": "BPC 7159.5(a)(3), (b)(1)",
+      "satisfied": false,
+      "note": "contract_price_usd and down_payment_usd are blank, so the cap cannot be checked. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-HIC-02",
+      "requirement": "Contract and every change in writing and signed by the parties before the work it covers starts",
+      "citation": "BPC 7159(d)",
+      "satisfied": true,
+      "note": "Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-CXL-01",
+      "requirement": "Three-business-day right to cancel a home solicitation contract",
+      "citation": "CIV 1689.6(a)(2)",
+      "satisfied": false,
+      "note": "Heading present; the statutory notice wording is not yet inserted. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
+    }
+  ],
+  "disclaimer": "Draft for attorney review, not legal advice. Blanks are left where a party, licence number, price or date was not supplied."
+}

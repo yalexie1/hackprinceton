@@ -1,0 +1,10 @@
+{
+  "sid": "zvKHR9DHNjJ",
+  "budget_usd": 14000.0,
+  "role": "owner_occupier",
+  "bills": null,
+  "overrides": {
+    "occupants.count": 3
+  },
+  "desks_requested": null
+}

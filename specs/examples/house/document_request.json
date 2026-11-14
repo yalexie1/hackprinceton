@@ -1,0 +1,14 @@
+{
+  "run_id": "run_house_example",
+  "doc_type": "retrofit_contract_residential",
+  "state": "CA",
+  "measure_ids": [
+    "ENV_ATTIC",
+    "LGT_LED"
+  ],
+  "fields": {
+    "owner_name": "Alex Example (illustrative)",
+    "property_address": "5836 La Mirada Ave, Los Angeles, CA 90038",
+    "transaction_date": "2026-11-20"
+  }
+}

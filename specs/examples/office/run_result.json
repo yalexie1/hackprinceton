@@ -2572,7 +2572,7 @@
       "title": "Window replacement",
       "applicable": true,
       "not_applicable_reason": null,
-      "description": "Replace 17 windows, 287.28 m2 on the north-east, south-west, north-west and south-east walls, with double low-e units: U from 4.32 to 2.16 W/m2K.",
+      "description": "Replace 17 windows, 287.28 m2 on the north-east, south-west, north-west and south-east walls, with double low-SHGC low-e units: U from 4.32 to 2.16 W/m2K, SHGC 0.25.",
       "params": {
         "glazing_area_m2": 287.28,
         "window_surface_ids": [
@@ -2596,37 +2596,38 @@
         ],
         "window_type_after": "double_lowe_non_metal",
         "u_after_w_m2k": 2.16,
-        "shgc_after": 0.44
+        "shgc_after": 0.25,
+        "climate_zone": "3B"
       },
       "savings": {
         "electricity_kwh": {
-          "low": 100.99,
-          "expected": 274.71,
-          "high": 274.71,
+          "low": -1651.93,
+          "expected": 8792.59,
+          "high": 8792.59,
           "unit": "kWh"
         },
         "gas_kwh": {
-          "low": -702.57,
-          "expected": 1356.45,
-          "high": 1356.45,
+          "low": -351.53,
+          "expected": 796.41,
+          "high": 796.41,
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 85.29,
-          "expected": 156.38,
-          "high": 156.38,
+          "low": 194.83,
+          "expected": 2682.93,
+          "high": 2682.93,
           "unit": "USD"
         },
         "co2_kg": {
-          "low": 44.49,
-          "expected": 299.41,
-          "high": 299.41,
+          "low": -741.24,
+          "expected": 1859.22,
+          "high": 1859.22,
           "unit": "kg"
         },
         "co2_nonbaseload_kg": {
-          "low": 139.88,
-          "expected": 365.61,
-          "high": 365.61,
+          "low": -925.63,
+          "expected": 3977.85,
+          "high": 3977.85,
           "unit": "kg"
         }
       },
@@ -2646,30 +2647,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 85.29,
-          "expected": 156.38,
-          "high": 156.38,
+          "low": 194.83,
+          "expected": 2682.93,
+          "high": 2682.93,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 25,
         "simple_payback_years": {
-          "low": 1017.73,
-          "expected": 1148.17,
-          "high": 2113.95,
+          "low": 59.32,
+          "expected": 66.92,
+          "high": 921.62,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -197420.13,
-          "expected": -176990.08,
-          "high": -156593.2,
+          "low": -181350.37,
+          "expected": -136603.07,
+          "high": -116206.19,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -177819.76,
-        "sir": 0.014,
+        "npv_sensitivity_usd": -150416.17,
+        "sir": 0.239,
         "irr": null,
-        "airr": -0.131,
+        "airr": -0.0273,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0075,
         "gas_escalation": -0.0032,
@@ -2683,9 +2684,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 85.29,
-              "expected": 156.38,
-              "high": 156.38,
+              "low": 194.83,
+              "expected": 2682.93,
+              "high": 2682.93,
               "unit": "USD"
             },
             "program_sir": null,
@@ -2701,17 +2702,17 @@
             "term_years": 20,
             "annual_payment_usd": 16295.31,
             "net_cashflow_year1_usd": {
-              "low": -16210.02,
-              "expected": -16138.93,
-              "high": -16138.93,
+              "low": -16100.48,
+              "expected": -13612.38,
+              "high": -13612.38,
               "unit": "USD"
             },
-            "program_sir": 0.01,
+            "program_sir": 0.165,
             "notes": [
               "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
               "Term of 20 years does not exceed the useful life of 25 years: a programme rule for a new commercial assessment in California, not a statutory condition (CA-PACE-11).",
-              "Program SIR 0.01: undiscounted savings over the 20-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
-              "Savings-to-debt-service ratio 0.01.",
+              "Program SIR 0.17: undiscounted savings over the 20-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
+              "Savings-to-debt-service ratio 0.16.",
               "Rate and term are market inputs, not defaults from a publication.",
               "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
               "Existing mortgage holder: consent or acknowledgment is a programme and capital-provider requirement, not a California statutory condition (specs/legal/california.md section 7.6).",
@@ -2815,7 +2816,7 @@
         {
           "kind": "default_table",
           "ref": "DEF-03",
-          "note": "double lowe non metal: U 2.16, SHGC 0.44 (S17 Table 69)"
+          "note": "double lowe non metal: U 2.16, SHGC 0.25; IECC climate zone 3B: IECC 2021 prescriptive SHGC 0.25 in zones 0-3 (Tables R402.1.2 and C402.4)"
         }
       ],
       "formula_ids": [
@@ -2846,7 +2847,7 @@
       "value_uplift": null,
       "warnings": [
         "Some window areas were read from panoramas, not measured (plus or minus 30 percent, physics 02 DEF-03).",
-        "New windows are the DEF-03 default, double low-e with a non-metal frame (U 2.16, SHGC 0.44); the rating of the product actually quoted replaces it.",
+        "New windows are double low-SHGC low-e units with a non-metal frame (U 2.16, SHGC 0.25; IECC climate zone 3B: IECC 2021 prescriptive SHGC 0.25 in zones 0-3 (Tables R402.1.2 and C402.4)); the rating of the product actually quoted replaces it.",
         "useful life of 25 years is unverified (physics 04 COST-02)"
       ]
     },
@@ -9648,7 +9649,7 @@
       {
         "measure_id": "WIN_REPLACE",
         "reason": "not_cost_effective",
-        "detail": "SIR 0.01 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
+        "detail": "SIR 0.24 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
       },
       {
         "measure_id": "LGT_LED",

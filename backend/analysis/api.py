@@ -3,13 +3,13 @@
 Every function keeps its final signature. A29 replaces the A0 stubs with the real modules as
 they merge; a stub replays the matching example in `specs/examples/`. REAL now: the model (A9
 geometry, A10 registry, A11 roof), the baseline (A3 systems with A2 zone loads and A1 climate),
-measures (the A16 engine with every plug-in that is registered: A21, A22, and A17, A18, A20
-as soon as their packages exist), solar (A11 roof, A14 layout, A1 and A4 yield, the A19
-measure), pricing and incentives (A24, A25), the budget plan (A26) and its value uplift (A30).
+measures (the A16 engine with every plug-in that is registered: A17 to A22 and the A23 desk
+layout on the A5 daylight scorer), solar (A11 roof refined by the A12 masks, A14 layout, A15
+shading, A1 and A4 yield, the A19 measure), pricing and incentives (A24, A25), the budget plan (A26) and its value uplift (A30).
 STILL FIXTURE-BACKED, and switching by itself when the package lands: a measure with no
 registered plug-in (replays the example's evaluation, marked in its warnings), observe_interior
-(A7 needs a model client: `set_vision`), score_desk_positions (A23), cpace_scenario (no rate or
-term source yet) and sensitivity (the real one, A27, takes over once the envelope, lighting and
+(A7 and A8 need a model client: `set_vision`) and cpace_scenario (no rate or term source yet).
+Sensitivity (the real one, A27, takes over once the envelope, lighting and
 heating-and-cooling plug-ins are all registered, so that the plan answers to the model).
 Pure and deterministic; no network.
 
@@ -34,9 +34,12 @@ from backend.analysis.finance.economics import financial_breakdown
 from backend.analysis.finance.plan import select_plan
 from backend.analysis.finance.sensitivity import sensitivity as _ask_questions
 from backend.analysis.finance.value import home_pv_uplift, plan_value_uplift
+from backend.analysis import layout
 from backend.analysis.measures import engine
 from backend.analysis.measures.pv import evaluate_pv
 from backend.analysis.physics.climate import ClimateHours, Weather, load_climate, plane_irradiance, read_site_weather, read_weather
+from backend.analysis.physics.daylight import (lighting_power_fraction, occupied_mask_from_stamps,
+                                               prepare_room, score_point, sun_arrays)
 from backend.analysis.physics.pv import energy_range, pv_hourly_yield
 from backend.analysis.physics.systems import (HourlyLoads, SystemsBaseline, calendar_from_stamps,
                                               egrid_subregion, internal_gains_hourly, systems_baseline)
@@ -45,7 +48,8 @@ from backend.analysis.solar.layout import Module, layout_pv
 from backend.analysis.model.geometry import build_geometry
 from backend.analysis.model.registry import (build_registry, merge_assumptions, scanned_floor_area_m2,
                                              set_model_assumption)
-from backend.analysis.solar.roof import build_parametric_roof
+from backend.analysis.solar.roof import build_parametric_roof, refine_with_masks
+from backend.analysis.solar.shading import shade_panels
 from backend.analysis.vision import observe_interior as _vision_interior
 from backend.schema import (Assumption, BaselineResult, BuildingModel, EnergyUse, FinancingScenario,
                             Flag, Incentive, LayoutResult, MeasureId, MeasureResult, Plan,
@@ -101,7 +105,7 @@ def set_vision(ask_model: Optional[Callable] = None, get_bytes: Optional[Callabl
 def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Flag]]:
     """REAL (A7) when `set_vision` has been called; otherwise the example's observations."""
     if _VISION["ask_model"] is not None and _VISION["get_bytes"] is not None:
-        return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"])
+        return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"], room_fallback=True)
     m = BuildingModel.model_validate(_load(_folder(bundle.summary.sid), "building_model.json"))
     return list(m.assumptions), list(m.flags)
 
@@ -119,6 +123,8 @@ def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = []
                               building_stories=costar.stories if costar else None)
     roof = (build_parametric_roof(bundle.vexcel, geometry.north_offset_deg.expected,
                                   state=bundle.summary.state) if bundle.vexcel else None)
+    if roof is not None:        # A12: tree overhang from the SAM 3 detections lowers the usable area
+        roof.planes = refine_with_masks(roof.planes, bundle.vexcel).planes
     assumptions = merge_assumptions(registry.assumptions, geometry.assumptions,
                                     roof.assumptions if roof else [])
     return BuildingModel(
@@ -257,6 +263,8 @@ def _register_plugins() -> None:
             continue
         for measure_id, (check, change, describe, formula_ids) in getattr(module, "MEASURES", {}).items():
             engine.register(measure_id, change=change, describe=describe, check=check, formula_ids=formula_ids)
+    engine.register("LAYOUT", check=layout.check, change=layout.change, describe=_describe_layout,
+                    formula_ids=layout.FORMULA_IDS)
     engine.register("PV_ROOF", change=lambda bundle, model: model.model_copy(deep=True),
                     describe=_describe_pv, formula_ids=("PV-01", "PV-02", "PV-03", "PV-04", "PV-05",
                                                         "PV-06", "PV-09", "LAY-03", "ROOF-04"))
@@ -337,6 +345,7 @@ def _design(bundle: PropertyBundle, model: BuildingModel, baseline: BaselineResu
         return _pv_installed_cost(bundle, count * module_w)
     design = layout_pv(list(model.roof_planes), electrical, structural, yield_fn, budget_usd,
                        consumption if consumption > 0 else None, installed_cost_usd=installed_cost)
+    design = _with_shading(bundle, model, design)
     if len(_DESIGN_CACHE) >= 128:
         _DESIGN_CACHE.pop(next(iter(_DESIGN_CACHE)))
     _DESIGN_CACHE[key] = design
@@ -346,6 +355,21 @@ def _design(bundle: PropertyBundle, model: BuildingModel, baseline: BaselineResu
 def _pv_installed_cost(bundle: PropertyBundle, watts_dc: float) -> float:
     """A24's installed cost of PV for a system of this size, the number A14 compares with the budget."""
     return measure_cost("PV_ROOF", watts_dc, bundle.summary.segment)[0].expected
+
+
+def _with_shading(bundle: PropertyBundle, model: BuildingModel, design: SolarDesign) -> SolarDesign:
+    """A15: ray-cast shading per panel where there is geometry to cast against (a splat roof or
+    obstructions with a height). On a parametric roof there is nothing to cast, so each panel keeps
+    A4's default allowance and A15 only reports that."""
+    if not design.panels:
+        return design
+    hours, _, _ = _climate(bundle)
+    comps = {p.id: {k: v for k, v in plane_irradiance(hours, p.tilt_deg.expected, p.azimuth_deg).items()
+                    if k in ("poa_beam", "poa_sky_diffuse", "poa_ground", "poa_sky_circumsolar")}
+             for p in model.roof_planes}
+    shaded = shade_panels(list(model.roof_planes), design.panels, hours.apparent_zenith_deg,
+                          hours.sun_azimuth_deg, poa_components=comps)
+    return design.model_copy(update={"panels": shaded.placements(design.panels)})
 
 
 def design_pv(bundle: PropertyBundle, model: BuildingModel, baseline: BaselineResult,
@@ -375,13 +399,68 @@ def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: Building
                        state=bundle.summary.state)
 
 
+_LIGHT_CONTROLS = ("continuous", "continuous_off", "stepped", "auto_on_off")
+
+
+def _desk_scorer(bundle: PropertyBundle, model: BuildingModel):
+    """The point scorer A23 wants, built on A5: daylight, glare and comfort at (x, y) of a room.
+    The sun is A1's year, the zone air temperature is A2's, and each room's windows and room-wide
+    reflected component are prepared once (a point takes about 6 ms). Besides A5's fields it
+    returns the mean saved lighting fraction at the setpoint for each control type (LCT-01)."""
+    hours, weather, _ = _climate(bundle)
+    cal = calendar_from_stamps(hours.stamps, bundle.climate.weather_time_convention)
+    _, runs = _zone_run(bundle, model, hours, weather, cal)
+    zone = next((z for z in runs["zone"].zones if z.conditioned), runs["zone"].zones[0])
+    zone_temps = {"theta_air_c": zone.hourly["theta_air_c"]}
+    occupied = occupied_mask_from_stamps(hours.stamps)
+    sun = sun_arrays(hours, occupied)
+    floors = {f.id: f for f in bundle.matterport.floors}
+    contexts: dict = {}
+    north = model.north_offset_deg.expected
+
+    def scorer(*, bundle, model, room, x, y, setpoint_lux):
+        floor = floors[room.floor_id]
+        if room.id not in contexts:
+            contexts[room.id] = prepare_room(room, model.surfaces, floor=floor, north_offset_deg=north,
+                                             assumptions=model.assumptions)
+        try:
+            raw = score_point(room, model.surfaces, x, y, sun, zone_temps, floor=floor, north_offset_deg=north,
+                              assumptions=model.assumptions, context=contexts[room.id], return_hourly=True)
+        except ValueError as err:       # A5 refuses a point it finds outside the room: never recommend it
+            return {"daylight": 0.0, "glare_risk": 1.0, "comfort_ppd": 100.0, "max_dt_pr_k": None,
+                    "warnings": [f"A5 refused this position: {err}"],
+                    "lighting_saved_fraction": {ct: 0.0 for ct in _LIGHT_CONTROLS}}
+        e_in = raw["hourly"]["e_in_lux"]
+        raw = {k: v for k, v in raw.items() if k != "hourly"}
+        raw["lighting_saved_fraction"] = {
+            ct: float(np.mean(1.0 - lighting_power_fraction(e_in, setpoint_lux, ct)[occupied]))
+            for ct in _LIGHT_CONTROLS}
+        return raw
+    return scorer
+
+
+_LAYOUT_CACHE: dict[str, MeasureResult] = {}
+
+
+def _describe_layout(bundle: PropertyBundle, model: BuildingModel, changed: BuildingModel,
+                     before: BaselineResult, options: dict) -> MeasureResult:
+    """The LAYOUT card for the A16 engine: A23 placing desks with the A5 scorer. Scoring a few
+    thousand positions takes seconds, so the card is memoised on the building and the request."""
+    key = hashlib.sha256(json.dumps([bundle.summary.sid, bundle.climate.weather_path, model.model_dump_json(),
+                                     (options or {}).get("desks_requested")]).encode()).hexdigest()
+    if key not in _LAYOUT_CACHE:
+        if len(_LAYOUT_CACHE) >= 64:
+            _LAYOUT_CACHE.pop(next(iter(_LAYOUT_CACHE)))
+        _LAYOUT_CACHE[key] = layout.describe(bundle, model, changed, before, options,
+                                             score_point=_desk_scorer(bundle, model))
+    return _LAYOUT_CACHE[key]
+
+
 def score_desk_positions(bundle: PropertyBundle, model: BuildingModel,
                          desks_requested: int | None = None) -> LayoutResult:
-    """STUB until A23: the example's desk layout."""
-    layout = _measure(bundle.summary.sid, "LAYOUT")
-    if layout is None or layout.layout is None:
-        raise LookupError("A0 stub: this example has no desk layout")
-    return layout.layout
+    """REAL (A23 with the A5 scorer): the scored candidate positions and the recommended desks."""
+    return layout.place_desks(bundle, model, desks_requested, _desk_scorer(bundle, model),
+                              flow=engine.flow_of(bundle.summary)).result
 
 
 _FORMULAS = ["COST-01", "COST-02", "ECO-05", "ECO-06", "ECO-07", "ECO-09", "ECO-10", "ECO-11", "ECO-13",

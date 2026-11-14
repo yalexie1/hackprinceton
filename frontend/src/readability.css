@@ -1,7 +1,16 @@
 /* Readable at ordinary browser zoom, including the dense energy explorer. */
 :root {
   font-size: 18px;
-  --muted: #536149;
+  --text-primary: #23372d;
+  --text-secondary: #45564b;
+  --muted: var(--text-secondary);
+  --plan-green: #19543d;
+  --plan-green-bg: #eaf5ed;
+  --budget-amber: #754500;
+  --budget-amber-bg: #fff2d6;
+  --other-slate: #35465d;
+  --other-slate-bg: #edf1f7;
+  color: var(--text-primary);
 }
 body {
   font-size: 18px;
@@ -49,7 +58,7 @@ small {
   overflow-y: auto;
 }
 .brand > span:last-child > span {
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 0.04em;
   line-height: 1.4;
 }
@@ -58,7 +67,7 @@ small {
 }
 .workspace-label {
   letter-spacing: 0.08em;
-  font-size: 14px;
+  font-size: 16px;
 }
 .nav-item {
   font-size: 17px;
@@ -70,7 +79,7 @@ small {
   min-width: 0;
 }
 .profile small {
-  font-size: 14px;
+  font-size: 16px;
 }
 .sidebar-note p {
   max-width: none;
@@ -91,7 +100,7 @@ small {
   min-height: 40px;
 }
 .mode-notice {
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 0.04em;
   flex-wrap: wrap;
   padding: 10px 0;
@@ -110,7 +119,7 @@ small {
   line-height: 1.7;
 }
 .hero-copy .eyebrow {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
   letter-spacing: 0.08em;
 }
@@ -130,10 +139,10 @@ small {
   font-size: 16px;
 }
 .property-type {
-  font-size: 14px;
+  font-size: 16px;
 }
 .fixture-source {
-  font-size: 15px;
+  font-size: 16px;
   margin: 8px 0;
 }
 .search-box input,
@@ -157,12 +166,12 @@ small {
   z-index: 7;
 }
 .explorer-caption {
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.06em;
   line-height: 1.4;
 }
 .explorer-caption small {
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 0.04em;
   line-height: 1.4;
   max-width: 300px;
@@ -191,7 +200,7 @@ small {
 }
 .scene-bottomline > span,
 .scene-bottomline > small {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
 }
 .scene-bottomline > span {
@@ -206,7 +215,7 @@ small {
 }
 .scene-room-buttons button > span,
 .scene-label {
-  font-size: 14px;
+  font-size: 16px;
 }
 .scene-insight {
   width: 340px;
@@ -225,7 +234,7 @@ small {
   gap: 8px;
 }
 .energy-plan-summary .scene-label {
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 0.06em;
 }
 .energy-plan-summary > strong {
@@ -251,7 +260,7 @@ small {
   font-size: 16px;
 }
 .energy-hover-hint {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
 }
 .energy-findings {
@@ -265,7 +274,7 @@ small {
 }
 .energy-findings > button > span,
 .energy-findings > button > small {
-  font-size: 14px;
+  font-size: 16px;
 }
 .energy-hotspot > span {
   width: 34px;
@@ -289,7 +298,7 @@ small {
   max-height: 510px;
 }
 .energy-tooltip-top {
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 0.05em;
   line-height: 1.5;
 }
@@ -308,7 +317,7 @@ small {
   gap: 18px 14px;
 }
 .energy-tooltip-grid span {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.45;
 }
 .energy-tooltip-grid strong {
@@ -316,16 +325,16 @@ small {
 }
 .energy-tooltip-grid strong small,
 .energy-tooltip-grid > div > small {
-  font-size: 14px;
+  font-size: 16px;
 }
 .energy-design-note,
 .energy-tooltip > p.energy-caveat,
 .energy-tooltip footer {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.65;
 }
 .energy-related button {
-  font-size: 15px;
+  font-size: 16px;
   padding: 10px;
 }
 .energy-idle-card {
@@ -334,7 +343,7 @@ small {
 }
 .energy-idle-card small,
 .energy-idle-card p {
-  font-size: 15px;
+  font-size: 16px;
 }
 .energy-idle-card strong {
   font-size: 27px;
@@ -343,7 +352,7 @@ small {
   height: 580px;
 }
 .house-embedded .view-switch button {
-  font-size: 14px;
+  font-size: 16px;
 }
 .house-embedded .energy-plan-summary {
   top: 85px;
@@ -353,14 +362,14 @@ small {
   font-size: 32px;
 }
 .house-embedded .energy-plan-summary > span:not(.scene-label) {
-  font-size: 14px;
+  font-size: 16px;
 }
 .house-embedded .energy-legend {
   width: 230px;
   bottom: 85px;
 }
 .house-embedded .energy-scope button {
-  font-size: 14px;
+  font-size: 16px;
   padding: 8px;
 }
 .house-embedded .scene-tools {
@@ -372,7 +381,7 @@ small {
 }
 .house-embedded .scene-bottomline > span,
 .house-embedded .scene-bottomline > small {
-  font-size: 14px;
+  font-size: 16px;
 }
 .house-embedded .energy-detail-host {
   bottom: 145px;
@@ -457,10 +466,10 @@ small {
     height: 900px;
   }
   .explorer-caption {
-    font-size: 14px;
+    font-size: 16px;
   }
   .explorer-caption small {
-    font-size: 14px;
+    font-size: 16px;
   }
   .explorer-topbar {
     left: 14px;
@@ -485,7 +494,7 @@ small {
   }
   .energy-plan-summary > span:not(.scene-label),
   .energy-plan-summary > small {
-    font-size: 15px;
+    font-size: 16px;
   }
   .scene-tools {
     top: 185px;
@@ -511,7 +520,7 @@ small {
   .energy-findings > button {
     white-space: normal;
     min-height: 44px;
-    font-size: 15px;
+    font-size: 16px;
     flex-shrink: 0;
   }
   .energy-findings > button > small {
@@ -537,10 +546,10 @@ small {
     font-size: 25px;
   }
   .energy-tooltip-grid span {
-    font-size: 15px;
+    font-size: 16px;
   }
   .energy-tooltip-grid strong small {
-    font-size: 14px;
+    font-size: 16px;
   }
   .scene-bottomline {
     left: 15px;
@@ -552,7 +561,7 @@ small {
   }
   .scene-bottomline > span,
   .scene-bottomline > small {
-    font-size: 14px;
+    font-size: 16px;
   }
   .perspective-strip {
     font-size: 16px;
@@ -574,7 +583,7 @@ small {
     width: 100%;
   }
   .property-type {
-    font-size: 14px;
+    font-size: 16px;
   }
   .property-copy > p,
   .property-meta,
@@ -855,4 +864,474 @@ main svg text {
   font-size: 17px;
   line-height: 1.6;
   color: #48513d;
+}
+
+/* Text uses dark foregrounds; pale colors are reserved for surfaces. */
+body {
+  line-height: 1.65;
+}
+.main-shell main :is(p, li),
+.help-modal li p {
+  font-size: 18px;
+  line-height: 1.75;
+}
+.main-shell main :is(p, small, li, dd, dt, summary),
+.help-modal :is(p, li, .eyebrow) {
+  overflow-wrap: anywhere;
+}
+.main-shell main :is(h2, h3, h4, label, strong) {
+  color: var(--text-primary);
+}
+button:disabled {
+  opacity: 1;
+  color: var(--text-secondary);
+  background-color: #ecefe9;
+  border-color: #cbd3c7;
+}
+button:disabled svg {
+  opacity: 0.7;
+}
+.nav-item:disabled,
+.energy-scope button span {
+  opacity: 1;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #59675d;
+  opacity: 1;
+}
+input,
+select,
+textarea {
+  color: var(--text-primary);
+  font-size: 18px;
+}
+.main-shell
+  main
+  :is(
+    .fineprint,
+    .field-help,
+    .range-value small,
+    .metric > small,
+    .measure-title > small,
+    .measure-saving > small,
+    .chart-labels,
+    .source-badge,
+    .confidence span,
+    .event small,
+    .profile small,
+    .fixture-source
+  ) {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.65;
+}
+.metric > span:first-child {
+  white-space: normal;
+  align-items: flex-start;
+}
+.metric .range-value strong {
+  font-size: clamp(24px, 2.2vw, 32px);
+  letter-spacing: -0.6px;
+}
+.range-value small {
+  white-space: normal;
+}
+.measure-summary {
+  padding: 20px;
+  align-items: flex-start;
+}
+.measure-title {
+  flex: 1;
+}
+.measure-title > span {
+  font-size: 19px;
+  font-weight: 650;
+  align-items: flex-start;
+}
+.measure-saving {
+  max-width: 42%;
+  white-space: normal;
+}
+.measure-saving > strong {
+  font-size: 21px;
+  color: var(--plan-green);
+}
+.measure-saving > small {
+  line-height: 1.6;
+}
+.rank,
+.property-index,
+.energy-findings > button > span {
+  opacity: 1;
+}
+.detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 24px 18px;
+}
+.detail-grid > div > span:first-child {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.detail-grid .range-value strong,
+.detail-grid > div > strong {
+  font-size: 21px;
+}
+.finance-box {
+  background: #eef3fc;
+  border: 1px solid #c3d0e3;
+  padding: 20px;
+}
+.error-message {
+  background: #fcefed;
+  border: 1px solid #dfb4af;
+  color: #8b302c;
+}
+.success-message {
+  color: var(--plan-green);
+}
+.finance-box > strong {
+  display: block;
+  font-size: 19px;
+  line-height: 1.6;
+}
+.financial-guide {
+  background: #f1f5ef;
+  border: 1px solid #ccd6c5;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 18px 0;
+}
+.financial-guide summary {
+  cursor: pointer;
+  font-weight: 650;
+  font-size: 17px;
+}
+.financial-guide dl {
+  margin: 18px 0 0;
+}
+.financial-guide dt {
+  font-weight: 700;
+  margin-top: 18px;
+  font-size: 17px;
+}
+.financial-guide dd {
+  margin: 5px 0 0;
+  font-size: 17px;
+  line-height: 1.75;
+}
+.plan-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  border: 0;
+  padding: 4px;
+  overflow: visible;
+}
+.plan-tabs > .plan-tab {
+  --category-color: var(--plan-green);
+  --category-bg: var(--plan-green-bg);
+  padding: 15px 12px;
+  margin: 0;
+  border: 1px solid #a7bdb0;
+  border-radius: 10px;
+  background: var(--category-bg);
+  color: var(--category-color);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.5;
+  white-space: normal;
+  text-align: left;
+  min-height: 64px;
+  gap: 8px;
+}
+.plan-tabs > .plan-tab.financeable {
+  --category-color: var(--budget-amber);
+  --category-bg: var(--budget-amber-bg);
+  border-color: #d6b87b;
+}
+.plan-tabs > .plan-tab.skipped {
+  --category-color: var(--other-slate);
+  --category-bg: var(--other-slate-bg);
+  border-color: #b8c3d2;
+}
+.plan-tabs > .plan-tab[aria-selected="true"] {
+  border: 2px solid var(--category-color);
+  box-shadow: 0 3px 0 var(--category-color);
+  color: var(--category-color);
+}
+.plan-tabs > .plan-tab:hover {
+  filter: brightness(0.97);
+}
+.plan-tabs > .plan-tab > span {
+  margin-left: auto;
+  background: white;
+  color: var(--category-color);
+  border: 1px solid currentColor;
+  border-radius: 20px;
+  font-size: 16px;
+  min-width: 30px;
+  text-align: center;
+  padding: 2px 7px;
+}
+.category-explanation {
+  border-left: 4px solid var(--plan-green);
+  background: var(--plan-green-bg);
+  padding: 20px;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+.category-explanation.financeable {
+  border-color: var(--budget-amber);
+  background: var(--budget-amber-bg);
+}
+.category-explanation.skipped {
+  border-color: var(--other-slate);
+  background: var(--other-slate-bg);
+}
+.category-explanation h3 {
+  font-size: 21px;
+  margin-bottom: 8px;
+}
+.category-explanation p {
+  color: var(--text-secondary);
+}
+.category-financeable .measure-card {
+  border-left: 4px solid var(--budget-amber);
+}
+.skipped-item {
+  border-left: 4px solid var(--other-slate);
+  padding: 22px;
+}
+.skipped-item > span {
+  font-size: 19px;
+  font-weight: 650;
+}
+.skipped-item > strong {
+  display: inline-block;
+  padding: 5px 10px;
+  background: var(--other-slate-bg);
+  color: var(--other-slate);
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 650;
+  text-transform: none;
+  margin: 12px 0;
+}
+.skipped-item.reason-not_cost_effective > strong {
+  background: #fae9e8;
+  color: #87312d;
+}
+.skipped-item p {
+  color: var(--text-secondary);
+}
+.assumption-body {
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.assumption-body strong {
+  font-size: 23px;
+}
+.assumption > .fineprint {
+  overflow-wrap: anywhere;
+}
+.event-list .event > div {
+  min-width: 0;
+}
+.event-todos li {
+  flex-wrap: wrap;
+}
+.question-card {
+  background: #fff5df;
+  border-color: #d8ba80;
+  padding: 24px;
+}
+.question-card h3 {
+  font-size: 23px;
+  line-height: 1.5;
+}
+.question-card > div {
+  flex-wrap: wrap;
+}
+.question-card p {
+  color: #564c38;
+}
+.help-modal {
+  max-width: 650px;
+}
+.help-modal li strong {
+  font-size: 20px;
+}
+.help-modal .inline-note {
+  font-size: 17px;
+  line-height: 1.75;
+}
+.audit-report {
+  font-size: 18px;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+.audit-report p {
+  margin: 0 0 20px;
+}
+.audit-report :is(h3, h4) {
+  margin: 24px 0 12px;
+  line-height: 1.5;
+  font-size: 21px;
+}
+.audit-report ul,
+.audit-report ol {
+  padding-left: 24px;
+}
+.audit-report li {
+  margin-bottom: 10px;
+}
+.audit-report code {
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+.audit-report .document-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+.audit-report .document-table-wrap td,
+.audit-report .document-table-wrap th {
+  padding: 12px;
+  border-bottom: 1px solid #ccd6c5;
+  text-align: left;
+}
+.energy-plan-summary {
+  background: #fffef6f5;
+  border: 1px solid #c5ccb9;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.energy-legend {
+  background: #fffef6f5;
+  border: 1px solid #c5ccb9;
+  border-radius: 10px;
+  padding: 12px;
+}
+.energy-tooltip {
+  background: #fffef8;
+}
+.energy-tooltip-top {
+  background: #fffef8;
+}
+.energy-tooltip.planned {
+  border-top: 4px solid var(--plan-green);
+}
+.energy-tooltip.opportunity {
+  border-top: 4px solid var(--budget-amber);
+}
+.energy-tooltip.unavailable {
+  border-top: 4px solid var(--other-slate);
+}
+.energy-tooltip.planned .energy-tooltip-top {
+  color: var(--plan-green);
+}
+.energy-tooltip.opportunity .energy-tooltip-top {
+  color: var(--budget-amber);
+}
+.energy-tooltip.unavailable .energy-tooltip-top {
+  color: var(--other-slate);
+}
+.energy-findings > button.unavailable {
+  background: var(--other-slate-bg);
+  color: var(--other-slate);
+}
+.energy-findings > button.opportunity {
+  background: var(--budget-amber-bg);
+  color: var(--budget-amber);
+}
+.energy-findings > button.planned {
+  background: var(--plan-green-bg);
+  color: var(--plan-green);
+}
+.energy-tooltip-grid span,
+.energy-tooltip-grid > div > small {
+  color: var(--text-secondary);
+}
+.energy-tooltip-grid strong {
+  color: var(--text-primary);
+}
+.scene-bottomline {
+  background: #fafaf3f5;
+  border-radius: 8px;
+  padding: 12px;
+}
+@media (max-width: 1050px) {
+  .setup-property {
+    display: block;
+    padding: 18px;
+    margin: 20px 0;
+    background: #eef3e9;
+    border: 1px solid #cbd6c4;
+    border-radius: 10px;
+  }
+  .setup-property > .house-viewer {
+    display: none;
+  }
+  .setup-property h3 {
+    font-size: 21px;
+  }
+  .result-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .result-aside {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .plan-tabs {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .plan-tabs > .plan-tab {
+    min-height: 56px;
+  }
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+  .metric .range-value strong {
+    font-size: 30px;
+  }
+  .measure-summary {
+    flex-wrap: wrap;
+    padding: 18px;
+    gap: 14px;
+  }
+  .measure-title {
+    flex-basis: calc(100% - 68px);
+  }
+  .measure-saving {
+    margin-left: 0;
+    max-width: none;
+    text-align: left;
+    padding-left: 0;
+  }
+  .measure-summary > svg:last-child {
+    margin-left: auto;
+  }
+  .page-title {
+    flex-wrap: wrap;
+  }
+  .page-title > div {
+    min-width: 0;
+    width: 100%;
+  }
+  .page-title .secondary-button {
+    width: 100%;
+    justify-content: center;
+    font-size: 17px;
+  }
+  .energy-detail-host .energy-tooltip {
+    max-height: 76dvh;
+  }
+  .house-viewer .energy-detail-host {
+    max-width: calc(100vw - 24px);
+  }
 }

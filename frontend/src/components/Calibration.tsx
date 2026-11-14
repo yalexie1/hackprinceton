@@ -7,8 +7,8 @@ export default function Calibration({ run }: { run: RunResult }) {
   if (!summary)
     return (
       <p className="inline-note">
-        Uncalibrated estimate: no completed fit to the owner’s utility bills is
-        available.
+        Uncalibrated estimate: these results have not been matched to your
+        utility bills.
       </p>
     );
   return (
@@ -22,8 +22,9 @@ export default function Calibration({ run }: { run: RunResult }) {
           : "Bill fit needs review"}
       </h3>
       <p>
-        The backend compares twelve monthly bills with the model. Bias is
-        simulated use minus billed use; lower fit error means closer agreement.
+        We compare twelve months of bills with the energy model. Bias shows
+        whether the model estimates more or less use than the bills. Fit error
+        measures the overall difference; lower is better.
       </p>
       <div className="calibration-table-wrap">
         <table>

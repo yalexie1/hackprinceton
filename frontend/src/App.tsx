@@ -44,7 +44,7 @@ import {
   demoRun,
   demoStages,
 } from "./lib/fixtures";
-import { download, money, number } from "./lib/format";
+import { auditStageLabel, download, money, number } from "./lib/format";
 import Find from "./components/Find";
 import HouseViewer from "./components/HouseViewer";
 import Tour from "./components/Tour";
@@ -714,14 +714,10 @@ export default function App() {
                   <span className="eyebrow">
                     A PLAN THAT FITS YOUR BUILDING
                   </span>
-                  <h1>
-                    Let’s make
-                    <br />
-                    <em>room for better.</em>
-                  </h1>
+                  <h1>Set up your energy audit.</h1>
                   <p className="section-description">
-                    Tell us what you want to invest. We’ll find the improvements
-                    that fit, and show the assumptions behind every estimate.
+                    Choose your cash budget and your role in the building.
+                    Review the assumptions behind each recommendation.
                   </p>
                   <div className="setup-property">
                     <HouseViewer office={office} embedded />
@@ -854,11 +850,11 @@ export default function App() {
                   <div className="audit-includes">
                     <span>
                       <Check size={15} />
-                      Building energy baseline
+                      Current energy use
                     </span>
                     <span>
                       <Check size={15} />
-                      Prioritized retrofit plan
+                      Recommended improvements
                     </span>
                     <span>
                       <Check size={15} />
@@ -887,15 +883,13 @@ export default function App() {
             <>
               <div className="page-title">
                 <div>
-                  <span className="eyebrow">
-                    THE BIGGER PICTURE, COMING TOGETHER
-                  </span>
+                  <span className="eyebrow">YOUR ENERGY AUDIT</span>
                   <h1>
                     {done
-                      ? "Clarity looks good on you."
+                      ? "Your energy audit is ready."
                       : question
-                        ? "One detail makes a difference."
-                        : "Getting to know your building."}
+                        ? "A question about your building."
+                        : "Analyzing your building."}
                   </h1>
                   <p>
                     {run.property.name} · {money(run.request.budget_usd)} cash
@@ -949,8 +943,7 @@ export default function App() {
                         </span>
                         <div>
                           <small>
-                            {event.stage?.replaceAll("_", " ") ||
-                              event.type.replaceAll("_", " ")}
+                            {auditStageLabel(event.stage || event.type)}
                           </small>
                           <p>
                             {event.message ||
@@ -1034,9 +1027,13 @@ export default function App() {
                             ? approval.measure_ids
                                 .map(
                                   (id) =>
+                                    run.plan?.selected.find(
+                                      (item) => item.measure.measure_id === id,
+                                    )?.measure.title ||
                                     run.measures.find(
                                       (measure) => measure.measure_id === id,
-                                    )?.title || String(id),
+                                    )?.title ||
+                                    String(id),
                                 )
                                 .join(", ")
                             : "Review the scope before approving."}
@@ -1249,8 +1246,8 @@ export default function App() {
                     </span>
                     {demo && (
                       <p className="fineprint">
-                        This report retains the original example’s answers.
-                        Replay choices do not change the saved analysis.
+                        This is a saved example report. Answering replay
+                        questions does not recalculate its numbers.
                       </p>
                     )}
                     <AuditNarrative
@@ -1381,9 +1378,11 @@ export default function App() {
             <div className="inline-note">
               <Info size={17} />
               <span>
-                Demo mode uses invented UI fixtures. Live mode connects to your
-                team’s API. Sponsor service credentials stay on the backend; the
-                browser uses only the domain-scoped Showcase SDK key.
+                Demo mode lets you explore saved examples. Connect API uses the
+                team’s analysis service. Each result labels its property-data
+                source and whether you are viewing a saved replay. Savings are
+                estimates; review the assumptions and confirm costs before
+                starting work.
               </span>
             </div>
             <button

@@ -17,7 +17,10 @@ export default function Geometry({
     run.plan?.selected.find((item) => item.measure.solar)?.measure.solar ||
     run.plan?.financeable.find((m) => m.solar)?.solar ||
     run.measures.find((m) => m.solar)?.solar;
-  const desks = run.measures.find((m) => m.layout)?.layout;
+  const layoutMeasure = run.measures.find(
+    (m) => m.measure_id === "LAYOUT" || m.layout,
+  );
+  const desks = layoutMeasure?.layout;
   const [roofView, setRoofView] = useState<RoofView | null>(null);
   const [roofError, setRoofError] = useState("");
   const [imageFailed, setImageFailed] = useState(false);
@@ -90,14 +93,24 @@ export default function Geometry({
       <div className="empty-state">
         <Sun />
         <h3>
-          {layout ? "No workspace candidates yet" : "No roof geometry yet"}
+          {layout
+            ? layoutMeasure && !layoutMeasure.applicable
+              ? "Desk placement cannot be assessed"
+              : "No workspace candidates yet"
+            : "No roof geometry yet"}
         </h3>
         <p>
-          The analysis will provide{" "}
-          {layout
-            ? "scored desk positions"
-            : "roof planes and panel placements"}{" "}
-          when available for this property.
+          {layout && layoutMeasure?.not_applicable_reason ? (
+            layoutMeasure.not_applicable_reason
+          ) : (
+            <>
+              The analysis will provide{" "}
+              {layout
+                ? "scored desk positions"
+                : "roof planes and panel placements"}{" "}
+              when available for this property.
+            </>
+          )}
         </p>
       </div>
     );
@@ -161,7 +174,7 @@ export default function Geometry({
                 checked={showDetections}
                 onChange={(event) => setShowDetections(event.target.checked)}
               />
-              Detection boxes
+              Detected roof features
             </label>
           )}
           {roofView && (
@@ -313,7 +326,7 @@ export default function Geometry({
                     width="24"
                     height="16"
                     rx="3"
-                    fill={selected === i ? "#234d3d" : "#799973"}
+                    fill={selected === i ? "#174b35" : "#486653"}
                   />
                   {(point.recommended || selected === i) && (
                     <text
@@ -388,10 +401,10 @@ export default function Geometry({
             fill="none"
             strokeWidth="2"
           />
-          <text x="626" y="37" textAnchor="middle" fontSize="11" fill="#64735d">
+          <text x="626" y="37" textAnchor="middle" fontSize="16" fill="#344c3d">
             {layout ? "+y" : "N"}
           </text>
-          <text x="28" y="405" fill="#64735d" fontSize="11">
+          <text x="28" y="405" fill="#344c3d" fontSize="16">
             {demo
               ? "Illustrative geometry · not to scale"
               : layout
@@ -405,8 +418,8 @@ export default function Geometry({
           <summary>Inspect {detections.length} roof detections</summary>
           <p>
             Boxes locate findings; their area is not the detected roof area.
-            Each mask area below comes directly from the data source;
-            overlapping masks are not added together.
+            Each feature’s outlined area comes directly from the data source.
+            Overlapping areas are not added together.
           </p>
           <ul>
             {detections.map((detection, i) => (
@@ -414,8 +427,8 @@ export default function Geometry({
                 {detection.label} · {number(detection.confidence * 100)}%
                 confidence ·{" "}
                 {detection.mask_area_m2 == null
-                  ? "mask area unavailable"
-                  : `${number(detection.mask_area_m2, 1)} m² mask area`}
+                  ? "outlined area unavailable"
+                  : `${number(detection.mask_area_m2, 1)} m² outlined area`}
               </li>
             ))}
           </ul>
@@ -438,7 +451,7 @@ export default function Geometry({
             </strong>
           </div>
           <div>
-            <span>Daylight autonomy at 300 lux</span>
+            <span>Time with enough daylight (300 lux)</span>
             <strong>
               {number(current.daylight * 100, 1)}% of occupied hours
             </strong>
@@ -450,7 +463,7 @@ export default function Geometry({
             </strong>
           </div>
           <div>
-            <span>Comfort PPD</span>
+            <span>Predicted occupants uncomfortable (PPD)</span>
             <strong>{number(current.comfort_ppd, 1)}%</strong>
           </div>
           <div>
@@ -480,7 +493,7 @@ export default function Geometry({
                 <small>{ranged(solar.annual_kwh)} kWh</small>
               </div>
               <div>
-                <span>Self-consumption</span>
+                <span>Solar energy used in the building</span>
                 <strong>
                   {solar.self_consumption_fraction == null
                     ? "Unknown"

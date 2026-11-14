@@ -9,6 +9,27 @@ export const number = (n: number, digits = 0) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: digits }).format(n);
 export const ranged = (r: Ranged, currency = false) =>
   `${currency ? money(r.low) : number(r.low, 2)}–${currency ? money(r.high) : number(r.high, 2)}`;
+export function auditStageLabel(stage: string) {
+  const labels: Record<string, string> = {
+    S1: "Find the property",
+    S2: "Gather building data",
+    S3: "Review building images",
+    S4: "Build the energy model",
+    S5: "Estimate current energy use",
+    S6: "Evaluate improvements",
+    S7: "Build your plan",
+    S8: "Explain the findings",
+    S9: "Prepare documents",
+    fallback: "Data source note",
+    error: "Issue to review",
+    todo: "Audit tasks",
+    done: "Audit complete",
+    question: "Your input is needed",
+    tool_call: "Analysis in progress",
+    partial_result: "New findings",
+  };
+  return labels[stage] || stage.replaceAll("_", " ");
+}
 export function download(name: string, text: string, type = "text/markdown") {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const link = document.createElement("a");

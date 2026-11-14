@@ -195,10 +195,10 @@ export default function HouseViewer({
       {status === "unavailable" && (
         <div className="house-fallback">
           <Box size={40} />
-          <strong>A different perspective awaits.</strong>
+          <strong>3D view unavailable</strong>
           <p>
-            3D needs WebGL in your browser. You can still explore every property
-            and energy plan below.
+            The 3D view is unavailable in this browser. You can still explore
+            every property and energy plan below.
           </p>
         </div>
       )}

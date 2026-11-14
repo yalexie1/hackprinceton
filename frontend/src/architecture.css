@@ -72,7 +72,7 @@ html {
   margin-bottom: 18px;
   font-size: 16px;
   letter-spacing: 1.65px;
-  color: #7a816c;
+  color: var(--text-secondary);
 }
 .hero-copy h1 {
   font-family: Georgia, "Times New Roman", serif;
@@ -84,7 +84,7 @@ html {
 .hero-copy h1 em {
   font-size: inherit;
   letter-spacing: -2.5px;
-  color: #778163;
+  color: var(--text-secondary);
   font-weight: 400;
 }
 .hero-intro {
@@ -95,7 +95,7 @@ html {
 .hero-intro p {
   font-size: 16px;
   line-height: 1.9;
-  color: #7a7f72;
+  color: var(--text-secondary);
 }
 .hero-property-link {
   display: inline-flex;
@@ -108,7 +108,7 @@ html {
   padding-bottom: 7px;
 }
 .hero-property-link:hover {
-  color: #78835e;
+  color: var(--text-secondary);
 }
 .house-viewer {
   position: relative;
@@ -185,7 +185,7 @@ html {
   font-size: 16px;
   font-weight: 400;
   letter-spacing: 1.3px;
-  color: #8c9181;
+  color: var(--text-secondary);
 }
 .view-switch {
   pointer-events: auto;
@@ -220,7 +220,7 @@ html {
   left: 28px;
   top: 96px;
   text-align: center;
-  color: #869076;
+  color: var(--text-secondary);
   pointer-events: none;
 }
 .scene-compass > span {
@@ -255,7 +255,7 @@ html {
   display: grid;
   place-items: center;
   border-radius: 3px;
-  color: #5c6b4b;
+  color: var(--text-secondary);
 }
 .scene-tools button:hover,
 .scene-tools button[aria-pressed="true"] {
@@ -276,7 +276,7 @@ html {
   display: block;
   font-size: 16px;
   letter-spacing: 1.4px;
-  color: #7b856b;
+  color: var(--text-secondary);
   margin-bottom: 9px;
 }
 .scene-room-buttons {
@@ -296,13 +296,13 @@ html {
   display: flex;
   gap: 9px;
   align-items: center;
-  color: #59694a;
+  color: var(--text-secondary);
   backdrop-filter: blur(10px);
   transition: background 0.2s;
 }
 .scene-room-buttons button > span {
   font-size: 16px;
-  color: #99a18b;
+  color: var(--text-secondary);
 }
 .scene-room-buttons button > svg {
   margin-left: auto;
@@ -334,14 +334,14 @@ html {
   flex-shrink: 0;
   background: #edf0df;
   border-radius: 50%;
-  color: #7b8855;
+  color: var(--text-secondary);
 }
 .scene-insight small {
   display: block;
   font-size: 16px;
   line-height: 1.6;
   letter-spacing: 1px;
-  color: #92987f;
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 .scene-insight strong {
@@ -356,7 +356,7 @@ html {
   font-size: 16px;
   line-height: 1.75;
   margin-top: 8px;
-  color: #858b78;
+  color: var(--text-secondary);
 }
 .scene-insight.is-selected {
   border-color: #cad3b6;
@@ -371,7 +371,7 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #89917a;
+  color: var(--text-secondary);
   pointer-events: none;
 }
 .scene-bottomline > span {
@@ -408,7 +408,7 @@ html {
   justify-content: center;
   align-items: center;
   gap: 15px;
-  color: #7c8967;
+  color: var(--text-secondary);
   font-size: 16px;
   pointer-events: none;
 }
@@ -445,12 +445,12 @@ html {
   gap: 15px;
   padding: 20px 2px;
   font-size: 16px;
-  color: #818975;
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--line);
 }
 .strip-number {
   margin-right: 10px;
-  color: #a0a58f;
+  color: var(--text-secondary);
   font-family: Georgia, serif;
   font-size: 16px;
   font-style: italic;
@@ -493,7 +493,7 @@ html {
   font-size: 23px;
 }
 .property-index {
-  color: #7d8b6b;
+  color: var(--text-secondary);
 }
 .property-type {
   background: #fafaf1df;
@@ -878,7 +878,7 @@ html {
   flex-direction: column;
   gap: 7px;
   max-width: 235px;
-  color: #657156;
+  color: var(--text-secondary);
 }
 .energy-plan-summary .scene-label {
   font-size: 16px;
@@ -902,7 +902,7 @@ html {
   font-family: "DM Sans", sans-serif;
   font-size: 16px;
   letter-spacing: 0;
-  color: #8b927f;
+  color: var(--text-secondary);
 }
 .energy-plan-summary > span:not(.scene-label) {
   font-size: 16px;
@@ -910,7 +910,7 @@ html {
 }
 .energy-plan-summary > small {
   font-size: 16px;
-  color: #929782;
+  color: var(--text-secondary);
 }
 .energy-legend {
   position: absolute;
@@ -947,7 +947,7 @@ html {
 }
 .energy-hover-hint {
   font-size: 16px;
-  color: #7c8869;
+  color: var(--text-secondary);
   display: flex;
   gap: 5px;
   align-items: center;
@@ -973,7 +973,7 @@ html {
   border-radius: 3px;
   text-align: left;
   font-size: 16px;
-  color: #66764f;
+  color: var(--text-secondary);
 }
 .energy-findings > button > span {
   font-size: 16px;
@@ -995,7 +995,7 @@ html {
   background: #bda468;
 }
 .energy-findings > button.unavailable {
-  color: #969884;
+  color: var(--text-secondary);
 }
 .energy-findings > button.unavailable > i {
   background: #afb1a2;
@@ -1021,7 +1021,7 @@ html {
   border-radius: 18px;
   background: #f9fcf0ee;
   box-shadow: 0 3px 16px #31431e24;
-  color: #4f6d34;
+  color: var(--text-secondary);
   white-space: nowrap;
   will-change: transform;
 }
@@ -1081,7 +1081,7 @@ html {
   font-size: 16px;
   font-weight: 650;
   letter-spacing: 1.2px;
-  color: #6d854c;
+  color: var(--text-secondary);
   margin-bottom: 9px;
 }
 .energy-tooltip-top button {
@@ -1097,10 +1097,10 @@ html {
   border-color: #d2c59f;
 }
 .energy-tooltip.opportunity .energy-tooltip-top {
-  color: #a18848;
+  color: var(--text-secondary);
 }
 .energy-tooltip.unavailable .energy-tooltip-top {
-  color: #90947b;
+  color: var(--text-secondary);
 }
 .energy-tooltip h3 {
   font-family: Georgia, serif;
@@ -1112,7 +1112,7 @@ html {
 .energy-tooltip > p {
   font-size: 16px;
   line-height: 1.7;
-  color: #7e8771;
+  color: var(--text-secondary);
   margin-top: 10px;
 }
 .energy-tooltip-grid {
@@ -1131,7 +1131,7 @@ html {
 }
 .energy-tooltip-grid span {
   font-size: 16px;
-  color: #8c947c;
+  color: var(--text-secondary);
 }
 .energy-tooltip-grid strong {
   font-size: 19px;
@@ -1146,7 +1146,7 @@ html {
 }
 .energy-tooltip-grid > div > small {
   font-size: 16px;
-  color: #929a84;
+  color: var(--text-secondary);
 }
 .energy-design-note {
   font-size: 16px;
@@ -1154,19 +1154,19 @@ html {
   padding: 9px;
   line-height: 1.6;
   border-radius: 3px;
-  color: #748260;
+  color: var(--text-secondary);
 }
 .energy-tooltip > p.energy-caveat {
   font-size: 16px;
   padding-left: 8px;
   border-left: 2px solid #ced8b9;
   line-height: 1.7;
-  color: #8c947d;
+  color: var(--text-secondary);
 }
 .energy-tooltip footer {
   font-size: 16px;
   line-height: 1.7;
-  color: #9da48e;
+  color: var(--text-secondary);
   margin-top: 12px;
 }
 .energy-related {
@@ -1198,7 +1198,7 @@ html {
   display: flex;
   gap: 12px;
   border-radius: 5px;
-  color: #778966;
+  color: var(--text-secondary);
   box-shadow: 0 5px 20px #34422207;
 }
 .energy-idle-card > svg {
@@ -1209,7 +1209,7 @@ html {
   font-size: 16px;
   letter-spacing: 0.8px;
   display: block;
-  color: #9aa38a;
+  color: var(--text-secondary);
   margin-bottom: 7px;
 }
 .energy-idle-card strong {
@@ -1224,7 +1224,7 @@ html {
 .energy-idle-card p {
   font-size: 16px;
   line-height: 1.75;
-  color: #8e9880;
+  color: var(--text-secondary);
   margin-top: 8px;
 }
 .house-embedded.has-energy-plan {

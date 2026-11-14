@@ -13,9 +13,20 @@ import {
   Thermometer,
   Wind,
 } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { MeasureResult, Ranged, RunResult } from "../lib/types";
 import { money, number, ranged } from "../lib/format";
+const reasonLabels: Record<string, string> = {
+  not_cost_effective: "Not cost-effective",
+  over_budget: "Does not fit the cash budget",
+  not_applicable: "Does not apply to this building",
+  no_savings: "No energy savings found",
+  no_cost_data: "Cost estimate unavailable",
+  already_done: "Already installed",
+  role: "Outside your permissions",
+  feasibility: "Needs further checks",
+  dependency: "Another upgrade is needed first",
+};
 export function Range({
   value,
   currency = false,
@@ -32,7 +43,7 @@ export function Range({
         {suffix}
       </strong>
       <small>
-        {ranged(value, currency)}
+        Estimated range: {ranged(value, currency)}
         {suffix}
       </small>
     </span>
@@ -116,7 +127,7 @@ export function MeasureCard({
                   <Range value={f.installed_cost_usd} currency />
                 </div>
                 <div>
-                  <span>Net upfront cash</span>
+                  <span>Cash needed upfront</span>
                   <Range value={f.net_upfront_usd} currency />
                 </div>
                 <div>
@@ -132,7 +143,7 @@ export function MeasureCard({
                   )}
                 </div>
                 <div>
-                  <span>Net present value</span>
+                  <span>Lifetime financial value (NPV)</span>
                   <Range value={f.npv_usd} currency />
                 </div>
                 <div>
@@ -148,13 +159,13 @@ export function MeasureCard({
                   <strong>{f.useful_life_years} years</strong>
                 </div>
                 <div>
-                  <span>Savings-to-investment ratio</span>
+                  <span>Savings compared with cost (SIR)</span>
                   <strong>
                     {f.sir == null ? "Not available" : number(f.sir, 2)}
                   </strong>
                 </div>
                 <div>
-                  <span>Internal rate of return</span>
+                  <span>Internal rate of return (IRR)</span>
                   <strong>
                     {f.irr == null
                       ? "Not available"
@@ -162,10 +173,47 @@ export function MeasureCard({
                   </strong>
                 </div>
                 <div>
-                  <span>Annual O&amp;M change</span>
+                  <span>Yearly maintenance cost change</span>
                   <strong>{money(f.annual_om_change_usd)}</strong>
                 </div>
               </div>
+              <details className="financial-guide">
+                <summary>What do these financial terms mean?</summary>
+                <dl>
+                  <dt>Simple payback</dt>
+                  <dd>
+                    How long estimated yearly savings take to recover the
+                    upfront cost.
+                  </dd>
+                  <dt>Discounted payback</dt>
+                  <dd>
+                    Payback after allowing for the lower value of money received
+                    in the future.
+                  </dd>
+                  <dt>Net present value (NPV)</dt>
+                  <dd>
+                    Future savings minus costs, expressed in today’s dollars.
+                    Positive values indicate a financial benefit under the
+                    stated assumptions.
+                  </dd>
+                  <dt>Savings-to-investment ratio (SIR)</dt>
+                  <dd>
+                    Discounted lifetime savings compared with the investment. A
+                    ratio of at least 1 passes the plan’s cost-effectiveness
+                    test.
+                  </dd>
+                  <dt>Internal rate of return (IRR)</dt>
+                  <dd>
+                    The discount rate at which the project’s net present value
+                    is zero.
+                  </dd>
+                  <dt>Estimated range</dt>
+                  <dd>
+                    The low and high estimates supplied by the analysis. These
+                    are estimates, not contractor quotes or guaranteed savings.
+                  </dd>
+                </dl>
+              </details>
               {measure.savings && (
                 <div className="detail-grid">
                   <div>
@@ -191,9 +239,9 @@ export function MeasureCard({
               <p className="fineprint">
                 {f.analysis_period_years}-year analysis ·{" "}
                 {number(f.discount_rate * 100, 1)}% discount rate · electricity
-                escalation {number(f.electricity_escalation * 100, 1)}% · gas
-                escalation {number(f.gas_escalation * 100, 1)}%. Cost source:{" "}
-                {f.cost_source}.
+                price increase {number(f.electricity_escalation * 100, 1)}% per
+                year · gas price increase {number(f.gas_escalation * 100, 1)}%
+                per year. Cost source: {f.cost_source}.
               </p>
               <div className="incentives">
                 <strong>Incentives</strong>
@@ -225,27 +273,31 @@ export function MeasureCard({
                 .map((s, i) => (
                   <div className="finance-box" key={i}>
                     <strong>
-                      C-PACE scenario ·{" "}
+                      Property-tax financing (C-PACE) ·{" "}
                       {s.eligible
                         ? "Eligible per analysis"
-                        : "Eligibility unconfirmed"}
+                        : "Eligibility not established"}
                     </strong>
+                    <p className="field-help">
+                      Financing is repaid through a property-tax assessment.
+                      Availability and eligibility must be confirmed.
+                    </p>
                     <p>
                       {money(s.financed_usd)} financed ·{" "}
                       {s.rate == null
                         ? "Rate unavailable"
                         : `${number(s.rate * 100, 2)}%`}{" "}
                       · {s.term_years ?? "—"} years ·{" "}
-                      {money(s.annual_payment_usd)} annual assessment
+                      {money(s.annual_payment_usd)} yearly financing payment
                     </p>
                     <p>
-                      First-year net cash flow:{" "}
+                      First-year savings after financing payments:{" "}
                       {money(s.net_cashflow_year1_usd.expected)} (
                       {ranged(s.net_cashflow_year1_usd, true)})
                     </p>
                     {s.program_sir != null && (
                       <p>
-                        Program savings-to-investment ratio:{" "}
+                        Financing programme’s savings ratio:{" "}
                         {number(s.program_sir, 2)}
                       </p>
                     )}
@@ -317,6 +369,7 @@ export default function PlanView({
   const [tab, setTab] = useState<"selected" | "financeable" | "skipped">(
     "selected",
   );
+  const tabsId = useId();
   if (!plan)
     return (
       <div className="empty-state">
@@ -326,7 +379,15 @@ export default function PlanView({
       </div>
     );
   const skipped = [
-    ...plan.skipped,
+    ...plan.skipped.filter(
+      (item) =>
+        !(
+          item.reason === "over_budget" &&
+          plan.financeable.some(
+            (measure) => measure.measure_id === item.measure_id,
+          )
+        ),
+    ),
     ...run.measures
       .filter(
         (m) =>
@@ -380,41 +441,97 @@ export default function PlanView({
       <section className="recommendations">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">YOUR NEXT CHAPTER</span>
-            <h2>A smarter use of your budget.</h2>
+            <span className="eyebrow">YOUR IMPROVEMENT OPTIONS</span>
+            <h2>Choose the right next steps.</h2>
           </div>
           <span className="count-pill">{plan.selected.length} upgrades</span>
         </div>
         <p className="section-description">
           Improve operations first, then reduce loads, upgrade equipment and
           size solar for the energy still needed. The backend ranks each step by
-          cost-effectiveness and only recommends measures with a
-          savings-to-investment ratio of at least 1.
+          value for money. An upgrade must pass the savings-versus-cost test to
+          be recommended.
         </p>
         <div
-          className="tabs"
+          className="tabs plan-tabs"
           role="tablist"
           aria-label="Retrofit recommendations"
         >
           {(["selected", "financeable", "skipped"] as const).map((t) => (
             <button
               key={t}
+              id={`${tabsId}-${t}`}
+              className={`plan-tab ${t}`}
+              data-category={t}
               role="tab"
               aria-selected={tab === t}
+              aria-controls={`${tabsId}-panel`}
+              tabIndex={tab === t ? 0 : -1}
               onClick={() => setTab(t)}
+              onKeyDown={(event) => {
+                const order = ["selected", "financeable", "skipped"] as const;
+                const index = order.indexOf(t);
+                const next =
+                  event.key === "ArrowRight"
+                    ? order[(index + 1) % 3]
+                    : event.key === "ArrowLeft"
+                      ? order[(index + 2) % 3]
+                      : event.key === "Home"
+                        ? order[0]
+                        : event.key === "End"
+                          ? order[2]
+                          : null;
+                if (!next) return;
+                event.preventDefault();
+                setTab(next);
+                event.currentTarget.parentElement
+                  ?.querySelector<HTMLButtonElement>(
+                    `[data-category="${next}"]`,
+                  )
+                  ?.focus();
+              }}
             >
+              {t === "selected" ? (
+                <Check size={20} />
+              ) : t === "financeable" ? (
+                <Coins size={20} />
+              ) : (
+                <Info size={20} />
+              )}
               {t === "selected"
                 ? plan.total_upfront_usd.expected > plan.budget_usd
                   ? "Selected upgrades"
-                  : "Within budget"
+                  : "In your plan"
                 : t === "financeable"
-                  ? "Beyond your budget"
-                  : "Not selected"}
+                  ? "Needs more budget"
+                  : "Other findings"}
               <span>{t === "skipped" ? skipped.length : plan[t].length}</span>
             </button>
           ))}
         </div>
-        <div className="measure-list" role="tabpanel">
+        <div
+          className={`measure-list category-${tab}`}
+          role="tabpanel"
+          id={`${tabsId}-panel`}
+          aria-labelledby={`${tabsId}-${tab}`}
+          tabIndex={0}
+        >
+          <div className={`category-explanation ${tab}`}>
+            <h3>
+              {tab === "selected"
+                ? "Included in your current plan"
+                : tab === "financeable"
+                  ? "Options beyond the current cash budget"
+                  : "Why other upgrades were left out"}
+            </h3>
+            <p>
+              {tab === "selected"
+                ? "These upgrades contribute to the savings totals above. Expand an upgrade to see its costs, estimated savings and supporting evidence."
+                : tab === "financeable"
+                  ? "These upgrades pass the analysis’s cost-effectiveness test but are outside your current plan. Their savings are not included in your totals. More budget or suitable financing may make them possible."
+                  : "These findings may not apply to your building, may depend on another upgrade, or may not justify their cost. Each item shows the reason from the analysis."}
+            </p>
+          </div>
           {tab === "selected" &&
             plan.selected.map((item) => (
               <MeasureCard
@@ -427,8 +544,8 @@ export default function PlanView({
           {tab === "financeable" && (
             <>
               <p className="fineprint">
-                Positive-savings measures outside the current plan. Financing
-                requires separate eligibility checks.
+                Financing requires separate checks. Being listed here does not
+                mean a loan or C-PACE programme is available.
               </p>
               {plan.financeable.map((m) => (
                 <MeasureCard key={m.measure_id} measure={m} onFocus={onFocus} />
@@ -437,16 +554,15 @@ export default function PlanView({
           )}
           {tab === "skipped" &&
             skipped.map((item, i) => (
-              <div className="skipped-item" key={i}>
+              <div className={`skipped-item reason-${item.reason}`} key={i}>
                 <span>
                   <ChevronRight size={16} />
                   {run.measures.find((m) => m.measure_id === item.measure_id)
                     ?.title || item.measure_id}
                 </span>
                 <strong>
-                  {item.reason === "not_cost_effective"
-                    ? "Not cost-effective"
-                    : item.reason.replaceAll("_", " ")}
+                  {reasonLabels[item.reason] ||
+                    item.reason.replaceAll("_", " ")}
                 </strong>
                 <p>{item.detail}</p>
               </div>
@@ -454,7 +570,13 @@ export default function PlanView({
           {(tab === "skipped" ? skipped.length : plan[tab].length) === 0 && (
             <div className="empty-state small">
               <Check />
-              <p>No measures in this category.</p>
+              <p>
+                {tab === "selected"
+                  ? plan.financeable.length
+                    ? "No upgrades are included in the current plan. Check Needs more budget for additional options."
+                    : "No upgrades are included in the current plan. Open Other findings to see why they were left out."
+                  : "No upgrades in this category."}
+              </p>
             </div>
           )}
         </div>

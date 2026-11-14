@@ -43,9 +43,9 @@ export function UpgradeDetails({
       <div className="energy-tooltip-top">
         <span>
           {status === "planned"
-            ? "IN YOUR PROPOSED PLAN"
+            ? "IN YOUR PLAN"
             : status === "opportunity"
-              ? "ADDITIONAL OPPORTUNITY"
+              ? "ADDITIONAL OPTION"
               : "NOT INCLUDED"}
         </span>
         <button aria-label="Close upgrade details" onClick={onClose}>
@@ -132,8 +132,8 @@ export function UpgradeDetails({
       <footer>
         {status === "planned"
           ? "Savings reflect this upgrade’s place in the plan."
-          : "Standalone finding. Not added to your plan’s savings."}{" "}
-        Concept location on an illustrative model.
+          : "Evaluated separately. Its savings are not added to your plan’s totals."}{" "}
+        Location shown on an illustrative model.
       </footer>
     </section>
   );
@@ -367,7 +367,7 @@ export default function EnergyOverlay({
           <Leaf size={21} />
           <div>
             <small>THE IMPROVEMENTS, EXPLAINED</small>
-            <strong>Every upgrade has a story.</strong>
+            <strong>Inspect an improvement.</strong>
             <p>
               Hover the solar panels or lighting to see what changes — and what
               it could save.

@@ -273,36 +273,6 @@ def test_roof_check_keeps_the_whole_roof_mask_on_a_rotated_footprint():
     assert "2 roof detections on the building" in " ".join(res.notes)
 
 
-def _flat_box(mask_area):
-    fp = _rect(-30.0, -20.0, 30.0, 20.0)                     # 2,400 m2 flat commercial roof
-    dets = [_det("roof", -30.5, -20.5, 30.5, 20.5, mask_area=mask_area)]
-    return VexcelData(structures=[VexcelStructure(primary=True, footprint_wkt=fp, footprint_area_m2=2400.0,
-                                                  attributes={"roof-characteristics.shape.value": "flat"})],
-                      detections=dets)
-
-
-@pytest.mark.parametrize("share,agrees", [(0.53, True), (0.47, True), (0.78, True), (0.30, False),
-                                          (1.10, True), (1.20, False)])
-def test_flat_roof_mask_is_a_lower_bound(share, agrees):
-    # D13 live LA offices: masks cover 0.47 to 0.78 of big flat roofs; under 0.40 or over
-    # +15 % is still a disagreement.
-    vex = _flat_box(2400.0 * share)
-    res = refine_with_masks(build_parametric_roof(vex).planes, vex)
-    assert res.roof_check.lower_bound is True
-    assert res.roof_check.agrees is agrees
-    assert any("tolerance" in w or "for a flat roof" in w for w in res.warnings) is (not agrees)
-    if agrees and share < 0.85:
-        assert any("lower bound" in n for n in res.notes)
-
-
-def test_pitched_roof_keeps_the_symmetric_tolerance():
-    dets = [_det("roof", -9.0, -6.0, 9.0, 6.0, mask_area=0.6 * 190.4)]
-    vex = _house(detections=dets)
-    vex.structures[0].footprint_area_m2 = 190.4
-    res = refine_with_masks(build_parametric_roof(vex).planes, vex)
-    assert res.roof_check.lower_bound is False and res.roof_check.agrees is False
-
-
 def test_inputs_are_not_mutated():
     tree = _det("tree", 6.5, -8.0, 10.5, -4.0, mask_area=9.6)
     vex = _house(detections=[tree])

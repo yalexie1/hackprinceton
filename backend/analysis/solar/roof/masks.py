@@ -40,18 +40,13 @@ from shapely.geometry.base import BaseGeometry
 
 from backend.schema import Assumption, EvidenceRef, Ranged, RoofPlane, VexcelData, VexcelDetection
 
-from .planes import SHAPE_KEY, _Frame, _primary, _wkt
+from .planes import _Frame, _primary, _wkt
 
 # --- constants destined for backend/config.py (kept local until A0 wires them) ---
 # Largest roof mask vs footprint: relative disagreement above which a warning is
 # raised. D8 saw 5 % on the golden house; 15 % leaves room for eaves and for the
 # mask missing a wing. Engineering judgment [U].
 ROOF_AREA_TOLERANCE = 0.15
-# On a flat roof the largest mask is a lower bound: on large flat commercial roofs
-# (rooftop equipment, parapets, setbacks) D10/D13 live bundles gave 0.47 to 0.78 of
-# the footprint, against 0.95 on the golden house. Below this share a flat-roof mask
-# is still flagged (a merged complex gave 0.03). Engineering judgment [U].
-FLAT_ROOF_MIN_MASK_SHARE = 0.40
 # A roof detection belongs to the target building when at least this share of its
 # mask can lie inside the footprint (keeps the garage out). With only a box and a
 # mask area, the share is the box's overlap with the footprint over the mask area:
@@ -242,7 +237,6 @@ class RoofAreaCheck:
     ratio_to_footprint: Optional[float]
     tolerance: float = ROOF_AREA_TOLERANCE
     agrees: Optional[bool] = None
-    lower_bound: bool = False     # flat roof: the mask may cover well under the footprint
     detection_index: Optional[int] = None
     basis: Optional[str] = None
 
@@ -319,24 +313,13 @@ def refine_with_masks(planes: Sequence[RoofPlane], vexcel: VexcelData,
         check.basis = best.basis
         ref = fp_area or plan_total
         if ref and ref > 0:
-            ratio = best.area_m2 / ref
-            check.ratio_to_footprint = round(ratio, 4)
-            flat = str(((s.attributes or {}) if s else {}).get(SHAPE_KEY, "")).strip().lower() == "flat"
-            check.lower_bound = flat
-            if flat:
-                check.agrees = FLAT_ROOF_MIN_MASK_SHARE <= ratio <= 1.0 + ROOF_AREA_TOLERANCE
-                if check.agrees and ratio < 1.0 - ROOF_AREA_TOLERANCE:
-                    notes.append(f"flat roof: largest roof mask covers {100 * ratio:.0f} % of the footprint, "
-                                 "read as a lower bound (equipment and setbacks are left out of the mask)")
-            else:
-                check.agrees = abs(ratio - 1.0) <= ROOF_AREA_TOLERANCE
+            check.ratio_to_footprint = round(best.area_m2 / ref, 4)
+            check.agrees = abs(best.area_m2 / ref - 1.0) <= ROOF_AREA_TOLERANCE
             if not check.agrees:
-                limit = (f"outside {100 * FLAT_ROOF_MIN_MASK_SHARE:.0f} % to {100 * (1 + ROOF_AREA_TOLERANCE):.0f} % "
-                         "of the footprint for a flat roof") if flat else \
-                    f"beyond the {100 * ROOF_AREA_TOLERANCE:.0f} % tolerance"
                 warnings.append(
                     f"largest SAM 3 roof mask {best.area_m2:.1f} m2 vs footprint {ref:.1f} m2 "
-                    f"({100 * (ratio - 1):+.0f} %), {limit}: check the footprint and the roof planes")
+                    f"({100 * (best.area_m2 / ref - 1):+.0f} %), beyond the "
+                    f"{100 * ROOF_AREA_TOLERANCE:.0f} % tolerance: check the footprint and the roof planes")
         if best.basis == "bbox":
             warnings.append("roof mask area unknown (no mask_area_m2 or mask_wkt): box area used, "
                             "which overstates the roof by up to 2x")

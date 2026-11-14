@@ -215,3 +215,42 @@ def test_the_measures_engine_baseline_is_not_benchmarked():
     measures engine simulates; a warning per variant would flood the result."""
     bundle, model, _ = baseline_of("house")
     assert api._simulate_baseline(bundle, model).warnings == []
+
+
+# ---- the benchmark's climate zone falls back like the rest of the registry (#361) ----
+
+def test_a_bundle_with_no_zone_is_still_benchmarked_from_the_state():
+    """The lead's call. Reading `bundle.climate.climate_zone` directly meant every live bundle -
+    all of which carried None - got `not_checked: no climate zone`, so the only sanity check on
+    the model was off exactly when the numbers were real. The registry has always fallen back on
+    the state; the benchmark now uses the same route."""
+    bundle, request = load("office_houston")
+    pinned = on_the_committed_weather(bundle)
+    off = pinned.model_copy(update={"climate": pinned.climate.model_copy(
+        update={"climate_zone": None})})
+    observed, flags = api.observe_interior(off)
+    model = api.build_building_model(off, observed, flags, request.overrides)
+    baseline = api.run_baseline(off, model)
+
+    assert not any("not benchmarked" in w for w in baseline.warnings), "the check must still run"
+    assert any("Gas use intensity" in w for w in benchmark_warnings(baseline)), \
+        "and still find Houston's gas outside the band"
+
+
+def test_a_zone_taken_from_the_state_is_declared():
+    """A cut chosen from the state is a weaker comparison than one chosen from the building's own
+    weather, and two properties in one state land in the same box. The reader is told."""
+    bundle, request = load("office_houston")
+    pinned = on_the_committed_weather(bundle)
+    off = pinned.model_copy(update={"climate": pinned.climate.model_copy(
+        update={"climate_zone": None})})
+    observed, flags = api.observe_interior(off)
+    model = api.build_building_model(off, observed, flags, request.overrides)
+    said = [w for w in api.run_baseline(off, model).warnings if "benchmark used" in w]
+    assert len(said) == 1 and "state (TX)" in said[0]
+
+
+def test_a_site_with_its_own_zone_is_not_told_the_state_was_used():
+    """The note is about a substitution. A bundle carrying its own zone had none."""
+    _, _, baseline = baseline_of("office_houston")
+    assert not any("benchmark used" in w for w in baseline.warnings)

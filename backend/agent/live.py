@@ -311,7 +311,8 @@ class LiveRun:
             self.files.write("report.md", report)
             try:
                 result = build_result(self.run_id, self.request, self.files, "done")
-                for problem in check_narrative(report, result)[:5]:
+                bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+                for problem in check_narrative(report, result, bundle, result.building_model)[:5]:
                     yield {"type": "error", "stage": "S8", "message": f"check_narrative: {problem}"}
             except ValueError:
                 pass

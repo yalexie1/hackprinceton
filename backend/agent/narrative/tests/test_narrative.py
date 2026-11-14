@@ -48,3 +48,45 @@ def test_years_and_headings_are_not_quantities():
 def test_percent_and_decimals():
     r = run("house")
     assert check_narrative("Rate is 0.31337 of nothing.", r) != []
+
+
+# ---- numbers from the bundle, the building model and the address ----
+
+def bundle(flavor):
+    from backend.schema import PropertyBundle
+    return PropertyBundle.model_validate_json((EX / flavor / "property_bundle.json").read_text())
+
+
+def test_bundle_value_is_accepted_only_when_the_bundle_is_passed():
+    from backend.agent.narrative.narrative import _walk
+    r, b = run("house"), bundle("house")
+    in_result = set(_walk(r.model_dump(mode="json", exclude={"narrative_md"})))
+    only_bundle = next(v for v in sorted(set(_walk(b.model_dump(mode="json"))))
+                       if v not in in_result and v != int(v) and round(v, 2) == v and 0 < v < 1000
+                       and not any(abs(v - w) < 0.005 for w in in_result))
+    text = f"The bundle reports {only_bundle} here."
+    assert check_narrative(text, r) != []
+    assert check_narrative(text, r, b) == []
+
+
+def test_address_numbers_are_accepted():
+    r = run("house")
+    moved = r.model_copy(update={"property": r.property.model_copy(update={"address": "98712 Test St, 90038"})})
+    assert check_narrative("Visit 98712 in 90038.", r) != []
+    assert check_narrative("Visit 98712 in 90038.", moved) == []
+
+
+def test_building_model_value_is_accepted_only_when_the_model_is_passed():
+    r = run("house")
+    model = r.building_model.model_copy(deep=True)
+    a = model.assumptions[0]
+    a.value = a.value.model_copy(update={"low": 123.4, "expected": 123.4, "high": 123.4})
+    r2 = r                                              # the run's own model does not hold 123.4
+    assert check_narrative("The value is 123.4 here.", r2) != []
+    assert check_narrative("The value is 123.4 here.", r2, model=model) == []
+
+
+def test_a_number_in_no_source_still_fails_with_every_source_passed():
+    r, b = run("house"), bundle("house")
+    assert check_narrative("Solar saves 98,765 kWh.", r, b, r.building_model) == [
+        "98,765: no structured result has this value"]

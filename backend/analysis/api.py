@@ -357,9 +357,29 @@ def _simulate_baseline(bundle: PropertyBundle, model: BuildingModel) -> Baseline
 # ---------- S5 Baseline ----------   REAL: A3 -> A2 -> A3, A1 climate
 
 @_with_state
+def calibrate_model(bundle: PropertyBundle, model: BuildingModel, bills: UtilityBills) -> BuildingModel:
+    """REAL (A6, physics 04 MV-06): move the uncertain inputs inside their ranges until the simulated
+    months match the twelve monthly bills (ASHRAE Guideline 14), and return the model to use for every later
+    step, carrying `calibration`. Not calibrated (MV-04 fails) leaves the assumptions as they were."""
+    from backend.analysis.physics.calibration import calibrate_to_bills
+    hours, _, _ = _climate(bundle)
+    token = _FAST.set(True)
+    try:
+        return calibrate_to_bills(bundle, model, bills, _simulate_baseline, set_assumption,
+                                  hours.temp_c).calibrated_model()
+    finally:
+        _FAST.reset(token)
+
+
+@_with_state
 def run_baseline(bundle: PropertyBundle, model: BuildingModel,
                  bills: UtilityBills | None = None) -> BaselineResult:
-    return _simulate_baseline(bundle, model)          # bill calibration is A6 (P2)
+    """REAL. A model that was calibrated to bills (`calibrate_model`) says so in the result."""
+    result = _simulate_baseline(bundle, model)
+    if model.calibration is not None:
+        result = result.model_copy(update={"calibrated_to_bills": model.calibration.calibrated,
+                                           "calibration": model.calibration})
+    return result
 
 
 # ---------- S6 Measures ----------
@@ -818,8 +838,10 @@ def _responsive_plan(bundle: PropertyBundle, base: BuildingModel, request: RunRe
     the model is rebuilt with the moved value as an override (a number collapses its range, SPEC 5.1)."""
     vision = [a for a in base.assumptions if a.source == "vision"]
     by_key = {a.key: a.value for a in base.assumptions}
+    def kept(a: Assumption) -> bool:        # the user's answers, and what the bills calibrated (MV-06)
+        return a.source == "user" or any(e.ref.startswith("bills.") for e in a.evidence)
     user = {a.key: (a.value.expected if isinstance(a.value, Ranged) else a.value)
-            for a in base.assumptions if a.source == "user"}
+            for a in base.assumptions if kept(a)}
 
     def plan(moved: BuildingModel) -> Plan:
         overrides = dict(user)

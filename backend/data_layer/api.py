@@ -35,12 +35,14 @@ behind them, so:
 """
 from __future__ import annotations
 
+import csv
 import json
 import os
 from pathlib import Path
 from typing import Optional
 
 from backend.schema import (
+    ClimateSite,
     FetchRecord,
     PropertyBundle,
     PropertySummary,
@@ -412,6 +414,33 @@ def _with_imagery(sid: str, vexcel: VexcelData) -> tuple[VexcelData, list[FetchR
     return (vexcel.model_copy(update=update) if update else vexcel), notes
 
 
+def _with_climate_zone(climate: ClimateSite, state: Optional[str]) -> tuple[ClimateSite, FetchRecord]:
+    """`climate.climate_zone` derived from the weather year this lane just cached.
+
+    Reads the hourly file back rather than threading the arrays out of `get_climate_site`: the
+    file is the thing every later stage reads anyway, so deriving the zone from it means the zone
+    and the simulation can never disagree about which year they describe.
+    """
+    from backend.data_layer import external as d9
+
+    if climate.climate_zone:
+        return climate, FetchRecord(layer="weather", what="ashrae169/climate-zone", status="ok",
+                                    detail=f"zone {climate.climate_zone} was already supplied")
+    path = Path(climate.weather_path)
+    path = path if path.is_absolute() else _ROOT / path
+    try:
+        with path.open(newline="") as handle:
+            temps = [row["temp_c"] for row in csv.DictReader(handle)]
+    except (OSError, KeyError) as exc:
+        return climate, FetchRecord(layer="weather", what="ashrae169/climate-zone",
+                                    status="missing",
+                                    detail=f"the cached weather file could not be read: {exc}"[:200])
+    zone, record = d9.climate_zone_from_temperatures(temps, state)
+    if zone is None:
+        return climate, record
+    return climate.model_copy(update={"climate_zone": zone}), record
+
+
 def _assemble(sid: str) -> PropertyBundle:
     """Build a bundle from the live sources.
 
@@ -554,6 +583,13 @@ def _assemble(sid: str) -> PropertyBundle:
     if tariff is None:
         raise IncompleteBundle(
             f"{sid}: tariff is a required field and could not be sourced", provenance)
+
+    # D18: the ASHRAE zone, after the state, because the moisture letter comes from it.
+    # Nothing was passing `climate_zone`, so every live bundle carried None while the
+    # committed examples carried 3B, 3B and 2A, and the A31 benchmark reported
+    # `not_checked: no climate zone` on every live run.
+    climate, znote = _with_climate_zone(climate, state)
+    provenance.append(znote)
 
     # Built before the bundle, not inside the constructor: it appends to `provenance`,
     # and relying on left-to-right argument evaluation to get that record into the

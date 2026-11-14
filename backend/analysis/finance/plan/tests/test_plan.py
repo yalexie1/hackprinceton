@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from backend.analysis.finance.plan import (BUDGET_WARNING, CONSENT_WARNING, NO_COST_DETAIL,
+from backend.analysis.finance.plan import (BUDGET_WARNING, CONSENT_WARNING, NO_COST_DETAIL, PriceGroup,
                                            role_allows, select_plan)
-from backend.schema import (EnergyUse, FinancialBreakdown, MeasureResult, Plan, Ranged, RunResult,
-                            ValueUplift)
+from backend.schema import (EnergyUse, FinancialBreakdown, MeasureResult, Plan, PropertyBundle, Ranged,
+                            RunResult, ValueUplift)
 
 EX = Path(__file__).resolve().parents[5] / "specs" / "examples"
 
@@ -181,7 +181,7 @@ def test_an_empty_plan_has_zero_totals():
 class FromRun:
     """Replays the measures of an example run (they were already evaluated and priced)."""
 
-    def __init__(self, run_result, plan):
+    def __init__(self, run_result, plan, bundle):
         # the plan's own copies of the picked measures: a solar design stops at the budget left
         self.by_id = {m.measure_id: m for m in run_result.measures}
         self.by_id.update({i.measure.measure_id: i.measure for i in plan.selected})
@@ -189,6 +189,13 @@ class FromRun:
         self.energy_after = plan.baseline_after
         self.pool = [i.measure.measure_id for i in plan.selected] + [m.measure_id for m in plan.financeable] \
             + [s.measure_id for s in plan.skipped]
+
+        def ranged(key):
+            return next((a.value for a in run_result.building_model.assumptions
+                         if a.key == key and hasattr(a.value, "low")), None)
+        self.price_group = PriceGroup.from_assumptions(
+            bundle.tariff.electricity_usd_per_kwh, bundle.tariff.gas_usd_per_kwh,
+            ranged("tariff.electricity_usd_per_kwh"), ranged("tariff.gas_usd_per_kwh"))
 
     def evaluate(self, mid, state):
         return self.by_id[mid]
@@ -201,18 +208,88 @@ class FromRun:
 
 @pytest.mark.parametrize("flavor,name,role", [("house", "plan.json", "owner_occupier"),
                                               ("house", "plan_tenant.json", "tenant"),
+                                              ("office", "plan.json", "landlord"),
                                               ("office_houston", "plan.json", "landlord")])
 def test_the_example_plans_are_reproduced(flavor, name, role):
     run_result = RunResult.model_validate_json((EX / flavor / "run_result.json").read_text())
+    bundle = PropertyBundle.model_validate_json((EX / flavor / "property_bundle.json").read_text())
     want = Plan.model_validate_json((EX / flavor / name).read_text())
     if name == "plan_tenant.json":
         pytest.skip("the tenant example was built on a different measure set")
-    fake = FromRun(run_result, want)
-    got = select_plan(sorted(set(fake.pool)), role, want.budget_usd, (), fake.evaluate, fake.apply, fake.energy)
+    fake = FromRun(run_result, want, bundle)
+    got = select_plan(sorted(set(fake.pool)), role, want.budget_usd, (), fake.evaluate, fake.apply, fake.energy,
+                      price_group=fake.price_group)
     assert ids_of(got) == [i.measure.measure_id for i in want.selected]
     assert [m.measure_id for m in got.financeable] == [m.measure_id for m in want.financeable]
     assert {(s.measure_id, s.reason) for s in got.skipped} == {(s.measure_id, s.reason) for s in want.skipped}
     assert got.total_upfront_usd.expected == pytest.approx(want.total_upfront_usd.expected, abs=0.02)
-    assert got.total_annual_savings_usd.expected == pytest.approx(want.total_annual_savings_usd.expected, abs=0.02)
-    # the examples band the totals by UNC-02 too; the Houston file differs by under 0.1% of the band
-    assert got.total_annual_savings_usd.low == pytest.approx(want.total_annual_savings_usd.low, rel=0.015)
+    # the savings band is UNC-02 with the price as one group: the examples follow it to the cent
+    for end in ("low", "expected", "high"):
+        assert getattr(got.total_annual_savings_usd, end) == pytest.approx(getattr(want.total_annual_savings_usd, end), abs=0.02), end
+
+
+# ---- the shared price group (UNC-02) ----
+
+def priced(mid, expected, low, high, kwh=None, gas_kwh=0.0, cost=100):
+    kwh = expected / 0.30 if kwh is None else kwh
+    m = measure(mid, usd(low, expected, high), cost=cost)
+    return m.model_copy(update={"savings": m.savings.model_copy(update={
+        "electricity_kwh": usd(kwh, kwh, kwh, "kWh"), "gas_kwh": usd(gas_kwh, gas_kwh, gas_kwh, "kWh")})})
+
+
+def total_of(measures, group):
+    table = {m.measure_id: m for m in measures}
+    plan = select_plan(list(table), "owner_occupier", 10_000, (), lambda mid, st: table[mid], lambda st, m: st,
+                       lambda st: use(), price_group=group)
+    return plan.total_annual_savings_usd
+
+
+def test_a_price_range_that_is_the_whole_range_adds_linearly_across_measures():
+    # two measures whose only uncertainty is the electricity price (+-10 %): fully correlated,
+    # so the plan's band is the sum of the two bands, not their root-sum-square
+    a, b = priced("LGT_LED", 1000, 900, 1100), priced("CTRL_TSTAT", 500, 450, 550)
+    group = PriceGroup(0.30, 0.10, 0.10)
+    t = total_of([a, b], group)
+    assert (t.low, t.expected, t.high) == (pytest.approx(1350.0, abs=0.01), 1500.0, pytest.approx(1650.0, abs=0.01))
+    independent = total_of([a, b], None)
+    assert independent.low == pytest.approx(1500 - (100 ** 2 + 50 ** 2) ** 0.5, abs=0.01)
+    assert t.low < independent.low and t.high > independent.high               # correlated: wider than independent
+
+
+def test_what_is_not_price_stays_independent():
+    # a measure whose range is price plus its own physics: the physics part adds in quadrature
+    a = priced("LGT_LED", 1000, 800, 1200)                                     # +-200 in all, 100 of it price
+    b = priced("CTRL_TSTAT", 1000, 800, 1200)
+    group = PriceGroup(0.30, 0.10, 0.10)
+    t = total_of([a, b], group)
+    own = (200 ** 2 - 100 ** 2) ** 0.5
+    expected_low = 2000 - ((100 + 100) ** 2 + own ** 2 + own ** 2) ** 0.5
+    assert t.low == pytest.approx(expected_low, abs=0.01) and t.high == pytest.approx(4000 - expected_low, abs=0.01)
+
+
+def test_no_price_range_is_the_old_independent_total():
+    a, b = priced("LGT_LED", 1000, 900, 1100), priced("CTRL_TSTAT", 500, 450, 550)
+    assert total_of([a, b], PriceGroup(0.30)).model_dump() == total_of([a, b], None).model_dump()
+
+
+def test_gas_price_is_in_the_same_group_and_a_penalty_moves_the_other_way():
+    # electricity saved 1000 USD, gas penalty 200 USD at 0.05 USD/kWh gas; both prices +-10 %
+    m = priced("HVAC_HP", 800, 700, 900, kwh=1200 / 0.30, gas_kwh=-4000)
+    t = total_of([m], PriceGroup(0.30, 0.10, 0.10, 0.05, 0.10, 0.10))
+    # price low: electricity part (1000) falls 100, the gas penalty (-200) shrinks 20 -> net -80;
+    # price high: +100 and -20 -> +80. The range of the one measure is not wider than its own +-100
+    assert (t.low, t.high) == (pytest.approx(700.0, abs=0.01), pytest.approx(900.0, abs=0.01))
+
+
+def test_the_group_total_stays_ordered_and_is_deterministic():
+    ms = [priced("LGT_LED", 1000, 900, 1100), priced("CTRL_TSTAT", 500, 450, 550), priced("ROOF_COOL", 300, 280, 330)]
+    g = PriceGroup(0.30, 0.05, 0.15)
+    t = total_of(ms, g)
+    assert t.low <= t.expected <= t.high and t.model_dump() == total_of(ms, g).model_dump()
+
+
+def test_price_group_from_the_models_assumption_ranges():
+    g = PriceGroup.from_assumptions(0.2975, 0.0724, usd(0.2692, 0.2975, 0.3258, "USD/kWh"), None)
+    assert g.electricity_rel_low == pytest.approx(0.0951, abs=1e-3) and g.electricity_rel_high == pytest.approx(0.0951, abs=1e-3)
+    assert g.gas_rel_low == g.gas_rel_high == 0.0 and g.gas_usd_per_kwh == 0.0724
+    assert PriceGroup.from_assumptions(0.3, None, None, None) == PriceGroup(0.3)

@@ -184,6 +184,17 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
 
 # ---------- S4 Model ----------   REAL: A10 registry, A9 geometry, A11 roof
 
+#: Geometry warnings a reader should see (no wall graph, rooms left out, an opening that does not fit...) ride on
+#: the model as flags with this key prefix; run_baseline repeats them as baseline warnings and the agent as run
+#: warnings. The placeholder-envelope line is bookkeeping about unset defaults, not something to show.
+GEOMETRY_NOTE = "geometry.note."
+_GEOMETRY_NOISE = "placeholder envelope properties"
+
+
+def geometry_notes(model: BuildingModel) -> list[str]:
+    return [f.message for f in model.flags if f.key.startswith(GEOMETRY_NOTE)]
+
+
 @_with_state
 def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = [],
                          flags: list[Flag] = [],
@@ -201,11 +212,13 @@ def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = []
         roof.planes = refine_with_masks(roof.planes, bundle.vexcel).planes
     assumptions = merge_assumptions(registry.assumptions, geometry.assumptions,
                                     roof.assumptions if roof else [])
+    notes = [Flag(key=f"{GEOMETRY_NOTE}{i}", status="unknown", message=w)
+             for i, w in enumerate(w for w in geometry.warnings if not w.startswith(_GEOMETRY_NOISE))]
     return BuildingModel(
         sid=bundle.summary.sid, bedrooms=registry.bedrooms, north_offset_deg=geometry.north_offset_deg,
         north_source=geometry.north_source, zones=geometry.zones, surfaces=geometry.surfaces,
         systems=registry.systems, roof_planes=list(roof.planes) if roof else [],
-        assumptions=assumptions, flags=registry.flags)
+        assumptions=assumptions, flags=[*registry.flags, *notes])
 
 
 def set_assumption(model: BuildingModel, key: str, value: float | str | bool,
@@ -407,6 +420,9 @@ def run_baseline(bundle: PropertyBundle, model: BuildingModel,
                  bills: UtilityBills | None = None) -> BaselineResult:
     """REAL. A model that was calibrated to bills (`calibrate_model`) says so in the result."""
     result = _simulate_baseline(bundle, model)
+    notes = [n for n in geometry_notes(model) if n not in result.warnings]
+    if notes:
+        result = result.model_copy(update={"warnings": [*notes, *result.warnings]})
     if model.calibration is not None:
         result = result.model_copy(update={"calibrated_to_bills": model.calibration.calibrated,
                                            "calibration": model.calibration})

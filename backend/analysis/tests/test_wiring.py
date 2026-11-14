@@ -751,3 +751,33 @@ def test_sensitivity_keeps_what_the_bills_calibrated(monkeypatch):
     monkeypatch.setattr(api, "_plan_fast", lambda b, m, r: None)
     api._responsive_plan(bundle, marked, request)(marked)
     assert key in seen["overrides"]
+
+
+# ---- what the geometry had to assume reaches the user (geometry warnings) ----
+
+def _no_wall_graph(bundle):
+    """The bundle of a live office scan: rooms with areas, but no wall edges."""
+    stripped = bundle.model_copy(deep=True)
+    for floor in stripped.matterport.floors:
+        floor.edges = []
+    return stripped
+
+
+def test_a_scan_with_no_wall_graph_says_so_on_the_model_and_the_baseline():
+    bundle, request = load("office_houston")
+    bare = _no_wall_graph(bundle)
+    model = model_of(bare, request)
+    notes = api.geometry_notes(model)
+    assert notes and any("wall" in n.lower() for n in notes)
+    assert all(f.status == "unknown" for f in model.flags if f.key.startswith(api.GEOMETRY_NOTE))
+    baseline = api.run_baseline(bare, model)
+    assert all(n in baseline.warnings for n in notes)
+
+
+@pytest.mark.parametrize("flavor", ["house", "office", "office_houston"])
+def test_a_model_with_nothing_to_report_carries_no_geometry_note(flavor):
+    """The examples have a wall graph: their models, and so their baselines, are unchanged by this."""
+    bundle, request = load(flavor)
+    model = model_of(bundle, request)
+    assert api.geometry_notes(model) == []
+    assert not any(f.key.startswith(api.GEOMETRY_NOTE) for f in model.flags)

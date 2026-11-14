@@ -788,3 +788,26 @@ def test_a_replayed_recording_says_replay_and_keeps_where_its_data_came_from(liv
     assert (recorded.served_by, replayed.served_by) == ("live", "replay")
     assert replayed.data_source == recorded.data_source
     assert replayed.data_source == "example"          # these tests run on the example bundle, and the result says so
+
+
+def test_a_geometry_assumption_becomes_a_fallback_event_and_a_run_warning(tmp_path):
+    from types import SimpleNamespace
+    from backend.agent.tools import Doors
+    from backend.schema import BuildingModel, Flag
+    from backend.agent import analysis_stub
+
+    def build_with_note(bundle, observed, flags, overrides):
+        model = analysis_stub.build_building_model(bundle, observed, flags, overrides)
+        note = Flag(key="geometry.note.0", status="unknown",
+                    message="the scan has no wall graph: walls were built from the footprint")
+        return model.model_copy(update={"flags": [*model.flags, note]})
+    analysis = SimpleNamespace(**{n: getattr(analysis_stub, n) for n in dir(analysis_stub) if not n.startswith("_")})
+    analysis.build_building_model = build_with_note
+    doors = stub_doors()
+    run = live.LiveRun("run_geo", request(), live.LiveSettings(
+        runs_dir=tmp_path, doors=Doors(data=doors.data, analysis=analysis, legal=doors.legal)))
+    run.tools["get_property_bundle"](request().sid)
+    run.tools["observe_interior"]()
+    out = run.tools["build_building_model"]()
+    assert "error" not in out
+    assert "the scan has no wall graph: walls were built from the footprint" in run._warnings

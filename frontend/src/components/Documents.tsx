@@ -6,7 +6,7 @@ import type {
   DocumentRequest,
   RunResult,
 } from "../lib/types";
-import { api } from "../lib/api";
+import { api, ApiError } from "../lib/api";
 import { demoDraft } from "../lib/fixtures";
 import { download } from "../lib/format";
 const labels: Record<DocType, string> = {
@@ -17,6 +17,34 @@ const labels: Record<DocType, string> = {
   energy_savings_guarantee: "Energy savings guarantee",
   cpace_package: "Commercial C-PACE package",
 };
+function demoTypes(commercial: boolean) {
+  return Object.keys(labels).filter((key) =>
+    commercial
+      ? key !== "retrofit_contract_residential"
+      : !["retrofit_contract_commercial", "cpace_package"].includes(key),
+  ) as DocType[];
+}
+export function documentScope(run: RunResult, docType: DocType) {
+  const measures = [
+    ...(run.plan?.selected.map((item) => item.measure) || []),
+    ...(docType === "cpace_package"
+      ? [
+          ...(run.plan?.financeable || []),
+          ...run.measures.filter((measure) =>
+            measure.finance?.financing.some(
+              (scenario) => scenario.kind === "cpace",
+            ),
+          ),
+        ]
+      : []),
+  ];
+  // A selected marginal measure takes precedence over its standalone estimate.
+  return measures.filter(
+    (measure, index) =>
+      measures.findIndex((item) => item.measure_id === measure.measure_id) ===
+      index,
+  );
+}
 function DraftText({ text }: { text: string }) {
   return (
     <div className="draft-text">
@@ -60,6 +88,11 @@ export default function Documents({
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<DocumentDraft | null>(null);
   const [error, setError] = useState("");
+  const [available, setAvailable] = useState<DocType[]>(() =>
+    demo ? demoTypes(commercial) : [],
+  );
+  const [loadingTemplates, setLoadingTemplates] = useState(!demo);
+  const [templateNotice, setTemplateNotice] = useState("");
   const version = useRef(0);
   useEffect(() => {
     version.current++;
@@ -70,15 +103,62 @@ export default function Documents({
       version.current++;
     };
   }, [run]);
+  useEffect(() => {
+    setApproved(false);
+    setDraft(null);
+    setTemplateNotice("");
+    const abort = new AbortController();
+    if (demo) {
+      setAvailable(demoTypes(commercial));
+      setLoadingTemplates(false);
+      return;
+    }
+    setAvailable([]);
+    setLoadingTemplates(true);
+    void api
+      .templates(state, run.property.segment, abort.signal)
+      .then((types) => {
+        if (abort.signal.aborted) return;
+        const known = types.filter((type) => type in labels);
+        setAvailable(known);
+        setDocType((current) =>
+          known.includes(current) ? current : known[0] || current,
+        );
+        if (!known.length)
+          setTemplateNotice(
+            "No document template is available for this property type and jurisdiction yet.",
+          );
+      })
+      .catch((error) => {
+        if (!abort.signal.aborted)
+          setTemplateNotice(
+            error instanceof Error
+              ? `Could not load available templates: ${error.message}`
+              : "Could not load available templates.",
+          );
+      })
+      .finally(() => {
+        if (!abort.signal.aborted) setLoadingTemplates(false);
+      });
+    return () => abort.abort();
+  }, [demo, state, run.property.segment]);
   function invalidate() {
     version.current++;
     setDraft(null);
     setApproved(false);
     setBusy(false);
   }
+  const planIds = new Set(
+    run.plan?.selected.map((item) => item.measure.measure_id),
+  );
+  const scope = documentScope(run, docType);
+  const selectedScope = selected.filter((id) =>
+    scope.some((measure) => measure.measure_id === id),
+  );
   async function generate(event: React.FormEvent) {
     event.preventDefault();
-    if (!approved || !selected.length) return;
+    if (!approved || !selectedScope.length || !available.includes(docType))
+      return;
     setBusy(true);
     setError("");
     const current = ++version.current;
@@ -86,14 +166,26 @@ export default function Documents({
       run_id: run.run_id,
       doc_type: docType,
       state,
-      measure_ids: selected,
+      measure_ids: selectedScope,
       fields: { owner_name: owner, contractor_name: contractor },
     };
     try {
       const result = demo ? demoDraft(body) : await api.draft(body);
       if (current === version.current) setDraft(result);
     } catch (e) {
-      if (current === version.current)
+      if (
+        current === version.current &&
+        e instanceof ApiError &&
+        e.code === "template_not_available"
+      ) {
+        const remaining = available.filter((type) => type !== docType);
+        setAvailable(remaining);
+        if (remaining[0]) setDocType(remaining[0]);
+        setTemplateNotice(
+          "That template is no longer available for this jurisdiction. Choose another available document.",
+        );
+        setApproved(false);
+      } else if (current === version.current)
         setError(e instanceof Error ? e.message : "Drafting failed.");
     } finally {
       if (current === version.current) setBusy(false);
@@ -113,25 +205,31 @@ export default function Documents({
         terms.
       </p>
       <form onSubmit={generate}>
+        {loadingTemplates && (
+          <p role="status">Checking available document templates…</p>
+        )}
+        {templateNotice && (
+          <p className="inline-note" role="status">
+            {templateNotice}
+          </p>
+        )}
         <div className="form-grid">
           <label>
             Document type
             <select
               value={docType}
+              disabled={loadingTemplates || !available.length}
               onChange={(e) => {
                 setDocType(e.target.value as DocType);
+                setSelected(
+                  run.plan?.selected.map((item) => item.measure.measure_id) ||
+                    [],
+                );
                 invalidate();
               }}
             >
               {Object.entries(labels)
-                .filter(([key]) =>
-                  commercial
-                    ? key !== "retrofit_contract_residential"
-                    : ![
-                        "retrofit_contract_commercial",
-                        "cpace_package",
-                      ].includes(key),
-                )
+                .filter(([key]) => available.includes(key as DocType))
                 .map(([key, label]) => (
                   <option key={key} value={key}>
                     {label}
@@ -179,7 +277,14 @@ export default function Documents({
         </div>
         <fieldset className="measure-checks">
           <legend>Scope of work</legend>
-          {run.plan?.selected.map(({ measure }) => (
+          {docType === "cpace_package" && (
+            <p className="inline-note">
+              This package is a financing review. Template availability does not
+              establish eligibility; programme, savings-to-investment tests and
+              owner consent still need confirmation.
+            </p>
+          )}
+          {scope.map((measure) => (
             <label key={measure.measure_id}>
               <input
                 type="checkbox"
@@ -194,6 +299,9 @@ export default function Documents({
                 }}
               />
               {measure.title}
+              {!planIds.has(measure.measure_id) && (
+                <small>Outside the selected plan · financing review only</small>
+              )}
             </label>
           ))}
         </fieldset>
@@ -210,10 +318,12 @@ export default function Documents({
           className="primary-button"
           disabled={
             !approved ||
-            !selected.length ||
+            !selectedScope.length ||
             busy ||
             !owner.trim() ||
-            !contractor.trim()
+            !contractor.trim() ||
+            loadingTemplates ||
+            !available.includes(docType)
           }
         >
           {busy ? (
@@ -256,6 +366,12 @@ export default function Documents({
           <DraftText text={draft.markdown} />
           <div className="document-checklist">
             <h3>Review checklist</h3>
+            {!draft.statutory_checks.length && (
+              <p className="inline-note">
+                No statutory checks were supplied for this draft. Its legal
+                requirements have not been checked.
+              </p>
+            )}
             {draft.unfilled_placeholders.length > 0 && (
               <p className="fineprint">
                 Unfilled terms:{" "}

@@ -6,6 +6,30 @@ import React from "react";
 import { UpgradeDetails } from "../components/EnergyOverlay";
 
 describe("energy exploration", () => {
+  it("keeps not-cost-effective evaluations out of the opportunity highlights", () => {
+    const run = demoShowcaseRun();
+    const measure = run.measures.find(
+      (item) => item.measure_id === "ENV_ATTIC",
+    )!;
+    run.plan!.selected = run.plan!.selected.filter(
+      (item) => item.measure.measure_id !== measure.measure_id,
+    );
+    run.plan!.skipped = [
+      {
+        measure_id: measure.measure_id,
+        reason: "not_cost_effective",
+        detail: "Not cost-effective: SIR 0.74",
+      },
+    ];
+    expect(
+      energyUpgrades(run).find(
+        (item) => item.measure.measure_id === measure.measure_id,
+      ),
+    ).toMatchObject({
+      status: "unavailable",
+      reason: "Not cost-effective: SIR 0.74",
+    });
+  });
   it("uses marginal savings from the selected plan and preserves input data", () => {
     const run = demoShowcaseRun();
     const selected = run.plan!.selected[0].measure;

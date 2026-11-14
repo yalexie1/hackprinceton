@@ -3,6 +3,7 @@
 uv run --with-requirements scripts/integration-requirements.txt python scripts/check_integration.py
 """
 import os
+import json
 from pathlib import Path
 import socket
 import subprocess
@@ -34,6 +35,20 @@ with tempfile.TemporaryDirectory(prefix="evergreen-integration-") as cache:
                     raise RuntimeError("Isolated replay backend failed to start") from None
                 time.sleep(0.1)
         result = subprocess.run(["npm", "exec", "--", "vitest", "run", "src/lib/api.integration.test.ts"], cwd=ROOT / "frontend", env=env)
+        if result.returncode:
+            sys.exit(result.returncode)
+        # Synthetic recordings exercise the demo's real legal-engine path without
+        # relying on a developer's private live recordings or sponsor cache.
+        for example in sorted((ROOT / "specs/examples").glob("*/run_result.json")):
+            sid = json.loads(example.read_text())["property"]["sid"]
+            recording = Path(env["AGENT_DEMO_DIR"]) / sid
+            recording.mkdir(parents=True)
+            for target, source in (("result.json", "run_result.json"),
+                                   ("events.json", "run_events.json"),
+                                   ("bundle.json", "property_bundle.json")):
+                (recording / target).write_bytes((example.parent / source).read_bytes())
+        result = subprocess.run(["npm", "exec", "--", "vitest", "run", "src/lib/api.integration.test.ts"],
+                                cwd=ROOT / "frontend", env={**env, "REPLAY_SOURCE": "recorded"})
         sys.exit(result.returncode)
     finally:
         server.terminate()

@@ -5,7 +5,19 @@ import type {
   RunEvent,
   RunRequest,
   RunResult,
+  RoofView,
+  DocType,
 } from "./types";
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
 const base = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 const eventTypes = new Set([
   "stage_started",
@@ -28,9 +40,11 @@ export async function request<T>(
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(
+    throw new ApiError(
       body?.error?.message ||
         `Request failed (${response.status}). Check that the backend is running.`,
+      response.status,
+      body?.error?.code,
     );
   }
   return response.json() as Promise<T>;
@@ -51,6 +65,17 @@ export const api = {
       body: JSON.stringify(body),
     }),
   result: (id: string) => request<RunResult>(`/runs/${encodeURIComponent(id)}`),
+  roof: (id: string, signal?: AbortSignal) =>
+    request<RoofView>(`/runs/${encodeURIComponent(id)}/roof`, { signal }),
+  templates: (
+    state: "CA" | "TX",
+    segment: PropertySummary["segment"],
+    signal?: AbortSignal,
+  ) =>
+    request<DocType[]>(
+      `/templates?${new URLSearchParams({ state, segment })}`,
+      { signal },
+    ),
   answer: (id: string, question_id: string, value: unknown) =>
     request<{ ok: boolean }>(`/runs/${encodeURIComponent(id)}/answers`, {
       method: "POST",

@@ -65,6 +65,7 @@ export function energyUpgrades(run?: RunResult | null): EnergyUpgrade[] {
           "no_cost_data",
           "already_done",
           "no_savings",
+          "not_cost_effective",
           "role",
         ].includes(skipped?.reason || "");
       return [

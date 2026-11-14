@@ -1,6 +1,6 @@
 # Evergreen frontend
 
-Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.3**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
+Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.6**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
 
 ## Run
 
@@ -56,9 +56,13 @@ Production builds use same-origin `/api` unless `VITE_API_BASE_URL` is set at bu
 - Search, start/resume runs, questions, budget/assumption updates, and document routes follow SPEC section 10. Types consumed by the UI live in `src/lib/types.ts`.
 - The SSE endpoint emits JSON `RunEvent` data, either default or named events. Comments, CRLF, fragmented UTF-8, multiline data, and multiple events per chunk are supported. The server replays history from the beginning: the frontend retains a per-run cursor and skips consumed events on reconnect. An active run pauses on a new question, done, or non-recoverable error. If the authoritative run is already complete, it drains the finite history to its end so earlier questions/done events do not hide appended G11 re-plan events. Recoverable errors stay in the stream. It fetches the final run and reconnects after an answer/update. Transport failures expose a reconnect button for the same run. Unknown future event types are ignored.
 - Questions may be embedded directly in `event.payload` or under `event.payload.question`; the subsequent `RunResult.questions` is authoritative.
+- Structured todo events show backend progress. Approval questions show document/state/scope context and preserve boolean answers.
 - Budget and assumption changes are sent to the backend. The UI never recomputes energy or financial results. All displayed estimate ranges come from the returned payloads.
-- Public data-quality warnings arrive through `RunResult.warnings`, fallback events, and measure warnings. Long warnings expand to show the full text, including competing roof outlines. A `re-run:` warning labels the earlier narrative outdated and folds it behind an explicit disclosure; current plan totals stay visible.
-- Live role selection supports owner-occupier, landlord, and tenant. Optional utility history requires twelve non-negative monthly values, in kWh (gas as kWh thermal).
+- Public data-quality warnings arrive through `RunResult.warnings`, `BaselineResult.warnings`, fallback/error events, and measure warnings. Fallback detail uses the backend's `fallback`, `layer`, `status`, `what` and `detail` fields. Long warnings expand in full. A `re-run:` warning identifies the earlier narrative as outdated.
+- Live role selection supports owner-occupier, landlord, and tenant. Optional utility history requires twelve non-negative monthly values, in kWh (gas as kWh thermal), with an optional first billing month. Office runs accept a requested desk count. Calibration shows per-fuel before/after bias and fit error, failed tolerances and warnings; an absent summary is explicitly uncalibrated.
+- Plans follow the backend's operations/load-reduction/equipment/solar order and distinguish `not_cost_effective` from budget exclusions. No browser economics or sizing replaces the selected marginal results.
+- `GET /api/runs/{id}/roof` supplies georeferenced planes, panels and detections. Missing/null ortho metadata or failed imagery leaves the supplied geometry visible. Parcel-bound overlays are labelled approximate; detection boxes are not treated as masks or summed footprint area. Workspace defaults to recommended positions and offers a precise position picker.
+- `GET /api/templates` always receives both state and property segment. Documents offers only returned types; `template_not_available` is an availability notice. C-PACE scope retains selected marginal sizing and clearly labels additional financing-review measures. Template availability is not eligibility.
 - Narrative and document text render as text, not executable HTML. Parties and selected measures require explicit approval before drafting.
 
 ### Matterport
@@ -75,7 +79,7 @@ SDK behavior on sponsor models remains unverified until configured browser SDK c
 
 ### Shared contract gaps to resolve with the owners
 
-1. The public API returns `PropertySummary` and `RunResult`, but currently exposes no `PropertyBundle`/floorplan/orthophoto endpoint. Roof and workspace screens therefore draw supplied geometry and candidate positions. Aerial image overlays and a real floorplan background need a bundle route (plus georeferenced image bounds for alignment).
+1. The public roof route supplies aerial bounds and detections. A real workspace floorplan background still needs a public floorplan route; candidate positions use the supplied layout geometry.
 2. Window/roof anchors and SDK sweep identity need validation on the two real golden properties.
 3. Shared run results and event sequences are discovered under `specs/examples/*/` (currently `house`, `office`, and `office_houston`), without editing or copying the spec files. Additional frontend-owned sandboxes live in `frontend/fixtures/`. Both sources validate against the current Pydantic contract. Shared examples have one saved budget each; arbitrary budget and role changes require the live backend.
 4. The financial breakdown and legal checklist depend on the analysis/legal owners. This frontend supplies no production pricing, physics, incentive rules, or statutory contract language.
@@ -93,7 +97,7 @@ uv run --with-requirements scripts/integration-requirements.txt python scripts/c
 
 `npm test` also renders the shared examples through the actual screen components to check optional fields, empty states, document gating, and separation of property value from energy savings. It covers SSE framing and termination, backend error handling, answer value preservation, fixture budget/totals, WKT parsing, and verified sweep matching. `check_contract.py` extracts the team's actual Pydantic block without editing it and validates every saved run, plus the shared property bundles, building models, documents, and event streams. When `backend/schema.py` exists, it checks that the actual backend schema agrees with the spec and validates against both. `scripts/make_fixtures.py` regenerates invented examples; it is not an analysis engine.
 
-`check_integration.py` exercises the actual TypeScript client against the actual FastAPI app: health/schema, search, run results and SSE, budget/assumption updates, full-history replay after PATCH, backend error envelopes, asset errors and document drafting for every discovered shared example. Replay does not pause for answers, so real waiting/resume behavior also has transport regression tests; sponsor-backed live/model verification belongs to the team end-to-end run.
+`check_integration.py` runs five checks twice through the actual TypeScript client and FastAPI app: first example replay, then synthetic recordings made from the shared examples in a temporary directory. It covers health/schema, search, results/SSE, budget/assumption updates, replay after PATCH, errors, roof metadata, segment-filtered templates and documents for every shared property. The recorded path exercises the real legal engine, visible blanks/statutory checks and unavailable-template errors. Synthetic recordings are test inputs, not claimed live analyses, and never replace a user's demo archive. Replay does not pause for answers, so waiting/resume behavior also has transport regression tests; sponsor-backed live/model verification belongs to the team end-to-end run.
 
 The approved `.github/workflows/frontend.yml` runs unit/screen tests, contract validation, replay integration and production build on PRs to main and changes on main/frontend affecting `frontend/`, `backend/` or `specs/`. It uses pinned action commits, Node 22.14.0 and Python 3.12.10, and requires no secrets or kit mirror. CI will flag schema/fixture drift as teammates land changes.
 

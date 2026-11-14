@@ -632,11 +632,104 @@ main svg text {
 }
 
 /* Audit provenance can include long explanations of competing data sources. */
-.run-warnings { min-width: 0; }
-.run-warnings h3 { font-size: 20px; margin: 0 0 16px; }
-.run-warnings p, .warning-detail { overflow-wrap: anywhere; white-space: pre-wrap; }
-.warning-detail { padding: 16px 0; border-bottom: 1px solid #d6d6c6; }
-.warning-detail summary { cursor: pointer; font-size: 16px; line-height: 1.65; }
-.warning-detail summary svg { display: inline; vertical-align: middle; margin-right: 8px; }
-.warning-detail summary span { color: #315641; font-weight: 700; white-space: nowrap; }
-.warning-detail p { line-height: 1.75; }
+.run-warnings {
+  min-width: 0;
+}
+.run-warnings h3 {
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+.run-warnings p,
+.warning-detail {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.warning-detail {
+  padding: 16px 0;
+  border-bottom: 1px solid #d6d6c6;
+}
+.warning-detail summary {
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.warning-detail summary svg {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.warning-detail summary span {
+  color: #315641;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.warning-detail p {
+  line-height: 1.75;
+}
+
+.calibration-panel {
+  margin: 0 0 28px;
+  padding: 24px;
+  border: 1px solid #c9d3c4;
+  border-radius: 16px;
+  background: #f4f6ed;
+}
+.calibration-panel h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+.calibration-panel p {
+  line-height: 1.7;
+}
+.calibration-table-wrap {
+  overflow-x: auto;
+}
+.calibration-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+.calibration-panel th,
+.calibration-panel td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px;
+  border-bottom: 1px solid #d2d9cc;
+}
+.calibration-panel summary,
+.roof-detections summary {
+  cursor: pointer;
+  font-weight: 650;
+  padding: 12px 0;
+}
+.roof-layer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+.roof-layer-controls label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+.roof-layer-controls input {
+  width: 20px;
+  height: 20px;
+}
+.roof-layer-controls span {
+  font-size: 16px;
+  color: #344c3d;
+}
+.roof-detections {
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  margin: 16px 0;
+}
+.event progress {
+  width: min(100%, 300px);
+  height: 12px;
+}

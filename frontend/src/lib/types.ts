@@ -1,5 +1,45 @@
 // Browser contract mirrors specs/SPEC.md section 9. Checked by check:contract.
-export const SCHEMA_VERSION = "0.3.3";
+export const SCHEMA_VERSION = "0.3.6";
+export interface CalibrationSummary {
+  calibrated: boolean;
+  fits: {
+    fuel: "electricity" | "gas";
+    nmbe_before: number;
+    cv_rmse_before: number;
+    nmbe_after: number;
+    cv_rmse_after: number;
+    passed: boolean;
+  }[];
+  moved: string[];
+  warnings: string[];
+}
+export interface RoofView {
+  srid: number;
+  ortho?: {
+    path: string;
+    bounds: { west: number; south: number; east: number; north: number };
+    bounds_source: "detection_fit" | "parcel_bbox";
+    width_px?: number | null;
+    height_px?: number | null;
+    image_available: boolean;
+  } | null;
+  planes: {
+    id: string;
+    polygon_wkt: string;
+    tilt_deg: number;
+    azimuth_deg: number;
+    usable_area_m2: number;
+  }[];
+  detections: {
+    label: string;
+    confidence: number;
+    bbox_wkt: string;
+    mask_wkt?: string | null;
+    mask_area_m2?: number | null;
+  }[];
+  panels: SolarDesign["panels"];
+  panels_selected: boolean;
+}
 export interface Ranged {
   low: number;
   expected: number;
@@ -187,7 +227,11 @@ export interface RunRequest {
   sid: string;
   budget_usd: number;
   role: Role;
-  bills?: { electricity_kwh: number[]; gas_kwh?: number[] } | null;
+  bills?: {
+    electricity_kwh: number[];
+    gas_kwh?: number[];
+    first_month?: string;
+  } | null;
   overrides?: Record<string, number | string | boolean>;
   desks_requested?: number | null;
 }
@@ -224,6 +268,7 @@ export interface RunResult {
     sid: string;
     assumptions: Assumption[];
     flags: Flag[];
+    calibration?: CalibrationSummary | null;
     roof_planes: {
       id: string;
       polygon_wkt: string;
@@ -250,6 +295,8 @@ export interface RunResult {
     peak_cooling_w: number;
     peak_heating_w: number;
     calibrated_to_bills: boolean;
+    calibration?: CalibrationSummary | null;
+    warnings?: string[];
   } | null;
   measures: MeasureResult[];
   plan?: Plan | null;

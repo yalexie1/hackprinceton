@@ -6,29 +6,85 @@ import PlanView, { MeasureCard } from "./Plan";
 import Assumptions from "./Assumptions";
 import Geometry from "./Geometry";
 import Find from "./Find";
-import Documents from "./Documents";
+import Documents, { documentScope } from "./Documents";
 import Warnings, { AuditNarrative } from "./Warnings";
+import Calibration from "./Calibration";
 import sharedHouse from "../../../specs/examples/house/run_result.json";
 import sharedOffice from "../../../specs/examples/office/run_result.json";
 const house = demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
-const office = demoRun(sharedOffice.property.sid, sharedOffice.request.budget_usd);
+const office = demoRun(
+  sharedOffice.property.sid,
+  sharedOffice.request.budget_usd,
+);
 describe("shared contract screen compatibility", () => {
+  it("keeps selected marginal sizing in a C-PACE document scope", () => {
+    const run = structuredClone(office);
+    const selected = run.plan!.selected[0].measure;
+    const standalone = structuredClone(selected);
+    selected.title = "Selected plan sizing";
+    standalone.title = "Larger standalone sizing";
+    run.plan!.financeable = [standalone];
+    expect(
+      documentScope(run, "cpace_package").find(
+        (m) => m.measure_id === selected.measure_id,
+      )?.title,
+    ).toBe("Selected plan sizing");
+  });
+  it("shows bill-fit results and warnings without claiming a failed fit is calibrated", () => {
+    const run = structuredClone(house);
+    run.baseline!.calibration = {
+      calibrated: false,
+      fits: [
+        {
+          fuel: "gas",
+          nmbe_before: 0.3,
+          cv_rmse_before: 0.4,
+          nmbe_after: 0.07,
+          cv_rmse_after: 0.18,
+          passed: false,
+        },
+      ],
+      moved: ["wall.u_value"],
+      warnings: ["Possible unmodelled gas load"],
+    };
+    const html = renderToStaticMarkup(<Calibration run={run} />);
+    expect(html).toContain("Bill fit needs review");
+    expect(html).toContain("Outside tolerance");
+    expect(html).toContain("Possible unmodelled gas load");
+    expect(html).toContain("30% → 7%");
+    expect(
+      renderToStaticMarkup(
+        <Calibration
+          run={{ ...house, baseline: null, building_model: null }}
+        />,
+      ),
+    ).toContain("Uncalibrated estimate");
+  });
   it("does not claim an unchanged replay plan fits a lower requested budget", () => {
     const run = structuredClone(house);
     run.plan!.budget_usd = 0;
-    const html = renderToStaticMarkup(<PlanView run={run} onFocus={() => {}} onDocuments={() => {}} />);
+    const html = renderToStaticMarkup(
+      <PlanView run={run} onFocus={() => {}} onDocuments={() => {}} />,
+    );
     expect(html).toContain("exceeds your cash budget at expected costs");
     expect(html).not.toContain("The plan fits at expected costs");
   });
   it("keeps long provenance details expandable and de-duplicates repeated fallback warnings", () => {
     const warning = `vexcel/property/extract:extent: ${"Both outlines and the decision remain visible. ".repeat(12)}END OF DETAIL`;
-    const html = renderToStaticMarkup(<Warnings warnings={[warning, warning]} />);
+    const html = renderToStaticMarkup(
+      <Warnings warnings={[warning, warning]} />,
+    );
     expect(html).toContain("<details");
     expect(html).toContain("Read full note");
     expect(html.split("END OF DETAIL")).toHaveLength(2);
   });
   it("marks an earlier narrative as outdated after a backend re-run warning", () => {
-    const html = renderToStaticMarkup(<AuditNarrative text="Earlier savings: $1000" warnings={["re-run: summary not regenerated"]} />);
+    const html = renderToStaticMarkup(
+      <AuditNarrative
+        text="Earlier savings: $1000"
+        warnings={["re-run: summary not regenerated"]}
+      />,
+    );
     expect(html).toContain("outdated numbers");
     expect(html).toContain("<details");
     expect(html).toContain("Earlier savings: $1000");
@@ -51,7 +107,8 @@ describe("shared contract screen compatibility", () => {
     const work = renderToStaticMarkup(
       <PlanView run={office} onFocus={() => {}} onDocuments={() => {}} />,
     );
-    for (const item of house.plan!.selected) expect(home).toContain(item.measure.title);
+    for (const item of house.plan!.selected)
+      expect(home).toContain(item.measure.title);
     expect(home).not.toContain("Estimated value uplift");
     expect(work).toContain("Estimated value uplift");
     expect(work).toContain("Shown separately from energy savings.");
@@ -73,7 +130,9 @@ describe("shared contract screen compatibility", () => {
     expect(roof).toContain("Proposed modules");
     const layout = renderToStaticMarkup(<Geometry run={office} layout demo />);
     expect((layout.match(/role="button"/g) || []).length).toBe(
-      office.measures.find((m) => m.layout)!.layout!.candidates.length,
+      office.measures
+        .find((m) => m.layout)!
+        .layout!.candidates.filter((point) => point.recommended).length,
     );
     expect(layout).toContain("Recommended");
     expect(

@@ -53,6 +53,7 @@ import Geometry from "./components/Geometry";
 import Assumptions from "./components/Assumptions";
 import Documents from "./components/Documents";
 import Warnings, { AuditNarrative } from "./components/Warnings";
+import Calibration from "./components/Calibration";
 type View =
   | "find"
   | "setup"
@@ -96,6 +97,8 @@ export default function App() {
   const [role, setRole] = useState<Role>("owner_occupier");
   const [electricBills, setElectricBills] = useState("");
   const [gasBills, setGasBills] = useState("");
+  const [firstMonth, setFirstMonth] = useState("");
+  const [desks, setDesks] = useState("");
   const [run, setRun] = useState<RunResult | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [question, setQuestion] = useState<Question | null>(null);
@@ -232,6 +235,8 @@ export default function App() {
     setSegment("");
     setElectricBills("");
     setGasBills("");
+    setFirstMonth("");
+    setDesks("");
   }
   function navigate(v: View) {
     if (v !== "find" && !done) return;
@@ -253,6 +258,8 @@ export default function App() {
     setBudget(demo ? (options.includes(15000) ? 15000 : options[0]) : 15000);
     setElectricBills("");
     setGasBills("");
+    setFirstMonth("");
+    setDesks("");
   }
   function pumpDemo() {
     const current = epoch.current;
@@ -291,7 +298,8 @@ export default function App() {
     try {
       const snapshot = await api.result(id);
       if (current !== epoch.current || abort.signal.aborted) return;
-      const completed = snapshot.status === "done" || snapshot.status === "error";
+      const completed =
+        snapshot.status === "done" || snapshot.status === "error";
       if (streamCursor.current.id !== id)
         streamCursor.current = { id, count: 0 };
       await streamRun(
@@ -355,14 +363,28 @@ export default function App() {
         throw new Error(
           "Add 12 electricity readings before adding gas readings.",
         );
+      if (
+        electricity &&
+        firstMonth &&
+        !/^\d{4}-(0[1-9]|1[0-2])$/.test(firstMonth)
+      )
+        throw new Error("Choose a valid first billing month.");
+      if (
+        !demo &&
+        desks &&
+        (!Number.isInteger(Number(desks)) || Number(desks) < 1)
+      )
+        throw new Error("Enter a positive whole number of desks.");
       const request: RunRequest = {
         sid: property.sid,
         budget_usd: budget,
         role,
+        ...(!demo && desks ? { desks_requested: Number(desks) } : {}),
         ...(electricity
           ? {
               bills: {
                 electricity_kwh: electricity,
+                ...(firstMonth ? { first_month: firstMonth } : {}),
                 ...(gas ? { gas_kwh: gas } : {}),
               },
             }
@@ -493,6 +515,18 @@ export default function App() {
   const title =
     views.find((v) => v.id === view)?.label ||
     (view === "setup" ? "Set up your audit" : "Building audit");
+  const questionEvent = [...events]
+    .reverse()
+    .find(
+      (event) =>
+        event.type === "question" &&
+        ((event.payload.question || event.payload) as Partial<Question>).id ===
+          question?.id,
+    );
+  const approval =
+    questionEvent?.payload.kind === "approval"
+      ? (questionEvent.payload.approval as Record<string, unknown> | undefined)
+      : undefined;
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileNav ? "is-open" : ""}`}>
@@ -612,7 +646,11 @@ export default function App() {
                 onClick={() => void switchMode(false)}
                 disabled={connecting}
               >
-                {connecting ? "Connecting…" : demo ? "Connect API" : "Connected"}
+                {connecting
+                  ? "Connecting…"
+                  : demo
+                    ? "Connect API"
+                    : "Connected"}
               </button>
             </div>
             <span className="avatar">VS</span>
@@ -765,8 +803,20 @@ export default function App() {
                         Add utility history <span>Optional</span>
                       </summary>
                       <p>
-                        Enter January through December, separated by commas.
+                        Enter twelve consecutive months, separated by commas.
+                        Leave the first month blank for January through
+                        December.
                       </p>
+                      <label>
+                        First billing month (optional)
+                        <input
+                          type="month"
+                          value={firstMonth}
+                          onChange={(event) =>
+                            setFirstMonth(event.target.value)
+                          }
+                        />
+                      </label>
                       <label>
                         Electricity use (kWh, 12 months)
                         <textarea
@@ -786,6 +836,19 @@ export default function App() {
                         />
                       </label>
                     </details>
+                  )}
+                  {!demo && office && (
+                    <label>
+                      Desk positions requested (optional)
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={desks}
+                        onChange={(event) => setDesks(event.target.value)}
+                        placeholder="Number of desks"
+                      />
+                    </label>
                   )}
                   <div className="audit-includes">
                     <span>
@@ -887,7 +950,31 @@ export default function App() {
                             {event.stage?.replaceAll("_", " ") ||
                               event.type.replaceAll("_", " ")}
                           </small>
-                          <p>{event.message}</p>
+                          <p>
+                            {event.message ||
+                              String(
+                                event.payload.detail ||
+                                  event.payload.fallback ||
+                                  "Audit update",
+                              )}
+                          </p>
+                          {event.type === "todo" &&
+                            typeof event.payload.done === "number" &&
+                            typeof event.payload.total === "number" &&
+                            event.payload.total > 0 && (
+                              <progress
+                                aria-label="Audit task progress"
+                                value={event.payload.done}
+                                max={event.payload.total}
+                              />
+                            )}
+                          {typeof event.payload.detail === "string" &&
+                            !event.message.includes(event.payload.detail) && (
+                              <details>
+                                <summary>Data source detail</summary>
+                                <p>{event.payload.detail}</p>
+                              </details>
+                            )}
                           {event.type === "todo" &&
                             Array.isArray(event.payload.todos) && (
                               <ul className="event-todos">
@@ -924,9 +1011,35 @@ export default function App() {
                   </div>
                   {question && (
                     <div className="question-card">
-                      <span className="eyebrow">A QUICK QUESTION</span>
+                      <span className="eyebrow">
+                        {approval
+                          ? "YOUR APPROVAL IS REQUIRED"
+                          : "A QUICK QUESTION"}
+                      </span>
                       <h3>{question.prompt}</h3>
                       <p>{question.impact_note}</p>
+                      {approval && (
+                        <p className="inline-note">
+                          Draft request:{" "}
+                          {String(approval.doc_type || "document").replaceAll(
+                            "_",
+                            " ",
+                          )}{" "}
+                          · {String(approval.state || "jurisdiction pending")}
+                          <br />
+                          Scope:{" "}
+                          {Array.isArray(approval.measure_ids)
+                            ? approval.measure_ids
+                                .map(
+                                  (id) =>
+                                    run.measures.find(
+                                      (measure) => measure.measure_id === id,
+                                    )?.title || String(id),
+                                )
+                                .join(", ")
+                            : "Review the scope before approving."}
+                        </p>
+                      )}
                       {demo && (
                         <p className="fineprint">
                           Demo replay: your choice advances the saved scenario.
@@ -962,6 +1075,7 @@ export default function App() {
                       Reconnect to this audit
                     </button>
                   )}
+                  {done && <Calibration run={run} />}
                 </section>
                 <Tour
                   key={run.property.sid}
@@ -1018,11 +1132,14 @@ export default function App() {
               <div className="result-grid">
                 <div className="result-main">
                   {view === "plan" && (
-                    <PlanView
-                      run={run}
-                      onFocus={setFocus}
-                      onDocuments={() => setView("documents")}
-                    />
+                    <>
+                      <Calibration run={run} />
+                      <PlanView
+                        run={run}
+                        onFocus={setFocus}
+                        onDocuments={() => setView("documents")}
+                      />
+                    </>
                   )}{" "}
                   {view === "roof" && <Geometry run={run} demo={demo} />}{" "}
                   {view === "layout" && (
@@ -1119,7 +1236,7 @@ export default function App() {
                     </form>
                     <p className="budget-rule">
                       <CheckCircle2 size={14} />
-                      No-cost measures come first.
+                      Operations first. Solar last.
                     </p>
                   </section>
                   <section className="insight-card">
@@ -1133,7 +1250,10 @@ export default function App() {
                         Replay choices do not change the saved analysis.
                       </p>
                     )}
-                    <AuditNarrative text={run.narrative_md} warnings={run.warnings} />
+                    <AuditNarrative
+                      text={run.narrative_md}
+                      warnings={run.warnings}
+                    />
                     <button
                       className="text-button"
                       onClick={() => setView("assumptions")}
@@ -1182,7 +1302,24 @@ export default function App() {
                   )}
                 </aside>
               </div>
-              <Warnings warnings={[...run.warnings, ...events.filter((event) => event.type === "fallback" || event.type === "error").map((event) => event.message)]} />
+              <Warnings
+                warnings={[
+                  ...run.warnings,
+                  ...(run.baseline?.warnings || []),
+                  ...events
+                    .filter(
+                      (event) =>
+                        event.type === "fallback" || event.type === "error",
+                    )
+                    .map(
+                      (event) =>
+                        event.message ||
+                        String(
+                          event.payload.detail || event.payload.fallback || "",
+                        ),
+                    ),
+                ]}
+              />
             </>
           )}
           <footer className="app-footer">

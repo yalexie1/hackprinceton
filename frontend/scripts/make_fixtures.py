@@ -27,7 +27,15 @@ for kind,office in [('house',False),('office',True)]:
     for budget in [5000,15000,30000]:
         # Generate canned response snapshots offline, never in the browser.
         selected=[];spent=0;remaining=measures.copy()
-        for m in [measures[0]]+sorted(measures[1:],key=lambda m:-m['finance']['annual_savings_usd']['expected']):
+        # Canned UI-only scenarios follow the product's loading order. These
+        # invented values do not simulate interactions or size actual equipment.
+        def order(m):
+            step = 1 if m['measure_id'] == 'LAYOUT' else 4 if m['measure_id'] == 'PV_ROOF' else 3 if m['measure_id'].startswith('HVAC_') else 2
+            cost = m['finance']['net_upfront_usd']['expected']
+            return step, -m['finance']['npv_usd']['expected'] / max(cost, 1)
+        for m in sorted(measures, key=order):
+            if m['finance']['sir'] is not None and m['finance']['sir'] < 1:
+                continue
             cost=m['finance']['net_upfront_usd']['expected']
             if spent+cost<=budget:
                 spent+=cost
@@ -36,7 +44,9 @@ for kind,office in [('house',False),('office',True)]:
         savings=sum(i['measure']['finance']['annual_savings_usd']['expected'] for i in selected)
         kwh=sum(i['measure']['savings']['electricity_kwh']['expected'] for i in selected)
         co2=sum(i['measure']['savings']['co2_kg']['expected'] for i in selected)
-        plan=dict(budget_usd=budget,selected=selected,financeable=remaining,skipped=[dict(measure_id=m['measure_id'],reason='over_budget',detail='Expected upfront cost exceeds the remaining cash budget.') for m in remaining],total_upfront_usd=r(spent),total_annual_savings_usd=r(savings),total_co2_kg=r(co2,'kg'),baseline_after=energy(22000-kwh,6000,5200-savings,8200-co2))
-        outputs[str(budget)]=dict(schema_version=VERSION,run_id=f'demo-{kind}-{budget}',status='done',request=dict(sid=sid,budget_usd=budget,role='owner_occupier'),property=prop,building_model=model,baseline=dict(annual=energy(22000,6000,5200,8200),end_use_kwh=dict(cooling=8500,heating=6000,lighting=4200,plug_loads=5300,water_heating=4000),monthly_electricity_kwh=[1300,1250,1400,1500,1900,2300,2600,2500,2200,1900,1650,1500],monthly_gas_kwh=[1100,950,700,450,250,150,100,100,200,400,650,950],peak_cooling_w=6500,peak_heating_w=8000,calibrated_to_bills=False),measures=measures,plan=plan,questions=[],narrative_md='Start with daylight and lighting, then put the budget toward the largest available savings. Review every assumption before making a decision. All results in this demo are invented UI fixtures, not building analysis.',warnings=['Illustrative UI fixture: no sponsor data, verified costs, physics simulation, or legal review.'])
+        eligible = [m for m in remaining if m['finance']['sir'] is None or m['finance']['sir'] >= 1]
+        skipped = [dict(measure_id=m['measure_id'], reason='over_budget' if m in eligible else 'not_cost_effective', detail='Expected upfront cost exceeds the remaining cash budget.' if m in eligible else f"Not cost-effective: SIR {m['finance']['sir']:.2f} in this invented scenario.") for m in remaining]
+        plan=dict(budget_usd=budget,selected=selected,financeable=eligible,skipped=skipped,total_upfront_usd=r(spent),total_annual_savings_usd=r(savings),total_co2_kg=r(co2,'kg'),baseline_after=energy(22000-kwh,6000,5200-savings,8200-co2))
+        outputs[str(budget)]=dict(schema_version=VERSION,run_id=f'demo-{kind}-{budget}',status='done',request=dict(sid=sid,budget_usd=budget,role='owner_occupier'),property=prop,building_model=model,baseline=dict(annual=energy(22000,6000,5200,8200),end_use_kwh=dict(cooling=8500,heating=6000,lighting=4200,plug_loads=5300,water_heating=4000),monthly_electricity_kwh=[1300,1250,1400,1500,1900,2300,2600,2500,2200,1900,1650,1500],monthly_gas_kwh=[1100,950,700,450,250,150,100,100,200,400,650,950],peak_cooling_w=6500,peak_heating_w=8000,calibrated_to_bills=False),measures=measures,plan=plan,questions=[],narrative_md='Start with operations, then reduce loads, upgrade equipment, and consider solar last. Review every assumption before making a decision. All results in this demo are invented UI fixtures, not building analysis.',warnings=['Illustrative UI fixture: no sponsor data, verified costs, physics simulation, or legal review.'])
     (OUT/f'{kind}.json').write_text(json.dumps(dict(illustrative=True,property=prop,runs=outputs),indent=2)+'\n')
 print('Generated two illustrative fixture sets (six complete run snapshots).')

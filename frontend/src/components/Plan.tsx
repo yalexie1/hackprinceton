@@ -386,8 +386,10 @@ export default function PlanView({
           <span className="count-pill">{plan.selected.length} upgrades</span>
         </div>
         <p className="section-description">
-          Start with no-cost changes, then prioritize annual savings. Each
-          upgrade is evaluated alongside the ones already selected.
+          Improve operations first, then reduce loads, upgrade equipment and
+          size solar for the energy still needed. The backend ranks each step by
+          cost-effectiveness and only recommends measures with a
+          savings-to-investment ratio of at least 1.
         </p>
         <div
           className="tabs"
@@ -402,7 +404,9 @@ export default function PlanView({
               onClick={() => setTab(t)}
             >
               {t === "selected"
-                ? plan.total_upfront_usd.expected > plan.budget_usd ? "Selected upgrades" : "Within budget"
+                ? plan.total_upfront_usd.expected > plan.budget_usd
+                  ? "Selected upgrades"
+                  : "Within budget"
                 : t === "financeable"
                   ? "Beyond your budget"
                   : "Not selected"}
@@ -439,7 +443,11 @@ export default function PlanView({
                   {run.measures.find((m) => m.measure_id === item.measure_id)
                     ?.title || item.measure_id}
                 </span>
-                <strong>{item.reason.replaceAll("_", " ")}</strong>
+                <strong>
+                  {item.reason === "not_cost_effective"
+                    ? "Not cost-effective"
+                    : item.reason.replaceAll("_", " ")}
+                </strong>
                 <p>{item.detail}</p>
               </div>
             ))}

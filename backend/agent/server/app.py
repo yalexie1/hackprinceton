@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.agent import api
-from backend.agent.roof import RoofView
+from backend.agent.roof import PropertyPreview, RoofView
 from backend.agent.runtime.replan import PatchError
 from backend.data_layer import api as data
 from backend.schema import (SCHEMA_VERSION, DocType, DocumentDraft, DocumentRequest, PropertySummary,
@@ -86,6 +86,14 @@ def create_app() -> FastAPI:
             return data.get_property_summary(sid)
         except LookupError:
             raise ApiError(404, "property_not_found", f"unknown sid: {sid}")
+
+    @app.get("/api/properties/{sid}/preview", response_model=PropertyPreview)
+    def property_preview(sid: str):
+        try:
+            data.get_property_summary(sid)
+        except LookupError:
+            raise ApiError(404, "property_not_found", f"unknown sid: {sid}")
+        return api.get_preview(sid)
 
     @app.post("/api/runs")
     def create_run(request: RunRequest):

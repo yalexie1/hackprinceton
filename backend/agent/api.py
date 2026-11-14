@@ -276,6 +276,27 @@ def get_roof(run_id: str):
     return roof_view(PropertyBundle.model_validate(raw), get_run(run_id), data.get_asset)
 
 
+def get_preview(sid: str):
+    """The property preview: the recorded run's bundle if there is one, else the data layer's cached live
+    bundle, else nothing. Never fetches and never reads specs/examples/ (its coordinates are invented)."""
+    import json
+    from backend.agent.roof import property_preview
+    from backend.data_layer import api as data
+    from backend.schema import PropertyBundle
+    bundle, origin = None, None
+    recorded = _recording_folder(sid) / "bundle.json"
+    cached = data._bundle_cache_path(sid)
+    for path, kind, key in ((recorded, "recorded_run", None), (cached, "cached_bundle", "bundle")):
+        try:
+            raw = json.loads(path.read_text())
+            bundle = PropertyBundle.model_validate(raw[key] if key else raw)
+            origin = kind
+            break
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return property_preview(sid, bundle, origin, data.get_asset)
+
+
 def get_document(run_id: str, doc_id: str) -> DocumentDraft:
     live_run = _live(run_id)
     if live_run is not None:

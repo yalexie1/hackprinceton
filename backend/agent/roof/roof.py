@@ -72,6 +72,27 @@ class RoofView(BaseModel):
     panels_selected: bool = False   # True: PV_ROOF is in the plan; False: the array is only financeable (or absent)
 
 
+class PreviewGeoreference(BaseModel):
+    latitude: float
+    longitude: float
+    source: Optional[str] = None     # Matterport's GeoCoordinateSource: "client", "processing" or "unknown"
+
+
+class PropertyPreview(BaseModel):
+    """What is already cached or recorded for a property, with no run and no fetch. Every field is null or
+    empty when it is not held: nothing here is ever taken from the invented example coordinates."""
+    sid: str
+    available: bool = False                      # False: no cached bundle and no recording, so everything below is empty
+    origin: Optional[Literal["cached_bundle", "recorded_run"]] = None
+    srid: int = 4326
+    georeference: Optional[PreviewGeoreference] = None
+    collection: Optional[str] = None             # the Vexcel capture the imagery comes from
+    ortho: Optional[OrthoView] = None
+    footprint_wkt: Optional[str] = None          # the primary structure
+    parcel_wkt: Optional[str] = None
+    oblique_paths: dict[str, str] = {}           # direction -> path for GET /api/assets/{path}; only files that are held
+
+
 def points(wkt: Optional[str]) -> list[tuple[float, float]]:
     nums = [float(v) for v in _NUM.findall(wkt or "")]
     return list(zip(nums[0::2], nums[1::2]))
@@ -184,3 +205,27 @@ def roof_view(bundle: PropertyBundle, result: RunResult, read_asset: Callable[[s
               for p in (pv.solar.panels if pv is not None and pv.solar else [])]
     return RoofView(ortho=ortho_view(bundle, read_asset), planes=planes, detections=detections,
                     panels=panels, panels_selected=selected)
+
+
+def property_preview(sid: str, bundle: Optional[PropertyBundle], origin: Optional[str],
+                     read_asset: Callable[[str], bytes]) -> PropertyPreview:
+    if bundle is None:
+        return PropertyPreview(sid=sid)
+    geo = bundle.matterport.georeference if bundle.matterport else None
+    v = bundle.vexcel
+    primary = next((st for st in (v.structures if v else []) if st.primary and st.footprint_wkt), None)
+    obliques = {}
+    for direction, path in (v.oblique_paths if v else {}).items():
+        try:
+            read_asset(path)
+        except Exception:                # a path whose file is not held would be a 404
+            continue
+        obliques[direction] = path
+    return PropertyPreview(
+        sid=sid, available=True, origin=origin,
+        georeference=PreviewGeoreference(latitude=geo.latitude, longitude=geo.longitude, source=geo.source) if geo else None,
+        collection=v.collection if v else None,
+        ortho=ortho_view(bundle, read_asset),
+        footprint_wkt=primary.footprint_wkt if primary else None,
+        parcel_wkt=v.parcel_wkt if v else None,
+        oblique_paths=obliques)

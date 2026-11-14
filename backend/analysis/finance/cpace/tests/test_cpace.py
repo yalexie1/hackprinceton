@@ -179,3 +179,9 @@ def test_the_example_scenarios_are_reproduced(flavor, region):
         assert got.eligible == want.eligible, m.measure_id
         checked += 1
     assert checked >= 4
+
+
+def test_a_property_with_no_state_is_not_offered_and_does_not_fail():
+    blank = summary("TX").model_copy(update={"state": None})
+    out = cpace_scenario(measure(), blank, rate=0.07, term_years=20)
+    assert not out.eligible and any("No C-PACE rules were read" in n for n in out.notes)

@@ -285,3 +285,17 @@ def test_npv_range_is_the_quadrature_of_one_at_a_time_runs():
     c_lo, c_hi = npv(m.savings.cost_usd.expected, f.net_upfront_usd.high), npv(m.savings.cost_usd.expected, f.net_upfront_usd.low)
     assert got.npv_usd.low == pytest.approx(y0 - ((y0 - s_lo) ** 2 + (y0 - c_lo) ** 2) ** 0.5, abs=0.5)
     assert got.npv_usd.high == pytest.approx(y0 + ((s_hi - y0) ** 2 + (c_hi - y0) ** 2) ** 0.5, abs=0.5)
+
+
+def test_an_unknown_state_prices_without_escalation_instead_of_failing():
+    run, bundle, m = house_pv()
+    for state in (None, "NY"):
+        f = m.finance
+        got = financial_breakdown(
+            installed_cost_usd=f.installed_cost_usd, cost_source=f.cost_source, net_upfront_usd=f.net_upfront_usd,
+            incentives=f.incentives, useful_life_years=f.useful_life_years,
+            annual_om_change_usd=f.annual_om_change_usd, savings=m.savings, tariff=bundle.tariff,
+            state=state, segment=run.property.segment)
+        assert got.electricity_escalation == 0.0 and got.gas_escalation == 0.0
+        assert any("State unknown" in n for n in got.financing[0].notes)
+        assert got.npv_usd.low <= got.npv_usd.expected <= got.npv_usd.high

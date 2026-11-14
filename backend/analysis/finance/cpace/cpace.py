@@ -89,7 +89,7 @@ def cpace_scenario(measure: MeasureResult, summary: PropertySummary, *, rate: Op
     eligible, why = _eligible_property(summary, units)
     if why:
         notes.append(why)
-    state = summary.state.upper()
+    state = (summary.state or "").upper()
     if state == "CA":
         if not ca_programme_confirmed:
             eligible = False

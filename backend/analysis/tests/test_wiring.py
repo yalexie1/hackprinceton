@@ -438,3 +438,46 @@ def test_the_vision_read_is_asked_for_the_room_fallback_and_its_flags_come_throu
     finally:
         api.set_vision(None, None)
     assert seen == {"room_fallback": True}
+
+
+# ---- a missing state never crashes pricing ----
+
+def without_state(bundle, address=None):
+    summary = bundle.summary.model_copy(update={"state": None, **({"address": address} if address else {})})
+    return bundle.model_copy(update={"summary": summary})
+
+
+def test_the_state_is_read_from_the_address_then_the_timezone():
+    assert api._state_from("5836 La Mirada Ave, Los Angeles, CA 90038") == "CA"
+    assert api._state_from("2100 West Loop S Fwy, Houston, TX 77027") == "TX"
+    assert api._state_from("12 Main St, Austin, Texas") == "TX"
+    assert api._state_from("1 Nowhere Rd", "America/Chicago") == "TX"
+    assert api._state_from("1 Nowhere Rd", "America/Los_Angeles") == "CA"
+    assert api._state_from("1 Nowhere Rd", None) is None
+    assert api._state_from("Cascade Ct, Santa Fe, NM", "America/Denver") is None
+
+
+@pytest.mark.parametrize("flavor", ["house", "office_houston"])
+def test_a_property_with_no_state_is_priced_like_the_same_property_with_one(flavor):
+    bundle, request = load(flavor)
+    blank = without_state(bundle)
+    assert blank.summary.state is None and api._state_from(blank.summary.address, blank.climate.timezone) == bundle.summary.state
+    model = model_of(bundle, request)
+    known = api.build_plan(bundle, model, request)
+    unknown = api.build_plan(blank, model, request)
+    assert unknown.model_dump_json() == known.model_dump_json()          # the address says the state
+
+
+def test_with_no_state_to_be_found_pricing_still_runs_without_escalation():
+    bundle, request = load("house")
+    nowhere = without_state(bundle, address="1 Nowhere Rd")
+    nowhere = nowhere.model_copy(update={"climate": nowhere.climate.model_copy(update={"timezone": "America/Denver"})})
+    model = model_of(bundle, request)
+    measure = api.evaluate_measure(nowhere, model, "LGT_LED", request.role)
+    priced = api.price_measure(nowhere, measure)
+    assert priced.finance is not None and priced.finance.electricity_escalation == 0.0 == priced.finance.gas_escalation
+    assert any("State unknown" in n for n in priced.finance.financing[0].notes)
+    plan = api.build_plan(nowhere, model, request)                      # the whole plan, no exception
+    assert plan.selected
+    assert api.lookup_incentives("LGT_LED", nowhere.summary) is not None
+    assert api.cpace_scenario(nowhere, priced).eligible is False        # no state, no C-PACE rules to apply

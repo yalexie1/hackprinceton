@@ -7,6 +7,7 @@ this module holds the algorithm and nothing else. Pure and deterministic.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 from backend.schema import (EnergyUse, MeasureId, MeasureResult, Plan, PlanItem, Ranged, Role,
@@ -66,6 +67,66 @@ def _band(y0: float, deviations: list[tuple[float, float]], linear: Optional[tup
     return y0 - lo ** 0.5, y0 + hi ** 0.5
 
 
+@dataclass(frozen=True)
+class PriceGroup:
+    """The `price_level` correlation group of UNC-02: the electricity price (which also prices export)
+    and the gas price move together across every measure of a plan. `*_rel_low` and `*_rel_high` are
+    the price's distance to its low and high, as a fraction of its expected value."""
+    electricity_usd_per_kwh: float
+    electricity_rel_low: float = 0.0
+    electricity_rel_high: float = 0.0
+    gas_usd_per_kwh: float = 0.0
+    gas_rel_low: float = 0.0
+    gas_rel_high: float = 0.0
+
+    @classmethod
+    def from_assumptions(cls, tariff_electricity: float, tariff_gas: Optional[float],
+                         electricity: Optional[Ranged], gas: Optional[Ranged]) -> "PriceGroup":
+        def rel(r: Optional[Ranged]) -> tuple[float, float]:
+            if r is None or r.expected <= 0:
+                return 0.0, 0.0
+            return (r.expected - r.low) / r.expected, (r.high - r.expected) / r.expected
+        e, g = rel(electricity), rel(gas)
+        return cls(tariff_electricity, e[0], e[1], tariff_gas or 0.0, g[0], g[1])
+
+
+def _price_parts(m: MeasureResult, group: PriceGroup) -> tuple[float, float]:
+    """The part of a measure's expected saving that moves with the electricity price (electricity and
+    export) and the part that moves with the gas price, in USD per year (signed)."""
+    s = m.savings
+    gas = s.gas_kwh.expected * group.gas_usd_per_kwh
+    return s.cost_usd.expected - gas, gas
+
+
+def _price_effect(parts: list[tuple[float, float]], group: PriceGroup) -> tuple[float, float]:
+    """(below, above) deviation of the summed savings when the price group is at its low and at its
+    high with every other input at expected (UNC-02: each deviation goes to the side it falls on)."""
+    elec = sum(p[0] for p in parts)
+    gas = sum(p[1] for p in parts)
+    at_low = -(elec * group.electricity_rel_low + gas * group.gas_rel_low)
+    at_high = elec * group.electricity_rel_high + gas * group.gas_rel_high
+    return -min(at_low, at_high, 0.0), max(at_low, at_high, 0.0)
+
+
+def _savings_total(chosen: list[MeasureResult], group: Optional[PriceGroup]) -> Ranged:
+    """Total annual savings. Without a price group every measure is independent. With one, the price
+    effect of all measures adds linearly (one correlated group) and what is left of each measure's own
+    range (its range less its price part, in quadrature, as A3 combined them) is independent."""
+    ranges = [m.savings.cost_usd for m in chosen]
+    if group is None:
+        return _total("USD", ranges, False)
+    y0 = sum(r.expected for r in ranges)
+    others_lo, others_hi = [], []
+    for m, r in zip(chosen, ranges):
+        below, above = _price_effect([_price_parts(m, group)], group)
+        d_lo, d_hi = r.expected - r.low, r.high - r.expected
+        others_lo.append(max(0.0, d_lo ** 2 - below ** 2) ** 0.5)
+        others_hi.append(max(0.0, d_hi ** 2 - above ** 2) ** 0.5)
+    g_lo, g_hi = _price_effect([_price_parts(m, group) for m in chosen], group)
+    low, high = _band(y0, [(a, b) for a, b in zip(others_lo, others_hi)], (g_lo, g_hi))
+    return Ranged(low=_usd(low), expected=_usd(y0), high=_usd(high), unit="USD")
+
+
 def _total(unit: str, ranges: list[Ranged], correlated: bool) -> Ranged:
     y0 = sum(r.expected for r in ranges)
     devs = [(r.expected - r.low, r.high - r.expected) for r in ranges]
@@ -78,7 +139,8 @@ def _total(unit: str, ranges: list[Ranged], correlated: bool) -> Ranged:
 
 def select_plan(measure_ids: list[MeasureId], role: Role, budget_usd: float, state: Any,
                 evaluate: Evaluate, apply: Apply, energy: Energy,
-                value_uplift: Optional[ValueUplift] = None) -> Plan:
+                value_uplift: Optional[ValueUplift] = None,
+                price_group: Optional[PriceGroup] = None) -> Plan:
     skipped: list[SkippedItem] = []
     pool: list[MeasureId] = []
     consent: set[str] = set()
@@ -153,6 +215,6 @@ def select_plan(measure_ids: list[MeasureId], role: Role, budget_usd: float, sta
         budget_usd=budget_usd, selected=selected, financeable=financeable,
         skipped=sorted(skipped, key=lambda s: (_REASONS.index(s.reason), s.measure_id)),
         total_upfront_usd=_total("USD", [m.finance.net_upfront_usd for m in chosen], True) if chosen else zero,
-        total_annual_savings_usd=_total("USD", [m.savings.cost_usd for m in chosen], False) if chosen else zero,
+        total_annual_savings_usd=_savings_total(chosen, price_group) if chosen else zero,
         total_co2_kg=_total("kg", [m.savings.co2_kg for m in chosen], False) if chosen else Ranged(low=0.0, expected=0.0, high=0.0, unit="kg"),
         baseline_after=energy(state), value_uplift=value_uplift)

@@ -32,7 +32,7 @@ import numpy as np
 
 from backend.analysis.finance.costs import NoCostData, cost_fields, incentives_for, measure_cost
 from backend.analysis.finance.economics import financial_breakdown
-from backend.analysis.finance.plan import select_plan
+from backend.analysis.finance.plan import PriceGroup, select_plan
 from backend.analysis.finance.sensitivity import sensitivity as _ask_questions
 from backend.analysis.finance.value import home_pv_uplift, plan_value_uplift
 from backend.analysis import layout
@@ -609,10 +609,19 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
         finally:
             _FAST.reset(token)
 
-    return select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy)
+    return select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy,
+                       price_group=_price_group(bundle, model))
 
 
 @_with_state
+def _price_group(bundle: PropertyBundle, model: BuildingModel) -> PriceGroup:
+    """UNC-02: the electricity and gas price ranges of the model, as the one `price_level` group."""
+    def ranged(key):
+        return next((a.value for a in model.assumptions if a.key == key and isinstance(a.value, Ranged)), None)
+    return PriceGroup.from_assumptions(bundle.tariff.electricity_usd_per_kwh, bundle.tariff.gas_usd_per_kwh,
+                                       ranged("tariff.electricity_usd_per_kwh"), ranged("tariff.gas_usd_per_kwh"))
+
+
 def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
     """REAL (A26, SPEC 6.5). Every round each measure is evaluated against the building as the plan
     has changed it (A16 engine, A2 and A3 simulation), priced (A24, A25), and the solar design is

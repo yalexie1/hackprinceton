@@ -511,21 +511,40 @@ def fetch_oblique(parcel_wkt: str, direction: str, *, sid: str = "",
     )
 
 
+#: Magic bytes to file extension. **`ortho/extract` and `oriented/extract` return JPEG**,
+#: measured on the golden house parcel on 2026-11-14 (`\xff\xd8\xff\xe0`), not the PNG the
+#: suffix used to claim. The suffix is what the server turns into a `Content-Type` through
+#: `mimetypes.guess_type`, so calling a JPEG `.png` told every client the wrong format.
+_IMAGE_SUFFIXES = ((b"\x89PNG\r\n\x1a\n", ".png"), (b"\xff\xd8\xff", ".jpg"))
+_SUFFIX_CANDIDATES = (".jpg", ".png")
+
+
+def _suffix_for(data: bytes) -> str:
+    """The extension the bytes actually are. Unrecognised bytes keep `.bin`, which is honest:
+    better an octet-stream a client refuses than an `image/png` it mis-decodes."""
+    for magic, suffix in _IMAGE_SUFFIXES:
+        if data[:len(magic)] == magic:
+            return suffix
+    return ".bin"
+
+
 def _fetch_image(endpoint: str, request: dict, *, sid: str, identifier: str,
                  post: Optional[Poster], refresh: bool
                  ) -> tuple[Optional[str], list[FetchRecord]]:
     """Both extract endpoints return image bytes, so this goes through the bytes cache
-    rather than `cached_json`."""
-    target = cache.path_for("vexcel-image", identifier, request, suffix=".png")
-    if target.is_file() and not refresh:
-        return cache.relative(target), [
-            cache.cache_note("vexcel", endpoint, hit=True)]
+    rather than `cached_json`. The cached file is named for the format it holds."""
+    if not refresh:
+        for suffix in _SUFFIX_CANDIDATES:
+            hit = cache.path_for("vexcel-image", identifier, request, suffix=suffix)
+            if hit.is_file():
+                return cache.relative(hit), [cache.cache_note("vexcel", endpoint, hit=True)]
 
     data = (post or _default_post_bytes)(endpoint, request)
     if data is None:
         return None, [cache.record("vexcel.no_parcel", f"{endpoint}: {identifier}")]
-    cache.write_bytes("vexcel-image", identifier, data, request, suffix=".png")
-    return cache.relative(target), [cache.cache_note("vexcel", endpoint, hit=False)]
+    written = cache.write_bytes("vexcel-image", identifier, data, request,
+                               suffix=_suffix_for(data))
+    return cache.relative(written), [cache.cache_note("vexcel", endpoint, hit=False)]
 
 
 def _default_post_bytes(path: str, body: dict) -> Optional[bytes]:

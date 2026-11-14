@@ -375,3 +375,59 @@ def test_the_door_stays_offline_by_default(monkeypatch):
     assert api.roof_area_m2("zvKHR9DHNjJ") is None
     found = api.detect_roof_elements("zvKHR9DHNjJ")
     assert isinstance(found, list)        # the fixture path, whatever it holds
+
+
+# ---------- the cached file is named for the format it holds (issue #319 follow-up) ----------
+
+@pytest.fixture
+def own_cache(monkeypatch, tmp_path):
+    """The four tests below write bytes, so they get their own cache root. Writing into
+    `data/cache/` would leave junk in the lane's real cache and could be read back as a hit by a
+    later test - which has already cost this lane an afternoon once."""
+    monkeypatch.setenv("DATA_LAYER_CACHE_DIR", str(tmp_path / "cache"))
+
+
+def test_a_jpeg_is_cached_as_jpg_not_png(own_cache):
+    """`ortho/extract` returns JPEG, measured live on the golden house parcel on 2026-11-14.
+    The suffix is what the server turns into a Content-Type (`mimetypes.guess_type`), so a JPEG
+    named `.png` told every client the wrong format."""
+    jpeg = b"\xff\xd8\xff\xe0" + b"\x00" * 64
+    path, _ = imagery._fetch_image("ortho/extract", {"wkt": "jpeg-case"}, sid="sid",
+                                   identifier="sid-ortho-jpeg", post=lambda e, b: jpeg,
+                                   refresh=True)
+    assert path.endswith(".jpg")
+
+
+def test_a_png_is_still_cached_as_png(own_cache):
+    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+    path, _ = imagery._fetch_image("ortho/extract", {"wkt": "png-case"}, sid="sid",
+                                   identifier="sid-ortho-png", post=lambda e, b: png,
+                                   refresh=True)
+    assert path.endswith(".png")
+
+
+def test_bytes_of_no_known_format_are_not_called_an_image(own_cache):
+    """Better an octet-stream a client refuses than an `image/png` it mis-decodes."""
+    path, _ = imagery._fetch_image("ortho/extract", {"wkt": "odd-case"}, sid="sid",
+                                   identifier="sid-ortho-odd", post=lambda e, b: b"not an image",
+                                   refresh=True)
+    assert path.endswith(".bin")
+
+
+def test_a_cached_image_is_a_hit_whichever_format_it_was_stored_as(own_cache):
+    """The hit check has to look for every suffix it might have written, or the second call
+    re-fetches and pays the extract cost again."""
+    jpeg = b"\xff\xd8\xff\xe0" + b"\x00" * 64
+    calls = []
+
+    def once(endpoint, body):
+        calls.append(endpoint)
+        return jpeg
+
+    request = {"wkt": "hit-case"}
+    first, _ = imagery._fetch_image("ortho/extract", request, sid="sid",
+                                    identifier="sid-ortho-hit", post=once, refresh=True)
+    second, notes = imagery._fetch_image("ortho/extract", request, sid="sid",
+                                         identifier="sid-ortho-hit", post=once, refresh=False)
+    assert second == first and len(calls) == 1, "the second call must not re-fetch"
+    assert any("cache" in (n.detail or "").lower() or n.status == "ok" for n in notes)

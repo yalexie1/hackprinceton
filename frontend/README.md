@@ -1,6 +1,6 @@
 # Evergreen frontend
 
-Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.6**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
+Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.7**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
 
 ## Run
 
@@ -54,6 +54,7 @@ Production builds use same-origin `/api` unless `VITE_API_BASE_URL` is set at bu
 ### Backend expectations
 
 - Search, start/resume runs, questions, budget/assumption updates, and document routes follow SPEC section 10. Types consumed by the UI live in `src/lib/types.ts`.
+- Run headers distinguish `data_source` (live/example/unknown property inputs) from `served_by` (live/replay/unknown delivery). A recording of live property data says “Live property data · Saved replay”; absent provenance is unknown and never implies live data. Connecting to the API alone does not establish either value.
 - The SSE endpoint emits JSON `RunEvent` data, either default or named events. Comments, CRLF, fragmented UTF-8, multiline data, and multiple events per chunk are supported. The server replays history from the beginning: the frontend retains a per-run cursor and skips consumed events on reconnect. An active run pauses on a new question, done, or non-recoverable error. If the authoritative run is already complete, it drains the finite history to its end so earlier questions/done events do not hide appended G11 re-plan events. Recoverable errors stay in the stream. It fetches the final run and reconnects after an answer/update. Transport failures expose a reconnect button for the same run. Unknown future event types are ignored.
 - Questions may be embedded directly in `event.payload` or under `event.payload.question`; the subsequent `RunResult.questions` is authoritative.
 - Structured todo events show backend progress. Approval questions show document/state/scope context and preserve boolean answers.

@@ -18,7 +18,7 @@
   },
   "runs": {
     "5000": {
-      "schema_version": "0.3.6",
+      "schema_version": "0.3.7",
       "run_id": "demo-house-5000",
       "status": "done",
       "request": {
@@ -43,7 +43,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.3.6",
+        "schema_version": "0.3.7",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -2125,10 +2125,12 @@
       "narrative_md": "Start with operations, then reduce loads, upgrade equipment, and consider solar last. Review every assumption before making a decision. All results in this demo are invented UI fixtures, not building analysis.",
       "warnings": [
         "Illustrative UI fixture: no sponsor data, verified costs, physics simulation, or legal review."
-      ]
+      ],
+      "data_source": "example",
+      "served_by": "replay"
     },
     "15000": {
-      "schema_version": "0.3.6",
+      "schema_version": "0.3.7",
       "run_id": "demo-house-15000",
       "status": "done",
       "request": {
@@ -2153,7 +2155,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.3.6",
+        "schema_version": "0.3.7",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -4235,10 +4237,12 @@
       "narrative_md": "Start with operations, then reduce loads, upgrade equipment, and consider solar last. Review every assumption before making a decision. All results in this demo are invented UI fixtures, not building analysis.",
       "warnings": [
         "Illustrative UI fixture: no sponsor data, verified costs, physics simulation, or legal review."
-      ]
+      ],
+      "data_source": "example",
+      "served_by": "replay"
     },
     "30000": {
-      "schema_version": "0.3.6",
+      "schema_version": "0.3.7",
       "run_id": "demo-house-30000",
       "status": "done",
       "request": {
@@ -4263,7 +4267,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.3.6",
+        "schema_version": "0.3.7",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -6344,7 +6348,9 @@
       "narrative_md": "Start with operations, then reduce loads, upgrade equipment, and consider solar last. Review every assumption before making a decision. All results in this demo are invented UI fixtures, not building analysis.",
       "warnings": [
         "Illustrative UI fixture: no sponsor data, verified costs, physics simulation, or legal review."
-      ]
+      ],
+      "data_source": "example",
+      "served_by": "replay"
     }
   }
 }

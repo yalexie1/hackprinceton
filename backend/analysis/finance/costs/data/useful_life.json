@@ -1,0 +1,135 @@
+[
+ {
+  "measure_id": "HVAC_HP",
+  "sector": "any",
+  "years": 15,
+  "status": "verified",
+  "basis": "EIA-2023: average life 15.3 years"
+ },
+ {
+  "measure_id": "DHW_HPWH",
+  "sector": "any",
+  "years": 15,
+  "status": "verified",
+  "basis": "EIA-2023: average life 15.1 years"
+ },
+ {
+  "measure_id": "HVAC_RTU",
+  "sector": "any",
+  "years": 21,
+  "status": "verified",
+  "basis": "EIA-2023: average life 21 years"
+ },
+ {
+  "measure_id": "LGT_LED",
+  "sector": "commercial",
+  "years": 15,
+  "status": "verified",
+  "basis": "EIA-2023: 53 000 h at 3 431 h/yr"
+ },
+ {
+  "measure_id": "LGT_LED",
+  "sector": "residential",
+  "years": 10,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "ROOF_COOL",
+  "sector": "any",
+  "years": 20,
+  "status": "verified",
+  "basis": "EPA-2008: many coatings last more than 20 years"
+ },
+ {
+  "measure_id": "PV_ROOF",
+  "sector": "any",
+  "years": 25,
+  "status": "judgement",
+  "basis": "HB135 section 4.5.3 example; no PV lifetime study opened"
+ },
+ {
+  "measure_id": "HVAC_ECON",
+  "sector": "any",
+  "years": 15,
+  "status": "unverified",
+  "basis": "no source opened; limited by the unit it controls"
+ },
+ {
+  "measure_id": "ENV_ATTIC",
+  "sector": "any",
+  "years": 25,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "ENV_WALL",
+  "sector": "any",
+  "years": 25,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "WIN_REPLACE",
+  "sector": "any",
+  "years": 25,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "ENV_AIRSEAL",
+  "sector": "any",
+  "years": 15,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "HVAC_DUCT",
+  "sector": "any",
+  "years": 15,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "LGT_CTRL",
+  "sector": "any",
+  "years": 10,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "CTRL_TSTAT",
+  "sector": "any",
+  "years": 10,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "WIN_FILM",
+  "sector": "any",
+  "years": 10,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "WIN_SHADE",
+  "sector": "any",
+  "years": 10,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "PLUG_MGMT",
+  "sector": "any",
+  "years": 10,
+  "status": "unverified",
+  "basis": "no source opened"
+ },
+ {
+  "measure_id": "LAYOUT",
+  "sector": "any",
+  "years": 5,
+  "status": "judgement",
+  "basis": "a layout lasts until the next move"
+ }
+]

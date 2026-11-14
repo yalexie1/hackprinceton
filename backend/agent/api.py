@@ -65,11 +65,18 @@ def start_run(request: RunRequest) -> str:
     if recorded is not None:                 # a live run that was kept for the demo
         run_id = f"run_demo_{next(_counter)}"
         result, events, bundle = recorded
+        asked_for = RunRequest.model_validate(result["request"])
         result["run_id"] = run_id
         result["served_by"] = "replay"           # the recording keeps the data_source it was made with
+        # **The caller's request, not the recording's.** Overwriting only `run_id` meant every
+        # property with a recording reported the budget, role and desks the recording was made
+        # with, so a user who asked for $10,000,000 was told $15,000 and had no way to tell the
+        # difference from a UI bug. The request a result carries has to be the one that was made.
+        result["request"] = request.model_dump(mode="json")
         _runs[run_id] = {"flavor": None, "bundle": bundle, "folder": _recording_folder(request.sid),
                          "result": RunResult.model_validate(result),
                          "events": [RunEvent.model_validate(e) for e in events], "answers": {}, "docs": {}}
+        _honour_request(_runs[run_id], request, asked_for)
         return run_id
     flavor = _flavor_for_sid(request.sid)
     run_id = f"run_{flavor}_{next(_counter)}"
@@ -85,6 +92,45 @@ def start_run(request: RunRequest) -> str:
         "docs": {},
     }
     return run_id
+
+
+def _honour_request(run: dict, wanted: RunRequest, recorded: RunRequest) -> None:
+    """Make a recorded run's plan answer the request it now claims, or say that it cannot.
+
+    Carrying the caller's request is necessary but not sufficient: a result that says
+    "$10,000,000" above a plan built for $15,000 is a worse lie than the one it replaces. A
+    different budget is re-planned for real through the same path `update` uses (#356), which
+    leaves the recording on disk untouched.
+
+    Role and desks cannot be re-planned - they change which measures apply at all - so they are
+    reported as not honoured rather than quietly ignored. Silence there would let the demo show a
+    tenant's plan under the word "landlord".
+    """
+    changed = []
+    if wanted.role != recorded.role:
+        changed.append(f"role {wanted.role!r} (the recording was made as {recorded.role!r})")
+    if wanted.desks_requested != recorded.desks_requested:
+        changed.append(f"desks {wanted.desks_requested} (the recording used {recorded.desks_requested})")
+
+    if wanted.budget_usd != recorded.budget_usd:
+        try:
+            new, events = _replan_recorded(run, wanted.budget_usd, wanted.overrides or None)
+        except LookupError as exc:
+            changed.append(f"budget {wanted.budget_usd:,.0f} USD (the recorded plan was built for "
+                           f"{recorded.budget_usd:,.0f}; it could not be rebuilt: {exc})")
+        else:
+            run["result"] = new
+            run["events"] = [*run["events"], *events]
+
+    if not changed:
+        return
+    result = run["result"]
+    run["result"] = result.model_copy(update={"warnings": [
+        *result.warnings,
+        "This saved run does not answer part of what was asked: "
+        + "; ".join(changed)
+        + ". Use real analysis for a plan built to your own inputs.",
+    ]})
 
 
 def _recording_folder(sid: str):

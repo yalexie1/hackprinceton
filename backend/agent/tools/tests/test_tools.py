@@ -178,3 +178,19 @@ def test_a_tool_called_too_early_says_which_tool_to_call_first(tmp_path):
     assert "error" in out and "call build_building_model first" in out["error"]
     out = tools["price_measure"]("LGT_LED")
     assert "error" in out and "call evaluate_measure('LGT_LED') first" in out["error"]
+
+
+def test_reader_tools_return_run_files_and_check_a_draft(tmp_path):
+    from backend.agent.tools import build_reader_tools
+    t, files = make(tmp_path)
+    ctx = ToolContext(request=RUN.request, files=files, doors=fake_doors(), run=lambda: RUN, asset_dir=tmp_path)
+    r = build_reader_tools(ctx)
+    assert set(r) == {"read_run_file", "check_report"}
+    assert "does not exist" in r["read_run_file"]("plan.json")["error"]
+    t["get_property_bundle"](BUNDLE.summary.sid); t["build_building_model"](); t["run_baseline"](); t["build_plan"](5000.0)
+    assert r["read_run_file"]("/run/plan.json") == r["read_run_file"]("plan.json") and "error" not in r["read_run_file"]("plan.json")
+    assert set(r["read_run_file"]("bundle.json")) == {"summary"}
+    assert "not readable" in r["read_run_file"]("model.json")["error"]
+    clean = r["check_report"]("The property has no figures here.")
+    assert clean == {"problems": []}
+    assert r["check_report"]("It saves $987,654,321 a year.")["problems"]

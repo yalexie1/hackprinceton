@@ -23,7 +23,7 @@ SUBAGENT_TOOLS: dict[str, tuple[str, ...]] = {
     "financier": ("price_measure", "lookup_incentives", "build_plan", "cpace_scenario",
                   "sensitivity"),
 }
-AUDITOR_TOOLS = ("ask_user",)
+AUDITOR_TOOLS = ("ask_user", "read_run_file", "check_report")   # the last two are read-only (tools.build_reader_tools)
 
 # SPEC 6.2: the measures of each property type. A subagent is told which ids exist so that it does not
 # have to probe the tool for them; the tool schemas also list every allowed id.
@@ -63,11 +63,13 @@ Delegate with the task tool, one subagent at a time, in this order, giving each 
   5. You: if sensitivity returned questions, ask the user with ask_user, one at a time (at most three);
      then have the financier apply each answer with set_assumption and call build_plan once more.
      If it returned none, ask nothing.
-  6. You: write report.md last: a short plain summary of the property, the baseline, the selected measures
-     with cost and saving, what is financeable, and what was skipped and why.
-You never do arithmetic. Every number in report.md is copied from a tool result with the same digits; do not
-write a total, a percentage, a sum or any figure no tool returned. Decide fallbacks when a layer is missing
-and say which you chose. The run is complete only when build_plan has returned and report.md is written."""
+  6. You: write report.md last, only from the run files. Read /run/plan.json, /run/measures.json and
+     /run/baseline.json with read_run_file, then write a short plain summary of the property, the baseline,
+     the selected measures with cost and saving, what is financeable, and what was skipped and why. Copy each
+     figure from those files with the same digits and units. Then run check_report on the draft; if it lists
+     a number, replace it with the value from the file or delete the sentence, and check again.
+You never do arithmetic. Do not write a total, a percentage, a sum, a ratio or any figure the files do not
+hold. Decide fallbacks when a layer is missing and say which you chose. The run is complete only when build_plan has returned and report.md is written."""
 
 
 def as_langchain_tool(name: str, fn: Callable) -> StructuredTool:
@@ -112,7 +114,7 @@ def build_auditor(tools: Mapping[str, Callable], model: Any = None, subagent_mod
         specs.append(counsel_spec(tools, subagent_model, approve))
     return create_deep_agent(
         model=model if model is not None else ORCHESTRATOR_MODEL,
-        tools=[as_langchain_tool("ask_user", ask)],
+        tools=[as_langchain_tool("ask_user", ask)] + [as_langchain_tool(n, tools[n]) for n in AUDITOR_TOOLS[1:] if n in tools],
         system_prompt=AUDITOR_PROMPT,
         middleware=[TodoListMiddleware()],
         subagents=specs,

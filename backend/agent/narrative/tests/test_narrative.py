@@ -47,4 +47,4 @@ def test_years_and_headings_are_not_quantities():
 
 def test_percent_and_decimals():
     r = run("house")
-    assert check_narrative("It is 0.07 of nothing.", r) != []
+    assert check_narrative("Rate is 0.31337 of nothing.", r) != []

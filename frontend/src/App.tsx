@@ -61,6 +61,7 @@ import HowItWorks from "./components/HowItWorks";
 import AuditTasks from "./components/AuditTasks";
 import { replayBatch } from "./lib/audit-replay";
 import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
+import { initialConnectedBudget, initialConnectedRole } from "./lib/recorded-budget";
 type View =
   | "find"
   | "setup"
@@ -275,8 +276,12 @@ export default function App() {
     setError("");
     setView("setup");
     const options = demoBudgets(p.sid);
-    setRole(demo ? demoRun(p.sid, options[0]).request.role : "owner_occupier");
-    setBudget(demo ? (options.includes(15000) ? 15000 : options[0]) : 15000);
+    setRole(demo ? demoRun(p.sid, options[0]).request.role : initialConnectedRole(p.sid));
+    setBudget(
+      demo
+        ? (options.includes(15000) ? 15000 : options[0])
+        : initialConnectedBudget(p.sid),
+    );
     setElectricBills("");
     setGasBills("");
     setFirstMonth("");

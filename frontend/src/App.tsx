@@ -962,6 +962,7 @@ export default function App() {
                   demo={demo}
                   measures={run.measures}
                   plan={run.plan}
+                  run={run}
                 />
               </div>
             </>
@@ -1041,6 +1042,7 @@ export default function App() {
                     demo={demo}
                     measures={run.measures}
                     plan={run.plan}
+                    run={run}
                     focus={focus}
                   />
                   <section className="budget-card">

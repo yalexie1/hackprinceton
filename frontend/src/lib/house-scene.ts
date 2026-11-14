@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import type { EnergyPart, EnergyPoint } from "./energy-explorer";
 
 export type HouseMode = "exterior" | "cutaway" | "exploded";
 export type HouseRoom = "living" | "bedroom" | "roof";
@@ -11,6 +12,11 @@ export interface HouseController {
   focus: (room: HouseRoom) => void;
   zoom: (factor: number) => void;
   reset: () => void;
+  setEnergy: (
+    active: EnergyPart[],
+    planned: EnergyPart[],
+    hovered: EnergyPart | null,
+  ) => void;
   dispose: () => void;
 }
 
@@ -18,7 +24,13 @@ export interface HouseController {
 // property geometry, energy measurements or third-party model assets are implied.
 export function createHouseScene(
   host: HTMLElement,
-  options: { compact: boolean; office: boolean; onUnavailable: () => void },
+  options: {
+    compact: boolean;
+    office: boolean;
+    onUnavailable: () => void;
+    onHover?: (part: EnergyPart | null) => void;
+    onProject?: (points: EnergyPoint[]) => void;
+  },
 ): HouseController {
   const { compact, office } = options;
   const renderer = new THREE.WebGLRenderer({
@@ -192,6 +204,16 @@ export function createHouseScene(
       ? new RoundedBoxGeometry(...size, 2, radius)
       : new THREE.BoxGeometry(...size);
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.userData.energyPart =
+      material === solar
+        ? "solar"
+        : material === glass
+          ? "windows"
+          : material === roofMaterial
+            ? "roof"
+            : material === plaster
+              ? "envelope"
+              : undefined;
     mesh.position.set(...pos);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -307,6 +329,7 @@ export function createHouseScene(
     side = false,
   ) {
     const group = new THREE.Group();
+    group.userData.energyPart = "windows";
     group.position.set(x, y, z);
     if (side) group.rotation.y = Math.PI / 2;
     parent.add(group);
@@ -483,7 +506,8 @@ export function createHouseScene(
       half.rotation.x = sign * angle;
       roof.add(half);
       box(half, [9.7, 0.17, slope], [0, 0, 0], roofMaterial);
-      box(half, [9.75, 0.1, slope], [0, -0.13, 0], wood);
+      box(half, [9.75, 0.1, slope], [0, -0.13, 0], wood).userData.energyPart =
+        "attic";
       for (let x = -4.7; x < 4.8; x += 0.38)
         box(half, [0.025, 0.035, slope], [x, 0.1, 0], roofMaterial);
       if (sign === 1)
@@ -501,6 +525,184 @@ export function createHouseScene(
         const panel = box(roof, [1.02, 0.06, 1.45], [x, 0.4, z], solar);
         panel.rotation.x = 0.18;
       }
+
+  // Inspectable energy systems, represented at concept locations only.
+  const lights = new THREE.Group();
+  lights.userData.energyPart = "lighting";
+  lower.add(lights);
+  for (const x of [-2.3, 2]) {
+    cylinder(lights, 0.025, 0.42, [x, 2.23, -0.2], bronze);
+    cylinder(lights, 0.28, 0.16, [x, 1.98, -0.2], white, 0.12);
+    cylinder(
+      lights,
+      0.19,
+      0.025,
+      [x, 1.89, -0.2],
+      mat("#fff3be", 0.3, { emissive: "#ffdf80", emissiveIntensity: 0.55 }),
+    );
+  }
+  const pump = new THREE.Group();
+  pump.userData.energyPart = "hvac";
+  lower.add(pump);
+  box(pump, [0.65, 0.95, 1.15], [4.96, 0.65, 1.8], stone, 0.04);
+  const fan = cylinder(pump, 0.32, 0.06, [5.31, 0.67, 1.8], charcoal);
+  fan.rotation.z = Math.PI / 2;
+  for (let i = -2; i <= 2; i++)
+    box(pump, [0.03, 0.62, 0.025], [5.35, 0.67, 1.8 + i * 0.1], stone);
+  const tank = new THREE.Group();
+  tank.userData.energyPart = "water";
+  lower.add(tank);
+  cylinder(tank, 0.28, 1.25, [3.8, 0.88, -1.6], white);
+  box(tank, [0.17, 0.22, 0.03], [3.8, 1.14, -1.3], charcoal);
+  const thermostat = box(
+    lower,
+    [0.07, 0.24, 0.28],
+    [0.23, 1.5, 0.25],
+    white,
+    0.025,
+  );
+  thermostat.userData.energyPart = "controls";
+  box(
+    lower,
+    [0.075, 0.12, 0.18],
+    [0.27, 1.51, 0.25],
+    olive,
+  ).userData.energyPart = "controls";
+
+  const energyAnchors: {
+    part: EnergyPart;
+    parent: THREE.Object3D;
+    position: THREE.Vector3;
+  }[] = [
+    { part: "solar", parent: roof, position: new THREE.Vector3(0, 1.05, 1.6) },
+    { part: "roof", parent: roof, position: new THREE.Vector3(3.7, 0.8, -1.6) },
+    {
+      part: "attic",
+      parent: roof,
+      position: new THREE.Vector3(-3, -0.12, 2.8),
+    },
+    {
+      part: "lighting",
+      parent: lower,
+      position: new THREE.Vector3(-2.3, 1.98, -0.2),
+    },
+    {
+      part: "envelope",
+      parent: upper,
+      position: new THREE.Vector3(-4.38, 1.5, 1.5),
+    },
+    {
+      part: "windows",
+      parent: upper,
+      position: new THREE.Vector3(1.04, 1.57, -2.92),
+    },
+    { part: "hvac", parent: lower, position: new THREE.Vector3(5.3, 0.8, 1.8) },
+    {
+      part: "water",
+      parent: lower,
+      position: new THREE.Vector3(3.8, 1.5, -1.6),
+    },
+    {
+      part: "controls",
+      parent: lower,
+      position: new THREE.Vector3(0.3, 1.5, 0.25),
+    },
+    {
+      part: "workspace",
+      parent: upper,
+      position: new THREE.Vector3(2.2, 1.3, -2.2),
+    },
+  ];
+  // Clone per-mesh materials so a window or lamp highlight never tints other
+  // objects sharing the same base material.
+  const energyMeshes: {
+    mesh: THREE.Mesh;
+    part: EnergyPart;
+    material: THREE.MeshStandardMaterial;
+  }[] = [];
+  house.traverse((object) => {
+    if (
+      !(object instanceof THREE.Mesh) ||
+      !(object.material instanceof THREE.MeshStandardMaterial)
+    )
+      return;
+    let tagged: THREE.Object3D | null = object;
+    while (tagged && !tagged.userData.energyPart) tagged = tagged.parent;
+    if (!tagged) return;
+    const part = tagged.userData.energyPart as EnergyPart;
+    object.userData.energyPart = part;
+    const material = object.material.clone();
+    object.material = material;
+    materials.push(material);
+    energyMeshes.push({ mesh: object, part, material });
+  });
+  let energyActive: EnergyPart[] = [];
+  let lastHover: EnergyPart | null = null;
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let dragging = false;
+  const isVisible = (object: THREE.Object3D): boolean =>
+    object.visible && (!object.parent || isVisible(object.parent));
+  function hover(part: EnergyPart | null) {
+    if (part !== lastHover) {
+      lastHover = part;
+      options.onHover?.(part);
+    }
+  }
+  function pointerMove(event: PointerEvent) {
+    if (compact || dragging || !energyActive.length) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      (-(event.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    scene.updateMatrixWorld();
+    raycaster.setFromCamera(pointer, camera);
+    const hit = raycaster
+      .intersectObject(house, true)
+      .find((h) => isVisible(h.object));
+    const part = hit?.object.userData.energyPart as EnergyPart | undefined;
+    hover(part && energyActive.includes(part) ? part : null);
+  }
+  const pointerLeave = () => hover(null);
+  let dragOrigin = { x: 0, y: 0 };
+  const dragStart = (event: PointerEvent) => {
+    dragOrigin = { x: event.clientX, y: event.clientY };
+    dragging = true;
+    hover(null);
+  };
+  const dragEnd = (event: PointerEvent) => {
+    dragging = false;
+    if (
+      Math.hypot(event.clientX - dragOrigin.x, event.clientY - dragOrigin.y) < 5
+    )
+      pointerMove(event);
+  };
+  renderer.domElement.addEventListener("pointermove", pointerMove);
+  renderer.domElement.addEventListener("pointerleave", pointerLeave);
+  renderer.domElement.addEventListener("pointerdown", dragStart);
+  window.addEventListener("pointerup", dragEnd);
+  function projectEnergy() {
+    scene.updateMatrixWorld();
+    options.onProject?.(
+      energyAnchors.map((anchor) => {
+        const point = anchor.parent
+          .localToWorld(anchor.position.clone())
+          .project(camera);
+        return {
+          part: anchor.part,
+          x: ((point.x + 1) / 2) * host.clientWidth,
+          y: ((1 - point.y) / 2) * host.clientHeight,
+          visible:
+            isVisible(anchor.parent) &&
+            point.z < 1 &&
+            point.z > -1 &&
+            Math.abs(point.x) < 0.96 &&
+            Math.abs(point.y) < 0.96,
+        };
+      }),
+    );
+  }
 
   let mode: HouseMode = compact ? "exterior" : "exploded";
   let targetUpper = 4.1,
@@ -622,6 +824,7 @@ export function createHouseScene(
     controls.update(delta);
     if (dirty || moving || controls.autoRotate) {
       renderer.render(scene, camera);
+      projectEnergy();
       dirty = false;
     }
   }
@@ -631,6 +834,27 @@ export function createHouseScene(
   else renderer.render(scene, camera);
   return {
     setMode,
+    setEnergy(active, planned, hovered) {
+      energyActive = active;
+      for (const item of energyMeshes) {
+        const lit = active.includes(item.part);
+        item.material.emissive.set(
+          lit
+            ? planned.includes(item.part)
+              ? "#6aab42"
+              : "#c9a04a"
+            : "#000000",
+        );
+        item.material.emissiveIntensity = lit
+          ? hovered === item.part
+            ? 0.65
+            : planned.includes(item.part)
+              ? 0.12
+              : 0.025
+          : 0;
+      }
+      dirty = true;
+    },
     setRotating(active) {
       controls.autoRotate = active;
       dirty = true;
@@ -692,6 +916,10 @@ export function createHouseScene(
       resize.disconnect();
       intersection.disconnect();
       controls.dispose();
+      renderer.domElement.removeEventListener("pointermove", pointerMove);
+      renderer.domElement.removeEventListener("pointerleave", pointerLeave);
+      renderer.domElement.removeEventListener("pointerdown", dragStart);
+      window.removeEventListener("pointerup", dragEnd);
       renderer.domElement.removeEventListener("webglcontextlost", contextLost);
       const geometries = new Set<THREE.BufferGeometry>();
       scene.traverse((object) => {

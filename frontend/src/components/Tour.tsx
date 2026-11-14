@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Box, Expand, Info, LocateFixed } from "lucide-react";
 import HouseViewer from "./HouseViewer";
-import type { Anchor, MeasureResult, Plan } from "../lib/types";
+import type { Anchor, MeasureResult, Plan, RunResult } from "../lib/types";
 interface Sdk {
   Mattertag: {
     add: (tags: unknown[]) => Promise<string[]>;
@@ -36,6 +36,7 @@ export default function Tour({
   measures,
   plan,
   focus,
+  run,
 }: {
   sid: string;
   office: boolean;
@@ -43,6 +44,7 @@ export default function Tour({
   measures: MeasureResult[];
   plan?: Plan | null;
   focus?: string;
+  run?: RunResult | null;
 }) {
   const iframe = useRef<HTMLIFrameElement>(null);
   const sdk = useRef<Sdk | null>(null);
@@ -178,7 +180,7 @@ export default function Tour({
       </div>
       <div className="tour-canvas">
         {demo ? (
-          <HouseViewer office={office} embedded />
+          <HouseViewer office={office} embedded run={run} />
         ) : (
           <iframe
             ref={iframe}

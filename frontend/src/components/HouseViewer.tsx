@@ -13,6 +13,9 @@ import {
   Sun,
 } from "lucide-react";
 import type { HouseController, HouseMode, HouseRoom } from "../lib/house-scene";
+import type { EnergyPart, EnergyPoint } from "../lib/energy-explorer";
+import type { RunResult } from "../lib/types";
+import EnergyOverlay from "./EnergyOverlay";
 
 const rooms: {
   id: HouseRoom;
@@ -51,13 +54,17 @@ export default function HouseViewer({
   compact = false,
   office = false,
   embedded = false,
+  run,
 }: {
   compact?: boolean;
   office?: boolean;
   embedded?: boolean;
+  run?: RunResult | null;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const controller = useRef<HouseController | null>(null);
+  const energyHover = useRef<((part: EnergyPart | null) => void) | null>(null);
+  const energyProject = useRef<((points: EnergyPoint[]) => void) | null>(null);
   const [mode, setMode] = useState<HouseMode>("exploded");
   const [rotating, setRotating] = useState(false);
   const [room, setRoom] = useState<HouseRoom | null>(null);
@@ -83,6 +90,8 @@ export default function HouseViewer({
           compact,
           office,
           onUnavailable: () => setStatus("unavailable"),
+          onHover: (part) => energyHover.current?.(part),
+          onProject: (points) => energyProject.current?.(points),
         });
         controller.current = scene;
         scene.setMode(compact ? "exterior" : current.current.mode, true);
@@ -131,14 +140,19 @@ export default function HouseViewer({
   const ready = status === "ready";
   return (
     <div
-      className={`house-viewer ${compact ? "house-thumbnail building-art" : "house-explorer"} ${embedded ? "house-embedded" : ""}`}
+      className={`house-viewer ${compact ? "house-thumbnail building-art" : "house-explorer"} ${embedded ? "house-embedded" : ""} ${run?.plan && !compact ? "has-energy-plan" : ""}`}
     >
       {!compact && (
         <div className="explorer-topbar">
           <div className="explorer-caption">
             <span className="status-dot" />
             <span>
-              THE EVERGREEN HOUSE<small>AN INTERACTIVE PERSPECTIVE</small>
+              {run?.plan ? "YOUR BUILDING, REIMAGINED" : "THE EVERGREEN HOUSE"}
+              <small>
+                {run?.plan
+                  ? "EXPLORE THE ENERGY UPGRADES"
+                  : "AN INTERACTIVE PERSPECTIVE"}
+              </small>
             </span>
           </div>
           <div className="view-switch" role="group" aria-label="House view">
@@ -190,6 +204,15 @@ export default function HouseViewer({
       )}
       {!compact && (
         <>
+          {run?.plan && ready && (
+            <EnergyOverlay
+              run={run}
+              controller={controller.current}
+              mode={mode}
+              hoverRef={energyHover}
+              projectRef={energyProject}
+            />
+          )}
           <div className="scene-compass" aria-hidden="true">
             <span>N</span>
             <div>↗</div>

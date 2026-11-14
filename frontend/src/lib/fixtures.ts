@@ -25,6 +25,9 @@ const fixtures = [
   runs: Record<string, RunResult>;
 }[];
 export const demoProperties = fixtures.map((f) => f.property);
+export function demoShowcaseRun() {
+  return demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
+}
 export function demoBudgets(sid?: string) {
   const fixture = fixtures.find((f) => f.property.sid === sid);
   return fixture

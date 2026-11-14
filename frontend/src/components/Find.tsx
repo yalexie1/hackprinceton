@@ -10,7 +10,8 @@ import {
 import type { PropertySummary } from "../lib/types";
 import BuildingArt from "./BuildingArt";
 import HouseViewer from "./HouseViewer";
-import { fixtureSource } from "../lib/fixtures";
+import { fixtureSource, demoShowcaseRun } from "../lib/fixtures";
+import { useMemo } from "react";
 export default function Find({
   properties,
   query,
@@ -30,6 +31,7 @@ export default function Find({
   demo: boolean;
   onSelect: (p: PropertySummary) => void;
 }) {
+  const showcase = useMemo(() => demoShowcaseRun(), []);
   return (
     <>
       <section className="find-hero">
@@ -56,7 +58,7 @@ export default function Find({
             </a>
           </div>
         </div>
-        <HouseViewer />
+        <HouseViewer run={showcase} />
         <div className="perspective-strip">
           <span>
             <span className="strip-number">01 /</span> Understand your space

@@ -95,7 +95,7 @@ def test_house_measured_windows():
 
 
 def test_office_vision_windows_fit_their_edges():
-    b, m = load("office")
+    b, m = load("office_houston")              # the LA office (Culver Connect) has measured openings
     fl = b.matterport.floors[0]
     xy = {v.id: (v.x, v.y) for v in fl.vertices}
     for room in b.matterport.rooms:

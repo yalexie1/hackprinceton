@@ -43,9 +43,16 @@ def fixture_card(name: str, mid: str) -> dict:
     return next(m for m in json.loads((EX / name / "measures.json").read_text()) if m["measure_id"] == mid)
 
 
+def bare(name: str) -> BuildingModel:
+    """The fixture model without the shading vision saw: the LA office (Culver Connect) has
+    interior blinds, which make WIN_SHADE already done; these tests need the windows bare."""
+    m = model(name)
+    return m.model_copy(update={"assumptions": [a for a in m.assumptions if a.key != "window.shading"]})
+
+
 def card(name: str, mid: str) -> MeasureResult:
     check, change, describe, _ = MEASURES[mid]
-    b, m = bundle(name), model(name)
+    b, m = bundle(name), bare(name)
     assert check(b, m) is None
     return describe(b, m, change(b, m), None, {"role": "owner_occupier", "desks_requested": None})
 
@@ -117,7 +124,7 @@ def test_env_wall_card():
 @pytest.mark.parametrize("mid", WINDOW_MEASURES)
 def test_window_measures_change_window_u_or_shgc_only(name, mid):
     check, change, _, _ = MEASURES[mid]
-    b, m = bundle(name), model(name)
+    b, m = bundle(name), bare(name)
     assert check(b, m) is None
     frozen = m.model_dump_json()
     new = change(b, m)
@@ -178,7 +185,7 @@ def test_shade_treats_sun_side_windows_only():
 # ---------------------------------------------------------------- windows: checks
 
 def test_window_already_done_from_recorded_fittings():
-    b, m = bundle("office"), model("office")
+    b, m = bundle("office"), bare("office")
     reason, detail = WIN.shade_check(b, with_assumption(m, "window.interior_shading", "roller_shades"))
     assert reason == "already_done" and "roller shades" in detail
     assert WIN.shade_check(b, with_assumption(m, "window.exterior_shading", "none")) is None
@@ -211,7 +218,7 @@ def test_window_cards_validate(name, mid):
     assert set(c.params["window_surface_ids"]) <= {s.id for s in model(name).surfaces if s.kind == "window"}
     if mid in ("WIN_FILM", "WIN_SHADE"):
         assert WIN.NO_COST_WARNING in c.warnings
-    if name != "house":
+    if name == "office_houston":             # windows read from panoramas (the LA office has openings)
         assert any("panoramas" in w for w in c.warnings)
 
 
@@ -219,7 +226,8 @@ def test_window_cards_validate(name, mid):
 def test_film_card_matches_fixture(name):
     fx, c = fixture_card(name, "WIN_FILM"), card(name, "WIN_FILM")
     assert c.params["glazing_area_m2"] == pytest.approx(fx["params"]["glazing_area_m2"])
-    assert c.formula_ids == fx["formula_ids"]
+    # the LA fixture is real output: the simulation adds its own ids after the card's
+    assert fx["formula_ids"][:len(c.formula_ids)] == c.formula_ids
     assert c.title == fx["title"]
     assert fx["anchors"][0]["room_id"] in {a.room_id for a in c.anchors}
 
@@ -285,7 +293,7 @@ def test_engine_evaluates_window_measures(registry, name):
     from backend.analysis.measures.engine import evaluate
     role = "owner_occupier" if name == "house" else "landlord"
     for mid in WINDOW_MEASURES:
-        r = evaluate(bundle(name), model(name), mid, role, fake_simulate, registry=registry)
+        r = evaluate(bundle(name), bare(name), mid, role, fake_simulate, registry=registry)
         assert r.applicable, (mid, r.not_applicable_reason)
         assert r.savings.electricity_kwh.expected > 0
         assert r.formula_ids[: len(MEASURES[mid][3])] == list(MEASURES[mid][3])
@@ -321,13 +329,13 @@ def test_shading_seen_by_vision_makes_win_shade_already_done(name, seen):
 
 @pytest.mark.parametrize("seen", ["none", "unknown"])
 def test_no_shading_seen_leaves_win_shade_offered(seen):
-    m = with_assumption(model("office"), "window.shading", seen)
+    m = with_assumption(bare("office"), "window.shading", seen)
     out = WIN.shade_check(bundle("office"), m)
     assert out is None or out[0] != "already_done", out
 
 
 def test_tinted_film_seen_by_vision_makes_win_film_already_done_only():
-    m = with_assumption(model("office"), "window.shading", "tinted_film")
+    m = with_assumption(bare("office"), "window.shading", "tinted_film")
     assert WIN.film_check(bundle("office"), m)[0] == "already_done"
     shade = WIN.shade_check(bundle("office"), m)
     assert shade is None or shade[0] != "already_done"

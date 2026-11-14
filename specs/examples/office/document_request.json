@@ -3,10 +3,10 @@
   "doc_type": "retrofit_contract_commercial",
   "state": "CA",
   "measure_ids": [
-    "LGT_LED"
+    "LGT_CTRL"
   ],
   "fields": {
-    "property_address": "11400 Olympic Blvd, Suite 140, Los Angeles, CA 90064",
+    "property_address": "3000 S Robertson Blvd, 4th floor, Los Angeles, CA 90034",
     "transaction_date": "2026-11-20"
   }
 }

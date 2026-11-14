@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.schema import BaselineResult, BuildingModel, EnergyUse, MeasureResult, PropertyBundle, Ranged
+from backend.schema import BaselineResult, BuildingModel, EnergyUse, Flag, MeasureResult, PropertyBundle, Ranged
 from backend.analysis.measures.engine import CATALOGUE, Registry, applicability, evaluate
 from backend.analysis.measures.hvac_dhw import (DUCT_REASON, ECONOMIZER_LIMIT_C, HPWH_UEF, MEASURES,
                                                 duct_change, econ_change, econ_check, hpwh_change,
@@ -39,6 +39,24 @@ def model(name: str) -> BuildingModel:
 
 def fixture_card(name: str, mid: str) -> dict:
     return next(m for m in json.loads((EX / name / "measures.json").read_text()) if m["measure_id"] == mid)
+
+
+def unconfirmed_office():
+    """The LA office with nothing confirming a rooftop unit: both golden offices now have
+    Vexcel-counted units on the D16 structure, so HVAC-00's other branch needs this variant."""
+    b, m = bundle("office"), model("office")
+    s0 = b.vexcel.structures[0]
+    attrs = {k: v for k, v in s0.attributes.items() if k != "roof-objects.ac-unit.count"}
+    vex = b.vexcel.model_copy(update={"structures": [s0.model_copy(update={"attributes": attrs})]
+                                      + list(b.vexcel.structures[1:])})
+    flag = Flag(key="hvac.system_type", status="unknown", message="No rooftop unit confirmed.")
+    planes = [p.model_copy(update={"obstruction_counts": {k: v for k, v in p.obstruction_counts.items()
+                                                          if k != "ac-unit"}}) for p in m.roof_planes]
+    m = m.model_copy(update={"systems": m.systems.model_copy(update={"hvac_type": "unknown"}),
+                             "assumptions": [a for a in m.assumptions if a.key != "hvac.system_type"],
+                             "flags": [f for f in m.flags if f.key != "hvac.rtu_service"] + [flag],
+                             "roof_planes": planes})
+    return b.model_copy(update={"vexcel": vex}), m
 
 
 def R(x: float, unit: str) -> Ranged:
@@ -103,7 +121,8 @@ def test_offered_by_property_type(registry, name):
 # ---------------------------------------------------------------- HVAC_ECON
 
 def test_econ_office_not_confirmed(registry):
-    out = run(registry, "office", "HVAC_ECON")
+    b, m = unconfirmed_office()
+    out = run(registry, "office", "HVAC_ECON", b=b, m=m)
     assert not out.applicable and out.params["skip_reason"] == "feasibility"
     assert out.not_applicable_reason == ("No packaged rooftop unit confirmed: flag hvac.system_type is "
                                          "unknown (physics 02 HVAC-00).")
@@ -145,10 +164,11 @@ def test_econ_already_done_and_change():
 
 def test_econ_units_fallbacks():
     b, m = bundle("office_houston"), model("office_houston")
-    assert rooftop_units(b, m)[0] == 2
+    assert rooftop_units(b, m)[0] == 4             # the D16 structure counts four
     b2 = b.model_copy(update={"vexcel": None})
-    assert rooftop_units(b2, m)[0] == 2            # from roof_planes obstruction_counts
-    assert rooftop_units(bundle("office"), model("office")) == (None, None)
+    assert rooftop_units(b2, m)[0] == 4            # from roof_planes obstruction_counts
+    assert rooftop_units(bundle("office"), model("office"))[0] == 3
+    assert rooftop_units(*unconfirmed_office()) == (None, None)
 
 
 # ---------------------------------------------------------------- HVAC_DUCT

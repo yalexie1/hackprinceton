@@ -837,9 +837,9 @@
     },
     "roof_planes": [
       {
-        "id": "plane_tower_roof",
-        "polygon_wkt": "POLYGON((-95.4567000 29.7452000, -95.4563774 29.7453623, -95.4565131 29.7455670, -95.4568356 29.7454047, -95.4567000 29.7452000))",
-        "area_m2": 943.8,
+        "id": "plane_roof",
+        "polygon_wkt": "POLYGON ((-95.4567036 29.7451875, -95.4563628 29.7453583, -95.4565133 29.7455847, -95.4568542 29.7454138, -95.4567036 29.7451875))",
+        "area_m2": 1104.74,
         "tilt_deg": {
           "low": 0.0,
           "expected": 1.2,
@@ -847,14 +847,14 @@
           "unit": "deg"
         },
         "azimuth_deg": 180.0,
-        "usable_area_m2": 780.0,
+        "usable_area_m2": 911.15,
         "obstructions": [],
         "obstruction_counts": {
-          "ac-unit": 2
+          "ac-unit": 4
         },
         "ridge_confirmed": false,
-        "eave_length_m": null,
-        "slope_length_m": null,
+        "eave_length_m": 38.004,
+        "slope_length_m": 29.073,
         "geometry_source": "vexcel_parametric"
       }
     ],
@@ -933,26 +933,6 @@
         "user_editable": true
       },
       {
-        "key": "roof.tower_area_m2",
-        "label": "Tower roof area",
-        "value": {
-          "low": 943.8,
-          "expected": 943.8,
-          "high": 943.8,
-          "unit": "m2"
-        },
-        "source": "costar",
-        "confidence": 0.6,
-        "evidence": [
-          {
-            "kind": "costar_field",
-            "ref": "CostarData.building_area_m2",
-            "note": "gross building area / 16 storeys; the Vexcel footprint outlines a podium or garage, 1.7 to 4.6 times the floor plate"
-          }
-        ],
-        "user_editable": true
-      },
-      {
         "key": "occupancy.count",
         "label": "People working in the suite",
         "value": {
@@ -996,7 +976,7 @@
           {
             "kind": "vexcel_attr",
             "ref": "roof-objects.ac-unit.count",
-            "note": "2 as returned"
+            "note": "4 as returned"
           },
           {
             "kind": "pano",
@@ -1031,7 +1011,7 @@
           {
             "kind": "ortho",
             "ref": "ortho-1",
-            "note": "two unit outlines of similar size"
+            "note": "four unit outlines of similar size"
           }
         ],
         "user_editable": true
@@ -1277,24 +1257,24 @@
       {
         "key": "roof.structure",
         "status": "unknown",
-        "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+        "message": "Flat roof: the chosen capture reports no roof condition and no material, so neither the membrane's remaining life nor the ballast or attachment load for racking can be read from imagery.",
         "evidence": [
           {
             "kind": "vexcel_attr",
-            "ref": "roof-characteristics.condition.precise-value",
-            "note": "2.88"
+            "ref": "roof-characteristics.shape.value",
+            "note": "flat; us-tx-houston-2023 reports no condition and no material"
           }
         ]
       },
       {
         "key": "hvac.rtu_service",
         "status": "likely_ok",
-        "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+        "message": "Vexcel counts four rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the four units serve is not shown.",
         "evidence": [
           {
             "kind": "vexcel_attr",
             "ref": "roof-objects.ac-unit.count",
-            "note": "2 as returned"
+            "note": "4 as returned"
           },
           {
             "kind": "pano",
@@ -1746,12 +1726,12 @@
         {
           "key": "roof.structure",
           "status": "unknown",
-          "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+          "message": "Flat roof: the chosen capture reports no roof condition and no material, so neither the membrane's remaining life nor the ballast or attachment load for racking can be read from imagery.",
           "evidence": [
             {
               "kind": "vexcel_attr",
-              "ref": "roof-characteristics.condition.precise-value",
-              "note": "2.88"
+              "ref": "roof-characteristics.shape.value",
+              "note": "flat; us-tx-houston-2023 reports no condition and no material"
             }
           ]
         }
@@ -1773,9 +1753,9 @@
           "note": "flat"
         },
         {
-          "kind": "costar_field",
-          "ref": "CostarData.building_area_m2",
-          "note": "tower roof 943.8 m2 = gross building area / 16"
+          "kind": "vexcel_attr",
+          "ref": "footprint.area",
+          "note": "1,104.5 m2: the structure that encloses the address and matches the floor plate (D16)"
         },
         {
           "kind": "ortho",
@@ -1803,205 +1783,205 @@
         "panel_count": 34,
         "panels": [
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
           },
           {
-            "plane_id": "plane_tower_roof",
+            "plane_id": "plane_roof",
             "polygon_wkt": null,
             "annual_kwh": 571.9,
             "shading_loss_fraction": 0.03
@@ -2033,12 +2013,12 @@
         "structural": {
           "key": "roof.structure",
           "status": "unknown",
-          "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+          "message": "Flat roof: the chosen capture reports no roof condition and no material, so neither the membrane's remaining life nor the ballast or attachment load for racking can be read from imagery.",
           "evidence": [
             {
               "kind": "vexcel_attr",
-              "ref": "roof-characteristics.condition.precise-value",
-              "note": "2.88"
+              "ref": "roof-characteristics.shape.value",
+              "note": "flat; us-tx-houston-2023 reports no condition and no material"
             }
           ]
         }
@@ -2047,7 +2027,7 @@
       "value_uplift": null,
       "warnings": [
         "No export value is assumed: Texas has no mandated buyback, so all savings come from self-consumption.",
-        "Usable area is for the tower roof derived from gross building area / storeys; the Vexcel footprint is a podium or garage and is not used.",
+        "The solar design uses the building whose footprint matches CoStar's floor area per storey; aerial captures also outline a larger roof at this property. 4 other capture(s) outline what looks like the same building at 3,700 to 4,320 m2 against the chosen 1,104 m2 (up to 3.9x, largest from us-tx-houston-2024); the floor plate chose the smaller, which on a tower is the tower rather than the podium it stands on",
         "Flat roof: tilt is a racking choice. Shading is the 3 percent default allowance.",
         "The 48E credit is listed at zero until its three conditions are confirmed."
       ]
@@ -2057,10 +2037,10 @@
       "title": "High-efficiency rooftop units",
       "applicable": true,
       "not_applicable_reason": null,
-      "description": "Replace the two packaged rooftop units (30 tons together) with units at IEER 14.8 or better.",
+      "description": "Replace the 4 packaged rooftop units (30 tons together) with units at IEER 14.8 or better.",
       "params": {
         "capacity_tons": 30,
-        "units": 2,
+        "units": 4,
         "ieer_after": 14.8
       },
       "savings": {
@@ -2205,12 +2185,12 @@
         {
           "key": "hvac.rtu_service",
           "status": "likely_ok",
-          "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+          "message": "Vexcel counts four rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the four units serve is not shown.",
           "evidence": [
             {
               "kind": "vexcel_attr",
               "ref": "roof-objects.ac-unit.count",
-              "note": "2 as returned"
+              "note": "4 as returned"
             },
             {
               "kind": "pano",
@@ -2234,7 +2214,7 @@
         {
           "kind": "vexcel_attr",
           "ref": "roof-objects.ac-unit.count",
-          "note": "2 as returned"
+          "note": "4 as returned"
         },
         {
           "kind": "pano",
@@ -2256,7 +2236,7 @@
       "value_uplift": null,
       "warnings": [
         "Owner measure: the units are building plant on the roof.",
-        "Which floors the two units serve is not confirmed; the saving assumes they serve this floor.",
+        "Which floors the four units serve is not confirmed; the saving assumes they serve this floor.",
         "Replacement before the end of the units' life is valued on energy alone; no residual value of the old units is credited."
       ]
     },
@@ -2265,9 +2245,9 @@
       "title": "Economizer and advanced rooftop controls",
       "applicable": true,
       "not_applicable_reason": null,
-      "description": "Add an advanced controller with a variable-speed fan and economizer control to each of the two rooftop units.",
+      "description": "Add an advanced controller with a variable-speed fan and economizer control to each of the four rooftop units.",
       "params": {
-        "units": 2,
+        "units": 4,
         "economizer_limit_c": 18.0
       },
       "savings": {
@@ -2304,12 +2284,12 @@
       },
       "finance": {
         "installed_cost_usd": {
-          "low": 8548.0,
-          "expected": 12088.0,
-          "high": 14176.0,
+          "low": 17096.0,
+          "expected": 24176.0,
+          "high": 28352.0,
           "unit": "USD"
         },
-        "cost_source": "PNNL-22656 Table ES-1 (2013 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 6044 USD per rooftop unit x 2",
+        "cost_source": "PNNL-22656 Table ES-1 and CEE-2014 (2013 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 6044 USD per rooftop unit x 4",
         "incentives": [
           {
             "name": "CenterPoint Commercial Standard Offer Program",
@@ -2329,9 +2309,9 @@
           }
         ],
         "net_upfront_usd": {
-          "low": 8548.0,
-          "expected": 12088.0,
-          "high": 14176.0,
+          "low": 17096.0,
+          "expected": 24176.0,
+          "high": 28352.0,
           "unit": "USD"
         },
         "annual_savings_usd": {
@@ -2343,22 +2323,22 @@
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 23.84,
-          "expected": 47.97,
-          "high": 97.02,
+          "low": 47.69,
+          "expected": 95.94,
+          "high": 194.05,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -11630.66,
-          "expected": -9029.85,
-          "high": -4899.24,
+          "low": -25572.45,
+          "expected": -21117.85,
+          "high": -13724.83,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -9758.36,
-        "sir": 0.253,
+        "npv_sensitivity_usd": -21846.36,
+        "sir": 0.126,
         "irr": null,
-        "airr": -0.0602,
+        "airr": -0.1029,
         "discount_rate": 0.03,
         "electricity_escalation": 0.0022,
         "gas_escalation": 0.0126,
@@ -2385,20 +2365,20 @@
           {
             "kind": "cpace",
             "eligible": false,
-            "financed_usd": 12088.0,
+            "financed_usd": 24176.0,
             "rate": 0.065,
             "term_years": 15,
-            "annual_payment_usd": 1285.59,
+            "annual_payment_usd": 2571.18,
             "net_cashflow_year1_usd": {
-              "low": -1160.09,
-              "expected": -1033.59,
-              "high": -859.31,
+              "low": -2445.68,
+              "expected": -2319.18,
+              "high": -2144.9,
               "unit": "USD"
             },
-            "program_sir": 0.196,
+            "program_sir": 0.098,
             "notes": [
-              "Program SIR 0.20: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
-              "Savings-to-debt-service ratio 0.20.",
+              "Program SIR 0.10: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+              "Savings-to-debt-service ratio 0.10.",
               "Term of 15 years does not exceed the useful life of 15 years.",
               "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
               "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
@@ -2412,12 +2392,12 @@
         {
           "key": "hvac.rtu_service",
           "status": "likely_ok",
-          "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+          "message": "Vexcel counts four rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the four units serve is not shown.",
           "evidence": [
             {
               "kind": "vexcel_attr",
               "ref": "roof-objects.ac-unit.count",
-              "note": "2 as returned"
+              "note": "4 as returned"
             },
             {
               "kind": "pano",
@@ -2432,7 +2412,7 @@
         {
           "kind": "vexcel_attr",
           "ref": "roof-objects.ac-unit.count",
-          "note": "2 as returned"
+          "note": "4 as returned"
         }
       ],
       "formula_ids": [
@@ -4078,12 +4058,12 @@
             {
               "key": "roof.structure",
               "status": "unknown",
-              "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+              "message": "Flat roof: the chosen capture reports no roof condition and no material, so neither the membrane's remaining life nor the ballast or attachment load for racking can be read from imagery.",
               "evidence": [
                 {
                   "kind": "vexcel_attr",
-                  "ref": "roof-characteristics.condition.precise-value",
-                  "note": "2.88"
+                  "ref": "roof-characteristics.shape.value",
+                  "note": "flat; us-tx-houston-2023 reports no condition and no material"
                 }
               ]
             }
@@ -4105,9 +4085,9 @@
               "note": "flat"
             },
             {
-              "kind": "costar_field",
-              "ref": "CostarData.building_area_m2",
-              "note": "tower roof 943.8 m2 = gross building area / 16"
+              "kind": "vexcel_attr",
+              "ref": "3,700 to 4,320 m2 outlines (four other captures)",
+              "note": "1,104.5 m2: the structure that encloses the address and matches the floor plate (D16)"
             },
             {
               "kind": "ortho",
@@ -4135,25 +4115,25 @@
             "panel_count": 4,
             "panels": [
               {
-                "plane_id": "plane_tower_roof",
+                "plane_id": "plane_roof",
                 "polygon_wkt": null,
                 "annual_kwh": 571.9,
                 "shading_loss_fraction": 0.03
               },
               {
-                "plane_id": "plane_tower_roof",
+                "plane_id": "plane_roof",
                 "polygon_wkt": null,
                 "annual_kwh": 571.9,
                 "shading_loss_fraction": 0.03
               },
               {
-                "plane_id": "plane_tower_roof",
+                "plane_id": "plane_roof",
                 "polygon_wkt": null,
                 "annual_kwh": 571.9,
                 "shading_loss_fraction": 0.03
               },
               {
-                "plane_id": "plane_tower_roof",
+                "plane_id": "plane_roof",
                 "polygon_wkt": null,
                 "annual_kwh": 571.9,
                 "shading_loss_fraction": 0.03
@@ -4185,12 +4165,12 @@
             "structural": {
               "key": "roof.structure",
               "status": "unknown",
-              "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+              "message": "Flat roof: the chosen capture reports no roof condition and no material, so neither the membrane's remaining life nor the ballast or attachment load for racking can be read from imagery.",
               "evidence": [
                 {
                   "kind": "vexcel_attr",
-                  "ref": "roof-characteristics.condition.precise-value",
-                  "note": "2.88"
+                  "ref": "roof-characteristics.shape.value",
+                  "note": "flat; us-tx-houston-2023 reports no condition and no material"
                 }
               ]
             }
@@ -4199,7 +4179,7 @@
           "value_uplift": null,
           "warnings": [
             "No export value is assumed: Texas has no mandated buyback, so all savings come from self-consumption.",
-            "Usable area is for the tower roof derived from gross building area / storeys; the Vexcel footprint is a podium or garage and is not used.",
+            "The solar design uses the building whose footprint matches CoStar's floor area per storey; aerial captures also outline a larger roof at this property. 4 other capture(s) outline what looks like the same building at 3,700 to 4,320 m2 against the chosen 1,104 m2 (up to 3.9x, largest from us-tx-houston-2024); the floor plate chose the smaller, which on a tower is the tower rather than the podium it stands on",
             "Flat roof: tilt is a racking choice. Shading is the 3 percent default allowance.",
             "The 48E credit is listed at zero until its three conditions are confirmed.",
             "may exceed budget"
@@ -4215,10 +4195,10 @@
         "title": "High-efficiency rooftop units",
         "applicable": true,
         "not_applicable_reason": null,
-        "description": "Replace the two packaged rooftop units (30 tons together) with units at IEER 14.8 or better.",
+        "description": "Replace the 4 packaged rooftop units (30 tons together) with units at IEER 14.8 or better.",
         "params": {
           "capacity_tons": 30,
-          "units": 2,
+          "units": 4,
           "ieer_after": 14.8
         },
         "savings": {
@@ -4363,12 +4343,12 @@
           {
             "key": "hvac.rtu_service",
             "status": "likely_ok",
-            "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+            "message": "Vexcel counts four rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the four units serve is not shown.",
             "evidence": [
               {
                 "kind": "vexcel_attr",
                 "ref": "roof-objects.ac-unit.count",
-                "note": "2 as returned"
+                "note": "4 as returned"
               },
               {
                 "kind": "pano",
@@ -4392,7 +4372,7 @@
           {
             "kind": "vexcel_attr",
             "ref": "roof-objects.ac-unit.count",
-            "note": "2 as returned"
+            "note": "4 as returned"
           },
           {
             "kind": "pano",
@@ -4414,7 +4394,7 @@
         "value_uplift": null,
         "warnings": [
           "Owner measure: the units are building plant on the roof.",
-          "Which floors the two units serve is not confirmed; the saving assumes they serve this floor.",
+          "Which floors the four units serve is not confirmed; the saving assumes they serve this floor.",
           "Replacement before the end of the units' life is valued on energy alone; no residual value of the old units is credited."
         ]
       },
@@ -4423,9 +4403,9 @@
         "title": "Economizer and advanced rooftop controls",
         "applicable": true,
         "not_applicable_reason": null,
-        "description": "Add an advanced controller with a variable-speed fan and economizer control to each of the two rooftop units.",
+        "description": "Add an advanced controller with a variable-speed fan and economizer control to each of the four rooftop units.",
         "params": {
-          "units": 2,
+          "units": 4,
           "economizer_limit_c": 18.0
         },
         "savings": {
@@ -4462,12 +4442,12 @@
         },
         "finance": {
           "installed_cost_usd": {
-            "low": 8548.0,
-            "expected": 12088.0,
-            "high": 14176.0,
+            "low": 17096.0,
+            "expected": 24176.0,
+            "high": 28352.0,
             "unit": "USD"
           },
-          "cost_source": "PNNL-22656 Table ES-1 (2013 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 6044 USD per rooftop unit x 2",
+          "cost_source": "PNNL-22656 Table ES-1 and CEE-2014 (2013 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 6044 USD per rooftop unit x 4",
           "incentives": [
             {
               "name": "CenterPoint Commercial Standard Offer Program",
@@ -4487,9 +4467,9 @@
             }
           ],
           "net_upfront_usd": {
-            "low": 8548.0,
-            "expected": 12088.0,
-            "high": 14176.0,
+            "low": 17096.0,
+            "expected": 24176.0,
+            "high": 28352.0,
             "unit": "USD"
           },
           "annual_savings_usd": {
@@ -4501,22 +4481,22 @@
           "annual_om_change_usd": 0.0,
           "useful_life_years": 15,
           "simple_payback_years": {
-            "low": 24.73,
-            "expected": 49.74,
-            "high": 100.62,
+            "low": 49.46,
+            "expected": 99.49,
+            "high": 201.23,
             "unit": "years"
           },
           "discounted_payback_years": null,
           "npv_usd": {
-            "low": -11707.23,
-            "expected": -9139.07,
-            "high": -5047.14,
+            "low": -25662.68,
+            "expected": -21227.07,
+            "high": -13855.59,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": -9841.56,
-          "sir": 0.244,
+          "npv_sensitivity_usd": -21929.56,
+          "sir": 0.122,
           "irr": null,
-          "airr": -0.0624,
+          "airr": -0.1048,
           "discount_rate": 0.03,
           "electricity_escalation": 0.0022,
           "gas_escalation": 0.0126,
@@ -4543,20 +4523,20 @@
             {
               "kind": "cpace",
               "eligible": false,
-              "financed_usd": 12088.0,
+              "financed_usd": 24176.0,
               "rate": 0.065,
               "term_years": 15,
-              "annual_payment_usd": 1285.59,
+              "annual_payment_usd": 2571.18,
               "net_cashflow_year1_usd": {
-                "low": -1164.57,
-                "expected": -1042.59,
-                "high": -874.54,
+                "low": -2450.16,
+                "expected": -2328.18,
+                "high": -2160.13,
                 "unit": "USD"
               },
-              "program_sir": 0.189,
+              "program_sir": 0.095,
               "notes": [
-                "Program SIR 0.19: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
-                "Savings-to-debt-service ratio 0.19.",
+                "Program SIR 0.09: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+                "Savings-to-debt-service ratio 0.09.",
                 "Term of 15 years does not exceed the useful life of 15 years.",
                 "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
                 "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
@@ -4570,12 +4550,12 @@
           {
             "key": "hvac.rtu_service",
             "status": "likely_ok",
-            "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+            "message": "Vexcel counts four rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the four units serve is not shown.",
             "evidence": [
               {
                 "kind": "vexcel_attr",
                 "ref": "roof-objects.ac-unit.count",
-                "note": "2 as returned"
+                "note": "4 as returned"
               },
               {
                 "kind": "pano",
@@ -4590,7 +4570,7 @@
           {
             "kind": "vexcel_attr",
             "ref": "roof-objects.ac-unit.count",
-            "note": "2 as returned"
+            "note": "4 as returned"
           }
         ],
         "formula_ids": [
@@ -4917,7 +4897,7 @@
       "impact_note": "Unit size sets the cost of replacement and the economizer saving; at the low end the economizer moves closer to the budget."
     }
   ],
-  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for Suite 500: 141,600 kWh of electricity and 9,000 kWh of gas a year, about $13,069 (range $11,074 to $19,671). Office hot water is not modelled. The electricity price is a published Texas average, not your tariff, and gas is priced at the EIA Texas commercial average.\n\nWithin the $50,000 budget the plan selects desk placement, the LED retrofit and a 1.72 kW rooftop array with the money left, for $49,442 upfront, saving about $3,782 a year (range $1,996 to $5,742).\n\nVexcel counts two rooftop units, so unit replacement and an economizer were evaluated. Neither fits the budget. With C-PACE the units would be financed at $68,910 over 20 years (program savings ratio 0.16) and the economizer at $12,088 over 15 years (ratio 0.19). Both are below the 1.0 the Texas program requires, so neither is eligible as it stands. The property is inside the City of Houston PACE region. An assessment is a first lien that runs with the land, and a mortgage holder's written consent is a precondition.\n\nValue uplift: capitalised at the rates of 16 comparable sales, the plan's savings correspond to about $20,677 of property value (range $0 to $81,168). This is an estimate shown beside the totals; it is not added to the savings.\n",
+  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for Suite 500: 141,600 kWh of electricity and 9,000 kWh of gas a year, about $13,069 (range $11,074 to $19,671). Office hot water is not modelled. The electricity price is a published Texas average, not your tariff, and gas is priced at the EIA Texas commercial average.\n\nWithin the $50,000 budget the plan selects desk placement, the LED retrofit and a 1.72 kW rooftop array with the money left, for $49,442 upfront, saving about $3,782 a year (range $1,996 to $5,742).\n\nVexcel counts four rooftop units, so unit replacement and an economizer were evaluated. Neither fits the budget. With C-PACE the units would be financed at $68,910 over 20 years (program savings ratio 0.16) and the economizer at $24,176 over 15 years (ratio 0.10). Both are below the 1.0 the Texas program requires, so neither is eligible as it stands. The property is inside the City of Houston PACE region. An assessment is a first lien that runs with the land, and a mortgage holder's written consent is a precondition.\n\nValue uplift: capitalised at the rates of 16 comparable sales, the plan's savings correspond to about $20,677 of property value (range $0 to $81,168). This is an estimate shown beside the totals; it is not added to the savings.\n",
   "warnings": [
     "LGT_LED and PV_ROOF may exceed budget at the high end of their cost ranges.",
     "Windows were read from panoramas: the scan has no openings.",

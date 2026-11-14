@@ -276,6 +276,54 @@ def get_roof(run_id: str):
     return roof_view(PropertyBundle.model_validate(raw), get_run(run_id), data.get_asset)
 
 
+def get_preview(sid: str):
+    """The property preview: the recorded run's bundle if there is one, else the data layer's cached live
+    bundle, else nothing. Never fetches and never reads specs/examples/ (its coordinates are invented): a
+    recording made from example data is skipped, and the cached bundle goes through the data layer's own
+    reader, which drops an entry written under an older assembly rule."""
+    import json
+    from backend.agent.roof import property_preview
+    from backend.data_layer import api as data
+    from backend.schema import PropertyBundle
+    bundle, origin = None, None
+    folder = _recording_folder(sid)
+    try:
+        if json.loads((folder / "result.json").read_text()).get("data_source") != "example":
+            bundle, origin = PropertyBundle.model_validate(json.loads((folder / "bundle.json").read_text())), "recorded_run"
+    except (OSError, ValueError, TypeError):
+        pass
+    if bundle is None:
+        cached = data._bundle_cache_path(sid)
+        if cached.is_file():
+            bundle = data._read_bundle_cache(sid, cached)
+            origin = "cached_bundle" if bundle is not None else None
+    preview = property_preview(sid, bundle, origin, data.get_asset)
+    if not preview.oblique_paths:
+        preview = preview.model_copy(update={"oblique_paths": _cached_obliques(sid, data)})
+    return preview
+
+
+def _cached_obliques(sid: str, data) -> dict:
+    """The oblique images already on disk, found without a request (`live=False`). The bundle does not
+    record them, so this is where the preview learns of them. A path whose file is missing is left out."""
+    getter = getattr(data, "get_obliques", None)
+    if getter is None:
+        return {}
+    try:
+        found = getter(sid, live=False)
+        found = found[0] if isinstance(found, tuple) else found
+        out = {}
+        for direction, path in (found or {}).items():
+            try:
+                data.get_asset(path)
+            except Exception:
+                continue
+            out[direction] = path
+        return out
+    except Exception:                    # no imagery is a valid answer; a preview never fails over it
+        return {}
+
+
 def get_document(run_id: str, doc_id: str) -> DocumentDraft:
     live_run = _live(run_id)
     if live_run is not None:

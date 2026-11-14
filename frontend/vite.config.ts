@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
+            if (id.includes("/node_modules/three/")) return "architecture";
             if (id.includes("/node_modules/")) return "vendor";
             if (id.includes("/fixtures/") || id.includes("/specs/examples/"))
               return "examples";

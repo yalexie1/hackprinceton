@@ -45,7 +45,7 @@ import {
 } from "./lib/fixtures";
 import { download, money, number } from "./lib/format";
 import Find from "./components/Find";
-import BuildingArt from "./components/BuildingArt";
+import HouseViewer from "./components/HouseViewer";
 import Tour from "./components/Tour";
 import PlanView from "./components/Plan";
 import Geometry from "./components/Geometry";
@@ -676,7 +676,7 @@ export default function App() {
                     that fit, and show the assumptions behind every estimate.
                   </p>
                   <div className="setup-property">
-                    <BuildingArt office={office} />
+                    <HouseViewer office={office} embedded />
                     <div>
                       <h3>{property.name}</h3>
                       <p>

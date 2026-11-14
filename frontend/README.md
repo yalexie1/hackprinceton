@@ -10,7 +10,15 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and office examples from `specs/examples/`, followed by two frontend-owned UI sandboxes with three budget scenarios each. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode. The illustrations are SVGs created for this UI.
+Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and office examples from `specs/examples/`, followed by two frontend-owned UI sandboxes with three budget scenarios each. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
+
+## Interactive architecture
+
+The welcome screen has a furnished Three.js house with exterior, cutaway, and exploded views. Drag to orbit, scroll/pinch to zoom, or use the labeled buttons for rotation, zoom, reset, and room focus. Selecting a room reveals its floor before moving the camera. The setup and demo audit screens include a smaller interactive explorer. Property-card previews render once, without animation or nested controls.
+
+Geometry, material textures, furniture and lighting are generated locally. These are **illustrative concept models**, not scans or measurements of the selected properties. Live Matterport tours and evidence pins continue to use the real property SDK. No energy estimates are calculated by the 3D scene.
+
+The renderer loads lazily when visible, pauses rendering offscreen/in background tabs, respects reduced motion for camera/view transitions, and disposes GPU resources when unmounted. If WebGL is unavailable, a fallback keeps the rest of the app usable.
 
 ## Demo walkthrough
 

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { PropertySummary } from "../lib/types";
 import BuildingArt from "./BuildingArt";
+import HouseViewer from "./HouseViewer";
 import { fixtureSource } from "../lib/fixtures";
 export default function Find({
   properties,
@@ -32,40 +33,46 @@ export default function Find({
   return (
     <>
       <section className="find-hero">
-        <div className="hero-copy">
-          <span className="eyebrow">
-            <span className="status-dot" />
-            BUILDING INTELLIGENCE, BETTER POSSIBILITIES
-          </span>
-          <h1>
-            Less energy.
-            <br />
-            <em>More possibility.</em>
-          </h1>
-          <p>
-            See what your building could become. A practical energy plan,
-            grounded in your space and shaped around your budget.
-          </p>
-          <div className="hero-footnote">
-            <Layers3 size={17} />
-            Inside, outside, and everything in between.
+        <div className="perspective-heading">
+          <div className="hero-copy">
+            <span className="eyebrow">
+              <span className="status-dot" />A CLEARER VIEW. A LIGHTER
+              FOOTPRINT.
+            </span>
+            <h1>
+              A new perspective
+              <br />
+              <em>on your building.</em>
+            </h1>
+          </div>
+          <div className="hero-intro">
+            <p>
+              Good decisions start with seeing the whole picture. Explore your
+              space, uncover its potential, and build a practical plan for a
+              better tomorrow.
+            </p>
+            <a className="hero-property-link" href="#your-properties">
+              Find your property <ArrowRight size={16} />
+            </a>
           </div>
         </div>
-        <div className="hero-art">
-          <BuildingArt />
-          <span className="floating-card">
-            <span className="mini-sun">☀</span>
-            <span>
-              A brighter outlook
-              <small>Understand the potential in your property.</small>
-            </span>
+        <HouseViewer />
+        <div className="perspective-strip">
+          <span>
+            <span className="strip-number">01 /</span> Understand your space
+          </span>
+          <span>
+            <span className="strip-number">02 /</span> Discover what’s possible
+          </span>
+          <span>
+            <span className="strip-number">03 /</span> Make a plan that fits
           </span>
         </div>
       </section>
-      <div className="section-heading find-heading">
+      <div className="section-heading find-heading" id="your-properties">
         <div>
-          <span className="eyebrow">START WITH YOUR SPACE</span>
-          <h2>Find your next opportunity.</h2>
+          <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+          <h2>Spaces with possibility.</h2>
         </div>
         <span className="coverage">
           <span className="status-dot" />

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Box, Expand, Info, LocateFixed } from "lucide-react";
-import BuildingArt from "./BuildingArt";
+import HouseViewer from "./HouseViewer";
 import type { Anchor, MeasureResult, Plan } from "../lib/types";
 interface Sdk {
   Mattertag: {
@@ -178,19 +178,7 @@ export default function Tour({
       </div>
       <div className="tour-canvas">
         {demo ? (
-          <>
-            <BuildingArt office={office} />
-            <span className="image-label">
-              <span className="status-dot" />
-              Illustrative model
-            </span>
-            <div className="tour-pin pin-one">
-              <span>1</span>Rooftop solar
-            </div>
-            <div className="tour-pin pin-two">
-              <span>2</span>Efficient lighting
-            </div>
-          </>
+          <HouseViewer office={office} embedded />
         ) : (
           <iframe
             ref={iframe}
@@ -206,7 +194,7 @@ export default function Tour({
         <LocateFixed size={14} />
         <span>
           {demo
-            ? "Concept illustration · no measured geometry"
+            ? "Interactive concept model · no measured geometry"
             : ready
               ? "Select a measure to explore its evidence"
               : "Explore the tour · evidence controls connect with the SDK"}

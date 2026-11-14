@@ -324,7 +324,7 @@ def test_sensitivity_is_the_real_rule_once_the_core_plugins_are_registered(monke
     bundle, request = load("house")
     model = model_of(bundle, request)
     calls = []
-    monkeypatch.setattr(api, "_ask_questions", lambda m, plan_fn: calls.append(m) or [])
+    monkeypatch.setattr(api, "_ask_questions", lambda m, plan_fn, **kw: calls.append(m) or [])
     assert api.sensitivity(bundle, model, request) == [] and len(calls) == 1          # envelope, lighting, heat pump: all registered
     registry = api.engine.REGISTRY
     saved = registry.plugins.pop("HVAC_HP")                                           # as if a core package were missing
@@ -629,3 +629,55 @@ def test_the_whole_door_works_for_a_property_that_has_no_example():
 def test_a_missing_example_does_not_change_a_property_that_has_one():
     bundle, request = load("house")
     assert api._has_example(bundle.summary.sid) and api._measures(bundle.summary.sid)
+
+
+# ---- sensitivity runs the plans side by side (A27) without changing a result ----
+
+def _fake_plan(model):
+    from backend.schema import Plan
+    from types import SimpleNamespace
+    total = sum(a.value.expected * (i + 1) for i, a in enumerate(model.assumptions) if hasattr(a.value, "expected"))
+    return SimpleNamespace(total_annual_savings_usd=SimpleNamespace(expected=total),
+                           selected=[SimpleNamespace(measure=SimpleNamespace(measure_id=f"M{int(total) % 3}"))])
+
+
+def test_the_parallel_runner_gives_the_loop_s_results_in_the_loop_s_order():
+    from backend.analysis.finance.sensitivity import with_value
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    models = [model] + [with_value(model, a.key, a.value.low)
+                        for a in model.assumptions if hasattr(a.value, "low") and a.value.low < a.value.high][:6]
+    serial = [_fake_plan(m) for m in models]
+    parallel = api._run_all(_fake_plan, models)
+    assert [(p.total_annual_savings_usd.expected, p.selected[0].measure.measure_id) for p in parallel] == \
+           [(p.total_annual_savings_usd.expected, p.selected[0].measure.measure_id) for p in serial]
+
+
+def test_the_runner_falls_back_to_the_loop_when_the_pool_cannot_start(monkeypatch):
+    import concurrent.futures as cf
+    def broken(*a, **k):
+        raise OSError("no processes")
+    monkeypatch.setattr(cf, "ProcessPoolExecutor", broken)
+    assert api._run_all(lambda m: m * 2, [1, 2, 3, 4, 5]) == [2, 4, 6, 8, 10]
+    assert api._FORK == {}
+
+
+def test_one_worker_means_no_pool(monkeypatch):
+    monkeypatch.setenv("ANALYSIS_WORKERS", "1")
+    assert api._run_all(lambda m: m + 1, list(range(8))) == list(range(1, 9))
+
+
+def test_sensitivity_asks_the_same_questions_whether_or_not_it_runs_in_parallel(monkeypatch):
+    from backend.analysis.finance import sensitivity as S
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    plan = api._responsive_plan(bundle, model, request)
+    keep = {"window.u_value", "tariff.electricity_usd_per_kwh", "infiltration.ach50", "lighting.lpd"}
+    asked = [a.key for a in model.assumptions if a.key not in keep]       # a small set keeps the test quick
+    loop = S.rank_assumptions(model, plan, asked)
+    side_by_side = S.rank_assumptions(model, plan, asked, run_all=api._run_all)
+    assert loop[0] == side_by_side[0]
+    assert [(r.key, r.y_low_run, r.y_high_run, r.changes) for r in loop[1]] == \
+           [(r.key, r.y_low_run, r.y_high_run, r.changes) for r in side_by_side[1]]
+    assert [q.model_dump() for q in S.sensitivity(model, plan, asked=asked)] == \
+           [q.model_dump() for q in S.sensitivity(model, plan, asked=asked, run_all=api._run_all)]

@@ -57,16 +57,28 @@ def _askable(model: BuildingModel, asked: Iterable[str]) -> list[Assumption]:
             and a.value.low < a.value.high]
 
 
-def rank_assumptions(model: BuildingModel, plan_fn: PlanFn, asked: Iterable[str] = ()
+def _serial(plan_fn: PlanFn, models: list[BuildingModel]) -> list:
+    return [plan_fn(m) for m in models]
+
+
+def rank_assumptions(model: BuildingModel, plan_fn: PlanFn, asked: Iterable[str] = (),
+                     run_all: Optional[Callable[[PlanFn, list[BuildingModel]], list]] = None
                      ) -> tuple[float, list[SensitivityRow]]:
     """(y0, rows): the expected-value plan's total savings and one row per askable assumption,
     in the order the agent should ask: selection changes first, then widest swing; ties go to the
     lower confidence, then the key (UNC-03)."""
-    y0 = _savings(plan_fn(model))
+    run_all = run_all or _serial
+    askable = _askable(model, asked)
+    # every run is independent of the others, so they can be computed side by side (run_all); the
+    # order of the models, and so of the results, is fixed here
+    models = [model]
+    for a in askable:
+        models += [with_value(model, a.key, a.value.low), with_value(model, a.key, a.value.high)]
+    plans = run_all(plan_fn, models)
+    y0 = _savings(plans[0])
     rows = []
-    for a in _askable(model, asked):
-        low = plan_fn(with_value(model, a.key, a.value.low))
-        high = plan_fn(with_value(model, a.key, a.value.high))
+    for k, a in enumerate(askable):
+        low, high = plans[1 + 2 * k], plans[2 + 2 * k]
         swing = abs(_savings(high) - _savings(low))
         rows.append(SensitivityRow(
             key=a.key, y_low_run=_savings(low), y_high_run=_savings(high), swing=swing,
@@ -119,9 +131,10 @@ def _question(row: SensitivityRow, y0: float) -> Question:
 
 
 def sensitivity(model: BuildingModel, plan_fn: PlanFn, ask_width: float = config.ASK_WIDTH,
-                ask_max: int = config.ASK_MAX, asked: Iterable[str] = ()) -> list[Question]:
+                ask_max: int = config.ASK_MAX, asked: Iterable[str] = (),
+                run_all: Optional[Callable[[PlanFn, list[BuildingModel]], list]] = None) -> list[Question]:
     """SPEC 5.3: the questions worth asking, most valuable first, at most `ask_max`. An empty
     list means: do not ask, the range is simply shown."""
-    y0, rows = rank_assumptions(model, plan_fn, asked)
+    y0, rows = rank_assumptions(model, plan_fn, asked, run_all)
     worth = [r for r in rows if r.changes or r.width > ask_width]
     return [_question(r, y0) for r in worth[:ask_max]]

@@ -457,6 +457,85 @@ Four conclusions the analysis lane needs:
 
 `POST /ortho/extract` and `POST /oriented/extract` return image bytes, 1,024-tile cap per extract. `POST /embedding/extract` does semantic search over pre-computed tile embeddings. [V] from the tutorial, [P] not exercised
 
+### 4.4a What D8 built, and the three numbers that decide how to use it
+
+`backend/data_layer/imagery.py`, 2026-11-14. [V] all measured live on the golden
+house parcel. Section 4.4 said SAM 3's label quality is poor; this says what it *is*
+good for, and the answer is narrower and more useful than expected.
+
+**The pixel-to-map transform exists and is exact.** 4.4 left `images[].metadata` as
+`[P]`. It carries `geometry` (the image footprint, an axis-aligned polygon), `width`,
+`height`, `srid`, `collection` and the capture dates, so pixels map linearly onto the
+footprint. The direction was **not** assumed: the response gives both `pixel-bbox` and
+a map-coordinate `bbox` for every detection, so the transform can be checked against
+the service's own answer. Over all 13 detections and both corners:
+
+| Assumption | mean corner error | worst |
+|---|---|---|
+| **row 0 = north** | **0.024 m** | 0.124 m |
+| row 0 = south | 17.1 m | 34.8 m |
+
+Sub-pixel one way, a third of the parcel the other. North-up it is.
+
+**Do not use `min-gsd` or `max-gsd` for scale.** They bracket the truth without
+matching it — reported 0.05623 and 0.07821 m/px where the footprint and pixel
+dimensions imply 0.06182 by 0.06140. Using `min-gsd` under-states ground area by
+about **17 %**. The footprint and the pixel dimensions are the scale.
+
+**`pixel-bbox` can start outside the image.** The first detection on the golden house
+has `x = -1`, so coordinates are clamped before being transformed.
+
+**`features` is one feature per detection.** 4.4's "13 detections" was 13 *features*,
+each with `properties.label` and a `properties.detections` list of length one.
+
+#### Roof area is the thing SAM 3 is actually good for
+
+With the transform in hand, each mask's ground area is its white-pixel count times
+the per-pixel area. The result is a genuine capability and three traps:
+
+| | m² | vs the 190.4 m² precomputed footprint |
+|---|---|---|
+| **Largest single mask** (conf 0.484) | **180.9** | **−5 %** |
+| Sum of all 13 masks | 485.8 | **+155 %** |
+| Highest-confidence mask (0.695) | 38.8 | a different building |
+
+1. **Never sum.** The masks are *nested*, not adjacent: 8 of the other 12 detections
+   are **100 %** inside the largest one's box and 3 more are 81–97 % inside. Summing
+   over-states by 2.6×.
+2. **Never rank by confidence.** The most confident detection sits **0 %** inside the
+   largest one. This parcel has two structures (4.2), and 0.695 is the secondary —
+   ranking by confidence hands back the garage.
+3. **Never use the bounding box.** Mask fill ran **43–93 %** of its own box, so box
+   area over-states a fragment by up to a factor of two.
+
+So `imagery.roof_area_m2()` returns the **largest single mask**, and the
+`FetchRecord` names which detection it came from and its confidence. Agreeing with an
+independently-sourced footprint to 5 % is what makes this usable at all; the three
+obvious alternatives are wrong by 17 %, 155 % and 2×.
+
+#### `mask_wkt` is left unset, deliberately
+
+The contract describes it as "map polygon derived from the pixel mask". The two honest
+options were a convex hull and the exact rectilinear outline, and **a hull is the
+dangerous one**: it is a valid single-ring polygon that a consumer would reasonably
+take the area of, and for a concave roof fragment that area is wrong by an amount
+nothing in the payload reveals. `bbox_wkt` already gives location and
+`roof_area_m2` gives true area, so a hull would add no capability and one silent trap.
+`mask_area_m2` is proposed to @yalexie1 as an additive contract field; until then the
+number comes from `imagery.detect_with_areas()`.
+
+#### Consequences for other lanes
+
+- **Obstruction counts stay on the precomputed `roof-objects` attributes.** SAM 3
+  missed a chimney they report, invented two skylights they say do not exist, and
+  found one of five roof vents. `SPEC.md` 16 lists this as a risk with precomputed as
+  the fallback — the fallback is the primary.
+- **Roof *geometry* stays with A11's parametric planes.** 13 fragments on one small
+  house is not plane segmentation.
+- **Roof *area* is now measured rather than inferred**, to 5 % on the one case where
+  an independent number exists to check against.
+- `Pillow` joins the data lane's dependencies, to decode the base64 PNG masks.
+
 ### 4.5 Golden lots
 
 - **House**: `POINT(-118.3171 34.093491667)`, from the model's own `geocoordinates`. 2 structures. [V] `primary-structure` True, `footprint.area` 190.39 m², `ground-elevation` 100.584, roof `gable`/`shingle`, `condition.precise-value` 4.53, `tree-cover` 4.0, `ac-unit.count` 2, `chimney.count` 1, `roof-vent.count` 5, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
@@ -625,7 +704,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D5 | P0 | The one public door | `data-api` | `backend/data_layer/api.py` | `PropertyBundle`, `PropertySummary` |
 | D6 | P0 | Golden fixtures | each source agent, in its own subdirectory | `data/fixtures/costar/`, `/matterport/`, `/vexcel/` — **never the parent** | — |
 | D7 | P1 | Index + office selection — **done**, see 2.4a | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
-| D8 | P1 | Imagery + SAM 3 | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique |
+| D8 | P1 | Imagery + SAM 3 — **done**, see 4.4a | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique, roof area |
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
 | D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
 | D12 | P1 | Splat + drone photos (track site) | `data-matterport` | `backend/data_layer/tracksite.py` | `splat_path`, `drone_photo_paths` |
@@ -784,6 +863,12 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Bundle cache round trip (D4) | all three golden | 2026-11-14 | 0.002–0.046 s; `raw` rebuilt from the kit; **hit == miss** on name, tariff and `raw` |
 | No URL in any cache entry | regex over the whole cache tree | 2026-11-14 | clean — after fixing the bundle entry, which carried **54** URL-valued fields from `costar.raw` |
 | Suite with an empty vs a fully populated cache | `pytest backend/data_layer -q` | 2026-11-14 | **150 passed / 15 skipped both ways** |
+| `elements/detect` metadata (D8) | live, golden house | 2026-11-14 | `geometry` + `width`/`height` give the transform; `features` is one per detection |
+| Pixel-to-map direction | all 13 detections, both corners, vs the service's own `bbox` | 2026-11-14 | **row 0 = north**: 0.024 m mean error against 17.1 m for south-up |
+| gsd versus footprint scale | same response | 2026-11-14 | reported 0.05623/0.07821 vs implied 0.06182/0.06140 — **`min-gsd` is 17 % low** |
+| Mask ground areas | 13 masks, pixel counts | 2026-11-14 | largest **180.9 m²** vs 190.4 m² precomputed (**−5 %**); sum 485.8 (**+155 %**) |
+| Mask nesting | pixel-box containment, 12 pairs | 2026-11-14 | 8 **100 %** contained in the largest, 3 at 81–97 %, 3 disjoint — never sum |
+| Highest-confidence detection | same response | 2026-11-14 | 0.695 is 38.8 m² and **0 % inside** the largest — the secondary structure |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; resolved by the lead's EIA decision, 5.1c |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |

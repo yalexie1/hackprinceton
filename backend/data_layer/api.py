@@ -425,21 +425,66 @@ def _summary_from(sid, matterport, costar, row) -> PropertySummary:
     )
 
 
-def detect_roof_elements(sid: str, labels: Optional[list[str]] = None) -> list[VexcelDetection]:
-    """Vexcel `elements/detect` with SAM 3; the live code is `D8`. Lives in this lane
-    because it is a network call and SPEC 14 requires analysis to run without one.
+def detect_roof_elements(
+    sid: str, labels: Optional[list[str]] = None, *, live: Optional[bool] = None
+) -> list[VexcelDetection]:
+    """Vexcel `elements/detect` with SAM 3 (`D8`). Lives in this lane because it is a
+    network call and SPEC 14 requires analysis to run without one.
 
     `specs/data-integration.md` 4.4 measured the label quality: use `"roof"`, not
     `"roof plane"`, which returns nothing, and a detection threshold near 0.3 rather
-    than the quickstart's 0.5. Roof obstruction counts should come from the Vexcel
-    precomputed `roof-objects` attributes, not from these masks.
+    than the quickstart's 0.5. **Roof obstruction counts must come from the Vexcel
+    precomputed `roof-objects` attributes, not from these masks** - SAM 3 missed a
+    chimney the attributes report and invented two skylights they say do not exist.
+
+    Live detection is opt-in on the same flag as the bundle, and needs the parcel
+    polygon: a bare `POINT` makes `elements/detect` return 404.
     """
+    if live is None:
+        live = os.environ.get("DATA_LAYER_LIVE") == "1"
+
+    if live:
+        from backend.data_layer import imagery as d8
+
+        bundle = get_property_bundle(sid, live=True)
+        parcel = bundle.vexcel.parcel_wkt if bundle.vexcel else None
+        if parcel:
+            found, _ = d8.detect(
+                parcel, sid=sid,
+                labels=tuple(labels) if labels else d8.DEFAULT_LABELS,
+            )
+            return found
+        return []
+
     bundle = get_property_bundle(sid)
     found = list(bundle.vexcel.detections) if bundle.vexcel else []
     if labels is not None:
         wanted = {l.casefold() for l in labels}
         found = [d for d in found if d.label.casefold() in wanted]
     return found
+
+
+def roof_area_m2(sid: str, *, live: Optional[bool] = None) -> Optional[float]:
+    """Usable roof area for the primary structure from the SAM 3 masks, or `None`.
+
+    The **largest single mask**, never the sum and never the most confident: the
+    detections are nested, so summing over-states by 2.6x, and on the golden house the
+    most confident detection was the secondary structure. Measured 180.9 m2 against a
+    precomputed footprint of 190.4 m2 - within 5 %. See `imagery.roof_area_m2`.
+    """
+    if live is None:
+        live = os.environ.get("DATA_LAYER_LIVE") == "1"
+    if not live:
+        return None
+
+    from backend.data_layer import imagery as d8
+
+    bundle = get_property_bundle(sid, live=True)
+    parcel = bundle.vexcel.parcel_wkt if bundle.vexcel else None
+    if not parcel:
+        return None
+    area, _ = d8.roof_area_m2(parcel, sid=sid)
+    return area
 
 
 def get_asset(path: str) -> bytes:

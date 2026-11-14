@@ -130,8 +130,10 @@ def _golden(folder):
 def test_pv_inputs_read_shading_and_racks():
     _, model, pv = _golden("house")
     i = pv_inputs(pv.solar, model.roof_planes, pv.params)
-    assert i["losses_percent"] == 11.42 and i["shading_fraction"] == pytest.approx(1 - 3768.3 / 3884.85, abs=2e-4)
-    assert [(p.tilt_deg, p.azimuth_deg) for p in i["planes"]] == [(20.0, 176.4)]
+    # #330: the house roof is A11's parametric Vexcel roof (the example's splat planes were hand-made)
+    assert i["losses_percent"] == pytest.approx(P.PVWATTS_LOSSES_NO_SHADING)
+    assert i["shading_fraction"] == pytest.approx(0.03, abs=2e-4)
+    assert [(p.tilt_deg, p.azimuth_deg) for p in i["planes"]] == [(28.4, 176.4)]
     _, model, pv = _golden("office")
     i = pv_inputs(pv.solar, model.roof_planes, pv.params)
     assert i["losses_percent"] == pytest.approx(P.PVWATTS_LOSSES_NO_SHADING)
@@ -142,8 +144,9 @@ def test_pv_inputs_read_shading_and_racks():
 
 
 # Where each golden example's PV_ROOF design lands against its PVGIS figure (reported in the PR).
-GOLDEN = {"house": (1806.9, 1730.6, 0.0441), "office": (1601.9, 1642.8, -0.0249),
-          "office_houston": (1371.2, 1298.5, 0.0560)}
+# #330: the building-mounted PVGIS figures and the real designs.
+GOLDEN = {"house": (1653.2, 1676.9, -0.0141), "office": (1599.4, 1630.0, -0.0187),
+          "office_houston": (1434.6, 1323.2, 0.0841)}
 
 
 @pytest.mark.parametrize("folder", sorted(GOLDEN))

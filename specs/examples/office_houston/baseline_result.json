@@ -1,72 +1,82 @@
 {
   "annual": {
     "electricity_kwh": {
-      "low": 120360.0,
-      "expected": 141600.0,
-      "high": 169920.0,
+      "low": 109188.23,
+      "expected": 138090.99,
+      "high": 150998.43,
       "unit": "kWh"
     },
     "gas_kwh": {
-      "low": 6750.0,
-      "expected": 9000.0,
-      "high": 11700.0,
+      "low": 3075.74,
+      "expected": 5068.28,
+      "high": 7700.16,
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 11073.76,
-      "expected": 13069.16,
-      "high": 19670.63,
+      "low": 9963.16,
+      "expected": 12611.3,
+      "high": 18663.31,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 41835.25,
-      "expected": 48943.88,
-      "high": 58419.08,
+      "low": 37455.83,
+      "expected": 47058.79,
+      "high": 51416.09,
       "unit": "kg"
     },
-    "co2_nonbaseload_kg": null
+    "co2_nonbaseload_kg": {
+      "low": 62761.87,
+      "expected": 79058.23,
+      "high": 86399.09,
+      "unit": "kg"
+    }
   },
   "end_use_kwh": {
-    "heating": 9000.0,
-    "cooling": 48000.0,
+    "heating": 5068.3,
+    "cooling": 43343.2,
     "water_heating": 0.0,
-    "lighting": 50600.0,
-    "plug": 43000.0,
+    "lighting": 51601.2,
+    "plug": 43146.6,
     "appliances": 0.0
   },
   "monthly_electricity_kwh": [
-    8519.7,
-    8232.4,
-    9669.0,
-    10818.3,
-    13116.9,
-    14840.8,
-    15990.1,
-    16277.5,
-    14266.2,
-    11967.6,
-    9381.7,
-    8519.8
+    8852.42,
+    8660.04,
+    9715.97,
+    11234.83,
+    12997.27,
+    13173.56,
+    13801.94,
+    14555.86,
+    12803.48,
+    12700.19,
+    10296.26,
+    9299.17
   ],
   "monthly_gas_kwh": [
-    2368.4,
-    1800.0,
-    947.4,
-    284.2,
-    94.7,
+    3658.38,
+    531.84,
+    25.95,
     0.0,
     0.0,
     0.0,
     0.0,
-    284.2,
-    1136.8,
-    2084.3
+    0.0,
+    0.0,
+    0.0,
+    91.92,
+    760.18
   ],
-  "peak_cooling_w": 98000.0,
-  "peak_heating_w": 52000.0,
+  "peak_cooling_w": 57480.045733113424,
+  "peak_heating_w": 57765.16479376813,
   "calibrated_to_bills": false,
-  "heating_need_kwh": 7200.0,
-  "cooling_need_kwh": 132000.0,
-  "latent_cooling_kwh": 21000.0,
-  "hourly_path": "data/cache/L3266YcPPvd/analysis/baseline_hourly.csv"
+  "calibration": null,
+  "heating_need_kwh": 4054.6217232558615,
+  "cooling_need_kwh": 116156.0165043376,
+  "latent_cooling_kwh": 6170.298720000001,
+  "hourly_path": null,
+  "warnings": [
+    "The site's own weather year is not on this machine (data/cache/L3266YcPPvd/weather/typical_year_hourly.csv), so the example year typical_year_hourly_houston.csv was used instead. Every energy figure here is for that year, not for the site's; expect them to move when the site file is present.",
+    "Gas use intensity of 6 kWh/m2 a year (1.8 kBtu/ft2) is below the 5th percentile of gas-using offices of 50,000 to 199,999 ft2 nationally (CBECS2018); 80 percent of them use 14 to 119 kWh/m2. Check the model before relying on it: gas heating or water heating may be too small. Compared with national instead of the climate zone, because the closer cut has fewer than 50 surveyed buildings."
+  ]
 }

@@ -159,7 +159,7 @@ def test_bad_answers_are_refused(monkeypatch):
 
 def test_answer_to_a_run_that_is_not_waiting_is_409():
     run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
-    r = client.post(f"/api/runs/{run_id}/answers", json={"question_id": "q_service_amps", "value": 100.0})
+    r = client.post(f"/api/runs/{run_id}/answers", json={"question_id": _body("house", "run_result.json")["questions"][0]["id"], "value": 100.0})
     assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_waiting"
 
 

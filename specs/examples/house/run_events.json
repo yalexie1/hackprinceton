@@ -59,31 +59,25 @@
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Electricity priced at the EIA California state average, not a LADWP schedule",
+    "message": "tariff electricity price (EIA retail sales, CA RES) (fallback): EIA state average retail price, CA RES, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)",
     "payload": {
+      "fallback": "provenance:tariff",
       "layer": "tariff",
-      "from": "utility tariff",
-      "to": "EIA state average (CA RES, 2026-08)"
+      "what": "electricity price (EIA retail sales, CA RES)",
+      "status": "fallback",
+      "detail": "EIA state average retail price, CA RES, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)"
     }
   },
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Gas priced at the EIA California state average, not a SoCalGas schedule",
+    "message": "tariff eia/natural-gas-price (fallback): EIA state average delivered gas price, CA RES, 2025 (22.01 $/MCF, EIA N3010CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)",
     "payload": {
+      "fallback": "provenance:tariff",
       "layer": "tariff",
-      "from": "gas utility tariff",
-      "to": "EIA state average (CA RES, 2025)"
-    }
-  },
-  {
-    "type": "fallback",
-    "stage": "S2",
-    "message": "MatterPak resources are unavailable; using the wall graph",
-    "payload": {
-      "layer": "matterport",
-      "from": "MatterPak mesh",
-      "to": "wall graph and room heights"
+      "what": "eia/natural-gas-price",
+      "status": "fallback",
+      "detail": "EIA state average delivered gas price, CA RES, 2025 (22.01 $/MCF, EIA N3010CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)"
     }
   },
   {
@@ -121,16 +115,6 @@
     "payload": {}
   },
   {
-    "type": "fallback",
-    "stage": "S4",
-    "message": "No window opening on the bedroom's walls; using the window read by vision for that room",
-    "payload": {
-      "layer": "matterport",
-      "from": "measured window openings",
-      "to": "window size from vision, wider range"
-    }
-  },
-  {
     "type": "stage_done",
     "stage": "S4",
     "message": "Building model ready",
@@ -145,6 +129,26 @@
     "payload": {}
   },
   {
+    "type": "tool_call",
+    "stage": "S5",
+    "message": "physicist: run_baseline",
+    "payload": {
+      "agent": "physicist",
+      "tool": "run_baseline",
+      "args": {
+        "sid": "zvKHR9DHNjJ"
+      }
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S5",
+    "message": "The site's own weather year is not on this machine (data/cache/zvKHR9DHNjJ/weather/typical_year_hourly.csv), so the example year typical_year_hourly.csv was used instead. Every energy figure here is for that year, not for the site's; expect them to move when the site file is present.",
+    "payload": {
+      "fallback": "weather:example_year"
+    }
+  },
+  {
     "type": "partial_result",
     "stage": "S5",
     "message": "Baseline ready",
@@ -152,9 +156,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 1918.54,
-        "expected": 2212.44,
-        "high": 2579.01,
+        "low": 2146.07,
+        "expected": 2713.25,
+        "high": 3410.46,
         "unit": "USD"
       }
     }
@@ -191,7 +195,7 @@
   {
     "type": "stage_done",
     "stage": "S6",
-    "message": "10 measures evaluated",
+    "message": "14 measures evaluated",
     "payload": {
       "artifact": "/run/measures.json"
     }
@@ -203,37 +207,6 @@
     "payload": {}
   },
   {
-    "type": "question",
-    "stage": "S7",
-    "message": "One question before the plan is final",
-    "payload": {
-      "question": {
-        "id": "q_service_amps",
-        "assumption_key": "electrical.service_amps",
-        "prompt": "What is the rating of your main electrical panel?",
-        "choices": [
-          {
-            "label": "100 A or less",
-            "value": 100.0
-          },
-          {
-            "label": "125 to 150 A",
-            "value": 150.0
-          },
-          {
-            "label": "200 A or more",
-            "value": 200.0
-          },
-          {
-            "label": "I don't know",
-            "value": null
-          }
-        ],
-        "impact_note": "A service upgrade is likely and could add $2,250 to $4,500 to rooftop solar. It is not in the installed cost; at the high end, solar no longer fits the budget and the selected measures change."
-      }
-    }
-  },
-  {
     "type": "tool_call",
     "stage": "S7",
     "message": "financier: build_plan",
@@ -243,6 +216,33 @@
       "args": {
         "budget_usd": 10000.0,
         "role": "owner_occupier"
+      }
+    }
+  },
+  {
+    "type": "question",
+    "stage": "S7",
+    "message": "3 questions before the plan is final",
+    "payload": {
+      "question": {
+        "id": "q_wall_u_value",
+        "assumption_key": "wall.u_value",
+        "prompt": "What is the exterior wall U-value?",
+        "choices": [
+          {
+            "label": "About 0.625 W/m2K (low)",
+            "value": 0.625
+          },
+          {
+            "label": "About 2.02 W/m2K (most likely)",
+            "value": 2.021
+          },
+          {
+            "label": "I don't know",
+            "value": null
+          }
+        ],
+        "impact_note": "Depending on this value the plan picks different measures; annual savings run from $619 to $1,209."
       }
     }
   },

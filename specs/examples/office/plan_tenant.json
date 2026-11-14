@@ -19,15 +19,15 @@
             "high": 1.0,
             "unit": "-"
           },
-          "auto_on_off_saved_fraction": 0.9029,
-          "controlled_power_w": 1032.96,
+          "auto_on_off_saved_fraction": 0.9027,
+          "controlled_power_w": 1024.32,
           "candidates_scored": 6712
         },
         "savings": {
           "electricity_kwh": {
             "low": 0.0,
-            "expected": 1212.42,
-            "high": 2424.84,
+            "expected": 1202.03,
+            "high": 2404.05,
             "unit": "kWh"
           },
           "gas_kwh": {
@@ -38,20 +38,20 @@
           },
           "cost_usd": {
             "low": 0.0,
-            "expected": 363.97,
-            "high": 727.94,
+            "expected": 360.85,
+            "high": 721.7,
             "unit": "USD"
           },
           "co2_kg": {
             "low": 0.0,
-            "expected": 236.47,
-            "high": 472.94,
+            "expected": 234.44,
+            "high": 468.89,
             "unit": "kg"
           },
           "co2_nonbaseload_kg": {
             "low": 0.0,
-            "expected": 528.6,
-            "high": 1057.21,
+            "expected": 524.07,
+            "high": 1048.14,
             "unit": "kg"
           }
         },
@@ -72,8 +72,8 @@
           },
           "annual_savings_usd": {
             "low": 0.0,
-            "expected": 363.97,
-            "high": 727.94,
+            "expected": 360.85,
+            "high": 721.7,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
@@ -87,11 +87,11 @@
           "discounted_payback_years": 0.0,
           "npv_usd": {
             "low": 0.0,
-            "expected": 1590.54,
-            "high": 3181.07,
+            "expected": 1576.9,
+            "high": 3153.81,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": 1425.74,
+          "npv_sensitivity_usd": 1413.51,
           "sir": null,
           "irr": null,
           "airr": null,
@@ -109,8 +109,8 @@
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
                 "low": 0.0,
-                "expected": 363.97,
-                "high": 727.94,
+                "expected": 360.85,
+                "high": 721.7,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -129,13 +129,18 @@
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
                 "low": 0.0,
-                "expected": 363.97,
-                "high": 727.94,
+                "expected": 360.85,
+                "high": 721.7,
                 "unit": "USD"
               },
               "program_sir": null,
               "notes": [
-                "Nothing to finance: the measure has no cost."
+                "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
+                "Nothing to finance: desk placement is not a permanent improvement fixed to the property.",
+                "Term shortened from 20 to 5 years: it may not exceed the useful life of the improvement (texas.md TX-PACE-11).",
+                "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
+                "Existing mortgage holder: consent or acknowledgment is a programme and capital-provider requirement, not a California statutory condition (specs/legal/california.md section 7.6).",
+                "Statutory test for commercial property: annual property taxes plus assessments, with this one, may not exceed 5 percent of market value at approval (Streets and Highways Code 5898.15; CA-PACE-07). It cannot be completed without the market value and the tax bill."
               ]
             }
           ]
@@ -284,13 +289,13 @@
               "y": 39.0,
               "daylight": 0.9302681992337165,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.725422291145158,
-              "score": 0.9162,
+              "comfort_ppd": 9.772605758525145,
+              "score": 0.9005,
               "recommended": true,
               "daylight_factor": 7.888792461015417,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.4853335030632593,
+              "max_dt_pr_k": 1.7514114303831576,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -303,13 +308,13 @@
               "y": 39.0,
               "daylight": 0.9302681992337165,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.725422291145158,
-              "score": 0.9162,
+              "comfort_ppd": 9.772605758525144,
+              "score": 0.9005,
               "recommended": true,
               "daylight_factor": 7.888792461015417,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.4853335030632593,
+              "max_dt_pr_k": 1.7514114303831576,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -320,15 +325,15 @@
               "room_id": "room_16",
               "x": 17.5,
               "y": 39.0,
-              "daylight": 0.9264367816091954,
+              "daylight": 0.9268199233716475,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.709253974677114,
-              "score": 0.9149,
+              "comfort_ppd": 9.761813404693038,
+              "score": 0.8993,
               "recommended": true,
               "daylight_factor": 7.516293910772734,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.4667728439145549,
+              "max_dt_pr_k": 1.7294995653854386,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -339,15 +344,15 @@
               "room_id": "room_16",
               "x": 44.5,
               "y": 39.0,
-              "daylight": 0.9264367816091954,
+              "daylight": 0.9268199233716475,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.709253974677114,
-              "score": 0.9149,
+              "comfort_ppd": 9.761813404693038,
+              "score": 0.8993,
               "recommended": true,
               "daylight_factor": 7.516293910772734,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.4667728439145549,
+              "max_dt_pr_k": 1.7294995653854386,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -360,13 +365,13 @@
               "y": 38.5,
               "daylight": 0.9237547892720307,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.926347116956327,
-              "score": 0.9106,
+              "comfort_ppd": 9.967203864184924,
+              "score": 0.895,
               "recommended": true,
               "daylight_factor": 6.791807016498668,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.9994203108287252,
+              "max_dt_pr_k": 2.358587116653112,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -379,13 +384,13 @@
               "y": 38.5,
               "daylight": 0.9237547892720307,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.926347116956324,
-              "score": 0.9106,
+              "comfort_ppd": 9.967203864184922,
+              "score": 0.895,
               "recommended": true,
               "daylight_factor": 6.791807016498668,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.9994203108287252,
+              "max_dt_pr_k": 2.358587116653112,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -398,13 +403,13 @@
               "y": 38.5,
               "daylight": 0.9218390804597701,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.923515542825784,
-              "score": 0.9099,
+              "comfort_ppd": 9.973818768917736,
+              "score": 0.8941,
               "recommended": true,
               "daylight_factor": 6.4988755872023924,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.9985938802121268,
+              "max_dt_pr_k": 2.357610621937809,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -417,13 +422,13 @@
               "y": 38.5,
               "daylight": 0.9218390804597701,
               "glare_risk": 0.0,
-              "comfort_ppd": 8.923515542825784,
-              "score": 0.9099,
+              "comfort_ppd": 9.973818768917736,
+              "score": 0.8941,
               "recommended": true,
               "daylight_factor": 6.4988755872023924,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 1.9985938802121268,
+              "max_dt_pr_k": 2.357610621937809,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -434,15 +439,15 @@
               "room_id": "room_15",
               "x": 11.0,
               "y": 38.5,
-              "daylight": 0.924904214559387,
+              "daylight": 0.9241379310344827,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.1004471184874,
-              "score": 0.9085,
+              "comfort_ppd": 10.152370537246018,
+              "score": 0.8924,
               "recommended": true,
               "daylight_factor": 6.984445861372097,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.0816491143035023,
+              "max_dt_pr_k": 2.4557538538137607,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -453,15 +458,15 @@
               "room_id": "room_17",
               "x": 51.0,
               "y": 38.5,
-              "daylight": 0.924904214559387,
+              "daylight": 0.9241379310344827,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.1004471184874,
-              "score": 0.9085,
+              "comfort_ppd": 10.152370537246023,
+              "score": 0.8924,
               "recommended": true,
               "daylight_factor": 6.984445861372097,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.0816491143035023,
+              "max_dt_pr_k": 2.4557538538137607,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -474,13 +479,13 @@
               "y": 38.5,
               "daylight": 0.9233716475095786,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.093416707713988,
-              "score": 0.9079,
+              "comfort_ppd": 10.15759973539876,
+              "score": 0.892,
               "recommended": true,
               "daylight_factor": 6.69461325934165,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.083396162404256,
+              "max_dt_pr_k": 2.457818420953018,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -493,13 +498,13 @@
               "y": 38.5,
               "daylight": 0.9233716475095786,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.093416707713988,
-              "score": 0.9079,
+              "comfort_ppd": 10.15759973539876,
+              "score": 0.892,
               "recommended": true,
               "daylight_factor": 6.69461325934165,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.083396162404256,
+              "max_dt_pr_k": 2.457818420953018,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -512,13 +517,13 @@
               "y": 38.5,
               "daylight": 0.924904214559387,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.188531302399708,
-              "score": 0.9071,
+              "comfort_ppd": 10.244785460829089,
+              "score": 0.8913,
               "recommended": false,
               "daylight_factor": 7.019474259007254,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.09606151016834,
+              "max_dt_pr_k": 2.472785825775489,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -531,13 +536,13 @@
               "y": 38.5,
               "daylight": 0.9233716475095786,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.17004562236296,
-              "score": 0.9068,
+              "comfort_ppd": 10.242461716488592,
+              "score": 0.8907,
               "recommended": false,
               "daylight_factor": 6.728266771765039,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.0999458167511875,
+              "max_dt_pr_k": 2.477376208559818,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -550,13 +555,13 @@
               "y": 38.5,
               "daylight": 0.9233716475095786,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.17004562236296,
-              "score": 0.9068,
+              "comfort_ppd": 10.242461716488592,
+              "score": 0.8907,
               "recommended": false,
               "daylight_factor": 6.728266771765039,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.0999458167511875,
+              "max_dt_pr_k": 2.477376208559818,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -566,20 +571,19 @@
             {
               "room_id": "room_17",
               "x": 55.0,
-              "y": 38.5,
-              "daylight": 0.9252873563218391,
+              "y": 38.0,
+              "daylight": 0.9099616858237548,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.255876199642893,
-              "score": 0.9063,
+              "comfort_ppd": 9.90780987816867,
+              "score": 0.8904,
               "recommended": false,
-              "daylight_factor": 7.074641434854051,
+              "daylight_factor": 4.944567450352949,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.09606151016834,
+              "max_dt_pr_k": 2.235100860078674,
               "warnings": [
                 "window geometry read from panoramas, not measured",
-                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
-                "facing the window the glare risk is 0.08 (GLR-05)"
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water"
               ]
             },
             {
@@ -588,13 +592,13 @@
               "y": 38.5,
               "daylight": 0.9233716475095786,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.21005743811095,
-              "score": 0.9062,
+              "comfort_ppd": 10.287309019510305,
+              "score": 0.89,
               "recommended": false,
               "daylight_factor": 6.737576699335879,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.1048717817973284,
+              "max_dt_pr_k": 2.483197641913492,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -607,89 +611,13 @@
               "y": 38.5,
               "daylight": 0.9233716475095786,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.21005743811095,
-              "score": 0.9062,
+              "comfort_ppd": 10.287309019510305,
+              "score": 0.89,
               "recommended": false,
               "daylight_factor": 6.737576699335877,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.1048717817973284,
-              "warnings": [
-                "window geometry read from panoramas, not measured",
-                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
-                "facing the window the glare risk is 0.07 (GLR-05)"
-              ]
-            },
-            {
-              "room_id": "room_16",
-              "x": 27.5,
-              "y": 38.5,
-              "daylight": 0.9233716475095786,
-              "glare_risk": 0.0,
-              "comfort_ppd": 9.231781214507027,
-              "score": 0.9059,
-              "recommended": false,
-              "daylight_factor": 6.740905233343886,
-              "view_azimuth_deg": 114.999999,
-              "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.10671095257959,
-              "warnings": [
-                "window geometry read from panoramas, not measured",
-                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
-                "facing the window the glare risk is 0.07 (GLR-05)"
-              ]
-            },
-            {
-              "room_id": "room_16",
-              "x": 34.5,
-              "y": 38.5,
-              "daylight": 0.9233716475095786,
-              "glare_risk": 0.0,
-              "comfort_ppd": 9.231781214507027,
-              "score": 0.9059,
-              "recommended": false,
-              "daylight_factor": 6.740905233343886,
-              "view_azimuth_deg": 114.999999,
-              "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.10671095257959,
-              "warnings": [
-                "window geometry read from panoramas, not measured",
-                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
-                "facing the window the glare risk is 0.07 (GLR-05)"
-              ]
-            },
-            {
-              "room_id": "room_16",
-              "x": 29.5,
-              "y": 38.5,
-              "daylight": 0.9233716475095786,
-              "glare_risk": 0.0,
-              "comfort_ppd": 9.242258060850578,
-              "score": 0.9057,
-              "recommended": false,
-              "daylight_factor": 6.742153835830628,
-              "view_azimuth_deg": 114.999999,
-              "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.1074179881609894,
-              "warnings": [
-                "window geometry read from panoramas, not measured",
-                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
-                "facing the window the glare risk is 0.07 (GLR-05)"
-              ]
-            },
-            {
-              "room_id": "room_16",
-              "x": 31.5,
-              "y": 38.5,
-              "daylight": 0.9233716475095786,
-              "glare_risk": 0.0,
-              "comfort_ppd": 9.24423512040134,
-              "score": 0.9057,
-              "recommended": false,
-              "daylight_factor": 6.7423660074052165,
-              "view_azimuth_deg": 114.999999,
-              "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.107539336515572,
+              "max_dt_pr_k": 2.483197641913492,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -702,13 +630,13 @@
               "y": 38.5,
               "daylight": 0.924904214559387,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.290906324589757,
-              "score": 0.9056,
+              "comfort_ppd": 10.352509147530213,
+              "score": 0.8897,
               "recommended": false,
               "daylight_factor": 7.019474259007254,
               "view_azimuth_deg": 114.999999,
               "direct_sun_hours": 0.0,
-              "max_dt_pr_k": 2.09606151016834,
+              "max_dt_pr_k": 2.472785825775489,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
@@ -716,18 +644,94 @@
               ]
             },
             {
+              "room_id": "room_16",
+              "x": 27.5,
+              "y": 38.5,
+              "daylight": 0.9233716475095786,
+              "glare_risk": 0.0,
+              "comfort_ppd": 10.31181192407465,
+              "score": 0.8897,
+              "recommended": false,
+              "daylight_factor": 6.740905233343886,
+              "view_azimuth_deg": 114.999999,
+              "direct_sun_hours": 0.0,
+              "max_dt_pr_k": 2.4853711593190297,
+              "warnings": [
+                "window geometry read from panoramas, not measured",
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
+                "facing the window the glare risk is 0.07 (GLR-05)"
+              ]
+            },
+            {
+              "room_id": "room_16",
+              "x": 34.5,
+              "y": 38.5,
+              "daylight": 0.9233716475095786,
+              "glare_risk": 0.0,
+              "comfort_ppd": 10.31181192407465,
+              "score": 0.8897,
+              "recommended": false,
+              "daylight_factor": 6.740905233343886,
+              "view_azimuth_deg": 114.999999,
+              "direct_sun_hours": 0.0,
+              "max_dt_pr_k": 2.4853711593190297,
+              "warnings": [
+                "window geometry read from panoramas, not measured",
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
+                "facing the window the glare risk is 0.07 (GLR-05)"
+              ]
+            },
+            {
+              "room_id": "room_16",
+              "x": 29.5,
+              "y": 38.5,
+              "daylight": 0.9233716475095786,
+              "glare_risk": 0.0,
+              "comfort_ppd": 10.32366804748878,
+              "score": 0.8895,
+              "recommended": false,
+              "daylight_factor": 6.742153835830628,
+              "view_azimuth_deg": 114.999999,
+              "direct_sun_hours": 0.0,
+              "max_dt_pr_k": 2.486206730127847,
+              "warnings": [
+                "window geometry read from panoramas, not measured",
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
+                "facing the window the glare risk is 0.07 (GLR-05)"
+              ]
+            },
+            {
+              "room_id": "room_16",
+              "x": 31.5,
+              "y": 38.5,
+              "daylight": 0.9233716475095786,
+              "glare_risk": 0.0,
+              "comfort_ppd": 10.325908566767252,
+              "score": 0.8895,
+              "recommended": false,
+              "daylight_factor": 6.7423660074052165,
+              "view_azimuth_deg": 114.999999,
+              "direct_sun_hours": 0.0,
+              "max_dt_pr_k": 2.486350139053471,
+              "warnings": [
+                "window geometry read from panoramas, not measured",
+                "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water",
+                "facing the window the glare risk is 0.07 (GLR-05)"
+              ]
+            },
+            {
               "room_id": "room_17",
               "x": 58.0,
               "y": 38.0,
-              "daylight": 0.9145593869731801,
+              "daylight": 0.9149425287356322,
               "glare_risk": 0.0,
-              "comfort_ppd": 9.10717160828474,
-              "score": 0.9042,
+              "comfort_ppd": 10.38546229479169,
+              "score": 0.8852,
               "recommended": false,
               "daylight_factor": 5.342713325959915,
               "view_azimuth_deg": 294.999999,
               "direct_sun_hours": 67.0,
-              "max_dt_pr_k": 1.8384148361220696,
+              "max_dt_pr_k": 2.1683715346788546,
               "warnings": [
                 "window geometry read from panoramas, not measured",
                 "dew point derived from temperature and humidity (Magnus); used only for DAY-07 precipitable water"
@@ -747,8 +751,8 @@
           "occupied_hours_per_year": 2600.0,
           "lighting_kwh_saved": {
             "low": 0.0,
-            "expected": 1212.42,
-            "high": 2424.84,
+            "expected": 1202.03,
+            "high": 2404.05,
             "unit": "kWh"
           },
           "warnings": [
@@ -767,464 +771,10 @@
       },
       "cumulative_upfront_usd": 0.0,
       "remaining_budget_usd": 75000.0
-    },
-    {
-      "rank": 2,
-      "measure": {
-        "measure_id": "LGT_CTRL",
-        "title": "Occupancy and daylight controls",
-        "applicable": true,
-        "not_applicable_reason": null,
-        "description": "Occupancy sensors and daylight dimming on the existing light fixtures.",
-        "params": {
-          "fixtures": 289,
-          "control_saving_fraction": 0.2,
-          "control_saving_fraction_range": [
-            0.1,
-            0.3
-          ],
-          "lpd_before_w_m2": 10.76,
-          "lpd_effective_after_w_m2": 8.608
-        },
-        "savings": {
-          "electricity_kwh": {
-            "low": 14383.53,
-            "expected": 17106.89,
-            "high": 17106.89,
-            "unit": "kWh"
-          },
-          "gas_kwh": {
-            "low": -3492.78,
-            "expected": -3492.78,
-            "high": 2373.18,
-            "unit": "kWh"
-          },
-          "cost_usd": {
-            "low": 4364.82,
-            "expected": 4945.17,
-            "high": 4945.17,
-            "unit": "USD"
-          },
-          "co2_kg": {
-            "low": 2703.47,
-            "expected": 2703.47,
-            "high": 2852.93,
-            "unit": "kg"
-          },
-          "co2_nonbaseload_kg": {
-            "low": 6103.08,
-            "expected": 6825.47,
-            "high": 6825.47,
-            "unit": "kg"
-          }
-        },
-        "finance": {
-          "installed_cost_usd": {
-            "low": 48552.0,
-            "expected": 64736.0,
-            "high": 97104.0,
-            "unit": "USD"
-          },
-          "cost_source": "EIA-2023 Commercial 4-ft T8 with Occupancy Sensor (2022 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 224 USD per controlled fixture x 289",
-          "incentives": [
-            {
-              "name": "Federal energy efficient commercial buildings deduction (26 U.S.C. 179D)",
-              "kind": "tax_deduction",
-              "amount_usd": {
-                "low": 0.0,
-                "expected": 0.0,
-                "high": 0.0,
-                "unit": "USD"
-              },
-              "status": "expired",
-              "eligibility": "not_eligible",
-              "conditions": [
-                "only if construction began on or before 2026-06-30"
-              ],
-              "citation": "physics 04 INC-03: section 179D(i), no deduction for property whose construction begins after 2026-06-30; Pub. L. 119-21 (139 Stat. 72), section 70507"
-            },
-            {
-              "name": "LADWP Commercial Lighting Incentive Program (CLIP)",
-              "kind": "rebate_after_install",
-              "amount_usd": {
-                "low": 0.0,
-                "expected": 0.0,
-                "high": 5132.07,
-                "unit": "USD"
-              },
-              "status": "verified",
-              "eligibility": "needs_confirmation",
-              "conditions": [
-                "monthly demand (Facilities Charge) above 200 kW",
-                "DLC-listed products; LADWP approval before purchase",
-                "at least 25 percent energy savings",
-                "high is the LADWP Preferred fixture rate 0.40 or the networked controls rate 0.30 USD/kWh"
-              ],
-              "citation": "physics 04 INC-19, https://www.ladwp.com/commercial-services/programs-and-rebates-commercial/commercial-lighting-incentive-program"
-            }
-          ],
-          "net_upfront_usd": {
-            "low": 48552.0,
-            "expected": 64736.0,
-            "high": 97104.0,
-            "unit": "USD"
-          },
-          "annual_savings_usd": {
-            "low": 4364.82,
-            "expected": 4945.17,
-            "high": 4945.17,
-            "unit": "USD"
-          },
-          "annual_om_change_usd": 0.0,
-          "useful_life_years": 10,
-          "simple_payback_years": {
-            "low": 9.82,
-            "expected": 13.09,
-            "high": 19.86,
-            "unit": "years"
-          },
-          "discounted_payback_years": null,
-          "npv_usd": {
-            "low": -58607.16,
-            "expected": -25920.19,
-            "high": -8986.55,
-            "unit": "USD"
-          },
-          "npv_sensitivity_usd": -32617.19,
-          "sir": 0.6,
-          "irr": null,
-          "airr": -0.0214,
-          "discount_rate": 0.03,
-          "electricity_escalation": -0.0159,
-          "gas_escalation": -0.0124,
-          "analysis_period_years": 10,
-          "financing": [
-            {
-              "kind": "cash",
-              "eligible": true,
-              "financed_usd": 0.0,
-              "rate": null,
-              "term_years": null,
-              "annual_payment_usd": 0.0,
-              "net_cashflow_year1_usd": {
-                "low": 4364.82,
-                "expected": 4945.17,
-                "high": 4945.17,
-                "unit": "USD"
-              },
-              "program_sir": null,
-              "notes": [
-                "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
-              ]
-            },
-            {
-              "kind": "cpace",
-              "eligible": false,
-              "financed_usd": 64736.0,
-              "rate": 0.065,
-              "term_years": 10,
-              "annual_payment_usd": 9005.08,
-              "net_cashflow_year1_usd": {
-                "low": -4640.26,
-                "expected": -4059.91,
-                "high": -4059.91,
-                "unit": "USD"
-              },
-              "program_sir": 0.549,
-              "notes": [
-                "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
-                "Program SIR 0.55: undiscounted savings over the 10-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
-                "Savings-to-debt-service ratio 0.55.",
-                "Term of 10 years does not exceed the useful life of 10 years: a programme rule for a new commercial assessment in California, not a statutory condition (CA-PACE-11).",
-                "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
-                "Statutory test for commercial property: annual property taxes plus assessments, with this one, may not exceed 5 percent of market value at approval (Streets and Highways Code 5898.15; CA-PACE-07). The new annual assessment would be $9,005; CoStar gives no sale price for this market, so there is no market value to test it against, and the current tax bill and existing assessments are not known either. The test cannot be completed.",
-                "Existing mortgage holder: consent or acknowledgment is a programme and capital-provider requirement, not a California statutory condition (section 7.6).",
-                "Rate and term are illustrative market inputs, not defaults from a publication."
-              ]
-            }
-          ]
-        },
-        "flags": [],
-        "anchors": [
-          {
-            "room_id": "room_09",
-            "pano_id": "pano_01",
-            "x": 8.0,
-            "y": 20.0,
-            "z": 1.5,
-            "label": "Light fixtures to put on sensors"
-          }
-        ],
-        "evidence": [
-          {
-            "kind": "default_table",
-            "ref": "LGT-01",
-            "note": "control factor on f_light(h), applied as the equivalent lighting power density"
-          },
-          {
-            "kind": "default_table",
-            "ref": "DEF-09",
-            "note": "small-office lighting schedule"
-          }
-        ],
-        "formula_ids": [
-          "LGT-01",
-          "LGT-03",
-          "ZON-01",
-          "ZON-04",
-          "ENV-03",
-          "INF-01",
-          "HVAC-01",
-          "TAR-01",
-          "EMI-01",
-          "UNC-02",
-          "COST-01",
-          "COST-02",
-          "ECO-05",
-          "ECO-06",
-          "ECO-07",
-          "ECO-09",
-          "ECO-10",
-          "ECO-11",
-          "ECO-13",
-          "INC-40"
-        ],
-        "solar": null,
-        "layout": null,
-        "value_uplift": null,
-        "warnings": [
-          "Rests on an unsourced assumption (SPEC 6.2): lighting control saving fraction 0.2 (range 0.1 to 0.3 fraction).",
-          "The daylight part (physics 03 LCT-01, LCT-02) is not computed separately; it is inside the one control fraction.",
-          "useful life of 10 years is unverified (physics 04 COST-02)",
-          "may exceed budget"
-        ]
-      },
-      "cumulative_upfront_usd": 64736.0,
-      "remaining_budget_usd": 10264.0
     }
   ],
-  "financeable": [
-    {
-      "measure_id": "ENV_AIRSEAL",
-      "title": "Air sealing",
-      "applicable": true,
-      "not_applicable_reason": null,
-      "description": "Seal the suite's side of the exterior wall: window perimeters, spandrel joints and penetrations along the four exterior walls.",
-      "params": {
-        "leakage_after_l_s_m2_75pa": 5.0,
-        "floor_area_m2": 2312.0
-      },
-      "savings": {
-        "electricity_kwh": {
-          "low": -2477.73,
-          "expected": -2477.73,
-          "high": -457.16,
-          "unit": "kWh"
-        },
-        "gas_kwh": {
-          "low": -21635.04,
-          "expected": 20058.94,
-          "high": 20058.94,
-          "unit": "kWh"
-        },
-        "cost_usd": {
-          "low": -55.36,
-          "expected": 349.18,
-          "high": 349.18,
-          "unit": "USD"
-        },
-        "co2_kg": {
-          "low": -2792.88,
-          "expected": 3152.12,
-          "high": 3152.12,
-          "unit": "kg"
-        },
-        "co2_nonbaseload_kg": {
-          "low": -1451.35,
-          "expected": 2555.09,
-          "high": 2555.09,
-          "unit": "kg"
-        }
-      },
-      "finance": {
-        "installed_cost_usd": {
-          "low": 11166.96,
-          "expected": 17733.04,
-          "high": 39419.6,
-          "unit": "USD"
-        },
-        "cost_source": "LBNL-2021 Table 13 and section 10.2 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 7.67 USD per m2 of conditioned floor x 2312",
-        "incentives": [
-          {
-            "name": "Federal energy efficient commercial buildings deduction (26 U.S.C. 179D)",
-            "kind": "tax_deduction",
-            "amount_usd": {
-              "low": 0.0,
-              "expected": 0.0,
-              "high": 0.0,
-              "unit": "USD"
-            },
-            "status": "expired",
-            "eligibility": "not_eligible",
-            "conditions": [
-              "only if construction began on or before 2026-06-30"
-            ],
-            "citation": "physics 04 INC-03: section 179D(i), no deduction for property whose construction begins after 2026-06-30; Pub. L. 119-21 (139 Stat. 72), section 70507"
-          },
-          {
-            "name": "LADWP Business Offerings for Sustainable Solutions (BOSS)",
-            "kind": "rebate_after_install",
-            "amount_usd": {
-              "low": 0.0,
-              "expected": 0.0,
-              "high": 0.0,
-              "unit": "USD"
-            },
-            "status": "verified",
-            "eligibility": "needs_confirmation",
-            "conditions": [
-              "LADWP pre-installation verification and pre-approval before any installation",
-              "must exceed California Energy Code minimums",
-              "complete within 12 months of approval",
-              "envelope paid at the rate of the affected HVAC system, 0.30 to 0.65 USD/kWh; the top rate is the high"
-            ],
-            "citation": "physics 04 INC-18, https://www.ladwp.com/commercial-services/programs-and-rebates-commercial/business-offerings-sustainable-solutions-boss"
-          }
-        ],
-        "net_upfront_usd": {
-          "low": 11166.96,
-          "expected": 17733.04,
-          "high": 39419.6,
-          "unit": "USD"
-        },
-        "annual_savings_usd": {
-          "low": -55.36,
-          "expected": 349.18,
-          "high": 349.18,
-          "unit": "USD"
-        },
-        "annual_om_change_usd": 0.0,
-        "useful_life_years": 15,
-        "simple_payback_years": null,
-        "discounted_payback_years": null,
-        "npv_usd": {
-          "low": -35954.59,
-          "expected": -13792.79,
-          "high": -7226.71,
-          "unit": "USD"
-        },
-        "npv_sensitivity_usd": -14711.03,
-        "sir": 0.222,
-        "irr": null,
-        "airr": -0.0683,
-        "discount_rate": 0.03,
-        "electricity_escalation": -0.0116,
-        "gas_escalation": -0.0076,
-        "analysis_period_years": 15,
-        "financing": [
-          {
-            "kind": "cash",
-            "eligible": true,
-            "financed_usd": 0.0,
-            "rate": null,
-            "term_years": null,
-            "annual_payment_usd": 0.0,
-            "net_cashflow_year1_usd": {
-              "low": -55.36,
-              "expected": 349.18,
-              "high": 349.18,
-              "unit": "USD"
-            },
-            "program_sir": null,
-            "notes": [
-              "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
-            ]
-          },
-          {
-            "kind": "cpace",
-            "eligible": false,
-            "financed_usd": 17733.04,
-            "rate": 0.065,
-            "term_years": 15,
-            "annual_payment_usd": 1885.96,
-            "net_cashflow_year1_usd": {
-              "low": -1941.32,
-              "expected": -1536.78,
-              "high": -1536.78,
-              "unit": "USD"
-            },
-            "program_sir": 0.185,
-            "notes": [
-              "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
-              "Program SIR 0.19: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
-              "Savings-to-debt-service ratio 0.19.",
-              "Term of 15 years does not exceed the useful life of 15 years: a programme rule for a new commercial assessment in California, not a statutory condition (CA-PACE-11).",
-              "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
-              "Statutory test for commercial property: annual property taxes plus assessments, with this one, may not exceed 5 percent of market value at approval (Streets and Highways Code 5898.15; CA-PACE-07). The new annual assessment would be $1,886; CoStar gives no sale price for this market, so there is no market value to test it against, and the current tax bill and existing assessments are not known either. The test cannot be completed.",
-              "Existing mortgage holder: consent or acknowledgment is a programme and capital-provider requirement, not a California statutory condition (section 7.6).",
-              "Rate and term are illustrative market inputs, not defaults from a publication."
-            ]
-          }
-        ]
-      },
-      "flags": [],
-      "anchors": [
-        {
-          "room_id": "room_03",
-          "pano_id": "pano_05",
-          "x": 20.0,
-          "y": 0.2,
-          "z": 1.5,
-          "label": "South-west glazing"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "default_table",
-          "ref": "INF-05",
-          "note": "7.5 L/s.m2 at 75 Pa before 2004"
-        }
-      ],
-      "formula_ids": [
-        "INF-05",
-        "ZON-01",
-        "ZON-04",
-        "ENV-03",
-        "INF-01",
-        "HVAC-01",
-        "LGT-03",
-        "TAR-01",
-        "EMI-01",
-        "UNC-02",
-        "COST-01",
-        "COST-02",
-        "ECO-05",
-        "ECO-06",
-        "ECO-07",
-        "ECO-09",
-        "ECO-10",
-        "ECO-11",
-        "ECO-13",
-        "INC-40"
-      ],
-      "solar": null,
-      "layout": null,
-      "value_uplift": null,
-      "warnings": [
-        "Rests on the leakage after sealing, a parameter with no opened source (SPEC.md section 6.2).",
-        "The exterior wall belongs to the building: work on it needs the owner's agreement and the building engineer's access.",
-        "Needs the owner's consent: a tenant may do this measure only with the owner's agreement (SPEC.md section 6.2).",
-        "useful life of 15 years is unverified (physics 04 COST-02)",
-        "needs the owner's written consent"
-      ]
-    }
-  ],
+  "financeable": [],
   "skipped": [
-    {
-      "measure_id": "ENV_AIRSEAL",
-      "reason": "over_budget",
-      "detail": "Net upfront cost is above the budget left after the selected measures; listed as financeable."
-    },
     {
       "measure_id": "ENV_ATTIC",
       "reason": "role",
@@ -1261,6 +811,16 @@
       "detail": "No positive annual savings against the current state."
     },
     {
+      "measure_id": "ENV_AIRSEAL",
+      "reason": "no_savings",
+      "detail": "No positive annual savings against the current state."
+    },
+    {
+      "measure_id": "LGT_CTRL",
+      "reason": "not_cost_effective",
+      "detail": "SIR 0.66 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
+    },
+    {
       "measure_id": "LGT_LED",
       "reason": "already_done",
       "detail": "Already done: the lamps are already LED."
@@ -1282,46 +842,46 @@
     }
   ],
   "total_upfront_usd": {
-    "low": 48552.0,
-    "expected": 64736.0,
-    "high": 97104.0,
+    "low": 0.0,
+    "expected": 0.0,
+    "high": 0.0,
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 4596.31,
-    "expected": 5309.14,
-    "high": 5976.48,
+    "low": 0.0,
+    "expected": 360.85,
+    "high": 721.7,
     "unit": "USD"
   },
   "total_co2_kg": {
-    "low": 2703.47,
-    "expected": 2939.94,
-    "high": 3219.68,
+    "low": 0.0,
+    "expected": 234.44,
+    "high": 468.89,
     "unit": "kg"
   },
   "baseline_after": {
     "electricity_kwh": {
-      "low": 216695.86,
-      "expected": 276249.45,
-      "high": 314837.85,
+      "low": 274974.58,
+      "expected": 310562.77,
+      "high": 352275.09,
       "unit": "kWh"
     },
     "gas_kwh": {
-      "low": 30902.45,
-      "expected": 77668.89,
-      "high": 140271.97,
+      "low": 0.0,
+      "expected": 1528.7,
+      "high": 15987.26,
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 67168.69,
-      "expected": 87162.18,
-      "high": 101990.04,
+      "low": 78991.16,
+      "expected": 93314.24,
+      "high": 109010.03,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 54398.99,
-      "expected": 67955.12,
-      "high": 81215.32,
+      "low": 53907.27,
+      "expected": 60848.29,
+      "high": 68828.84,
       "unit": "kg"
     },
     "co2_nonbaseload_kg": null
@@ -1329,8 +889,8 @@
   "value_uplift": {
     "value_usd": {
       "low": 0.0,
-      "expected": 44242.83,
-      "high": 138987.91,
+      "expected": 3007.08,
+      "high": 16783.72,
       "unit": "USD"
     },
     "method": "VAL-01",

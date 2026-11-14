@@ -63,41 +63,65 @@
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Electricity priced at the EIA California state average, not a LADWP schedule",
+    "message": "No splat: use the Vexcel roof.",
     "payload": {
-      "layer": "tariff",
-      "from": "utility tariff",
-      "to": "EIA state average (CA COM, 2026-08)"
+      "fallback": "no_splat"
     }
   },
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Gas priced at the EIA California state average, not a SoCalGas schedule",
+    "message": "MatterPak locked: use the wall graph.",
     "payload": {
-      "layer": "tariff",
-      "from": "gas utility tariff",
-      "to": "EIA state average (CA COM, 2025)"
+      "fallback": "matterpak_locked"
     }
   },
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Aerial captures disagree on the roof extent; using the structure that matches the floor plate",
+    "message": "vexcel property/extract:extent (fallback): 1 other capture(s) outline what looks like the same building at 4,568 to 4,568 m2 against the chosen 2,566 m2 (up to 1.8x, largest from us-ca-losangeles-2023); the floor plate chose the smaller, which on a tower is the tower rather than the podium it stands on",
     "payload": {
+      "fallback": "provenance:vexcel",
       "layer": "vexcel",
-      "from": "4,568 m2 outline (us-ca-losangeles-2023)",
-      "to": "2,566.5 m2 structure (us-ca-losangeles-2025)"
+      "what": "property/extract:extent",
+      "status": "fallback",
+      "detail": "1 other capture(s) outline what looks like the same building at 4,568 to 4,568 m2 against the chosen 2,566 m2 (up to 1.8x, largest from us-ca-losangeles-2023); the floor plate chose the smaller, which on a tower is the tower rather than the podium it stands on"
     }
   },
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "No aerial splat for this model; using the Vexcel flat roof",
+    "message": "vexcel oblique west (error): HTTP 429 after three retries; three of four obliques cached",
     "payload": {
-      "layer": "matterport",
-      "from": "aerial splat",
-      "to": "Vexcel parametric roof"
+      "fallback": "provenance:vexcel",
+      "layer": "vexcel",
+      "what": "oblique west",
+      "status": "error",
+      "detail": "HTTP 429 after three retries; three of four obliques cached"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "tariff electricity price (EIA retail sales, CA COM) (fallback): EIA state average retail price, CA COM, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)",
+    "payload": {
+      "fallback": "provenance:tariff",
+      "layer": "tariff",
+      "what": "electricity price (EIA retail sales, CA COM)",
+      "status": "fallback",
+      "detail": "EIA state average retail price, CA COM, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "tariff eia/natural-gas-price (fallback): EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)",
+    "payload": {
+      "fallback": "provenance:tariff",
+      "layer": "tariff",
+      "what": "eia/natural-gas-price",
+      "status": "fallback",
+      "detail": "EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)"
     }
   },
   {
@@ -115,10 +139,10 @@
   {
     "type": "error",
     "stage": "S3",
-    "message": "Vexcel returned 429 for one oblique; continuing without it",
+    "message": "One panorama could not be decoded; continuing without it",
     "payload": {
-      "code": "vexcel_rate_limited",
-      "message": "HTTP 429",
+      "code": "vision_image_error",
+      "message": "image decode failed",
       "recoverable": true
     }
   },
@@ -137,42 +161,9 @@
   {
     "type": "fallback",
     "stage": "S4",
-    "message": "No openings in the wall graph; using window sizes read by vision",
+    "message": "No window openings in the wall graph: use window sizes read by vision.",
     "payload": {
-      "layer": "matterport",
-      "from": "measured window openings",
-      "to": "window count and size from vision, wider range"
-    }
-  },
-  {
-    "type": "question",
-    "stage": "S4",
-    "message": "One question before the model is final",
-    "payload": {
-      "question": {
-        "id": "q_rtu_age",
-        "assumption_key": "hvac.install_year",
-        "prompt": "When were the rooftop units installed or last replaced?",
-        "choices": [
-          {
-            "label": "Before 2006",
-            "value": 2000.0
-          },
-          {
-            "label": "2006 to 2014",
-            "value": 2010.0
-          },
-          {
-            "label": "In the 2024 renovation",
-            "value": 2024.0
-          },
-          {
-            "label": "I don't know",
-            "value": null
-          }
-        ],
-        "impact_note": "The panoramas suggest units from 2006 to 2014. Their age sets the efficiency the replacement is measured against, and newer units would make replacing them poor value."
-      }
+      "fallback": "no_window_openings"
     }
   },
   {
@@ -190,6 +181,26 @@
     "payload": {}
   },
   {
+    "type": "tool_call",
+    "stage": "S5",
+    "message": "physicist: run_baseline",
+    "payload": {
+      "agent": "physicist",
+      "tool": "run_baseline",
+      "args": {
+        "sid": "ZSPaQbkGcJJ"
+      }
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S5",
+    "message": "The site's own weather year is not on this machine (data/cache/ZSPaQbkGcJJ/weather/typical_year_hourly.csv), so the example year typical_year_hourly.csv was used instead. Every energy figure here is for that year, not for the site's; expect them to move when the site file is present.",
+    "payload": {
+      "fallback": "weather:example_year"
+    }
+  },
+  {
     "type": "partial_result",
     "stage": "S5",
     "message": "Baseline ready",
@@ -197,9 +208,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 72481.14,
-        "expected": 92471.32,
-        "high": 107283.35,
+        "low": 72178.1,
+        "expected": 92784.0,
+        "high": 107738.65,
         "unit": "USD"
       }
     }
@@ -268,6 +279,37 @@
       "tool": "cpace_scenario",
       "args": {
         "measure_id": "LGT_CTRL"
+      }
+    }
+  },
+  {
+    "type": "question",
+    "stage": "S7",
+    "message": "One question before the plan is final",
+    "payload": {
+      "question": {
+        "id": "q_rtu_age",
+        "assumption_key": "hvac.install_year",
+        "prompt": "When were the rooftop units installed or last replaced?",
+        "choices": [
+          {
+            "label": "Before 2006",
+            "value": 2000.0
+          },
+          {
+            "label": "2006 to 2014",
+            "value": 2010.0
+          },
+          {
+            "label": "In the 2024 renovation",
+            "value": 2024.0
+          },
+          {
+            "label": "I don't know",
+            "value": null
+          }
+        ],
+        "impact_note": "The panoramas suggest units from 2006 to 2014. Their age sets the efficiency the replacement is measured against, and newer units would make replacing them poor value."
       }
     }
   },

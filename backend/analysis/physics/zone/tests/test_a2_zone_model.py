@@ -117,8 +117,10 @@ def test_year_run_shapes_and_sanity(folder):
     z = r.zones[0]
     for k in HOURLY_KEYS:
         assert len(z.hourly[k]) == 8760
-    assert r.heating_need_kwh > 0 and r.cooling_need_kwh > 0
-    assert r.peak_heating_w > 0 and r.peak_cooling_w > 0
+    # a mid-floor Los Angeles suite (Culver Connect, floor 3 of 4, #330) under this test's constant
+    # gains needs no heating at all; the others do
+    assert r.cooling_need_kwh > 0 and r.peak_cooling_w > 0
+    assert (r.heating_need_kwh > 0 and r.peak_heating_w > 0) or folder == "office"
     assert sum(r.monthly_heating_kwh) == pytest.approx(r.heating_need_kwh)
     assert sum(r.monthly_cooling_kwh) == pytest.approx(r.cooling_need_kwh)
     assert set(z.hourly["mode"]) <= {"heating", "cooling", "off"}
@@ -306,8 +308,10 @@ def test_ground_method_and_capacity_options():
     floor = next(s for s in m.surfaces if s.boundary == "ground")
     assert b.zones[0].h_g_w_k == pytest.approx(floor.area_m2 * floor.u_value.expected)
     assert a.zones[0].h_g_w_k != pytest.approx(b.zones[0].h_g_w_k)
-    capped = run("house", options=ZoneOptions(use_cooling_capacity=True))
-    assert capped.peak_cooling_w <= m.systems.cooling_capacity_w + 1e-6
+    # #330: the registry gives the house no rated capacity, so the test sets one (the old example's)
+    rated = m.model_copy(update={"systems": m.systems.model_copy(update={"cooling_capacity_w": 10551.0})})
+    capped = run("house", rated, options=ZoneOptions(use_cooling_capacity=True))
+    assert capped.peak_cooling_w <= 10551.0 + 1e-6
 
 
 def test_deterministic():

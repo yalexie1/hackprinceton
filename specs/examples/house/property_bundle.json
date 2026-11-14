@@ -903,10 +903,10 @@
     "timezone": "America/Los_Angeles",
     "climate_zone": "3B",
     "weather_path": "data/cache/zvKHR9DHNjJ/weather/typical_year_hourly.csv",
-    "weather_source": "Open-Meteo archive API: hourly GHI, DNI, DHI, temperature, relative humidity and wind. The cached file is not part of this example.",
+    "weather_source": "Live runs read the TMYx typical-year file of the nearest representative station (climate.onebuilding.org, data-integration 5.1f), with the Open-Meteo archive as the fallback; the cached file is not part of this example. The example runs on the committed NOAA 2024 year of the same station (specs/examples/weather/README.md).",
     "weather_time_convention": "hour_end",
-    "pvgis_annual_kwh_per_kw": 1754.23,
-    "pvgis_sd_fraction": 0.02301
+    "pvgis_annual_kwh_per_kw": 1677.42,
+    "pvgis_sd_fraction": 0.02249
   },
   "tariff": {
     "utility": "LADWP (electricity), SoCalGas (gas)",
@@ -981,9 +981,9 @@
     },
     {
       "layer": "weather",
-      "what": "hourly weather (Open-Meteo archive) and the PVGIS annual cross-check",
+      "what": "hourly weather (TMYx station typical year) and the PVGIS annual cross-check",
       "status": "ok",
-      "detail": null
+      "detail": "PVGIS v5_3 PVcalc, building-mounted (mountingplace=building), 14 % loss, tilt 20, south, PVGIS-ERA5, fetched 2026-11-14: 1677.42 kWh per kWp a year, standard deviation 0.02249 of it. The station file is not in the example; it runs on the committed NOAA 2024 year"
     },
     {
       "layer": "place",

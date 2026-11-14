@@ -2,7 +2,7 @@
   "doc_id": "doc_office_houston_example_1",
   "doc_type": "cpace_package",
   "state": "TX",
-  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# C-PACE project summary\n\nProperty: 2100 West Loop S, Houston, TX 77027 (CoStar property id 234088), Suite 500. Application date: 2026-11-20. PACE region: City of Houston (the address is inside the city limits by the Census incorporated place; the CoStar mailing city is not used for this test).\n\nProperty owner: {{owner_legal_name}}. Legal description: {{property_legal_description}}.\n\nThis is the owner's energy assessment, not the independent third-party review.\n\n## 1. Qualified improvements\n\n- HVAC_RTU: replacement of the four rooftop units, useful life 21 years, net cost $68,910.\n- HVAC_ECON: economizer and advanced controls on the four units, useful life 15 years, net cost $24,176.\n\nCost-weighted useful life: 19.4 years.\n\n## 2. Financing terms\n\nRooftop units: $68,910 over 20 years at 6.5%, annual assessment $6,254. Economizer: $24,176 over 15 years, annual assessment $2,571. Capital provider: {{capital_provider_name}}.\n\n## 3. Savings test (program rule)\n\nProgram savings-to-investment ratio (undiscounted, over the term): 0.16 for the rooftop units and 0.10 for the economizer. The program requires at least 1.0, so neither passes as it stands. The independent third-party reviewer determines the official figure: {{third_party_reviewer_name}}.\n\nDiscounted life-cycle SIR (a different measure): 0.233 and 0.122.\n\n## 4. Lien and lender consent\n\nThe assessment is a first and prior lien with the priority of an ad valorem tax lien, and it runs with the land. Existing mortgage holder: {{mortgage_holder_name}}. Notice sent: {{notice_sent_date}}. Written consent: {{mortgage_holder_consent_date}}.\n",
+  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# C-PACE project summary\n\nProperty: 2100 West Loop S, Houston, TX 77027 (CoStar property id 234088), Suite 500. Application date: 2026-11-20. PACE region: City of Houston (the address is inside the city limits by the Census incorporated place; the CoStar mailing city is not used for this test).\n\nProperty owner: {{owner_legal_name}}. Legal description: {{property_legal_description}}.\n\nThis is the owner's energy assessment, not the independent third-party review.\n\n## 1. Qualified improvements\n\n- LGT_LED: replacement of the 112 fluorescent 2x4 troffers with LED luminaires, useful life 15 years, net cost $43,680. The audit's plan selects it and pays for it in cash; this package shows it financed instead.\n\n## 2. Financing terms\n\nLED retrofit: $43,680 over 15 years at 6.5%, annual assessment $4,645. Capital provider: {{capital_provider_name}}.\n\n## 3. Savings test (program rule)\n\nProgram savings-to-investment ratio (undiscounted, over the term): 0.85 for the LED retrofit. The program requires at least 1.0, so it does not pass as it stands. The independent third-party reviewer determines the official figure: {{third_party_reviewer_name}}.\n\nDiscounted life-cycle SIR (a different measure): 1.092.\n\n## 4. Lien and lender consent\n\nThe assessment is a first and prior lien with the priority of an ad valorem tax lien, and it runs with the land. Existing mortgage holder: {{mortgage_holder_name}}. Notice sent: {{notice_sent_date}}. Written consent: {{mortgage_holder_consent_date}}.\n",
   "unfilled_placeholders": [
     "owner_legal_name",
     "property_legal_description",
@@ -25,7 +25,7 @@
       "requirement": "Each financed measure is a qualified improvement",
       "citation": "Loc. Gov't Code section 399.002(3), (4)",
       "satisfied": true,
-      "note": "Rooftop units and their controls are permanent improvements fixed to the property. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "LED luminaires are permanent improvements fixed to the property. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     },
     {
       "requirement_id": "TX-PACE-04",
@@ -39,7 +39,7 @@
       "requirement": "Assessment period does not exceed the useful life of the qualified project",
       "citation": "Loc. Gov't Code section 399.009(a)(8)",
       "satisfied": true,
-      "note": "Terms 20 and 15 years against lives 21 and 15 years. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "Term 15 years against a life of 15 years. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     },
     {
       "requirement_id": "TX-PACE-15",
@@ -67,7 +67,7 @@
       "requirement": "SIR of at least 1 over the life of the assessment, validated by the reviewer",
       "citation": "Texas PACE Authority Program Guide v4.3, Steps 2, 7, 8",
       "satisfied": false,
-      "note": "The screen gives program SIRs of 0.16 and 0.19, below 1. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "The screen gives a program SIR of 0.85, below 1. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     }
   ],
   "disclaimer": "Draft for attorney review, not legal advice. Blanks are left where a party, legal description or date was not supplied."

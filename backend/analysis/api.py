@@ -455,17 +455,11 @@ def _register_plugins() -> None:
 @_with_state
 def evaluate_measure(bundle: PropertyBundle, model: BuildingModel, measure_id: MeasureId,
                      role: Role, desks_requested: int | None = None) -> MeasureResult:
-    """REAL (A16 engine) for every registered measure. One with no plug-in yet replays the
-    example's evaluation and says so; with no example either it is not applicable."""
-    result = engine.evaluate(bundle, model, measure_id, role, _simulate_baseline,
-                             desks_requested=desks_requested, simulate_formula_ids=_SIM_FORMULAS)
-    if engine.skip_reason(result) != "not_supported":
-        return result
-    stub = _measure(bundle.summary.sid, measure_id)
-    if stub is None:
-        return result
-    return stub.model_copy(update={"finance": None, "warnings": [
-        *stub.warnings, "A0 stub: this measure's package is not registered yet; the example's evaluation is shown"]})
+    """REAL (A16 engine) for every registered measure. A measure with no evaluator is not applicable
+    ("not_supported"): the example's evaluation is never shown in its place, because a card for another
+    building (a roof card on a 3rd-floor suite) is worse than none."""
+    return engine.evaluate(bundle, model, measure_id, role, _simulate_baseline,
+                           desks_requested=desks_requested, simulate_formula_ids=_SIM_FORMULAS)
 
 
 _SIM_FORMULAS = ("ZON-01", "ZON-04", "ENV-03", "INF-01", "HVAC-01", "LGT-03", "TAR-01", "EMI-01", "UNC-02")

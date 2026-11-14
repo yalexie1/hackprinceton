@@ -86,8 +86,11 @@ def test_only_a_finished_run_can_be_adjusted(tmp_path):
 
 def test_the_summary_text_is_kept_and_flagged_when_it_no_longer_matches(tmp_path):
     store, files, result = finished_run(tmp_path)
-    new, _ = replan(result, files, store, DOORS, budget_usd=500.0)
-    assert new.narrative_md == result.narrative_md
+    # a summary that states the budget of the plan it was written for (7,777); a later re-run changes the budget
+    first, _ = replan(result, files, store, DOORS, budget_usd=7777.0)
+    first = first.model_copy(update={"narrative_md": first.narrative_md + "\n\nThe budget for this plan is $7,777."})
+    new, _ = replan(first, files, store, DOORS, budget_usd=500.0)
+    assert new.narrative_md == first.narrative_md
     assert any(w.startswith("re-run:") and "not regenerated" in w for w in new.warnings)
     again, _ = replan(new, files, store, DOORS, budget_usd=400.0)
     assert sum(w.startswith("re-run:") for w in again.warnings) == 1       # not stacked

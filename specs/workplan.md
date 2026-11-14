@@ -798,7 +798,7 @@ Inputs: `specs/SPEC.md` sha256 f9c980a9f0cf, `specs/data-integration.md` sha256 
 
 | # | Check | Items | Result |
 |---|---|---|---|
-| 1 | Contract block of SPEC 9 loads under Pydantic 2 and every model builds a JSON schema (SCHEMA_VERSION 0.3.1: 55 models, 6 literal aliases) | 61 | pass |
+| 1 | Contract block of SPEC 9 loads under Pydantic 2 and every model builds a JSON schema (SCHEMA_VERSION 0.3.2: 55 models, 6 literal aliases) | 61 | pass |
 | 2 | Package ids are unique | 89 | pass |
 | 3 | Every work package has all nine columns filled, a valid id and tier, and sits in its own lane's table (87 packages; the 2 owner tasks have their four columns filled) | 89 | pass |
 | 4 | No path is owned by two owners: no path is listed under two lanes in 1.1, and every package's bound path resolves, by the most specific path of 1.1, to its own lane's owner (18 lane paths, 113 bound paths, 94 distinct) | 113 | pass |

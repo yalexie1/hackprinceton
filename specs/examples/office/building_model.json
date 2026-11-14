@@ -1,0 +1,596 @@
+{
+  "schema_version": "0.2.0",
+  "sid": "HjEyXryhRLk",
+  "north_offset_deg": {
+    "low": 87.28,
+    "expected": 88.28,
+    "high": 89.28,
+    "unit": "deg"
+  },
+  "north_source": "georeference",
+  "zones": [
+    {
+      "id": "zone_suite",
+      "room_ids": [
+        "room_open_office",
+        "room_conference",
+        "room_private_office",
+        "room_reception",
+        "room_break"
+      ],
+      "use": "office",
+      "floor_area_m2": 186.0,
+      "volume_m3": 509.64,
+      "conditioned": true
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "surf_wall_e",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 27.1,
+      "azimuth_deg": 91.7,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 0.5,
+        "expected": 0.7,
+        "high": 1.0,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "parent_surface_id": null
+    },
+    {
+      "id": "surf_wall_n",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 24.98,
+      "azimuth_deg": 1.7,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 0.5,
+        "expected": 0.7,
+        "high": 1.0,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "parent_surface_id": null
+    },
+    {
+      "id": "surf_wall_w",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "adjacent_conditioned",
+      "area_m2": 39.1,
+      "azimuth_deg": 271.7,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.5,
+        "expected": 2.0,
+        "high": 2.5,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "parent_surface_id": null
+    },
+    {
+      "id": "surf_wall_s",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "adjacent_conditioned",
+      "area_m2": 33.98,
+      "azimuth_deg": 181.7,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.5,
+        "expected": 2.0,
+        "high": 2.5,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "parent_surface_id": null
+    },
+    {
+      "id": "surf_roof",
+      "zone_id": "zone_suite",
+      "kind": "roof",
+      "boundary": "exterior",
+      "area_m2": 186.0,
+      "azimuth_deg": null,
+      "tilt_deg": 0.0,
+      "u_value": {
+        "low": 0.3,
+        "expected": 0.45,
+        "high": 0.7,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "parent_surface_id": null
+    },
+    {
+      "id": "surf_floor",
+      "zone_id": "zone_suite",
+      "kind": "floor",
+      "boundary": "ground",
+      "area_m2": 186.0,
+      "azimuth_deg": null,
+      "tilt_deg": 180.0,
+      "u_value": {
+        "low": 0.3,
+        "expected": 0.5,
+        "high": 0.8,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "parent_surface_id": null
+    },
+    {
+      "id": "surf_win_e",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 14.0,
+      "azimuth_deg": 91.7,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 2.6,
+        "expected": 3.1,
+        "high": 3.6,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.35,
+        "expected": 0.45,
+        "high": 0.55,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e"
+    },
+    {
+      "id": "surf_win_n",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 9.0,
+      "azimuth_deg": 1.7,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 2.6,
+        "expected": 3.1,
+        "high": 3.6,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.35,
+        "expected": 0.45,
+        "high": 0.55,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_n"
+    },
+    {
+      "id": "surf_door_w",
+      "zone_id": "zone_suite",
+      "kind": "door",
+      "boundary": "adjacent_conditioned",
+      "area_m2": 2.0,
+      "azimuth_deg": 271.7,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 2.0,
+        "expected": 2.5,
+        "high": 3.0,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "parent_surface_id": "surf_wall_w"
+    }
+  ],
+  "systems": {
+    "hvac_type": "packaged_unit",
+    "heating_fuel": "gas",
+    "cooling_cop": {
+      "low": 2.4,
+      "expected": 2.9,
+      "high": 3.3,
+      "unit": "W/W"
+    },
+    "heating_efficiency": {
+      "low": 0.74,
+      "expected": 0.78,
+      "high": 0.8,
+      "unit": "-"
+    },
+    "dhw_type": "electric_point_of_use",
+    "dhw_fuel": "electricity",
+    "dhw_efficiency": {
+      "low": 0.9,
+      "expected": 0.95,
+      "high": 0.98,
+      "unit": "-"
+    },
+    "lighting_w_per_m2": {
+      "low": 10.5,
+      "expected": 12.0,
+      "high": 13.5,
+      "unit": "W/m2"
+    },
+    "plug_w_per_m2": {
+      "low": 6.0,
+      "expected": 9.0,
+      "high": 13.0,
+      "unit": "W/m2"
+    },
+    "infiltration_ach": {
+      "low": 0.3,
+      "expected": 0.5,
+      "high": 0.9,
+      "unit": "1/h"
+    },
+    "occupancy_schedule": "office_weekday",
+    "occupants": {
+      "low": 10.0,
+      "expected": 12.0,
+      "high": 14.0,
+      "unit": "people"
+    }
+  },
+  "roof_planes": [
+    {
+      "id": "plane_east",
+      "polygon_wkt": "POLYGON((-95.5153916 29.8157973, -95.5153759 29.8162538, -95.5155001 29.8162571, -95.5155158 29.8158005, -95.5153916 29.8157973))",
+      "area_m2": 640.7,
+      "tilt_deg": {
+        "low": 9.5,
+        "expected": 18.4,
+        "high": 26.6,
+        "unit": "deg"
+      },
+      "azimuth_deg": 91.7,
+      "usable_area_m2": 420.0,
+      "obstructions": [],
+      "geometry_source": "vexcel_parametric"
+    },
+    {
+      "id": "plane_west",
+      "polygon_wkt": "POLYGON((-95.5155158 29.8158005, -95.5155001 29.8162571, -95.5156243 29.8162603, -95.5156400 29.8158038, -95.5155158 29.8158005))",
+      "area_m2": 640.7,
+      "tilt_deg": {
+        "low": 9.5,
+        "expected": 18.4,
+        "high": 26.6,
+        "unit": "deg"
+      },
+      "azimuth_deg": 271.7,
+      "usable_area_m2": 430.0,
+      "obstructions": [],
+      "geometry_source": "vexcel_parametric"
+    }
+  ],
+  "assumptions": [
+    {
+      "key": "lighting.lamp_type",
+      "label": "Lamp type in the ceiling troffers",
+      "value": "fluorescent",
+      "source": "user",
+      "confidence": 1.0,
+      "evidence": [
+        {
+          "kind": "user",
+          "ref": "q_lamp_type",
+          "note": "answer to the run's question"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "geometry.ceiling_height_m",
+      "label": "Ceiling height",
+      "value": {
+        "low": 2.74,
+        "expected": 2.74,
+        "high": 2.74,
+        "unit": "m"
+      },
+      "source": "measured",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "kind": "matterport_field",
+          "ref": "rooms.dimensions.height"
+        }
+      ],
+      "user_editable": false
+    },
+    {
+      "key": "geometry.north_offset_deg",
+      "label": "Rotation from model +y to true north",
+      "value": {
+        "low": 87.28,
+        "expected": 88.28,
+        "high": 89.28,
+        "unit": "deg"
+      },
+      "source": "measured",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "matterport_field",
+          "ref": "geocoordinates.rotation",
+          "note": "rotation about z from the quaternion; the sign convention is an assumption of this example"
+        }
+      ],
+      "user_editable": false
+    },
+    {
+      "key": "window.area_m2",
+      "label": "Total window area",
+      "value": {
+        "low": 23.0,
+        "expected": 23.0,
+        "high": 23.0,
+        "unit": "m2"
+      },
+      "source": "measured",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "matterport_field",
+          "ref": "floors.edges.openings",
+          "note": "eight openings of type window: width times height"
+        }
+      ],
+      "user_editable": false
+    },
+    {
+      "key": "building.year_built",
+      "label": "Year built",
+      "value": {
+        "low": 1984.0,
+        "expected": 1984.0,
+        "high": 1984.0,
+        "unit": "year"
+      },
+      "source": "costar",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "costar_field",
+          "ref": "CostarData.year_built",
+          "note": "from the ConstructionComplete event; normalised field; kit field names are in the kit's models/ folder"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "building.class",
+      "label": "Building class",
+      "value": "B",
+      "source": "costar",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "costar_field",
+          "ref": "CostarData.building_class",
+          "note": "normalised field; kit field names are in the kit's models/ folder"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "occupancy.occupants",
+      "label": "People working in the suite",
+      "value": {
+        "low": 10.0,
+        "expected": 12.0,
+        "high": 14.0,
+        "unit": "people"
+      },
+      "source": "costar",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "kind": "costar_field",
+          "ref": "CostarData.occupancy.tenancies",
+          "note": "employee count of the suite's current tenant"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "roof.shape",
+      "label": "Roof shape",
+      "value": "gable",
+      "source": "vexcel",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-characteristics.shape.value"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "roof.existing_solar",
+      "label": "Solar panels already on the roof",
+      "value": false,
+      "source": "vexcel",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.solar.value"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "hvac.system_type",
+      "label": "HVAC system type",
+      "value": "packaged_unit",
+      "source": "vision",
+      "confidence": 0.6,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "ceiling supply diffusers and return grille"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_03",
+          "note": "wall thermostat"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "window.glazing",
+      "label": "Window glazing",
+      "value": "double_pane_tinted",
+      "source": "vision",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_02",
+          "note": "double reflection, bronze tint"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "lighting.w_per_m2",
+      "label": "Lighting power density",
+      "value": {
+        "low": 10.5,
+        "expected": 12.0,
+        "high": 13.5,
+        "unit": "W/m2"
+      },
+      "source": "vision",
+      "confidence": 0.75,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "2x4 troffers on a regular grid"
+        },
+        {
+          "kind": "user",
+          "ref": "q_lamp_type",
+          "note": "range narrowed by the answer"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "hvac.cooling_cop",
+      "label": "Cooling efficiency (COP)",
+      "value": {
+        "low": 2.4,
+        "expected": 2.9,
+        "high": 3.3,
+        "unit": "W/W"
+      },
+      "source": "vintage_default",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF (vintage default table; table ids pending in specs/physics/)"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "wall.u_value",
+      "label": "Exterior wall U-value",
+      "value": {
+        "low": 0.5,
+        "expected": 0.7,
+        "high": 1.0,
+        "unit": "W/m2K"
+      },
+      "source": "vintage_default",
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF (vintage default table; table ids pending in specs/physics/)"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "roof.u_value",
+      "label": "Roof U-value",
+      "value": {
+        "low": 0.3,
+        "expected": 0.45,
+        "high": 0.7,
+        "unit": "W/m2K"
+      },
+      "source": "vintage_default",
+      "confidence": 0.45,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF (vintage default table; table ids pending in specs/physics/)"
+        }
+      ],
+      "user_editable": true
+    }
+  ],
+  "flags": [
+    {
+      "key": "electrical.service",
+      "status": "likely_ok",
+      "message": "Three-prong and GFCI outlets throughout; a commercial panel is visible from reception.",
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_03"
+        }
+      ]
+    },
+    {
+      "key": "hvac.unit_location",
+      "status": "unknown",
+      "message": "Ceiling diffusers and a wall thermostat show a ducted packaged system, but Vexcel reports no rooftop AC unit on this building. The unit serving the suite was not located; it may be ground-mounted. Confirm on site.",
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "ceiling supply diffusers and return grille"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_03",
+          "note": "wall thermostat"
+        },
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.ac-unit.count",
+          "note": "0 as returned"
+        }
+      ]
+    },
+    {
+      "key": "hvac.economizer",
+      "status": "blocked",
+      "message": "The unit serving the suite has not been located (flag hvac.unit_location), so an economizer cannot be specified.",
+      "evidence": [
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.ac-unit.count",
+          "note": "0 as returned"
+        }
+      ]
+    }
+  ]
+}

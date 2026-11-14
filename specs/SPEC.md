@@ -1,6 +1,8 @@
 # Master spec
 
-Status: draft v0.1, 2026-11-13. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.2, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+
+v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
 Companion files:
 
@@ -8,8 +10,9 @@ Companion files:
 |---|---|---|
 | `specs/workplan.md` | Who builds what, work packages, rules for parallel work | everyone, first |
 | `specs/data-integration.md` | CoStar, Matterport, Vexcel and external data | Data lane |
-| `specs/physics.md` | Every formula, with sources | Analysis lane |
-| `specs/legal.md` | Contract templates and statutory terms | Agent lane |
+| `specs/physics.md` | Index of the physics spec: `specs/physics/01-solar-pv.md`, `02-thermal-systems.md`, `03-daylight-comfort.md`, `04-economics-emissions-mv.md`. Every formula, with sources | Analysis lane |
+| `specs/legal/california.md`, `specs/legal/texas.md` | What each state's law requires in each document, with citations | Agent lane |
+| `specs/legal.md` | Document templates, clause library and the placeholder table. Owner: @Sri-SriPod (handed over on the board, 2026-11-14) | Agent lane |
 | `specs/examples/` | Example payloads for every contract type | everyone |
 
 Verification tags used in all spec files:
@@ -48,11 +51,12 @@ CoStar judging weights [V]: use of the data 30, agentic depth 30, customer usefu
 ## 3. Constraints from the data
 
 1. **No scan upload.** The keys reach 14,944 existing Matterport models in the Houston and Los Angeles areas. "Input the scan" means search by address or name and pick a model. [V]
-2. **What "commercial" means here.** The index marks 13,014 models commercial and 1,930 residential, but most commercial models are apartment units. Models that carry a numeric CoStar property id number 6,191; LoopNet suites (offices and shops) are about 210. The office flow finds its candidates by CoStar property type, not by the index segment. [V] counts from `models_index.csv`; property-type field [P] Data lane.
-3. **A scan has geometry, not thermal properties.** It gives room polygons, room type, area, width, depth, height, a wall graph with wall thickness, panoramas, and floor plans. It does not give U-values, insulation, window type, HVAC equipment or electrical service size. Those are inferred, section 5.
+2. **What "commercial" means here.** The index marks 13,014 models commercial and 1,930 residential, but most commercial models are apartment units. Models that carry a numeric CoStar property id number 6,191; LoopNet suites (offices and shops) are about 210. The office flow finds its candidates by CoStar property type (`propertyType` 5, Office), not by the index segment. [V] counts from `models_index.csv`; [V] 2026-11-14 property-type enum from the kit's `schemas/enums.json`.
+3. **A scan has geometry, not thermal properties.** It gives room polygons, room type, area, width, depth, height, a wall graph with wall thickness, the openings in each wall (type, width, height, sill elevation, position along the wall), a georeference (latitude, longitude and the rotation of the model frame to true north), panoramas, and floor plans. So the size, position and orientation of windows and doors are data. It does not give U-values, insulation, glazing performance (U-value, solar heat gain), HVAC equipment or electrical service size. Those are inferred, section 5. Doors and windows are never wall-edge types (`EdgeType` is only `wall` or `invisible`); they are openings on an edge, typed `divider`, `doorway`, `opening` or `window`. [V] 2026-11-14 for the opening and georeference fields and both enums, live and by schema introspection; the live check returned doorway openings, so whether window openings are populated on a given model is [P] Data lane.
 4. **Exterior 3D exists for few models.** 232 models have an aerial Gaussian splat and drone photos (211 residential, 21 commercial). For the rest, the exterior comes from Vexcel footprints, roof attributes and obliques. [V]
 5. **Unit versus building.** An apartment unit or office suite is part of a larger building. Roof and envelope measures belong to the building owner. The run request carries the user's role, and measures are filtered by it, section 6.2.
 6. **Coverage.** Vexcel keys work only in Houston and Los Angeles. All sponsor data is licensed for the hackathon only and must not be committed. [V]
+7. **The CoStar kit joins to models directly.** The kit is a 49 MB zip with two starter CSVs, eight JSONL datasets, and field documentation (`schemas/`, `models/`, `concepts/`). `commercial-properties.csv` (`PropertyId`, `MatterportModelId`) and `residential-listings.csv` (`ListingId`, `ResidentialListingId`, `MatterportModelId`) map each record to its Matterport model, so the join does not go through `models_index.csv`. The Model API has no geographic search, so property search runs on these CSVs. Besides property and listing records, the kit holds tenancies, tenant companies with employee counts, sale comparables and apartment asking rents, which feed occupancy (section 5.1) and value uplift (section 6.6). [V] 2026-11-14, `data-integration.md` section 2.
 
 ## 4. User flow
 
@@ -73,25 +77,31 @@ Every input the physics needs that is not measured is an `Assumption`: a key, a 
 | Source | Meaning |
 |---|---|
 | `user` | the user stated it |
-| `measured` | read directly from scan geometry (areas, heights, wall thickness) |
-| `costar` | from the CoStar record (year built, building class, size) |
+| `measured` | read directly from the scan (areas, heights, wall thickness, opening sizes and positions, orientation from the georeference) |
+| `costar` | from the CoStar record (year built, building class, gross building area, tenancies and tenant employee counts) |
 | `vexcel` | from Vexcel attributes (roof material, shape, condition, footprint, tree cover) |
 | `vision` | a model read it from panoramas or aerial imagery |
 | `vintage_default` | lookup by construction era, climate zone and building type |
 
 A stronger source replaces a weaker one for the same key. Vintage default tables and their sources are defined in `physics.md`.
 
+What is data and what is an assumption:
+
+- **Windows.** Area, position and orientation come from the scan's wall openings and georeference (`measured`). Only glazing performance, meaning U-value and solar heat gain coefficient, is an assumption. Where a model's wall graph has no window openings, vision supplies count and size (`vision`) and the range widens.
+- **Office occupancy.** Where CoStar has tenancy records, the number of occupants, their industry and the tenancy period are data (`costar`) and drive plug loads, lighting schedules and ventilation. Homes, and offices with no tenant record, use the vintage defaults.
+- **Year built and area.** CoStar has no single year-built field. Years are in `constructionEvents[]`; the model uses the construction-complete event and records which event it used. The envelope uses gross building area, never rentable area.
+
 ### 5.2 What vision reads
 
 | Target | Imagery | Output |
 |---|---|---|
-| Windows: count, size, frame, single or double pane cues, shading | panoramas | window surfaces per wall, glazing assumption |
+| Windows: frame, single or double pane cues, shading; count and size only as a cross-check on the measured openings, or where a model has none | panoramas | glazing assumption; window surfaces only as the fallback |
 | HVAC: wall units, registers, thermostat type, rooftop units | panoramas, ortho | system type and age band |
 | Water heater: tank or tankless, fuel cues | panoramas | type |
 | Lighting: fixture type and density | panoramas | lighting power density range |
 | Wall material: drywall, plaster, masonry, panelling | panoramas | construction era cue, routing difficulty |
 | Outlets: two-prong, three-prong, GFCI; main panel if visible | panoramas | wiring-age cue, service flag |
-| Roof: planes, obstructions, existing solar, trees | Vexcel ortho and obliques via SAM 3 | roof polygons |
+| Roof: roof outline and usable area, trees | Vexcel ortho and obliques via SAM 3, label `roof` | roof masks. Obstruction counts and existing solar come from Vexcel's precomputed `roof-objects` and `solar` attributes, not from SAM 3 |
 
 Outlet type and wall material are cues, not proof. They move an assumption's range and confidence; they never set a hard fact. The items that decide solar installation are service panel capacity and roof structure, so those are reported as `likely_ok`, `likely_upgrade`, or `unknown`.
 
@@ -155,14 +165,17 @@ A measure is skipped with a stated reason when the role cannot do it, when the m
 
 ### 6.3 Solar pipeline
 
-1. **Locate the lot.** Matterport lat/lon, then Vexcel `property/extract` for the parcel polygon and structure footprints, then the CoStar record for the same property.
+1. **Locate the lot.** Latitude and longitude from the Matterport georeference, then Vexcel `property/extract` for the parcel polygon and structure footprints, then the CoStar record joined on the Matterport model id.
 2. **Exterior geometry**, best available source first:
    1. aerial splat plus drone photos (232 models): sample the splat, fit roof planes;
-   2. Vexcel footprint, roof shape class and calculated roof height: build a parametric roof (flat, gable, hip) with a pitch range by shape;
+   2. Vexcel footprint and roof shape class: build a parametric roof (flat, gable, hip) whose pitch is a range looked up by shape (`physics.md`). Vexcel's calculated roof height is not used to derive pitch: on the golden house it read below grade and changed between calls, so it is a hint that must pass a sanity check (`data-integration.md` section 4.3). This is the P0 path;
    3. footprint with a flat or assumed-pitch roof, widest range.
-   The geometry is registered to true north (`data-integration.md` section 6).
-3. **Roof understanding with SAM 3.** Vexcel `elements/detect` runs SAM 3 on the ortho and available obliques. Labels: roof plane, vent, chimney, skylight, rooftop HVAC unit, solar panel, tree. Masks come back as map-coordinate polygons. Usable area is each plane minus obstructions minus fire-code setbacks (setback values: `physics.md` or `legal.md`, cited). [V] endpoint and model name from the Vexcel tutorial, 2026-11-13; label quality on roofs [P] Analysis lane.
-4. **Tilt, azimuth, shading.** Per plane from the geometry. Shading is computed hour by hour by casting rays from panel points toward the sun against the exterior geometry and tree masks.
+   The interior model is rotated to true north with the Matterport georeference (`data-integration.md` section 3.2); matching the floor outline to the Vexcel footprint is a cross-check, and the fallback when the georeference is missing. The aerial splat is in its own local frame and is registered to the footprint.
+3. **Roof understanding.** Two sources, each used for what it measured well on the golden house (`data-integration.md` section 4.4):
+   - **Obstructions and existing solar: Vexcel precomputed attributes first.** `roof-objects` counts (chimney, skylight, roof vent, AC unit) and `solar` are the primary source. SAM 3 missed the house's chimney, reported two skylights that are not there, and found one of five vents.
+   - **Roof extent and usable area: SAM 3** through Vexcel `elements/detect` on the ortho and the newest obliques, label `roof` at a detection threshold near 0.3, keeping each detection's confidence. The label `roof plane` returns nothing, and the default threshold of 0.5 discards most real detections (confidences ran 0.31 to 0.70). SAM 3 returns roof fragments, not clean planes (13 on one small house), so the masks give area and tree overhang, not plane geometry. Each detection comes back as a map-coordinate bounding polygon plus a pixel mask (a PNG cropped to its pixel box); the Analysis lane turns masks into map polygons.
+   Usable area is the roof area minus an allowance per counted obstruction minus fire-code setbacks (setback values: `physics.md` or `legal.md`, cited). [V] 2026-11-14 request shape, labels and thresholds, live on the golden house; [P] the office lot.
+4. **Tilt, azimuth, shading.** Per plane from the geometry: fitted planes where a splat exists; otherwise the parametric roof, with azimuth from the footprint's ridge direction and tilt as the pitch range for the roof shape. Shading is computed hour by hour by casting rays from panel points toward the sun against the exterior geometry and tree masks.
 5. **Weather and production.** Typical-year irradiance and temperature for the site, then the PV model in `physics.md`.
 6. **Layout.** Fill planes in order of annual yield per panel. Stop at the first of: roof area exhausted, budget reached, or annual production reaching the site's annual consumption.
 7. **Indoor feasibility.** From section 5.2: outlet type and visible panel become an electrical flag with an added cost range for a likely service upgrade; wall material informs conduit routing cost. A flag of `unknown` raises a question under section 5.3 if it changes the plan.
@@ -221,6 +234,8 @@ Every recommended and financeable measure shows all of:
 | CO2 avoided per year | |
 | Financing scenarios | cash always; C-PACE for commercial properties |
 
+The plan as a whole also shows a **value uplift** where CoStar market data exists for the property: the estimated change in property value from the plan's annual savings, capitalised at a rate taken from comparable sales, as a low/expected/high range with the number of comparables used. It is reported beside the plan totals and is never added to savings or used in the ranking. Method and limits: `physics.md`, value module.
+
 C-PACE scenario fields: financed amount, rate, term (not longer than useful life), annual assessment, first-year net cash flow, eligibility notes, and plain statements that the assessment is a lien that runs with the property and that an existing mortgage holder's consent is normally required. Statutory conditions are in `legal.md`.
 
 Federal incentive status to confirm before use, from secondary sources read 2026-11-13 [U]: the residential credits under sections 25C and 25D ended for 2025; the section 179D commercial deduction ends for construction beginning after June 30, 2026; the section 48E credit for solar is cut off for facilities that begin construction after July 4, 2026 unless placed in service by the end of 2027. Until the finance package confirms these against primary sources, the registry marks federal incentives `unverified` and the plan is computed without them.
@@ -266,7 +281,7 @@ Rules:
 2. **Planning is visible.** The orchestrator keeps a todo list that is streamed to the frontend.
 3. **Asking the user** is a tool (`ask_user`) that pauses the run and resumes with the answer. It is called only under section 5.3.
 4. **Approval before drafting.** `fill_template` requires user approval of the parties and the measure list.
-5. **Fallbacks are the agent's decisions**, and are logged: no splat, use the Vexcel roof; MatterPak locked, use the wall graph; no CoStar record, use the Vexcel building type and a wider vintage range.
+5. **Fallbacks are the agent's decisions**, and are logged: no splat, use the Vexcel roof; MatterPak locked, use the wall graph; no CoStar record, use the Vexcel building type and a wider vintage range; no georeference, register the floor outline to the Vexcel footprint; no window openings in the wall graph, use window sizes read by vision.
 6. **Run artifacts** are written to the agent's file system under `/run/`: `bundle.json`, `model.json`, `baseline.json`, `measures.json`, `plan.json`, `report.md`.
 
 Build notes, each to confirm against the installed versions [P] Agent lane:
@@ -285,9 +300,9 @@ This block is the source for `backend/schema.py` (Pydantic v2). Version it with 
 ```python
 from __future__ import annotations
 from typing import Literal, Optional, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.2.0"
 
 # ---------- primitives ----------
 
@@ -297,6 +312,12 @@ class Ranged(BaseModel):
     expected: float
     high: float
     unit: str
+
+    @model_validator(mode="after")
+    def _ordered(self) -> "Ranged":
+        if not (self.low <= self.expected <= self.high):
+            raise ValueError("Ranged requires low <= expected <= high")
+        return self
 
 Source = Literal["user", "measured", "costar", "vexcel", "vision", "vintage_default"]
 
@@ -337,8 +358,9 @@ class PropertySummary(BaseModel):
     state: Optional[Literal["CA", "TX"]] = None
     lat: Optional[float] = None
     lon: Optional[float] = None
-    costar_property_id: Optional[str] = None
-    homes_listing_id: Optional[str] = None
+    costar_property_id: Optional[str] = None             # kit PropertyId (commercial)
+    costar_listing_id: Optional[str] = None              # kit ListingId (residential)
+    costar_residential_listing_id: Optional[str] = None  # groups the listings of one sale or rental
     has_splat: bool = False
     has_defurnished: bool = False
     pano_count: int = 0
@@ -350,11 +372,22 @@ class Vertex(BaseModel):
     x: float                      # metres, model frame
     y: float
 
+class Opening(BaseModel):
+    """A door or window in a wall edge, as measured by the scan."""
+    id: str
+    type: str                     # OpeningType: "divider", "doorway", "opening", "window"
+    label: Optional[str] = None
+    width_m: Optional[float] = None
+    height_m: Optional[float] = None
+    lower_elevation_m: Optional[float] = None   # bottom of the opening above the floor (sill height)
+    relative_center: Optional[float] = None     # position along the edge, as returned; origin and units [P] Data lane
+
 class WallEdge(BaseModel):
     id: str
-    type: str                     # as returned by the Model API
+    type: str                     # EdgeType: "wall" or "invisible"; doors and windows are openings
     thickness_m: Optional[float] = None
     vertex_ids: tuple[str, str]
+    openings: list[Opening] = []
 
 class Floor(BaseModel):
     id: str
@@ -390,7 +423,23 @@ class FloorplanAsset(BaseModel):
     origin_x: Optional[float] = None
     origin_y: Optional[float] = None
 
+class Quaternion(BaseModel):
+    x: float
+    y: float
+    z: float
+    w: float
+
+class GeoReference(BaseModel):
+    """Model.geocoordinates from the Model API. Places and rotates the model frame on the earth."""
+    latitude: float
+    longitude: float
+    altitude_m: Optional[float] = None
+    rotation: Quaternion                        # as returned; about z for a level model
+    translation: Optional[tuple[float, float, float]] = None
+    source: Optional[str] = None                # GeoCoordinateSource: "client", "processing", "unknown"
+
 class MatterportData(BaseModel):
+    georeference: Optional[GeoReference] = None
     floors: list[Floor]
     rooms: list[Room]
     panos: list[Pano]
@@ -414,9 +463,11 @@ class VexcelStructure(BaseModel):
 class VexcelDetection(BaseModel):
     label: str
     confidence: float
-    image_id: str
-    bbox_wkt: str
-    mask_wkt: Optional[str] = None
+    image_id: str                               # e.g. "ortho-1", "oriented-1"
+    bbox_wkt: str                               # map-coordinate polygon, as returned
+    pixel_bbox: Optional[tuple[int, int, int, int]] = None   # x, y, w, h in the image
+    mask_png_path: Optional[str] = None         # cached pixel mask, cropped to pixel_bbox
+    mask_wkt: Optional[str] = None              # map polygon derived from the pixel mask
 
 class VexcelData(BaseModel):
     collection: Optional[str] = None
@@ -427,18 +478,50 @@ class VexcelData(BaseModel):
     oblique_paths: dict[str, str] = {}        # direction -> path
     detections: list[VexcelDetection] = []
 
+class Tenancy(BaseModel):
+    """One tenant in the building, from location-occupancy joined to company-detail."""
+    tenant_name: Optional[str] = None
+    industry: Optional[str] = None
+    employees: Optional[int] = None
+    area_m2: Optional[float] = None
+    floor: Optional[str] = None
+    move_in: Optional[str] = None              # ISO date
+    move_out: Optional[str] = None             # ISO date; None = still in place
+
+class OccupancyData(BaseModel):
+    tenancies: list[Tenancy] = []
+    employees_total: Optional[int] = None
+    occupied_area_m2: Optional[float] = None
+
+class MarketData(BaseModel):
+    """Inputs to value uplift, from commercial-sale-comp and apartment-listing."""
+    cap_rate: Optional[Ranged] = None                     # fraction per year, from comparable sales
+    sale_price_usd_per_m2: Optional[Ranged] = None
+    asking_rent_usd_per_m2_year: Optional[Ranged] = None
+    comp_count: int = 0
+
 class CostarData(BaseModel):
     kind: Literal["residential_listing", "commercial_property"]
-    record_id: str
+    # join keys from the kit's starter CSVs; the join is on matterport_model_id
+    matterport_model_id: str
+    property_id: Optional[str] = None          # PropertyId, commercial
+    listing_id: Optional[str] = None           # ListingId, residential
+    residential_listing_id: Optional[str] = None
+    record_id: str                             # `id` of the JSONL record
     raw: dict                                  # the record as found in the kit
-    # normalised fields, all optional until the kit columns are confirmed
-    property_type: Optional[str] = None
-    year_built: Optional[int] = None
+    # normalised fields; names in the kit's models/ and schemas/ are authoritative
+    property_type: Optional[str] = None        # enum name, e.g. "Office"
+    property_type_code: Optional[int] = None   # propertyType enum value; Office = 5
+    year_built: Optional[int] = None           # from constructionEvents[], ConstructionComplete preferred
+    year_built_event: Optional[str] = None     # which construction event year_built came from
     year_renovated: Optional[int] = None
-    building_class: Optional[str] = None
-    building_area_m2: Optional[float] = None
+    building_class: Optional[str] = None       # "A", "B", "C", "F"
+    building_area_m2: Optional[float] = None   # gross building area; use for the envelope
+    rentable_area_m2: Optional[float] = None   # leasing only
     stories: Optional[int] = None
     owner_name: Optional[str] = None
+    occupancy: Optional[OccupancyData] = None
+    market: Optional[MarketData] = None
 
 class ClimateSite(BaseModel):
     lat: float
@@ -486,6 +569,8 @@ class Surface(BaseModel):
     u_value: Ranged                            # W/m2K
     shgc: Optional[Ranged] = None              # windows only
     parent_surface_id: Optional[str] = None    # window -> wall
+    source_edge_id: Optional[str] = None       # WallEdge this surface was built from
+    source_opening_id: Optional[str] = None    # Opening this window or door was built from; None = from vision
 
 class Zone(BaseModel):
     id: str
@@ -507,6 +592,7 @@ class Systems(BaseModel):
     plug_w_per_m2: Ranged
     infiltration_ach: Ranged
     occupancy_schedule: str                    # key into the schedule table
+    occupants: Optional[Ranged] = None         # people; from CoStar tenancies when present
 
 class RoofPlane(BaseModel):
     id: str
@@ -516,12 +602,16 @@ class RoofPlane(BaseModel):
     azimuth_deg: float
     usable_area_m2: float
     obstructions: list[VexcelDetection] = []
+    obstruction_counts: dict[str, int] = {}    # from Vexcel roof-objects, e.g. {"chimney": 1}; no positions
     geometry_source: Literal["splat", "vexcel_parametric", "assumed"]
 
 class BuildingModel(BaseModel):
     schema_version: str = SCHEMA_VERSION
     sid: str
-    north_offset_deg: Ranged                   # rotation from model frame +y to true north
+    north_offset_deg: Ranged                   # degrees clockwise from model frame +y to true north; from the
+                                               # georeference as 2*atan2(z, w) for a level model. Sign convention [P]
+                                               # Analysis lane: confirm against the Vexcel footprint on the golden house
+    north_source: Literal["georeference", "footprint_registration", "assumed"] = "georeference"
     zones: list[Zone]
     surfaces: list[Surface]
     systems: Systems
@@ -651,6 +741,14 @@ class SkippedItem(BaseModel):
     reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done"]
     detail: str
 
+class ValueUplift(BaseModel):
+    """Estimated change in property value from the plan's savings. Never added to savings."""
+    value_usd: Ranged
+    method: str                                # physics.md entry id
+    cap_rate: Optional[Ranged] = None
+    comp_count: int = 0
+    notes: list[str] = []
+
 class Plan(BaseModel):
     budget_usd: float
     selected: list[PlanItem]
@@ -660,6 +758,7 @@ class Plan(BaseModel):
     total_annual_savings_usd: Ranged
     total_co2_kg: Ranged
     baseline_after: EnergyUse
+    value_uplift: Optional[ValueUplift] = None
 
 # ---------- agent and server ----------
 
@@ -721,6 +820,7 @@ class DocumentRequest(BaseModel):
     fields: dict[str, str] = {}                # user-supplied placeholders, by name
 
 class StatutoryCheck(BaseModel):
+    requirement_id: Optional[str] = None       # id in specs/legal/*.md, e.g. "CA-HIC-03"
     requirement: str
     citation: str
     satisfied: bool
@@ -794,7 +894,7 @@ Environment variables, in a git-ignored `.env` (names only; never commit values)
 
 | Tier | Content |
 |---|---|
-| **P0**, must demo | two golden properties (one house with a splat, one office) end to end on live data; all three layers in the bundle; building model with assumption registry; hourly baseline; measures `ENV_ATTIC`, `ENV_AIRSEAL`, `LGT_LED`, `HVAC_HP` or `HVAC_RTU`, `ROOF_COOL`, `PV_ROOF` on a parametric roof; budget plan with full financial breakdown; deep agent with subagents and the ask rule; plan screen and 3D tour with pins; one document (California retrofit contract) |
+| **P0**, must demo | two golden properties (one house with a splat, one office; ids in `data-integration.md` section 2.6) end to end on live data; all three layers in the bundle; building model with assumption registry; hourly baseline; measures `ENV_ATTIC`, `ENV_AIRSEAL`, `LGT_LED`, `HVAC_HP` or `HVAC_RTU`, `ROOF_COOL`, `PV_ROOF` on a parametric roof; budget plan with full financial breakdown; deep agent with subagents and the ask rule; plan screen and 3D tour with pins; one document (California retrofit contract) |
 | **P1**, should | remaining measures; SAM 3 roof segmentation and drawn panel layout; ray-cast shading; desk placement; indoor electrical feasibility; C-PACE scenario; all five documents in both states |
 | **P2**, if time | any property on demand; bill calibration; portfolio screening (rank many properties by retrofit return using Vexcel filters and CoStar records); document export to Word |
 
@@ -822,11 +922,14 @@ Environment variables, in a git-ignored `.env` (names only; never commit values)
 
 | Item | Owner | Fallback |
 |---|---|---|
-| Model frame may not be north-aligned | Data + Analysis | register floor outline to Vexcel footprint; if ambiguous, carry a wide `north_offset_deg` and ask |
+| Georeference missing or wrong on a model (north alignment itself is no longer a risk: the Model API returns the rotation). Both golden models report source `processing`, meaning derived by Matterport, not set by a person | Data + Analysis | cross-check against the Vexcel footprint; if they disagree or the field is absent, register to the footprint and widen `north_offset_deg` |
+| Window openings not populated in a model's wall graph | Data + Analysis | window count and size from vision, wider range |
 | MatterPak locked for most models | Data | wall graph and room heights are enough for the thermal model |
-| CoStar kit columns unknown until opened | Data | normalised fields stay optional; vintage defaults widen |
-| True offices are a small share of "commercial" | Data | select by CoStar property type and LoopNet ids |
-| SAM 3 label quality on roofs | Analysis | Vexcel precomputed roof attributes and roof-object counts |
+| CoStar kit download link expires 2026-11-15 03:30 UTC | Data | the verified mirror the Data lane holds (git-ignored); get the zip from @vigjay, do not re-download |
+| The kit's `index.md` mentions a separate zip for connecting to Matterport models, which nobody has | team, via `/ask-costar` | the starter CSVs already give the join |
+| True offices are a small share of "commercial" | Data | select by CoStar `propertyType` 5 |
+| Vexcel counts no rooftop AC unit on the golden office (9050 Emnora Ln), but `HVAC_RTU` is a P0 office measure | Analysis, team to decide | take the HVAC type from interior vision (registers, thermostats, ceiling units) and evaluate the measure that matches, or pick a golden office that has rooftop units |
+| SAM 3 on roofs returns fragments and unreliable obstruction labels (measured on the golden house) | Analysis | already the design: precomputed roof attributes for obstructions, pitch by roof shape for tilt, SAM 3 for area only; fitted planes only where a splat exists |
 | Whether sponsor imagery may be sent to an external model provider | team, via `/ask-costar` | SAM 3 through Vexcel needs no external call; panorama reading does |
 | Federal and utility incentives in force | Analysis (finance) | compute without them, mark `unverified` |
 | Legal drafts are not legal advice | Agent | disclaimer on every draft; blanks instead of guesses |

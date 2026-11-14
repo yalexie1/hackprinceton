@@ -1,0 +1,19 @@
+{
+  "sid": "zvKHR9DHNjJ",
+  "name": "5836 La Mirada Ave",
+  "segment": "residential",
+  "use_type": "single_family",
+  "address": "5836 La Mirada Ave, Los Angeles, CA 90038",
+  "city": "Los Angeles",
+  "state": "CA",
+  "lat": 34.0934917,
+  "lon": -118.3171,
+  "costar_property_id": null,
+  "costar_listing_id": "235967170",
+  "costar_residential_listing_id": "221139020",
+  "has_splat": true,
+  "has_defurnished": true,
+  "pano_count": 39,
+  "room_count": 19,
+  "floor_count": 1
+}

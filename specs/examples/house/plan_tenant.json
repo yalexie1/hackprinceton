@@ -1,0 +1,211 @@
+{
+  "budget_usd": 1000.0,
+  "selected": [
+    {
+      "rank": 1,
+      "measure": {
+        "measure_id": "LGT_LED",
+        "title": "LED lamps throughout",
+        "applicable": true,
+        "not_applicable_reason": null,
+        "description": "Replace the remaining incandescent and halogen lamps with LED.",
+        "params": {
+          "lamps": 30
+        },
+        "savings": {
+          "electricity_kwh": {
+            "low": 361.6,
+            "expected": 452.0,
+            "high": 542.4,
+            "unit": "kWh"
+          },
+          "gas_kwh": {
+            "low": -48.0,
+            "expected": -40.0,
+            "high": -32.0,
+            "unit": "kWh"
+          },
+          "cost_usd": {
+            "low": 88.32,
+            "expected": 110.4,
+            "high": 132.48,
+            "unit": "USD"
+          },
+          "co2_kg": {
+            "low": 102.69,
+            "expected": 128.36,
+            "high": 154.03,
+            "unit": "kg"
+          }
+        },
+        "finance": {
+          "installed_cost_usd": {
+            "low": 300.0,
+            "expected": 380.0,
+            "high": 494.0,
+            "unit": "USD"
+          },
+          "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+          "incentives": [],
+          "net_upfront_usd": {
+            "low": 300.0,
+            "expected": 380.0,
+            "high": 494.0,
+            "unit": "USD"
+          },
+          "annual_savings_usd": {
+            "low": 88.32,
+            "expected": 110.4,
+            "high": 132.48,
+            "unit": "USD"
+          },
+          "annual_om_change_usd": 0.0,
+          "useful_life_years": 15,
+          "simple_payback_years": {
+            "low": 2.26,
+            "expected": 3.44,
+            "high": 5.59,
+            "unit": "years"
+          },
+          "discounted_payback_years": 3.7,
+          "npv_usd": {
+            "low": 614.22,
+            "expected": 1005.28,
+            "high": 1362.34,
+            "unit": "USD"
+          },
+          "sir": 3.65,
+          "irr": 0.3131,
+          "discount_rate": 0.05,
+          "electricity_escalation": 0.03,
+          "gas_escalation": 0.02,
+          "analysis_period_years": 20,
+          "financing": [
+            {
+              "kind": "cash",
+              "eligible": true,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": -405.68,
+                "expected": -269.6,
+                "high": -167.52,
+                "unit": "USD"
+              },
+              "notes": [
+                "Paid in full at installation."
+              ]
+            }
+          ]
+        },
+        "flags": [],
+        "anchors": [
+          {
+            "room_id": "room_kitchen",
+            "pano_id": "pano_02",
+            "x": 7.4,
+            "y": 6.3,
+            "z": 2.6,
+            "label": "Kitchen ceiling fixtures"
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "pano",
+            "ref": "pano_02",
+            "note": "halogen downlights"
+          }
+        ],
+        "formula_ids": [
+          "LGT",
+          "HVAC"
+        ],
+        "solar": null,
+        "layout": null,
+        "warnings": []
+      },
+      "cumulative_upfront_usd": 380.0,
+      "remaining_budget_usd": 620.0
+    }
+  ],
+  "financeable": [],
+  "skipped": [
+    {
+      "measure_id": "PV_ROOF",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+    },
+    {
+      "measure_id": "ENV_ATTIC",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+    },
+    {
+      "measure_id": "HVAC_HP",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+    },
+    {
+      "measure_id": "ROOF_COOL",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+    },
+    {
+      "measure_id": "DHW_HPWH",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+    },
+    {
+      "measure_id": "CTRL_TSTAT",
+      "reason": "already_done",
+      "detail": "A smart thermostat is already installed (pano_01)."
+    }
+  ],
+  "total_upfront_usd": {
+    "low": 300.0,
+    "expected": 380.0,
+    "high": 494.0,
+    "unit": "USD"
+  },
+  "total_annual_savings_usd": {
+    "low": 88.32,
+    "expected": 110.4,
+    "high": 132.48,
+    "unit": "USD"
+  },
+  "total_co2_kg": {
+    "low": 102.69,
+    "expected": 128.36,
+    "high": 154.03,
+    "unit": "kg"
+  },
+  "baseline_after": {
+    "electricity_kwh": {
+      "low": 2857.6,
+      "expected": 3548.0,
+      "high": 4438.4,
+      "unit": "kWh"
+    },
+    "gas_kwh": {
+      "low": 5792.0,
+      "expected": 7240.0,
+      "high": 9048.0,
+      "unit": "kWh"
+    },
+    "cost_usd": {
+      "low": 1235.92,
+      "expected": 1501.6,
+      "high": 1840.68,
+      "unit": "USD"
+    },
+    "co2_kg": {
+      "low": 1908.53,
+      "expected": 2374.84,
+      "high": 2966.31,
+      "unit": "kg"
+    }
+  },
+  "value_uplift": null
+}

@@ -1,0 +1,952 @@
+[
+  {
+    "measure_id": "HVAC_RTU",
+    "title": "High-efficiency packaged unit",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Replace the packaged unit serving the suite with a high-efficiency unit with a variable-speed fan. The evidence is interior only: Vexcel shows no rooftop unit on this building, so the existing unit's position is unknown.",
+    "params": {
+      "capacity_kw_cooling": 17.6
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 3453.0,
+        "expected": 4604.0,
+        "high": 5755.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 255.0,
+        "expected": 340.0,
+        "high": 425.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 388.75,
+        "expected": 518.34,
+        "high": 647.93,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 1323.76,
+        "expected": 1765.02,
+        "high": 2206.28,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 9500.0,
+        "expected": 11500.0,
+        "high": 14500.0,
+        "unit": "USD"
+      },
+      "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 9500.0,
+        "expected": 11500.0,
+        "high": 14500.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 388.75,
+        "expected": 518.34,
+        "high": 647.93,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": -450.0,
+      "useful_life_years": 18,
+      "simple_payback_years": {
+        "low": 14.66,
+        "expected": 22.19,
+        "high": 37.3,
+        "unit": "years"
+      },
+      "discounted_payback_years": 15.6,
+      "npv_usd": {
+        "low": -3561.76,
+        "expected": 1330.89,
+        "high": 5223.53,
+        "unit": "USD"
+      },
+      "sir": 1.12,
+      "irr": 0.0636,
+      "discount_rate": 0.05,
+      "electricity_escalation": 0.03,
+      "gas_escalation": 0.02,
+      "analysis_period_years": 20,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": -13661.25,
+            "expected": -10531.66,
+            "high": -8402.07,
+            "unit": "USD"
+          },
+          "notes": [
+            "Paid in full at installation."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": true,
+          "financed_usd": 11500.0,
+          "rate": 0.065,
+          "term_years": 15,
+          "annual_payment_usd": 1223.06,
+          "net_cashflow_year1_usd": {
+            "low": -384.31,
+            "expected": -254.72,
+            "high": -125.13,
+            "unit": "USD"
+          },
+          "notes": [
+            "Term of 15 years does not exceed the useful life of 18 years.",
+            "The C-PACE assessment is a lien that runs with the property.",
+            "The consent of an existing mortgage holder is normally required.",
+            "Illustrative terms. Statutory conditions and programme rules are in legal.md and are not checked here."
+          ]
+        }
+      ]
+    },
+    "flags": [
+      {
+        "key": "hvac.unit_location",
+        "status": "unknown",
+        "message": "Ceiling diffusers and a wall thermostat show a ducted packaged system, but Vexcel reports no rooftop AC unit on this building. The unit serving the suite was not located; it may be ground-mounted. Confirm on site.",
+        "evidence": [
+          {
+            "kind": "pano",
+            "ref": "pano_01",
+            "note": "ceiling supply diffusers and return grille"
+          },
+          {
+            "kind": "pano",
+            "ref": "pano_03",
+            "note": "wall thermostat"
+          },
+          {
+            "kind": "vexcel_attr",
+            "ref": "roof-objects.ac-unit.count",
+            "note": "0 as returned"
+          }
+        ]
+      }
+    ],
+    "anchors": [
+      {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 5.0,
+        "y": 5.8,
+        "z": 2.74,
+        "label": "Supply diffuser fed by the packaged unit"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_01",
+        "note": "ceiling supply diffusers and return grille"
+      },
+      {
+        "kind": "pano",
+        "ref": "pano_03",
+        "note": "wall thermostat"
+      }
+    ],
+    "formula_ids": [
+      "HVAC",
+      "ZON"
+    ],
+    "solar": null,
+    "layout": null,
+    "warnings": [
+      "Existing unit not located: confirm its type and position on site before pricing."
+    ]
+  },
+  {
+    "measure_id": "LGT_LED",
+    "title": "LED retrofit of ceiling troffers",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Replace fluorescent tubes and ballasts in the 2x4 troffers with LED.",
+    "params": {
+      "fixtures": 40
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 2648.0,
+        "expected": 3310.0,
+        "high": 3972.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": -312.0,
+        "expected": -260.0,
+        "high": -208.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 284.0,
+        "expected": 355.0,
+        "high": 426.0,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 942.11,
+        "expected": 1177.64,
+        "high": 1413.17,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 2300.0,
+        "expected": 2900.0,
+        "high": 3700.0,
+        "unit": "USD"
+      },
+      "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 2300.0,
+        "expected": 2900.0,
+        "high": 3700.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 284.0,
+        "expected": 355.0,
+        "high": 426.0,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 15,
+      "simple_payback_years": {
+        "low": 5.4,
+        "expected": 8.17,
+        "high": 13.03,
+        "unit": "years"
+      },
+      "discounted_payback_years": 9.3,
+      "npv_usd": {
+        "low": -135.96,
+        "expected": 1555.05,
+        "high": 3046.06,
+        "unit": "USD"
+      },
+      "sir": 1.54,
+      "irr": 0.1155,
+      "discount_rate": 0.05,
+      "electricity_escalation": 0.03,
+      "gas_escalation": 0.02,
+      "analysis_period_years": 20,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": -3416.0,
+            "expected": -2545.0,
+            "high": -1874.0,
+            "unit": "USD"
+          },
+          "notes": [
+            "Paid in full at installation."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": true,
+          "financed_usd": 2900.0,
+          "rate": 0.065,
+          "term_years": 15,
+          "annual_payment_usd": 308.42,
+          "net_cashflow_year1_usd": {
+            "low": -24.42,
+            "expected": 46.58,
+            "high": 117.58,
+            "unit": "USD"
+          },
+          "notes": [
+            "Term of 15 years does not exceed the useful life of 15 years.",
+            "The C-PACE assessment is a lien that runs with the property.",
+            "The consent of an existing mortgage holder is normally required.",
+            "Illustrative terms. Statutory conditions and programme rules are in legal.md and are not checked here."
+          ]
+        }
+      ]
+    },
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 5.0,
+        "y": 4.2,
+        "z": 2.74,
+        "label": "Fluorescent troffers"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_01",
+        "note": "2x4 troffers"
+      },
+      {
+        "kind": "user",
+        "ref": "q_lamp_type",
+        "note": "fluorescent"
+      }
+    ],
+    "formula_ids": [
+      "LGT",
+      "HVAC"
+    ],
+    "solar": null,
+    "layout": null,
+    "warnings": []
+  },
+  {
+    "measure_id": "PLUG_MGMT",
+    "title": "Plug load management",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Advanced power strips and scheduled shut-off for workstations and shared equipment.",
+    "params": {
+      "workstations": 12
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 336.0,
+        "expected": 672.0,
+        "high": 1008.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 36.96,
+        "expected": 73.92,
+        "high": 110.88,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 124.32,
+        "expected": 248.64,
+        "high": 372.96,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 300.0,
+        "expected": 450.0,
+        "high": 650.0,
+        "unit": "USD"
+      },
+      "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 300.0,
+        "expected": 450.0,
+        "high": 650.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 36.96,
+        "expected": 73.92,
+        "high": 110.88,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 8,
+      "simple_payback_years": {
+        "low": 2.71,
+        "expected": 6.09,
+        "high": 17.59,
+        "unit": "years"
+      },
+      "discounted_payback_years": 6.8,
+      "npv_usd": {
+        "low": -386.47,
+        "expected": 77.05,
+        "high": 490.58,
+        "unit": "USD"
+      },
+      "sir": 1.17,
+      "irr": 0.0893,
+      "discount_rate": 0.05,
+      "electricity_escalation": 0.03,
+      "gas_escalation": 0.02,
+      "analysis_period_years": 20,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": -613.04,
+            "expected": -376.08,
+            "high": -189.12,
+            "unit": "USD"
+          },
+          "notes": [
+            "Paid in full at installation."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 36.96,
+            "expected": 73.92,
+            "high": 110.88,
+            "unit": "USD"
+          },
+          "notes": [
+            "Illustrative screen: plug-in equipment is not permanently fixed to the real property (TX-PACE-02, Loc. Gov't Code section 399.004(b))."
+          ]
+        }
+      ]
+    },
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 6.5,
+        "y": 2.5,
+        "z": 0.4,
+        "label": "Workstation outlets"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_01",
+        "note": "monitors and task equipment at each desk"
+      }
+    ],
+    "formula_ids": [
+      "LGT"
+    ],
+    "solar": null,
+    "layout": null,
+    "warnings": []
+  },
+  {
+    "measure_id": "LAYOUT",
+    "title": "Desk placement for daylight",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Move four desks to the positions with the best daylight, low glare risk and good comfort; electric lighting is displaced where daylight targets are met.",
+    "params": {
+      "grid_m": 0.5,
+      "wall_clearance_m": 0.6,
+      "min_spacing_m": 2.0
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 252.0,
+        "expected": 420.0,
+        "high": 546.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 27.72,
+        "expected": 46.2,
+        "high": 60.06,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 93.24,
+        "expected": 155.4,
+        "high": 202.02,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "USD"
+      },
+      "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 27.72,
+        "expected": 46.2,
+        "high": 60.06,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 10,
+      "simple_payback_years": {
+        "low": 0.0,
+        "expected": 0.0,
+        "high": 0.0,
+        "unit": "years"
+      },
+      "discounted_payback_years": 0.0,
+      "npv_usd": {
+        "low": 242.48,
+        "expected": 404.14,
+        "high": 525.38,
+        "unit": "USD"
+      },
+      "sir": null,
+      "irr": null,
+      "discount_rate": 0.05,
+      "electricity_escalation": 0.03,
+      "gas_escalation": 0.02,
+      "analysis_period_years": 20,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 27.72,
+            "expected": 46.2,
+            "high": 60.06,
+            "unit": "USD"
+          },
+          "notes": [
+            "Paid in full at installation."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": false,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": 27.72,
+            "expected": 46.2,
+            "high": 60.06,
+            "unit": "USD"
+          },
+          "notes": [
+            "Nothing to finance: the measure has no cost."
+          ]
+        }
+      ]
+    },
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 1.5,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 1"
+      },
+      {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 4.0,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 2"
+      },
+      {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 6.5,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 3"
+      },
+      {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 8.5,
+        "y": 2.5,
+        "z": 0.75,
+        "label": "Recommended desk 4"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_01",
+        "note": "east glazing along the open office"
+      },
+      {
+        "kind": "matterport_field",
+        "ref": "floors.edges.openings",
+        "note": "window positions along the east wall"
+      }
+    ],
+    "formula_ids": [
+      "DAY",
+      "GLR",
+      "CMF",
+      "LCT"
+    ],
+    "solar": null,
+    "layout": {
+      "desks_requested": 4,
+      "candidates": [
+        {
+          "room_id": "room_open_office",
+          "x": 1.5,
+          "y": 1.0,
+          "daylight": 0.82,
+          "glare_risk": 0.55,
+          "comfort_ppd": 14.0,
+          "score": 0.52,
+          "recommended": false
+        },
+        {
+          "room_id": "room_open_office",
+          "x": 1.5,
+          "y": 2.5,
+          "daylight": 0.71,
+          "glare_risk": 0.18,
+          "comfort_ppd": 8.0,
+          "score": 0.78,
+          "recommended": true
+        },
+        {
+          "room_id": "room_open_office",
+          "x": 4.0,
+          "y": 2.5,
+          "daylight": 0.73,
+          "glare_risk": 0.16,
+          "comfort_ppd": 7.0,
+          "score": 0.8,
+          "recommended": true
+        },
+        {
+          "room_id": "room_open_office",
+          "x": 6.5,
+          "y": 2.5,
+          "daylight": 0.72,
+          "glare_risk": 0.17,
+          "comfort_ppd": 7.0,
+          "score": 0.79,
+          "recommended": true
+        },
+        {
+          "room_id": "room_open_office",
+          "x": 8.5,
+          "y": 2.5,
+          "daylight": 0.66,
+          "glare_risk": 0.15,
+          "comfort_ppd": 8.0,
+          "score": 0.74,
+          "recommended": true
+        },
+        {
+          "room_id": "room_open_office",
+          "x": 4.0,
+          "y": 5.0,
+          "daylight": 0.41,
+          "glare_risk": 0.05,
+          "comfort_ppd": 6.0,
+          "score": 0.55,
+          "recommended": false
+        },
+        {
+          "room_id": "room_open_office",
+          "x": 6.5,
+          "y": 5.0,
+          "daylight": 0.4,
+          "glare_risk": 0.05,
+          "comfort_ppd": 6.0,
+          "score": 0.54,
+          "recommended": false
+        },
+        {
+          "room_id": "room_open_office",
+          "x": 4.0,
+          "y": 7.5,
+          "daylight": 0.18,
+          "glare_risk": 0.02,
+          "comfort_ppd": 6.0,
+          "score": 0.31,
+          "recommended": false
+        }
+      ]
+    },
+    "warnings": []
+  },
+  {
+    "measure_id": "WIN_FILM",
+    "title": "Solar control window film",
+    "applicable": true,
+    "not_applicable_reason": null,
+    "description": "Film on the east glazing to cut solar heat gain.",
+    "params": {
+      "glazing_area_m2": 14.0
+    },
+    "savings": {
+      "electricity_kwh": {
+        "low": 155.0,
+        "expected": 310.0,
+        "high": 465.0,
+        "unit": "kWh"
+      },
+      "gas_kwh": {
+        "low": -135.0,
+        "expected": -90.0,
+        "high": -45.0,
+        "unit": "kWh"
+      },
+      "cost_usd": {
+        "low": 15.47,
+        "expected": 30.95,
+        "high": 46.42,
+        "unit": "USD"
+      },
+      "co2_kg": {
+        "low": 49.2,
+        "expected": 98.41,
+        "high": 147.62,
+        "unit": "kg"
+      }
+    },
+    "finance": {
+      "installed_cost_usd": {
+        "low": 1400.0,
+        "expected": 1725.0,
+        "high": 2100.0,
+        "unit": "USD"
+      },
+      "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+      "incentives": [],
+      "net_upfront_usd": {
+        "low": 1400.0,
+        "expected": 1725.0,
+        "high": 2100.0,
+        "unit": "USD"
+      },
+      "annual_savings_usd": {
+        "low": 15.47,
+        "expected": 30.95,
+        "high": 46.42,
+        "unit": "USD"
+      },
+      "annual_om_change_usd": 0.0,
+      "useful_life_years": 12,
+      "simple_payback_years": {
+        "low": 30.16,
+        "expected": 55.74,
+        "high": 135.75,
+        "unit": "years"
+      },
+      "discounted_payback_years": null,
+      "npv_usd": {
+        "low": -1939.74,
+        "expected": -1404.48,
+        "high": -919.22,
+        "unit": "USD"
+      },
+      "sir": 0.19,
+      "irr": -0.1596,
+      "discount_rate": 0.05,
+      "electricity_escalation": 0.03,
+      "gas_escalation": 0.02,
+      "analysis_period_years": 20,
+      "financing": [
+        {
+          "kind": "cash",
+          "eligible": true,
+          "financed_usd": 0.0,
+          "rate": null,
+          "term_years": null,
+          "annual_payment_usd": 0.0,
+          "net_cashflow_year1_usd": {
+            "low": -2084.53,
+            "expected": -1694.05,
+            "high": -1353.58,
+            "unit": "USD"
+          },
+          "notes": [
+            "Paid in full at installation."
+          ]
+        },
+        {
+          "kind": "cpace",
+          "eligible": true,
+          "financed_usd": 1725.0,
+          "rate": 0.065,
+          "term_years": 12,
+          "annual_payment_usd": 211.43,
+          "net_cashflow_year1_usd": {
+            "low": -195.96,
+            "expected": -180.48,
+            "high": -165.01,
+            "unit": "USD"
+          },
+          "notes": [
+            "Term of 12 years does not exceed the useful life of 12 years.",
+            "The C-PACE assessment is a lien that runs with the property.",
+            "The consent of an existing mortgage holder is normally required.",
+            "Illustrative terms. Statutory conditions and programme rules are in legal.md and are not checked here."
+          ]
+        }
+      ]
+    },
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_conference",
+        "pano_id": "pano_02",
+        "x": 12.5,
+        "y": 0.2,
+        "z": 1.5,
+        "label": "East glazing"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_02",
+        "note": "unshaded east glazing"
+      },
+      {
+        "kind": "matterport_field",
+        "ref": "floors.edges.openings",
+        "note": "five east-facing windows"
+      }
+    ],
+    "formula_ids": [
+      "WIN",
+      "DAY"
+    ],
+    "solar": null,
+    "layout": null,
+    "warnings": []
+  },
+  {
+    "measure_id": "HVAC_ECON",
+    "title": "Economizer and controls",
+    "applicable": false,
+    "not_applicable_reason": "Blocked by feasibility flag hvac.economizer: the unit serving the suite has not been located.",
+    "description": "",
+    "params": {},
+    "savings": null,
+    "finance": null,
+    "flags": [
+      {
+        "key": "hvac.economizer",
+        "status": "blocked",
+        "message": "The unit serving the suite has not been located (flag hvac.unit_location), so an economizer cannot be specified.",
+        "evidence": [
+          {
+            "kind": "vexcel_attr",
+            "ref": "roof-objects.ac-unit.count",
+            "note": "0 as returned"
+          }
+        ]
+      }
+    ],
+    "anchors": [],
+    "evidence": [
+      {
+        "kind": "vexcel_attr",
+        "ref": "roof-objects.ac-unit.count",
+        "note": "0 as returned"
+      }
+    ],
+    "formula_ids": [],
+    "solar": null,
+    "layout": null,
+    "warnings": []
+  },
+  {
+    "measure_id": "LGT_CTRL",
+    "title": "Occupancy and daylight controls",
+    "applicable": false,
+    "not_applicable_reason": "Already done: ceiling occupancy sensors are installed.",
+    "description": "",
+    "params": {},
+    "savings": null,
+    "finance": null,
+    "flags": [],
+    "anchors": [
+      {
+        "room_id": "room_conference",
+        "pano_id": "pano_02",
+        "x": 12.5,
+        "y": 2.5,
+        "z": 2.74,
+        "label": "Existing occupancy sensor"
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "pano",
+        "ref": "pano_02",
+        "note": "ceiling occupancy sensor"
+      }
+    ],
+    "formula_ids": [],
+    "solar": null,
+    "layout": null,
+    "warnings": []
+  },
+  {
+    "measure_id": "HVAC_HP",
+    "title": "Heat pump replacing AC and furnace",
+    "applicable": false,
+    "not_applicable_reason": "Home-flow measure (SPEC.md section 6.2); this property is an office suite.",
+    "description": "",
+    "params": {},
+    "savings": null,
+    "finance": null,
+    "flags": [],
+    "anchors": [],
+    "evidence": [],
+    "formula_ids": [],
+    "solar": null,
+    "layout": null,
+    "warnings": []
+  }
+]

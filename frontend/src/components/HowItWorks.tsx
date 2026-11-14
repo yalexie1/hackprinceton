@@ -266,27 +266,6 @@ export default function HowItWorks() {
           </div>
         ))}
       </dl>
-
-      <h3>What this does not do</h3>
-      <ul className="hiw-limits">
-        <li>
-          It is not an appraisal. The property value figure is shown separately and is never added
-          to energy savings or used in the ranking.
-        </li>
-        <li>
-          It is not legal advice. Documents are drafts for an attorney, with blanks left visible
-          and statutory text never invented.
-        </li>
-        <li>
-          It does not replace a site visit. Anything that needs eyes on the building — electrical
-          capacity, roof structure, equipment age — is flagged for a check rather than assumed
-          away.
-        </li>
-        <li>
-          Savings are estimates with a stated range. Confirm costs with a contractor before
-          starting work.
-        </li>
-      </ul>
     </section>
   );
 }

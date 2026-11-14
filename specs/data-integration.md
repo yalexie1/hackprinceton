@@ -150,6 +150,32 @@ Verified georeferences: [V] 2026-11-14
 
 **The golden office has no window openings at all.** [V] 2026-11-14 — `HjEyXryhRLk` ("Suite A - 2,000SF") returns 5 openings across its single floor, **every one `doorway`**. So window surfaces cannot be derived from the scan for the office flow, which matters because office daylight, glare and desk placement (`SPEC.md` §6.4) depend on them. Either office windows are inferred from the footprint and facade, or the golden office is re-picked. Raised for the analysis lane — the same shape of problem as `ac-unit.count` being 0 on the same building (§4.5).
 
+**Two findings that change the office flow.** [V] 2026-11-14
+
+**1. The golden office is not an office.** `PropertyId 354635` (9050 Emnora Ln, "Exchange Emnora", Houston 77080) reads from the kit as `propertyType` **2 = Industrial**, `propertySubtype` **52 = Industrial_Warehouse**, `buildingClass` **3 = C**, with `propertyIndustrial` populated and `propertyOffice` null. GBA = RBA = 13,320 sq ft, `numStoriesAboveGrade` present, `constructionEvents` = `[(2, 1984)]` so year built 1984. **It would never be returned by the office selector**, which filters `propertyType == 5` (§2.5). This also explains the two anomalies already recorded: a warehouse plausibly has no rooftop AC unit (§4.5) and no windows.
+
+There is no shortage of real offices: **289 properties are `propertyType` 5 and 274 of them carry at least one Matterport model** — 183 Houston, 90 Los Angeles. For context the kit is dominated by apartments: of 3,339 properties, 2,765 are Multifamily, 289 Office, 122 Industrial, 65 GeneralRetail, 55 Hospitality, 31 Flex. Strong candidates by model count, all `constructionStatus` Existing:
+
+| PropertyId | Address | Models | GBA | Stories | Class | Built |
+|---|---|---|---|---|---|---|
+| 234088 | 2100 West Loop, Houston 77027 | 9 | 162,540 | 16 | A | 1974 |
+| 246899 | 11400 Olympic Blvd, Los Angeles 90064 | 9 | 259,923 | 17 | A | 1989 |
+| 246836 | 10940 Wilshire Blvd, Los Angeles 90024 | 8 | 223,797 | 24 | A | 1988 |
+| 23551 | 7457 Harwin Dr, Houston 77036 | 10 | 105,717 | 3 | B | 1983 |
+
+**2. Re-picking the office does not get you windows.** Sampled one model from each of 12 distinct `propertyType == 5` properties against 12 residential models:
+
+| Sample | Models with ≥1 opening | Opening types seen |
+|---|---|---|
+| Office (12 properties) | **2 / 12** | `doorway` 17, `opening` 16 — **no `window` at all** |
+| Residential (12 listings) | **12 / 12** | `doorway` 154, `opening` 35, **`window` 34**, `divider` 5 |
+
+So the openings graph is populated on residential scans and essentially absent on commercial ones, and **not one office model in the sample carried a single `window` opening.** This is systemic, not a property-selection artefact: **office window surfaces can never come from the scan**, whichever office is chosen.
+
+Consequence for the analysis lane: `A9` builds window surfaces and true north from openings, and that path is **home-flow only**. The office flow needs windows from another source — Vexcel obliques or facade imagery, or footprint plus storey count plus a window-to-wall ratio from the vintage tables, or the panorama vision model — and whichever is chosen must carry its uncertainty as an `Assumption`. Office daylight, glare and desk placement (`SPEC.md` §6.4) all sit downstream of that choice.
+
+One more, for EMI-01: the current office ZIP is **77080**, prefix 770, which falls in the Houston set `specs/physics/04-economics-emissions-mv.md` flags as ambiguous (of 415 ZIPs with prefixes 770 and 772–775, 325 are ERCT only, 35 are SRMV only, 55 split). Whichever office is finally chosen, its eGRID subregion must be resolved from the delivery utility rather than assumed — CenterPoint territory is ERCT.
+
 **The enum values settle it.** [V] 2026-11-14
 
 - **`OpeningType` = `divider` | `doorway` | `opening` | `window`.** `window` is an explicit, first-class value — windows are *typed*, not merely "an opening we guess about".
@@ -498,4 +524,7 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Golden house MatterPak | live query | 2026-11-14 | `unlocked` but all 3 resources `unavailable` |
 | Splat / drone, both lots | track site | 2026-11-14 | house 15.6 GB total, office 4.1 GB; office `outsideView` false |
 | CoStar join, second source | track site `propertyId` | 2026-11-14 | `HjEyXryhRLk` -> `354635`, matches the kit CSV |
+| Golden office property type | kit record, `propertyType`/`propertySubtype` | 2026-11-14 | **Industrial_Warehouse, class C, 1984 — not an office** |
+| Office inventory in the kit | streamed all 3,339 records + CSV join | 2026-11-14 | 289 type-5 offices, **274 with models** (183 HOU, 90 LA) |
+| Openings: office vs residential | 12 + 12 live models | 2026-11-14 | office 2/12 any opening, **0 windows**; residential 12/12, 34 windows |
 | Edge-fraction origin, rotation sense | — | — | **[P] open — footprint registration cross-check** |

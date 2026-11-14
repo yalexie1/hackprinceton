@@ -8,10 +8,11 @@ from typing import Optional, Union
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.agent import api
+from backend.agent.runtime.replan import PatchError
 from backend.data_layer import api as data
 from backend.schema import (SCHEMA_VERSION, DocumentDraft, DocumentRequest, PropertySummary,
                             RunRequest, RunResult, Segment, UseType)
@@ -25,7 +26,7 @@ class AnswerBody(BaseModel):
 
 
 class PatchBody(BaseModel):
-    budget_usd: Optional[float] = None
+    budget_usd: Optional[float] = Field(default=None, ge=0)
     overrides: Optional[dict[str, Union[float, str, bool]]] = None
 
 
@@ -114,7 +115,10 @@ def create_app() -> FastAPI:
     @app.patch("/api/runs/{run_id}")
     def patch_run(run_id: str, body: PatchBody):
         run_of(run_id)
-        api.update_run(run_id, body.budget_usd, body.overrides)
+        try:
+            api.update_run(run_id, body.budget_usd, body.overrides)
+        except PatchError as err:
+            raise ApiError(err.status, err.code, err.message)
         return {"ok": True}
 
     @app.post("/api/runs/{run_id}/documents", response_model=DocumentDraft)

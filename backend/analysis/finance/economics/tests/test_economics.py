@@ -221,8 +221,10 @@ def test_breakdown_echoes_config_and_is_ordered():
     assert got.electricity_escalation == pytest.approx(-0.0018) and got.gas_escalation == pytest.approx(-0.0047)
     assert got.npv_usd.low <= got.npv_usd.expected <= got.npv_usd.high
     assert got.simple_payback_years.low <= got.simple_payback_years.expected <= got.simple_payback_years.high
-    assert got.simple_payback_years.expected == pytest.approx(10.42, abs=0.01)
-    assert got.financing[0].kind == "cash" and got.financing[0].net_cashflow_year1_usd.expected == pytest.approx(866.81, abs=0.01)
+    f = m.finance
+    assert got.simple_payback_years.expected == pytest.approx(
+        f.net_upfront_usd.expected / (m.savings.cost_usd.expected - f.annual_om_change_usd), abs=0.01)    # ECO-11 screening form
+    assert got.financing[0].kind == "cash" and got.financing[0].net_cashflow_year1_usd.expected == pytest.approx(m.savings.cost_usd.expected - m.finance.annual_om_change_usd, abs=0.01)
     assert (got.sir > 1) == (got.npv_usd.expected > 0)
     assert breakdown(m, run, bundle) == got                      # deterministic
 

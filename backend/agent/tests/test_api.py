@@ -36,7 +36,7 @@ def test_answer_update_and_documents():
     req = RunRequest.model_validate_json((EX / "house" / "run_request.json").read_text())
     run_id = api.start_run(req)
     api.answer(run_id, "q1", "yes")
-    api.update_run(run_id, budget_usd=1234.0, overrides={"k": 1.0})
+    api.update_run(run_id, budget_usd=1234.0, overrides={"occupancy.count": 5.0})
     assert api.get_run(run_id).request.budget_usd == 1234.0
     dreq = DocumentRequest.model_validate_json((EX / "house" / "document_request.json").read_text())
     dreq.run_id = run_id

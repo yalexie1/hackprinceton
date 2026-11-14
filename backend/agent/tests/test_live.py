@@ -12,6 +12,7 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from backend.agent import api, live
+from backend.agent.runtime.replan import PatchError
 from backend.agent.fixtures import EXAMPLES, flavors
 from backend.schema import RunRequest, RunResult
 
@@ -285,3 +286,29 @@ def test_a_failed_call_is_retried_and_fill_template_is_never_memoized(tmp_path):
     t["fill_template"](*args)
     t["fill_template"](*args)
     assert run.memo_hits == 0
+
+
+def test_a_finished_live_run_is_adjusted_and_replanned(live_mode):
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    with pytest.raises(PatchError) as early:                       # paused, not finished
+        api.update_run(run_id, budget_usd=500.0)
+    assert early.value.code == "run_not_done"
+    api.answer(run_id, "q_service_amps", 100.0)
+    assert drain(run_id)[-1].type == "done"
+    before = api.get_run(run_id)
+    api.update_run(run_id, budget_usd=500.0, overrides={"occupancy.count": 5.0})
+    events = drain(run_id)
+    assert events[-1].type == "done" and events[-1].message == "Re-run complete"
+    after = api.get_run(run_id)
+    assert after.status == "done" and after.plan.budget_usd == 500.0 and after.request.overrides["occupancy.count"] == 5.0
+    assert next(a for a in after.building_model.assumptions if a.key == "occupancy.count").value.expected == 5.0
+    assert after.narrative_md == before.narrative_md
+    assert [q.id for q in after.questions] == [q.id for q in before.questions]            # the answered question is kept
+    with pytest.raises(PatchError) as bad:
+        api.update_run(run_id, overrides={"nope": 1.0})
+    assert bad.value.code == "unknown_assumption"
+    assert api.get_run(run_id).plan.budget_usd == 500.0                                    # a refused patch changes nothing

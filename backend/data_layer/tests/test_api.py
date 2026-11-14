@@ -156,9 +156,10 @@ def test_a_cached_live_bundle_never_leaks_into_the_offline_path(tmp_path, monkey
     sid = SIDS[0]
     fake = api.get_property_bundle(sid)
     fake.summary.name = "CACHED LIVE VALUE"
-    target = tmp_path / sid
-    target.mkdir(parents=True, exist_ok=True)
-    (target / "bundle.json").write_text(fake.model_dump_json())
+    # Seeded through the writer, not by hand: the on-disk shape is D4's business
+    # (it strips `costar.raw` so no URL is persisted), and a test that hand-builds
+    # it is really testing a copy of the format that drifts from the real one.
+    api._write_bundle_cache(api._bundle_cache_path(sid), fake)
 
     offline = api.get_property_bundle(sid, live=False)
     assert offline.summary.name != "CACHED LIVE VALUE"
@@ -172,8 +173,7 @@ def test_env_var_selects_the_live_path(monkeypatch, tmp_path):
     sid = SIDS[0]
     seeded = api.get_property_bundle(sid, live=False)
     seeded.summary.name = "FROM CACHE"
-    (tmp_path / sid).mkdir(parents=True, exist_ok=True)
-    (tmp_path / sid / "bundle.json").write_text(seeded.model_dump_json())
+    api._write_bundle_cache(api._bundle_cache_path(sid), seeded)
     # DATA_LAYER_LIVE=1 means the cache is consulted without passing live=True
     assert api.get_property_bundle(sid).summary.name == "FROM CACHE"
 
@@ -183,8 +183,7 @@ def test_refresh_bypasses_the_cache(monkeypatch, tmp_path):
     sid = SIDS[0]
     seeded = api.get_property_bundle(sid, live=False)
     seeded.summary.name = "STALE"
-    (tmp_path / sid).mkdir(parents=True, exist_ok=True)
-    (tmp_path / sid / "bundle.json").write_text(seeded.model_dump_json())
+    api._write_bundle_cache(api._bundle_cache_path(sid), seeded)
     assert api.get_property_bundle(sid, live=True).summary.name == "STALE"
     calls = []
     monkeypatch.setattr(api, "_assemble", lambda s: (calls.append(s), seeded)[1])

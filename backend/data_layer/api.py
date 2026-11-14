@@ -49,7 +49,7 @@ from backend.schema import (
     VexcelDetection,
 )
 
-from . import index
+from . import cache, index
 
 _ROOT = Path(__file__).resolve().parents[2]
 _EXAMPLES = _ROOT / "specs" / "examples"
@@ -235,12 +235,88 @@ def get_property_bundle(
 
     cached = _bundle_cache_path(sid)
     if cached.is_file() and not refresh:
-        return PropertyBundle.model_validate_json(cached.read_text())
+        replayed = _read_bundle_cache(sid, cached)
+        if replayed is not None:
+            return replayed
 
     bundle = _assemble(sid)
-    cached.parent.mkdir(parents=True, exist_ok=True)
-    cached.write_text(bundle.model_dump_json())
+    try:
+        _write_bundle_cache(cached, bundle)
+    except cache.SignedUrlInCache as exc:
+        # The bundle is fine; it simply cannot be cached without persisting a URL.
+        # Returning it uncached is right - refusing to answer would be worse, and
+        # scrubbing it would make a cache hit disagree with a fresh assembly.
+        bundle.provenance = list(bundle.provenance) + [FetchRecord(
+            layer="matterport", what="bundle:cache", status="error",
+            detail=f"not cached: a URL-valued field would be persisted ({exc})"[:200],
+        )]
     return bundle
+
+
+#: What `_write_bundle_cache` removes before writing, and `_read_bundle_cache` puts
+#: back. `CostarData.raw` is "the record as found in the kit" per the contract, and
+#: those records carry CDN image URLs and agent websites - 54 of them on the golden
+#: house. A cached URL is a trap: nothing says when it stopped working.
+#:
+#: Stripping it is safe precisely because it is *local* data. The kit mirror is on
+#: disk, so `raw` is rebuilt on a cache hit in about 0.04 s, and the field stays
+#: truthful on both paths. Scrubbing it in place instead would make a cache hit
+#: disagree with a fresh assembly, which is the worse failure: silent and invisible.
+_STRIPPED = "costar.raw"
+
+
+def _write_bundle_cache(path: Path, bundle: PropertyBundle) -> Path:
+    """Write the bundle atomically, with `costar.raw` left out.
+
+    Raises `SignedUrlInCache` if any URL survives the strip, rather than persisting
+    it or quietly mangling it. That is a loud failure on an unexpected payload shape,
+    which is what a cache with a documented invariant should do when the invariant is
+    about to break.
+    """
+    payload = bundle.model_dump(mode="json")
+    stripped: list[str] = []
+    if payload.get("costar") and payload["costar"].get("raw"):
+        payload["costar"]["raw"] = {}
+        stripped.append(_STRIPPED)
+    _, urls = cache.scrub_urls(payload)
+    if urls:
+        raise cache.SignedUrlInCache(f"URL-valued fields remain: {urls[:5]}")
+    return cache.atomic_write_path(
+        path,
+        json.dumps({"stripped": stripped, "bundle": payload}, separators=(",", ":")).encode(),
+    )
+
+
+def _read_bundle_cache(sid: str, path: Path) -> Optional[PropertyBundle]:
+    """The cached bundle with `costar.raw` restored from the kit, or `None` on a miss.
+
+    A miss covers a truncated entry and an entry written before this format, both of
+    which cost a reassembly rather than the run.
+    """
+    try:
+        entry = json.loads(path.read_text())
+        payload = entry["bundle"]
+        stripped = entry.get("stripped") or []
+    except (json.JSONDecodeError, KeyError, TypeError, OSError):
+        # An entry this code can never read again is garbage, and a pre-D4 entry is
+        # garbage that keeps leaking the URLs D4 exists to keep out of the cache. It
+        # is git-ignored and regenerable from the live sources, so it goes.
+        path.unlink(missing_ok=True)
+        return None
+
+    if _STRIPPED in stripped and payload.get("costar"):
+        from backend.data_layer import costar as d1
+
+        try:
+            payload["costar"]["raw"] = d1.get_costar_data(sid).raw
+        except Exception:
+            # No kit mirror on this machine. The bundle is still usable; `raw` being
+            # empty is visible, where a wrong `raw` would not be.
+            pass
+    try:
+        return PropertyBundle.model_validate(payload)
+    except Exception:
+        return None
 
 
 def _assemble(sid: str) -> PropertyBundle:

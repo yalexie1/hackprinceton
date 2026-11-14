@@ -21,10 +21,13 @@ Every rule here is a verified finding from `specs/data-integration.md` section 5
   for the United States, and it is a ~30 km reanalysis, so it is a sanity band and
   never the hourly source. **PVWatts and NSRDB are unusable**: both
   `developer.nrel.gov` and `nsrdb.nrel.gov` fail DNS resolution from here.
-- **Tariff**: URDB gives the real utility where one exists, but it has **zero** rates
-  at the Houston office because ERCOT is a deregulated retail market with no single
-  regulated tariff. The EIA state average is the documented fallback and is always
-  labelled as one - it is a state monthly average, not that building's contract.
+- **Tariff**: the **EIA state average for all three golden properties**, decided by
+  the lead on 2026-11-14 (`specs/data-integration.md` 5.1c). URDB gives the real
+  utility where one exists but has **zero** rates at the Houston office, ERCOT being
+  a deregulated retail market with no single regulated tariff, and
+  `electricity_usd_per_kwh` is one marginal price, so a time-of-use schedule would
+  have to be flattened regardless. The figure is always labelled a `fallback` - it is
+  a state monthly average, not that building's contract.
 """
 from __future__ import annotations
 
@@ -217,6 +220,14 @@ def _eia_price_usd_per_kwh(state: str, sector: str, *, get: Optional[Getter] = N
     return cents * CENTS_TO_USD, rows[0].get("period")
 
 
+#: Whether the state mandates a price for exported PV. The contract's own rule -
+#: `Tariff.export_regime` is documented as "None where no export price is mandated
+#: (Texas)" - so California is `net_metering` and ERCOT, which mandates no export
+#: compensation at all, is `none`. Leaving the field unset was discarding something
+#: the schema asked for, and the PV measure needs it to value exported generation.
+EXPORT_REGIME: dict[str, str] = {"CA": "net_metering", "TX": "none"}
+
+
 def get_tariff(
     state: str, sector: str, *, utility: Optional[str] = None,
     get: Optional[Getter] = None,
@@ -225,12 +236,22 @@ def get_tariff(
 
     `state` is `CA` or `TX`; `sector` is EIA's `RES` or `COM`.
 
-    **This is a state monthly average, not the building's retail contract.** For the
-    Los Angeles properties URDB does return the real utility (LADWP, `eiaid` 11208),
-    but at the Houston office URDB has **no tariff at all** - ERCOT is a deregulated
-    retail market with no single regulated tariff to look up - so the fallback is the
-    only route that works for both states. The `fallback` status and the source string
-    exist so no reader mistakes it for a looked-up rate.
+    **This is a state monthly average, not the building's retail contract**, and as
+    of the lead's decision of 2026-11-14 it is the source for **all three** golden
+    properties, not only the Houston one (`specs/data-integration.md` 5.1c). URDB
+    does return the real utility for Los Angeles (LADWP, `eiaid` 11208) but has
+    **no tariff at all** at the Houston office - ERCOT is deregulated, so there is no
+    single regulated schedule to look up - and `electricity_usd_per_kwh` is one
+    marginal price, so a time-of-use schedule would have to be flattened anyway. The
+    `fallback` status and the source string exist so no reader mistakes a state
+    average for a looked-up rate.
+
+    `utility` is passed in rather than inferred. Deriving it from the CoStar `City`
+    field would repeat the mistake the PACE work caught, where `cityId` 5316
+    "Houston" included a property outside the incorporated city: LADWP serves the
+    city of Los Angeles and the surrounding unincorporated county is SCE, so the
+    same trap applies. Absent a verified utility the field says what the number
+    actually is.
     """
     price, period = _eia_price_usd_per_kwh(state, sector, get=get)
     if price is None:
@@ -240,6 +261,7 @@ def get_tariff(
     return Tariff(
         utility=utility or f"{state} state average ({sector})",
         electricity_usd_per_kwh=round(price, 6),
+        export_regime=EXPORT_REGIME.get(state),
         source=label,
         retrieved=period or "",
     ), [FetchRecord(layer="tariff", what="eia/retail-sales", status="fallback", detail=label)]

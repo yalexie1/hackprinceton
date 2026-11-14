@@ -484,8 +484,8 @@ Checked live 2026-11-14. **Two of the sources `SPEC.md` and `handoff-plan.md` na
 | Hourly irradiance (GHI, DNI, DHI), temperature, RH, wind | **Open-Meteo archive API** (`archive-api.open-meteo.com/v1/archive`) | none | [V] 200; units in `hourly_units`; timezone-aware; returns site `elevation` |
 | Annual PV yield + inter-annual uncertainty | **PVGIS v5_3 `PVcalc`** (EC Joint Research Centre) | none | [V] 200 on both golden lots |
 | PV reference implementation for unit tests | **pvlib 0.16.1** (local wheel) | n/a | [V] downloads |
-| Utility tariff, Los Angeles | **NREL URDB** via `api.openei.org/utility_rates` | free NREL key (`DEMO_KEY` works for probing) | [V] returns LADWP, `eiaid` 11208 |
-| State average retail price (tariff fallback) | **EIA API v2** `electricity/retail-sales` | free EIA key, `EIA_API_KEY` | [V] 200 for TX and CA, commercial and residential |
+| Retail electricity price, **all three golden properties** | **EIA API v2** `electricity/retail-sales`, state average | free EIA key, `EIA_API_KEY` | [V] 200 for TX and CA, commercial and residential |
+| Utility tariff, Los Angeles | ~~**NREL URDB**~~ — **off the path**, see 5.1c | free NREL key (`DEMO_KEY` works for probing) | [V] returns LADWP, `eiaid` 11208, but unused |
 
 Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 
@@ -526,12 +526,59 @@ So an hour stamped `05:00` is the mean over `04:00`–`05:00`. **Anything that t
 
 Choosing `246899` over the Houston warehouse puts **both** golden properties in Los Angeles. Four consequences: [V] 2026-11-14
 
-1. **Both use the real LADWP tariff** from URDB (`eiaid` 11208), so the EIA state-average fallback is **off the demo path**. It stays implemented and documented — any Houston property still needs it, and 183 of the 274 office candidates are in Houston.
+1. ~~**Both use the real LADWP tariff** from URDB (`eiaid` 11208), so the EIA state-average fallback is **off the demo path**.~~ **Superseded 2026-11-14 by the lead** (board #6873683873): all three golden properties take the EIA state average. See 5.1c.
 2. **Both are eGRID subregion CAMX.** ZIP 90064 has prefix 900, inside the range EMI-01 confirmed for all 533 LA-area ZIPs (900–918). So `EF_avg` = **0.19504 kg CO₂e/kWh** for both, and the ERCT-versus-SRMV ambiguity that affected Houston ZIP 77080 **disappears**.
 3. **The 3.35× Texas/California price gap leaves the demo.** The weaker-Houston-economics warning below no longer applies to either golden property, though it stays true for any Houston run.
-**Resolved 2026-11-14:** a third golden property, the Houston office `234088` / `L3266YcPPvd`, was added so the Texas path keeps a demo vehicle. The demo now shows both states — LADWP and CAMX on the LA house and LA office, and the Texas price, ERCT 0.33413, the Texas documents and the Texas C-PACE route on the Houston office. The EIA state-average fallback is therefore **back on the demo path** for that property, and the 3.35× price gap becomes a visible, honest contrast between the two offices rather than a hidden surprise. Items 1–3 above still describe the two Los Angeles properties.
+**Resolved 2026-11-14:** a third golden property, the Houston office `234088` / `L3266YcPPvd`, was added so the Texas path keeps a demo vehicle. The demo now shows both states — the California price and CAMX on the LA house and LA office, and the Texas price, ERCT 0.33413, the Texas documents and the Texas C-PACE route on the Houston office. The EIA state-average fallback is therefore **back on the demo path** for that property, and the 3.35× price gap becomes a visible, honest contrast between the two offices rather than a hidden surprise. Items 1–3 above still describe the two Los Angeles properties.
 
 4. **~~Texas now has no demo vehicle.~~** `specs/legal/texas.md`, the Texas documents 2–6 and the Texas PACE Act route in `SPEC.md` §6.6 have no golden property to run against, while California does. That is a real cost of this choice: either accept that Texas is specified but not demonstrated, or add a Houston office as a third property. Flagged, not decided — candidates are in §3.3.
+
+### 5.1c One price source for all three properties — the lead's decision
+
+**Decided 2026-11-14 by @yalexie1 (lead), board #6873683873.** Every golden property
+takes its electricity price from the **EIA state average**, not from a looked-up
+utility schedule:
+
+| Property | State | Sector | Price | `FetchRecord` |
+|---|---|---|---|---|
+| LA house `zvKHR9DHNjJ` | CA | RES | **0.2975** USD/kWh | `tariff / fallback` |
+| LA office `jfiEvosX974` | CA | COM | **0.3002** USD/kWh | `tariff / fallback` |
+| Houston office `L3266YcPPvd` | TX | COM | **0.0896** USD/kWh | `tariff / fallback` |
+
+`Tariff.source` names EIA with the state, sector and period, and the `fallback`
+record sits beside it, so no reader mistakes a state average for the building's
+retail contract. **LADWP is unchanged as the utility** for net metering, the LADWP
+rebates and eGRID CAMX — the decision is about where the *price* comes from.
+
+**URDB stays off the path. My call, and the reasons:** [V] 2026-11-14
+
+1. **It cannot serve all three properties.** URDB returns 0 rates at the Houston
+   office for every sector filter, because ERCOT is deregulated and there is no
+   single regulated schedule to look up. So the EIA path has to exist regardless,
+   and one sourcing path for three properties beats two.
+2. **The contract carries a single marginal price.**
+   `Tariff.electricity_usd_per_kwh` is one number, so a URDB time-of-use schedule
+   has to be flattened to an average anyway. That flattening is itself an
+   assumption, and it is less traceable than "EIA, CA, COM, 2026-08".
+3. It remains implemented-adjacent and documented here, so it is a half-hour of work
+   if the finance lane later wants a real LADWP schedule and the contract grows a
+   place to put one.
+
+**`Tariff.utility` is a separate, open question.** [P] It currently reads
+`CA state average (RES)`, not `LADWP`, and the easy fix is unsafe: resolving the
+utility from the CoStar `City` field would repeat the mistake the PACE work already
+caught, where `cityId` 5316 "Houston" included a property that is **not** in the
+incorporated city. LADWP serves the city of Los Angeles while surrounding
+unincorporated county is SCE territory, so the same trap applies. Doing it properly
+means the Census incorporated-place lookup that answered the PACE question — which
+is cheap, but whether `utility` must literally read `LADWP` depends on how the
+analysis and legal lanes key the rebates off it. Raised with the lead; not guessed
+at here.
+
+**`Tariff.export_regime` is now set**, which it was not before: `net_metering` for
+California and `none` for Texas. This is the contract's own rule — the field's
+comment reads "None where no export price is mandated (Texas)" — and ERCOT mandates
+no export compensation, so leaving it unset was losing data the schema asked for.
 
 ### 5.2 What is blocked, and the caveats
 
@@ -549,7 +596,7 @@ Choosing `246899` over the Houston warehouse puts **both** golden properties in 
 
   **EIA returns numeric fields as JSON strings** — `"price": "8.96"` — so an `isinstance(v, (int, float))` guard silently rejects every real response. A hand-written fixture using a float will not catch it: that is exactly what happened here, and only the live test found it. [V] 2026-11-14
 
-  **This is a state monthly average, not the building's actual retail contract.** In deregulated ERCOT the real price varies widely by retail plan, so the office `Tariff` must carry `source` naming EIA with the state, sector and period, and a `FetchRecord{layer: "tariff", status: "fallback"}` beside it. It is defensible and traceable; it is not a lookup of that building's tariff. The LA home flow still uses the real LADWP rate from URDB.
+  **This is a state monthly average, not the building's actual retail contract.** In deregulated ERCOT the real price varies widely by retail plan, so the office `Tariff` must carry `source` naming EIA with the state, sector and period, and a `FetchRecord{layer: "tariff", status: "fallback"}` beside it. It is defensible and traceable; it is not a lookup of that building's tariff. As of the lead's decision below, **every** golden property is sourced this way, not just the Houston one.
 
   **One consequence worth stating before anyone is surprised by it.** Texas commercial power is **8.96 ¢/kWh against California commercial at 30.02 — a factor of 3.35**. Since every retrofit's dollar saving is energy saved times price, the Houston office will show markedly worse payback, NPV and SIR than the Los Angeles house for identical physics. That is a real result, not a bug, and it is exactly the sort of thing the C-PACE route in `SPEC.md` §6.6 exists to address. The demo script should not treat a weak office result as a failure.
 - **Emission factors: eGRID2023 is the current edition** (the EPA page also still references eGRID2022). The relevant subregions are **CAMX** for Los Angeles and **ERCT** for Houston. **The factor values have not been opened**, and per the double-check protocol they are therefore **unverified — do not hardcode them from memory.** The data file must be read before any CO₂ figure is computed. [P]
@@ -685,7 +732,7 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Search makes no network call | `socket.socket.connect` patched to raise | 2026-11-14 | first call 0.069 s, second 0.006 s, no connection attempted |
 | Live bundle after D7 | all three golden, `refresh=True` | 2026-11-14 | 2.2–2.9 s; names now `Executive Tower`, `5836 La Mirada Avenue`, `2100 West Loop South` |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
-| NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; open blocker |
+| NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; resolved by the lead's EIA decision, 5.1c |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |
 | EPA eGRID factors | page only | 2026-11-14 | eGRID2023 current; **values not opened, unverified** |
 | EIA API v2 retail price | live, TX + CA, both sectors | 2026-11-14 | 200; TX com 8.96, TX res 15.91, CA com 30.02, CA res 29.75 ¢/kWh (2026-08) |

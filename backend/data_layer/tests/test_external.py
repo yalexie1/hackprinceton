@@ -150,6 +150,30 @@ def test_cents_conversion_on_a_second_state(monkeypatch):
     assert tariff.electricity_usd_per_kwh == pytest.approx(0.2975)
 
 
+def test_export_regime_follows_the_state(monkeypatch):
+    """The contract documents `export_regime` as "None where no export price is
+    mandated (Texas)". California mandates one, ERCOT does not, and leaving the field
+    unset discarded something the schema asked for."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    ca, _ = ex.get_tariff("CA", "RES", get=_getter({"api.eia.gov": EIA_CA_RES}))
+    tx, _ = ex.get_tariff("TX", "COM", get=_getter({"api.eia.gov": EIA_TX_COM}))
+    assert ca.export_regime == "net_metering"
+    assert tx.export_regime == "none"
+    # An unknown state must not be given a regime it may not have.
+    assert ex.EXPORT_REGIME.get("NY") is None
+
+
+def test_the_utility_is_never_inferred_from_a_city(monkeypatch):
+    """Deriving the utility from the CoStar `City` field would repeat the mistake the
+    PACE work caught: `cityId` 5316 "Houston" included a property outside the
+    incorporated city, and LADWP/SCE splits the same way around Los Angeles. Absent a
+    verified utility the field says what the number actually is."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    tariff, _ = ex.get_tariff("CA", "COM", get=_getter({"api.eia.gov": EIA_CA_RES}))
+    assert "state average" in tariff.utility
+    assert "LADWP" not in tariff.utility
+
+
 def test_a_known_utility_name_is_kept(monkeypatch):
     """URDB gives LADWP for the LA properties; the price still comes from EIA, and
     the fallback status still says so."""

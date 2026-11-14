@@ -1335,3 +1335,35 @@ textarea {
     max-width: calc(100vw - 24px);
   }
 }
+
+/* The audit's position, at the top of the page (#357 item 4). */
+.audit-progress {
+  margin-top: 0.75rem;
+  max-width: 28rem;
+}
+.audit-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
+}
+.audit-progress-row strong {
+  font-weight: 650;
+}
+.audit-progress-row span {
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.audit-progress progress {
+  width: 100%;
+  height: 0.5rem;
+}
+/* Waiting on a person is not progress: a bar that keeps creeping reads as "working". */
+.audit-progress.waiting .audit-progress-row strong {
+  color: #8a5a00;
+}
+.audit-progress.done .audit-progress-row strong {
+  color: #174b35;
+}

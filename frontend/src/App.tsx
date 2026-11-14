@@ -55,6 +55,7 @@ import Documents from "./components/Documents";
 import Warnings, { AuditNarrative } from "./components/Warnings";
 import Calibration from "./components/Calibration";
 import RunSource from "./components/RunSource";
+import { AuditProgress } from "./components/AuditProgress";
 import AuditTasks from "./components/AuditTasks";
 import { replayBatch } from "./lib/audit-replay";
 import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
@@ -153,6 +154,17 @@ export default function App() {
   const done = run?.status === "done";
   const office = property?.segment === "commercial";
   const budgets = demoBudgets(property?.sid);
+  // @Sri-SriPod's cold-start finding: the form defaulted to $15,000 whatever the property, so
+  // choosing a saved run with a different budget re-planned it on the spot and every screen
+  // then said "the plan has changed" and "the summary was not regenerated". A saved run's own
+  // budget is the honest default for it. Only when the property has exactly one saved budget:
+  // a sandbox with several, or a live property with none, keeps whatever the user typed.
+  useEffect(() => {
+    if (!demo || !property) return;
+    const saved = demoBudgets(property.sid);
+    if (saved.length === 1) setBudget(saved[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demo, property?.sid]);
   function clearAsync() {
     epoch.current++;
     controller.current?.abort();
@@ -921,6 +933,11 @@ export default function App() {
                     budget
                   </p>
                   <RunSource run={run} />
+                  <AuditProgress
+                    events={events}
+                    done={done}
+                    waiting={Boolean(question)}
+                  />
                 </div>
                 {done && (
                   <button
@@ -932,6 +949,65 @@ export default function App() {
                   </button>
                 )}
               </div>
+              {/* The question sits above the log: in a rehearsal it was below a
+                  screenful of events, so the one thing the run needed from a person was
+                  the last thing they saw. */}
+                {question && (
+                  <div className="question-card">
+                    <span className="eyebrow">
+                      {approval
+                        ? "YOUR APPROVAL IS REQUIRED"
+                        : "A QUICK QUESTION"}
+                    </span>
+                    <h3>{question.prompt}</h3>
+                    <p>{question.impact_note}</p>
+                    {approval && (
+                      <p className="inline-note">
+                        Draft request:{" "}
+                        {String(approval.doc_type || "document").replaceAll(
+                          "_",
+                          " ",
+                        )}{" "}
+                        · {String(approval.state || "jurisdiction pending")}
+                        <br />
+                        Scope:{" "}
+                        {Array.isArray(approval.measure_ids)
+                          ? approval.measure_ids
+                              .map(
+                                (id) =>
+                                  run.plan?.selected.find(
+                                    (item) => item.measure.measure_id === id,
+                                  )?.measure.title ||
+                                  run.measures.find(
+                                    (measure) => measure.measure_id === id,
+                                  )?.title ||
+                                  String(id),
+                              )
+                              .join(", ")
+                          : "Review the scope before approving."}
+                      </p>
+                    )}
+                    {demo && (
+                      <p className="fineprint">
+                        Demo replay: your choice advances the saved scenario.
+                        Its estimates and original answers remain unchanged.
+                      </p>
+                    )}
+                    <div>
+                      {question.choices.map((choice, i) => (
+                        <button
+                          className="secondary-button"
+                          disabled={busy}
+                          key={i}
+                          onClick={() => void answer(choice.value)}
+                        >
+                          {choice.label}
+                          <ArrowRight size={14} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               <div className="audit-grid">
                 <section className="audit-timeline">
                   <div className="card-heading">
@@ -1024,62 +1100,6 @@ export default function App() {
                       </div>
                     )}
                   </div>
-                  {question && (
-                    <div className="question-card">
-                      <span className="eyebrow">
-                        {approval
-                          ? "YOUR APPROVAL IS REQUIRED"
-                          : "A QUICK QUESTION"}
-                      </span>
-                      <h3>{question.prompt}</h3>
-                      <p>{question.impact_note}</p>
-                      {approval && (
-                        <p className="inline-note">
-                          Draft request:{" "}
-                          {String(approval.doc_type || "document").replaceAll(
-                            "_",
-                            " ",
-                          )}{" "}
-                          · {String(approval.state || "jurisdiction pending")}
-                          <br />
-                          Scope:{" "}
-                          {Array.isArray(approval.measure_ids)
-                            ? approval.measure_ids
-                                .map(
-                                  (id) =>
-                                    run.plan?.selected.find(
-                                      (item) => item.measure.measure_id === id,
-                                    )?.measure.title ||
-                                    run.measures.find(
-                                      (measure) => measure.measure_id === id,
-                                    )?.title ||
-                                    String(id),
-                                )
-                                .join(", ")
-                            : "Review the scope before approving."}
-                        </p>
-                      )}
-                      {demo && (
-                        <p className="fineprint">
-                          Demo replay: your choice advances the saved scenario.
-                          Its estimates and original answers remain unchanged.
-                        </p>
-                      )}
-                      <div>
-                        {question.choices.map((choice, i) => (
-                          <button
-                            className="secondary-button"
-                            disabled={busy}
-                            key={i}
-                            onClick={() => void answer(choice.value)}
-                          >
-                            {choice.label}
-                            <ArrowRight size={14} />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   {!busy && !done && !question && !demo && (
                     <button
                       className="secondary-button reconnect"

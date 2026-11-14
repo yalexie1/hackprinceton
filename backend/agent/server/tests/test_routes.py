@@ -1,5 +1,8 @@
 import json
+import os
 from pathlib import Path
+
+import pytest
 
 from fastapi.testclient import TestClient
 
@@ -219,3 +222,54 @@ def test_bad_patches_and_runs_that_are_not_done():
     api.get_run(run_id).status = "waiting_for_user"
     r = client.patch(f"/api/runs/{run_id}", json={"budget_usd": 100})
     assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_done"
+
+
+# ---------- documents from a recorded run, and an un-templated request (#274) ----------
+
+@pytest.fixture
+def recorded_run():
+    """A run served from a recorded live run, the path the demo uses.
+
+    `backend/agent/conftest.py` points `AGENT_DEMO_DIR` at an empty directory for every
+    agent test, so a recording has to be built here rather than relying on whatever the
+    developer happens to have in `data/runs/_demo/`. The three files are the ones
+    `api._recorded` reads, and the example's own payloads stand in for a live run's.
+    """
+    demo = Path(os.environ["AGENT_DEMO_DIR"]) / _body("house", "property_summary.json")["sid"]
+    demo.mkdir(parents=True, exist_ok=True)
+    for target, source in (("result.json", "run_result.json"),
+                           ("events.json", "run_events.json"),
+                           ("bundle.json", "property_bundle.json")):
+        (demo / target).write_text(json.dumps(_body("house", source)))
+
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    assert run_id.startswith("run_demo_"), "the recording was not picked up"
+    return run_id
+
+
+def test_a_document_from_a_recorded_run_carries_its_statutory_checklist(recorded_run):
+    """`engine.fill_template` always returns an empty checklist - running the predicates
+    is the caller's job. `LiveRun.draft` did it; the recorded-run path in `agent/api.py`
+    did not, so a document drafted from a recording came back with no checklist at all.
+    The demo serves recordings, and the checklist is what SPEC 15 step 7 shows."""
+    body = {"run_id": recorded_run, "doc_type": "retrofit_contract_residential",
+            "state": "CA", "measure_ids": ["ENV_ATTIC"], "fields": {}}
+    r = client.post(f"/api/runs/{recorded_run}/documents", json=body)
+    assert r.status_code == 200, r.text
+    draft = r.json()
+    assert len(draft["statutory_checks"]) >= 30, "the CA-R-* predicates did not run"
+    assert any(not c["satisfied"] for c in draft["statutory_checks"]), \
+        "unfilled statutory text must be reported unsatisfied"
+    assert draft["unfilled_placeholders"], "a real fill leaves visible blanks"
+
+
+def test_a_document_type_with_no_template_is_a_404_not_a_500(recorded_run):
+    """The legal door raises LookupError rather than relabelling another document. The
+    route had no handler for it, so it surfaced as an Internal Server Error."""
+    for doc_type in ("retrofit_contract_commercial", "cpace_package"):
+        body = {"run_id": recorded_run, "doc_type": doc_type, "state": "CA",
+                "measure_ids": ["ENV_ATTIC"], "fields": {}}
+        r = client.post(f"/api/runs/{recorded_run}/documents", json=body)
+        assert r.status_code == 404, f"{doc_type}: {r.status_code} {r.text[:120]}"
+        assert r.json()["error"]["code"] == "template_not_available"
+        assert doc_type in r.json()["error"]["message"]

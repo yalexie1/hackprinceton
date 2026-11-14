@@ -32,6 +32,12 @@ class Doors:
     data: Any       # module/object with the functions of workplan 3.1
     analysis: Any   # 3.2
     legal: Any      # 3.3
+    #: Why a door is not the real one, when it is not. `live.default_doors()` falls back
+    #: to `analysis_stub` if `backend.analysis.api` cannot be imported, and that swap
+    #: used to be silent: a missing numpy or shapely on the demo machine would replay
+    #: fixtures for the whole analysis lane with nothing in the run saying so, leaving
+    #: someone to debug the numbers. Set here, reported as a run warning.
+    degraded: Optional[str] = None
 
 
 def default_doors() -> Doors:

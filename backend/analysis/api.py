@@ -1,9 +1,13 @@
 """Public door of the Analysis lane (workplan 3.2). The only module other lanes import.
 
-A0 stubs: every function returns the matching example in `specs/examples/` behind the final
-signature, so the agent and server lanes can run end to end before any physics exists. A29
-replaces each body with the real modules; the signatures stay. Pure, deterministic, no
-network, no file writes.
+Every function keeps its final signature. A29 replaces the A0 stubs (which return the matching
+example in `specs/examples/`) with the real modules as they merge. Wired so far, marked REAL
+below: the model (A9 geometry, A10 registry, A11 roof), pricing and incentives (A24, A25) and
+the budget plan (A26). Still replaying fixtures, marked STUB, until their packages land:
+observe_interior (A7), run_baseline (A2, A3), evaluate_measure (A16 to A22), design_pv (A14),
+score_desk_positions (A23), cpace_scenario (A28) and sensitivity (the real one, A27, is ready
+but the stub measures do not respond to the model, so it would never ask). Pure, deterministic,
+no network, no file writes.
 
 Examples are found by scanning `specs/examples/` for folders with a `run_result.json` and
 reading the sid out of it: no folder name and no sid is hard-coded, so repointing `office/`
@@ -15,8 +19,14 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from backend.schema import (Assumption, BaselineResult, BuildingModel, FinancingScenario, Flag,
-                            Incentive, LayoutResult, MeasureId, MeasureResult, Plan,
+from backend.analysis.finance.costs import NoCostData, cost_fields, incentives_for
+from backend.analysis.finance.economics import financial_breakdown
+from backend.analysis.finance.plan import select_plan
+from backend.analysis.model.geometry import build_geometry
+from backend.analysis.model.registry import build_registry, merge_assumptions, set_model_assumption
+from backend.analysis.solar.roof import build_parametric_roof
+from backend.schema import (Assumption, BaselineResult, BuildingModel, EnergyUse, FinancingScenario,
+                            Flag, Incentive, LayoutResult, MeasureId, MeasureResult, Plan,
                             PropertyBundle, PropertySummary, Question, Ranged, Role, RunRequest,
                             SolarDesign, Source, UtilityBills)
 
@@ -60,32 +70,32 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
     return list(m.assumptions), list(m.flags)
 
 
-# ---------- S4 Model ----------
+# ---------- S4 Model ----------   REAL: A10 registry, A9 geometry, A11 roof
 
 def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = [],
                          flags: list[Flag] = [],
                          overrides: dict[str, float | str | bool] = {}) -> BuildingModel:
-    model = BuildingModel.model_validate(_load(_folder(bundle.summary.sid), "building_model.json"))
-    for key, value in overrides.items():
-        model = set_assumption(model, key, value)
-    return model
+    registry = build_registry(bundle, observed, flags, overrides)
+    office = registry.building_type != "home"
+    costar = bundle.costar
+    geometry = build_geometry(bundle.matterport, bundle.vexcel, registry.assumptions,
+                              use="office" if office else "living", part_of_larger_building=office,
+                              building_stories=costar.stories if costar else None)
+    roof = (build_parametric_roof(bundle.vexcel, geometry.north_offset_deg.expected,
+                                  state=bundle.summary.state) if bundle.vexcel else None)
+    assumptions = merge_assumptions(registry.assumptions, geometry.assumptions,
+                                    roof.assumptions if roof else [])
+    return BuildingModel(
+        sid=bundle.summary.sid, bedrooms=registry.bedrooms, north_offset_deg=geometry.north_offset_deg,
+        north_source=geometry.north_source, zones=geometry.zones, surfaces=geometry.surfaces,
+        systems=registry.systems, roof_planes=list(roof.planes) if roof else [],
+        assumptions=assumptions, flags=registry.flags)
 
 
 def set_assumption(model: BuildingModel, key: str, value: float | str | bool,
                    source: Source = "user") -> BuildingModel:
     """Returns a new model; a float collapses the range to that value. The input is unchanged."""
-    out = model.model_copy(deep=True)
-    target = next((a for a in out.assumptions if a.key == key), None)
-    if target is None:
-        target = Assumption(key=key, label=key, value="", source=source, confidence=1.0)
-        out.assumptions.append(target)
-    if isinstance(value, (bool, str)):
-        target.value = value
-    else:
-        unit = target.value.unit if isinstance(target.value, Ranged) else ""
-        target.value = Ranged(low=float(value), expected=float(value), high=float(value), unit=unit)
-    target.source, target.confidence = source, 1.0
-    return out
+    return set_model_assumption(model, key, value, source)
 
 
 # ---------- S5 Baseline ----------
@@ -121,19 +131,84 @@ def score_desk_positions(bundle: PropertyBundle, model: BuildingModel,
 
 # ---------- S7 Plan ----------
 
+# Home and office columns of the SPEC 6.2 measure library.
+_HOME = ("ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE", "ROOF_COOL",
+         "HVAC_HP", "HVAC_DUCT", "DHW_HPWH", "LGT_LED", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
+_OFFICE = ("ENV_ATTIC", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE", "ROOF_COOL", "HVAC_RTU",
+           "HVAC_ECON", "LGT_LED", "LGT_CTRL", "PLUG_MGMT", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
+_FORMULAS = ["COST-01", "COST-02", "ECO-05", "ECO-06", "ECO-07", "ECO-09", "ECO-10", "ECO-11", "ECO-13",
+             "INC-40"]
+
+
 def price_measure(bundle: PropertyBundle, measure: MeasureResult) -> MeasureResult:
-    return _measure(bundle.summary.sid, measure.measure_id) or measure
+    """REAL (A24 costs, A25 economics) once the measure says how much of it there is (its
+    `params` or `solar`). Where the quantity is not in the measure yet, the stub engine's own
+    finance is kept and the measure says so; with no quantity and none to keep, `finance`
+    stays empty. A measure with no verified cost source gets `finance=None` and a warning."""
+    if not measure.applicable or measure.savings is None:
+        return measure
+    summary = bundle.summary
+    try:
+        costs = cost_fields(measure, summary)
+    except NoCostData as err:
+        if err.code == "no_quantity":
+            stub = _measure(summary.sid, measure.measure_id)
+            if stub is not None and stub.finance is not None:
+                return measure.model_copy(update={"finance": stub.finance, "warnings": [
+                    *measure.warnings, "A0 stub: finance kept from the example; the quantity to price is not in the measure yet"]})
+        return measure.model_copy(update={"finance": None, "warnings": [
+            *measure.warnings, f"{err}" if err.code == "no_quantity" else "no verified cost source; get a quote"]})
+    breakdown = financial_breakdown(
+        installed_cost_usd=costs.installed_cost_usd, cost_source=costs.cost_source,
+        net_upfront_usd=costs.net_upfront_usd, incentives=costs.incentives,
+        useful_life_years=costs.useful_life_years, annual_om_change_usd=costs.annual_om_change_usd,
+        savings=measure.savings, tariff=bundle.tariff, state=summary.state, segment=summary.segment,
+        degradation_rate=(measure.solar.degradation_rate if measure.solar else 0.0) or 0.0)
+    formulas = list(measure.formula_ids) + [f for f in _FORMULAS if f not in measure.formula_ids]
+    return measure.model_copy(update={"finance": breakdown, "formula_ids": formulas,
+                                      "warnings": [*measure.warnings, *costs.notes]})
 
 
 def lookup_incentives(measure_id: MeasureId, summary: PropertySummary) -> list[Incentive]:
-    found = _measure(summary.sid, measure_id)
-    return list(found.finance.incentives) if found and found.finance else []
+    """REAL (A24). The measure's parameters come from the stub engine's result until A16."""
+    found = _measure(summary.sid, measure_id) or MeasureResult(measure_id=measure_id, title=measure_id,
+                                                               applicable=True)
+    return incentives_for(found, summary)
 
 
 def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
-    name = "plan_tenant.json" if request.role == "tenant" else "plan.json"
-    plan = Plan.model_validate(_load(_folder(bundle.summary.sid), name))
-    return plan.model_copy(update={"budget_usd": request.budget_usd})
+    """REAL algorithm (A26, SPEC 6.5) over the stub engine's measures priced by A24 and A25.
+    The state is the model plus the measures chosen so far; the stub engine does not yet change
+    its savings with the state, and `baseline_after` is the baseline less the chosen savings."""
+    columns = _HOME if model.systems.occupancy_schedule == "home" else _OFFICE
+    ids = [m for m in columns if _measure(bundle.summary.sid, m) is not None]    # the stub engine's measures
+    baseline = run_baseline(bundle, model, request.bills)
+
+    def evaluate(measure_id, state):
+        found = evaluate_measure(bundle, state[0], measure_id, request.role, request.desks_requested)
+        return price_measure(bundle, found)
+
+    def apply(state, measure):
+        return (state[0], state[1] + (measure,))
+
+    def energy(state):
+        return _after(baseline.annual, [m.savings for m in state[1]])
+
+    return select_plan(ids, request.role, request.budget_usd, (model, ()), evaluate, apply, energy)
+
+
+def _after(base: EnergyUse, savings: list[EnergyUse]) -> EnergyUse:
+    """Annual use less the chosen measures' expected savings (an interim stand-in for simulating
+    the changed model, A3)."""
+    def minus(r: Ranged, parts: list[Ranged]) -> Ranged:
+        cut = sum(p.expected for p in parts)
+        low, expected, high = (max(0.0, round(x - cut, 2)) for x in (r.low, r.expected, r.high))
+        return Ranged(low=low, expected=expected, high=high, unit=r.unit)
+    return EnergyUse(
+        electricity_kwh=minus(base.electricity_kwh, [s.electricity_kwh for s in savings]),
+        gas_kwh=minus(base.gas_kwh, [s.gas_kwh for s in savings]),
+        cost_usd=minus(base.cost_usd, [s.cost_usd for s in savings]),
+        co2_kg=minus(base.co2_kg, [s.co2_kg for s in savings]))
 
 
 def cpace_scenario(bundle: PropertyBundle, measure: MeasureResult) -> FinancingScenario:

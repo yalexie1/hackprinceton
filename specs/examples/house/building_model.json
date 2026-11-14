@@ -818,29 +818,31 @@
           "label": "roof vent",
           "confidence": 0.33,
           "image_id": "ortho-1",
-          "bbox_wkt": "POLYGON((-118.3172217 34.0935206, -118.3172220 34.0935242, -118.3172263 34.0935239, -118.3172261 34.0935203, -118.3172217 34.0935206))",
+          "bbox_wkt": "POLYGON((-118.3172263 34.0935203, -118.3172263 34.0935242, -118.3172217 34.0935242, -118.3172217 34.0935203, -118.3172263 34.0935203))",
           "pixel_bbox": [
-            645,
-            752,
-            6,
-            6
+            502,
+            724,
+            7,
+            7
           ],
-          "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det05.png",
-          "mask_wkt": "POLYGON((-118.3172229 34.0935214, -118.3172230 34.0935232, -118.3172252 34.0935231, -118.3172251 34.0935213, -118.3172229 34.0935214))"
+          "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det11.png",
+          "mask_wkt": null,
+          "mask_area_m2": 0.1
         },
         {
           "label": "tree",
           "confidence": 0.47,
           "image_id": "ortho-1",
-          "bbox_wkt": "POLYGON((-118.3172049 34.0934410, -118.3172076 34.0934770, -118.3172563 34.0934745, -118.3172536 34.0934385, -118.3172049 34.0934410))",
+          "bbox_wkt": "POLYGON((-118.3172563 34.0934385, -118.3172563 34.0934770, -118.3172049 34.0934770, -118.3172049 34.0934385, -118.3172563 34.0934385))",
           "pixel_bbox": [
-            608,
-            822,
-            63,
-            57
+            457,
+            809,
+            77,
+            69
           ],
-          "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det06.png",
-          "mask_wkt": "POLYGON((-118.3172060 34.0934419, -118.3172086 34.0934761, -118.3172551 34.0934736, -118.3172526 34.0934395, -118.3172060 34.0934419))"
+          "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det12.png",
+          "mask_wkt": null,
+          "mask_area_m2": 11.8
         }
       ],
       "obstruction_counts": {
@@ -1306,13 +1308,33 @@
         }
       ],
       "user_editable": true
+    },
+    {
+      "key": "tariff.electricity_usd_per_kwh",
+      "label": "Electricity price",
+      "value": {
+        "low": 0.2692,
+        "expected": 0.2975,
+        "high": 0.3258,
+        "unit": "USD/kWh"
+      },
+      "source": "published_default",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "data-integration 5.1c",
+          "note": "EIA California residential average for August 2026, 29.75 cents; the range is symmetric, half-width 2.83 cents, the gap to the year-to-date average 32.58 cents in the same EIA tables (physics 04 TAR-06 check values)"
+        }
+      ],
+      "user_editable": true
     }
   ],
   "flags": [
     {
       "key": "electrical.service",
-      "status": "unknown",
-      "message": "Main panel not visible in any panorama; two-prong outlets seen. A service upgrade may be needed for solar.",
+      "status": "likely_upgrade",
+      "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
       "evidence": [
         {
           "kind": "pano",
@@ -1321,8 +1343,8 @@
         }
       ],
       "added_cost_usd": {
-        "low": 0.0,
-        "expected": 1500.0,
+        "low": 2250.0,
+        "expected": 3000.0,
         "high": 4500.0,
         "unit": "USD"
       }

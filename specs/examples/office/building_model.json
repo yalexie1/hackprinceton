@@ -865,9 +865,9 @@
       "key": "tariff.electricity_usd_per_kwh",
       "label": "Electricity price",
       "value": {
-        "low": 0.19,
-        "expected": 0.22,
-        "high": 0.26,
+        "low": 0.2696,
+        "expected": 0.3002,
+        "high": 0.3308,
         "unit": "USD/kWh"
       },
       "source": "published_default",
@@ -875,8 +875,8 @@
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "TAR-01",
-          "note": "LADWP commercial schedule from URDB; which schedule applies and the flattening of time-of-use prices set the range; the numbers in this example are illustrative"
+          "ref": "data-integration 5.1c",
+          "note": "EIA California commercial average for August 2026, 30.02 cents; the range is symmetric, half-width 3.06 cents, the gap to the year-to-date average 26.96 cents in the same EIA tables (physics 04 TAR-06 check values)"
         }
       ],
       "user_editable": true

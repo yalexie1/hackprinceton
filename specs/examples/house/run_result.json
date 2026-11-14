@@ -851,29 +851,31 @@
             "label": "roof vent",
             "confidence": 0.33,
             "image_id": "ortho-1",
-            "bbox_wkt": "POLYGON((-118.3172217 34.0935206, -118.3172220 34.0935242, -118.3172263 34.0935239, -118.3172261 34.0935203, -118.3172217 34.0935206))",
+            "bbox_wkt": "POLYGON((-118.3172263 34.0935203, -118.3172263 34.0935242, -118.3172217 34.0935242, -118.3172217 34.0935203, -118.3172263 34.0935203))",
             "pixel_bbox": [
-              645,
-              752,
-              6,
-              6
+              502,
+              724,
+              7,
+              7
             ],
-            "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det05.png",
-            "mask_wkt": "POLYGON((-118.3172229 34.0935214, -118.3172230 34.0935232, -118.3172252 34.0935231, -118.3172251 34.0935213, -118.3172229 34.0935214))"
+            "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det11.png",
+            "mask_wkt": null,
+            "mask_area_m2": 0.1
           },
           {
             "label": "tree",
             "confidence": 0.47,
             "image_id": "ortho-1",
-            "bbox_wkt": "POLYGON((-118.3172049 34.0934410, -118.3172076 34.0934770, -118.3172563 34.0934745, -118.3172536 34.0934385, -118.3172049 34.0934410))",
+            "bbox_wkt": "POLYGON((-118.3172563 34.0934385, -118.3172563 34.0934770, -118.3172049 34.0934770, -118.3172049 34.0934385, -118.3172563 34.0934385))",
             "pixel_bbox": [
-              608,
-              822,
-              63,
-              57
+              457,
+              809,
+              77,
+              69
             ],
-            "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det06.png",
-            "mask_wkt": "POLYGON((-118.3172060 34.0934419, -118.3172086 34.0934761, -118.3172551 34.0934736, -118.3172526 34.0934395, -118.3172060 34.0934419))"
+            "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det12.png",
+            "mask_wkt": null,
+            "mask_area_m2": 11.8
           }
         ],
         "obstruction_counts": {
@@ -1339,13 +1341,33 @@
           }
         ],
         "user_editable": true
+      },
+      {
+        "key": "tariff.electricity_usd_per_kwh",
+        "label": "Electricity price",
+        "value": {
+          "low": 0.2692,
+          "expected": 0.2975,
+          "high": 0.3258,
+          "unit": "USD/kWh"
+        },
+        "source": "published_default",
+        "confidence": 0.4,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "data-integration 5.1c",
+            "note": "EIA California residential average for August 2026, 29.75 cents; the range is symmetric, half-width 2.83 cents, the gap to the year-to-date average 32.58 cents in the same EIA tables (physics 04 TAR-06 check values)"
+          }
+        ],
+        "user_editable": true
       }
     ],
     "flags": [
       {
         "key": "electrical.service",
-        "status": "unknown",
-        "message": "Main panel not visible in any panorama; two-prong outlets seen. A service upgrade may be needed for solar.",
+        "status": "likely_upgrade",
+        "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
         "evidence": [
           {
             "kind": "pano",
@@ -1354,8 +1376,8 @@
           }
         ],
         "added_cost_usd": {
-          "low": 0.0,
-          "expected": 1500.0,
+          "low": 2250.0,
+          "expected": 3000.0,
           "high": 4500.0,
           "unit": "USD"
         }
@@ -1415,9 +1437,9 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 1695.7,
-        "expected": 1912.0,
-        "high": 2197.11,
+        "low": 1868.72,
+        "expected": 2159.0,
+        "high": 2521.04,
         "unit": "USD"
       },
       "co2_kg": {
@@ -1501,9 +1523,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 886.86,
-          "expected": 942.08,
-          "high": 979.55,
+          "low": 995.81,
+          "expected": 1121.07,
+          "high": 1236.66,
           "unit": "USD"
         },
         "co2_kg": {
@@ -1550,30 +1572,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 886.86,
-          "expected": 942.08,
-          "high": 979.55,
+          "low": 995.81,
+          "expected": 1121.07,
+          "high": 1236.66,
           "unit": "USD"
         },
         "annual_om_change_usd": 75.27,
         "useful_life_years": 25,
         "simple_payback_years": {
-          "low": 6.62,
-          "expected": 10.42,
-          "high": 13.0,
+          "low": 5.39,
+          "expected": 8.63,
+          "high": 11.0,
           "unit": "years"
         },
-        "discounted_payback_years": 13.5,
+        "discounted_payback_years": 10.6,
         "npv_usd": {
-          "low": 2036.69,
-          "expected": 4847.51,
-          "high": 8639.12,
+          "low": 4237.51,
+          "expected": 7733.31,
+          "high": 12077.32,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": 384.17,
-        "sir": 1.537,
-        "irr": 0.0749,
-        "airr": 0.0479,
+        "npv_sensitivity_usd": 2339.55,
+        "sir": 1.856,
+        "irr": 0.0985,
+        "airr": 0.0558,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0018,
         "gas_escalation": -0.0047,
@@ -1587,9 +1609,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 811.59,
-              "expected": 866.81,
-              "high": 904.28,
+              "low": 920.54,
+              "expected": 1045.8,
+              "high": 1161.39,
               "unit": "USD"
             },
             "program_sir": null,
@@ -1602,8 +1624,8 @@
       "flags": [
         {
           "key": "electrical.service",
-          "status": "unknown",
-          "message": "Main panel not visible in any panorama; two-prong outlets seen. A service upgrade may be needed for solar.",
+          "status": "likely_upgrade",
+          "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
           "evidence": [
             {
               "kind": "pano",
@@ -1612,8 +1634,8 @@
             }
           ],
           "added_cost_usd": {
-            "low": 0.0,
-            "expected": 1500.0,
+            "low": 2250.0,
+            "expected": 3000.0,
             "high": 4500.0,
             "unit": "USD"
           }
@@ -1660,7 +1682,7 @@
           "x": 0.3,
           "y": 7.7,
           "z": 0.4,
-          "label": "Two-prong outlet (electrical service unknown)"
+          "label": "Two-prong outlet (service upgrade likely)"
         }
       ],
       "evidence": [
@@ -1737,8 +1759,8 @@
         "degradation_rate": 0.005,
         "electrical": {
           "key": "electrical.service",
-          "status": "unknown",
-          "message": "Main panel not visible in any panorama; two-prong outlets seen. A service upgrade may be needed for solar.",
+          "status": "likely_upgrade",
+          "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
           "evidence": [
             {
               "kind": "pano",
@@ -1747,8 +1769,8 @@
             }
           ],
           "added_cost_usd": {
-            "low": 0.0,
-            "expected": 1500.0,
+            "low": 2250.0,
+            "expected": 3000.0,
             "high": 4500.0,
             "unit": "USD"
           }
@@ -1798,7 +1820,7 @@
         ]
       },
       "warnings": [
-        "Electrical service size is unknown: a service upgrade could add 0 to 4,500 USD, which is not in the installed cost.",
+        "Electrical service is likely to need an upgrade: it could add 2,250 to 4,500 USD, which is not in the installed cost.",
         "Net metering is modelled as steady-state annual netting at the energy price; fixed and minimum charges are never offset.",
         "Shading was computed by ray casting against the splat, so the 3 percent default allowance is not applied; the far horizon is not included."
       ]
@@ -1827,9 +1849,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 106.47,
-          "expected": 152.1,
-          "high": 197.73,
+          "low": 114.95,
+          "expected": 165.07,
+          "high": 215.19,
           "unit": "USD"
         },
         "co2_kg": {
@@ -1881,30 +1903,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 106.47,
-          "expected": 152.1,
-          "high": 197.73,
+          "low": 114.95,
+          "expected": 165.07,
+          "high": 215.19,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 25,
         "simple_payback_years": {
-          "low": 9.81,
-          "expected": 14.64,
-          "high": 24.37,
+          "low": 9.02,
+          "expected": 13.49,
+          "high": 22.52,
           "unit": "years"
         },
-        "discounted_payback_years": 20.5,
+        "discounted_payback_years": 18.2,
         "npv_usd": {
-          "low": -1069.94,
-          "expected": 321.67,
-          "high": 1299.63,
+          "low": -896.68,
+          "expected": 542.92,
+          "high": 1590.2,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -510.61,
-        "sir": 1.144,
-        "irr": 0.0427,
-        "airr": 0.0356,
+        "npv_sensitivity_usd": -362.05,
+        "sir": 1.244,
+        "irr": 0.051,
+        "airr": 0.039,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0018,
         "gas_escalation": -0.0047,
@@ -1918,9 +1940,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 106.47,
-              "expected": 152.1,
-              "high": 197.73,
+              "low": 114.95,
+              "expected": 165.07,
+              "high": 215.19,
               "unit": "USD"
             },
             "program_sir": null,
@@ -1988,9 +2010,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 92.75,
-          "expected": 132.5,
-          "high": 165.62,
+          "low": 69.06,
+          "expected": 104.57,
+          "high": 135.56,
           "unit": "USD"
         },
         "co2_kg": {
@@ -2042,30 +2064,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 92.75,
-          "expected": 132.5,
-          "high": 165.62,
+          "low": 69.06,
+          "expected": 104.57,
+          "high": 135.56,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 55.66,
-          "expected": 101.25,
-          "high": 154.11,
+          "low": 68.81,
+          "expected": 128.3,
+          "high": 204.55,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -12975.4,
-          "expected": -8953.07,
-          "high": -3528.64,
+          "low": -13288.19,
+          "expected": -9271.51,
+          "high": -3849.32,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -9388.27,
-        "sir": 0.136,
+        "npv_sensitivity_usd": -9632.27,
+        "sir": 0.105,
         "irr": null,
-        "airr": -0.0983,
+        "airr": -0.1138,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0062,
         "gas_escalation": -0.0108,
@@ -2079,9 +2101,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 92.75,
-              "expected": 132.5,
-              "high": 165.62,
+              "low": 69.06,
+              "expected": 104.57,
+              "high": 135.56,
               "unit": "USD"
             },
             "program_sir": null,
@@ -2091,7 +2113,26 @@
           }
         ]
       },
-      "flags": [],
+      "flags": [
+        {
+          "key": "electrical.service",
+          "status": "likely_upgrade",
+          "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
+          "evidence": [
+            {
+              "kind": "pano",
+              "ref": "pano_03",
+              "note": "two-prong outlets on the bedroom wall"
+            }
+          ],
+          "added_cost_usd": {
+            "low": 2250.0,
+            "expected": 3000.0,
+            "high": 4500.0,
+            "unit": "USD"
+          }
+        }
+      ],
       "anchors": [
         {
           "room_id": "room_living",
@@ -2120,7 +2161,9 @@
       "solar": null,
       "layout": null,
       "value_uplift": null,
-      "warnings": []
+      "warnings": [
+        "The electrical service may need an upgrade for a heat pump (electrical.service is likely_upgrade)."
+      ]
     },
     {
       "measure_id": "LGT_LED",
@@ -2145,9 +2188,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 88.32,
-          "expected": 110.4,
-          "high": 132.48,
+          "low": 102.56,
+          "expected": 131.87,
+          "high": 161.18,
           "unit": "USD"
         },
         "co2_kg": {
@@ -2179,30 +2222,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 88.32,
-          "expected": 110.4,
-          "high": 132.48,
+          "low": 102.56,
+          "expected": 131.87,
+          "high": 161.18,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 10,
         "simple_payback_years": {
-          "low": 1.23,
-          "expected": 2.47,
-          "high": 3.85,
+          "low": 1.02,
+          "expected": 2.07,
+          "high": 3.26,
           "unit": "years"
         },
-        "discounted_payback_years": 2.7,
+        "discounted_payback_years": 2.2,
         "npv_usd": {
-          "low": 389.48,
-          "expected": 618.23,
-          "high": 842.97,
+          "low": 513.16,
+          "expected": 791.29,
+          "high": 1066.35,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": 463.36,
-        "sir": 3.27,
-        "irr": 0.3755,
-        "airr": 0.1596,
+        "npv_sensitivity_usd": 606.33,
+        "sir": 3.905,
+        "irr": 0.4584,
+        "airr": 0.1803,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0108,
         "gas_escalation": -0.0174,
@@ -2216,9 +2259,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 88.32,
-              "expected": 110.4,
-              "high": 132.48,
+              "low": 102.56,
+              "expected": 131.87,
+              "high": 161.18,
               "unit": "USD"
             },
             "program_sir": null,
@@ -2284,9 +2327,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 12.94,
-          "expected": 25.88,
-          "high": 38.81,
+          "low": 15.24,
+          "expected": 31.1,
+          "high": 46.95,
           "unit": "USD"
         },
         "co2_kg": {
@@ -2356,9 +2399,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": -2.85,
-          "expected": -1.9,
-          "high": -0.95,
+          "low": -0.81,
+          "expected": 0.95,
+          "high": 2.71,
           "unit": "USD"
         },
         "co2_kg": {
@@ -2409,9 +2452,9 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": -2.85,
-          "expected": -1.9,
-          "high": -0.95,
+          "low": -0.81,
+          "expected": 0.95,
+          "high": 2.71,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
@@ -2419,15 +2462,15 @@
         "simple_payback_years": null,
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -2237.31,
-          "expected": -1682.63,
-          "high": -1128.77,
+          "low": -2197.64,
+          "expected": -1641.65,
+          "high": -1086.47,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -1677.71,
-        "sir": -0.012,
+        "npv_sensitivity_usd": -1648.4,
+        "sir": 0.013,
         "irr": null,
-        "airr": null,
+        "airr": -0.1716,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0036,
         "gas_escalation": -0.007,
@@ -2441,9 +2484,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": -2.85,
-              "expected": -1.9,
-              "high": -0.95,
+              "low": -0.81,
+              "expected": 0.95,
+              "high": 2.71,
               "unit": "USD"
             },
             "program_sir": null,
@@ -2476,7 +2519,7 @@
       "layout": null,
       "value_uplift": null,
       "warnings": [
-        "Vented attic: the result is an upper bound (SPEC.md section 6.2). Even the upper bound is a net loss here, because the winter heating penalty outweighs the cooling saving."
+        "Vented attic: the result is an upper bound (SPEC.md section 6.2). Even the upper bound barely breaks even here: the winter heating penalty almost cancels the cooling saving."
       ]
     },
     {
@@ -2619,9 +2662,9 @@
               "unit": "kWh"
             },
             "cost_usd": {
-              "low": 886.86,
-              "expected": 942.08,
-              "high": 979.55,
+              "low": 995.81,
+              "expected": 1121.07,
+              "high": 1236.66,
               "unit": "USD"
             },
             "co2_kg": {
@@ -2668,30 +2711,30 @@
               "unit": "USD"
             },
             "annual_savings_usd": {
-              "low": 886.86,
-              "expected": 942.08,
-              "high": 979.55,
+              "low": 995.81,
+              "expected": 1121.07,
+              "high": 1236.66,
               "unit": "USD"
             },
             "annual_om_change_usd": 75.27,
             "useful_life_years": 25,
             "simple_payback_years": {
-              "low": 6.62,
-              "expected": 10.42,
-              "high": 13.0,
+              "low": 5.39,
+              "expected": 8.63,
+              "high": 11.0,
               "unit": "years"
             },
-            "discounted_payback_years": 13.5,
+            "discounted_payback_years": 10.6,
             "npv_usd": {
-              "low": 2036.69,
-              "expected": 4847.51,
-              "high": 8639.12,
+              "low": 4237.51,
+              "expected": 7733.31,
+              "high": 12077.32,
               "unit": "USD"
             },
-            "npv_sensitivity_usd": 384.17,
-            "sir": 1.537,
-            "irr": 0.0749,
-            "airr": 0.0479,
+            "npv_sensitivity_usd": 2339.55,
+            "sir": 1.856,
+            "irr": 0.0985,
+            "airr": 0.0558,
             "discount_rate": 0.03,
             "electricity_escalation": -0.0018,
             "gas_escalation": -0.0047,
@@ -2705,9 +2748,9 @@
                 "term_years": null,
                 "annual_payment_usd": 0.0,
                 "net_cashflow_year1_usd": {
-                  "low": 811.59,
-                  "expected": 866.81,
-                  "high": 904.28,
+                  "low": 920.54,
+                  "expected": 1045.8,
+                  "high": 1161.39,
                   "unit": "USD"
                 },
                 "program_sir": null,
@@ -2720,8 +2763,8 @@
           "flags": [
             {
               "key": "electrical.service",
-              "status": "unknown",
-              "message": "Main panel not visible in any panorama; two-prong outlets seen. A service upgrade may be needed for solar.",
+              "status": "likely_upgrade",
+              "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
               "evidence": [
                 {
                   "kind": "pano",
@@ -2730,8 +2773,8 @@
                 }
               ],
               "added_cost_usd": {
-                "low": 0.0,
-                "expected": 1500.0,
+                "low": 2250.0,
+                "expected": 3000.0,
                 "high": 4500.0,
                 "unit": "USD"
               }
@@ -2778,7 +2821,7 @@
               "x": 0.3,
               "y": 7.7,
               "z": 0.4,
-              "label": "Two-prong outlet (electrical service unknown)"
+              "label": "Two-prong outlet (service upgrade likely)"
             }
           ],
           "evidence": [
@@ -2855,8 +2898,8 @@
             "degradation_rate": 0.005,
             "electrical": {
               "key": "electrical.service",
-              "status": "unknown",
-              "message": "Main panel not visible in any panorama; two-prong outlets seen. A service upgrade may be needed for solar.",
+              "status": "likely_upgrade",
+              "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
               "evidence": [
                 {
                   "kind": "pano",
@@ -2865,8 +2908,8 @@
                 }
               ],
               "added_cost_usd": {
-                "low": 0.0,
-                "expected": 1500.0,
+                "low": 2250.0,
+                "expected": 3000.0,
                 "high": 4500.0,
                 "unit": "USD"
               }
@@ -2916,7 +2959,7 @@
             ]
           },
           "warnings": [
-            "Electrical service size is unknown: a service upgrade could add 0 to 4,500 USD, which is not in the installed cost.",
+            "Electrical service is likely to need an upgrade: it could add 2,250 to 4,500 USD, which is not in the installed cost.",
             "Net metering is modelled as steady-state annual netting at the energy price; fixed and minimum charges are never offset.",
             "Shading was computed by ray casting against the splat, so the 3 percent default allowance is not applied; the far horizon is not included.",
             "may exceed budget"
@@ -2950,9 +2993,9 @@
               "unit": "kWh"
             },
             "cost_usd": {
-              "low": 88.32,
-              "expected": 110.4,
-              "high": 132.48,
+              "low": 102.56,
+              "expected": 131.87,
+              "high": 161.18,
               "unit": "USD"
             },
             "co2_kg": {
@@ -2984,30 +3027,30 @@
               "unit": "USD"
             },
             "annual_savings_usd": {
-              "low": 88.32,
-              "expected": 110.4,
-              "high": 132.48,
+              "low": 102.56,
+              "expected": 131.87,
+              "high": 161.18,
               "unit": "USD"
             },
             "annual_om_change_usd": 0.0,
             "useful_life_years": 10,
             "simple_payback_years": {
-              "low": 1.23,
-              "expected": 2.47,
-              "high": 3.85,
+              "low": 1.02,
+              "expected": 2.07,
+              "high": 3.26,
               "unit": "years"
             },
-            "discounted_payback_years": 2.7,
+            "discounted_payback_years": 2.2,
             "npv_usd": {
-              "low": 389.48,
-              "expected": 618.23,
-              "high": 842.97,
+              "low": 513.16,
+              "expected": 791.29,
+              "high": 1066.35,
               "unit": "USD"
             },
-            "npv_sensitivity_usd": 463.36,
-            "sir": 3.27,
-            "irr": 0.3755,
-            "airr": 0.1596,
+            "npv_sensitivity_usd": 606.33,
+            "sir": 3.905,
+            "irr": 0.4584,
+            "airr": 0.1803,
             "discount_rate": 0.03,
             "electricity_escalation": -0.0108,
             "gas_escalation": -0.0174,
@@ -3021,9 +3064,9 @@
                 "term_years": null,
                 "annual_payment_usd": 0.0,
                 "net_cashflow_year1_usd": {
-                  "low": 88.32,
-                  "expected": 110.4,
-                  "high": 132.48,
+                  "low": 102.56,
+                  "expected": 131.87,
+                  "high": 161.18,
                   "unit": "USD"
                 },
                 "program_sir": null,
@@ -3092,9 +3135,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 106.65,
-            "expected": 152.36,
-            "high": 198.07,
+            "low": 115.13,
+            "expected": 165.33,
+            "high": 215.53,
             "unit": "USD"
           },
           "co2_kg": {
@@ -3146,30 +3189,30 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 106.65,
-            "expected": 152.36,
-            "high": 198.07,
+            "low": 115.13,
+            "expected": 165.33,
+            "high": 215.53,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
           "useful_life_years": 25,
           "simple_payback_years": {
-            "low": 9.8,
-            "expected": 14.61,
-            "high": 24.33,
+            "low": 9.01,
+            "expected": 13.47,
+            "high": 22.48,
             "unit": "years"
           },
-          "discounted_payback_years": 20.4,
+          "discounted_payback_years": 18.2,
           "npv_usd": {
-            "low": -1066.46,
-            "expected": 325.96,
-            "high": 1305.12,
+            "low": -893.25,
+            "expected": 547.21,
+            "high": 1595.72,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": -507.71,
-          "sir": 1.146,
-          "irr": 0.0429,
-          "airr": 0.0356,
+          "npv_sensitivity_usd": -359.16,
+          "sir": 1.246,
+          "irr": 0.0512,
+          "airr": 0.0391,
           "discount_rate": 0.03,
           "electricity_escalation": -0.0018,
           "gas_escalation": -0.0047,
@@ -3183,9 +3226,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 106.65,
-                "expected": 152.36,
-                "high": 198.07,
+                "low": 115.13,
+                "expected": 165.33,
+                "high": 215.53,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -3253,9 +3296,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 93.7,
-            "expected": 133.85,
-            "high": 167.31,
+            "low": 69.81,
+            "expected": 105.68,
+            "high": 136.98,
             "unit": "USD"
           },
           "co2_kg": {
@@ -3307,30 +3350,30 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 93.7,
-            "expected": 133.85,
-            "high": 167.31,
+            "low": 69.81,
+            "expected": 105.68,
+            "high": 136.98,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
           "useful_life_years": 15,
           "simple_payback_years": {
-            "low": 55.1,
-            "expected": 100.23,
-            "high": 152.55,
+            "low": 68.09,
+            "expected": 126.95,
+            "high": 202.36,
             "unit": "years"
           },
           "discounted_payback_years": null,
           "npv_usd": {
-            "low": -12961.46,
-            "expected": -8938.66,
-            "high": -3513.97,
+            "low": -13276.89,
+            "expected": -9259.84,
+            "high": -3837.44,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": -9377.16,
-          "sir": 0.137,
+          "npv_sensitivity_usd": -9623.26,
+          "sir": 0.106,
           "irr": null,
-          "airr": -0.0978,
+          "airr": -0.1131,
           "discount_rate": 0.03,
           "electricity_escalation": -0.0062,
           "gas_escalation": -0.0108,
@@ -3344,9 +3387,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 93.7,
-                "expected": 133.85,
-                "high": 167.31,
+                "low": 69.81,
+                "expected": 105.68,
+                "high": 136.98,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -3356,7 +3399,26 @@
             }
           ]
         },
-        "flags": [],
+        "flags": [
+          {
+            "key": "electrical.service",
+            "status": "likely_upgrade",
+            "message": "Main panel not visible in any panorama; two-prong outlets seen, so the wiring and service are likely original: a service upgrade is likely needed for solar. Added cost: project judgement: physics 04 has no COST row for a service upgrade; 3,000 USD central with the COST-00 range rule (0.75 x, 1.5 x).",
+            "evidence": [
+              {
+                "kind": "pano",
+                "ref": "pano_03",
+                "note": "two-prong outlets on the bedroom wall"
+              }
+            ],
+            "added_cost_usd": {
+              "low": 2250.0,
+              "expected": 3000.0,
+              "high": 4500.0,
+              "unit": "USD"
+            }
+          }
+        ],
         "anchors": [
           {
             "room_id": "room_living",
@@ -3385,7 +3447,155 @@
         "solar": null,
         "layout": null,
         "value_uplift": null,
-        "warnings": []
+        "warnings": [
+          "The electrical service may need an upgrade for a heat pump (electrical.service is likely_upgrade)."
+        ]
+      },
+      {
+        "measure_id": "ROOF_COOL",
+        "title": "Cool roof coating",
+        "applicable": true,
+        "not_applicable_reason": null,
+        "description": "Reflective coating on the roof to cut solar heat gain.",
+        "params": {
+          "absorptance_after": 0.3
+        },
+        "savings": {
+          "electricity_kwh": {
+            "low": 30.0,
+            "expected": 60.0,
+            "high": 90.0,
+            "unit": "kWh"
+          },
+          "gas_kwh": {
+            "low": -390.0,
+            "expected": -260.0,
+            "high": -130.0,
+            "unit": "kWh"
+          },
+          "cost_usd": {
+            "low": -0.81,
+            "expected": 0.95,
+            "high": 2.71,
+            "unit": "USD"
+          },
+          "co2_kg": {
+            "low": -53.13,
+            "expected": -35.42,
+            "high": -17.71,
+            "unit": "kg"
+          },
+          "co2_nonbaseload_kg": {
+            "low": -31.44,
+            "expected": -20.96,
+            "high": -10.48,
+            "unit": "kg"
+          }
+        },
+        "finance": {
+          "installed_cost_usd": {
+            "low": 1109.18,
+            "expected": 1662.95,
+            "high": 2217.54,
+            "unit": "USD"
+          },
+          "cost_source": "EPA-2008 section 3.3 (2006 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 20.27 USD per m2 of roof x 82.04",
+          "incentives": [
+            {
+              "name": "LADWP Consumer Rebate Program, cool roof",
+              "kind": "rebate_after_install",
+              "amount_usd": {
+                "low": 0.0,
+                "expected": 0.0,
+                "high": 529.84,
+                "unit": "USD"
+              },
+              "status": "verified",
+              "eligibility": "needs_confirmation",
+              "conditions": [
+                "steep slope: 3-year SRI of 20 earns 0.20, 35 earns 0.60 USD per sq ft",
+                "CRRC-rated product",
+                "finalled building permit"
+              ],
+              "citation": "physics 04 INC-10: 0.20 or 0.60 USD per sq ft of cool roof over conditioned space, paid after installation"
+            }
+          ],
+          "net_upfront_usd": {
+            "low": 1109.18,
+            "expected": 1662.95,
+            "high": 2217.54,
+            "unit": "USD"
+          },
+          "annual_savings_usd": {
+            "low": -0.81,
+            "expected": 0.95,
+            "high": 2.71,
+            "unit": "USD"
+          },
+          "annual_om_change_usd": 0.0,
+          "useful_life_years": 20,
+          "simple_payback_years": null,
+          "discounted_payback_years": null,
+          "npv_usd": {
+            "low": -2197.64,
+            "expected": -1641.65,
+            "high": -1086.47,
+            "unit": "USD"
+          },
+          "npv_sensitivity_usd": -1648.4,
+          "sir": 0.013,
+          "irr": null,
+          "airr": -0.1716,
+          "discount_rate": 0.03,
+          "electricity_escalation": -0.0036,
+          "gas_escalation": -0.007,
+          "analysis_period_years": 20,
+          "financing": [
+            {
+              "kind": "cash",
+              "eligible": true,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": -0.81,
+                "expected": 0.95,
+                "high": 2.71,
+                "unit": "USD"
+              },
+              "program_sir": null,
+              "notes": [
+                "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+              ]
+            }
+          ]
+        },
+        "flags": [],
+        "anchors": [],
+        "evidence": [
+          {
+            "kind": "vexcel_attr",
+            "ref": "roof-characteristics.material.class"
+          },
+          {
+            "kind": "default_table",
+            "ref": "DEF-02",
+            "note": "shingle 0.85, cool roof 0.30"
+          }
+        ],
+        "formula_ids": [
+          "ENV-05",
+          "ZON-04",
+          "ECO-07",
+          "EMI-01"
+        ],
+        "solar": null,
+        "layout": null,
+        "value_uplift": null,
+        "warnings": [
+          "Vented attic: the result is an upper bound (SPEC.md section 6.2). Even the upper bound barely breaks even here: the winter heating penalty almost cancels the cooling saving."
+        ]
       }
     ],
     "skipped": [
@@ -3400,14 +3610,14 @@
         "detail": "Net upfront cost is above the whole budget; listed as financeable."
       },
       {
+        "measure_id": "ROOF_COOL",
+        "reason": "over_budget",
+        "detail": "Net upfront cost is above the budget left after rooftop solar; listed as financeable."
+      },
+      {
         "measure_id": "DHW_HPWH",
         "reason": "feasibility",
         "detail": "Flag dhw.space is blocked: the water heater is in a small closet inside the conditioned space."
-      },
-      {
-        "measure_id": "ROOF_COOL",
-        "reason": "no_savings",
-        "detail": "The heating penalty outweighs the cooling saving, even as an upper bound."
       },
       {
         "measure_id": "CTRL_TSTAT",
@@ -3427,9 +3637,9 @@
       "unit": "USD"
     },
     "total_annual_savings_usd": {
-      "low": 993.02,
-      "expected": 1052.48,
-      "high": 1095.98,
+      "low": 1114.1,
+      "expected": 1252.94,
+      "high": 1383.13,
       "unit": "USD"
     },
     "total_co2_kg": {
@@ -3452,9 +3662,9 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 638.89,
-        "expected": 859.52,
-        "high": 1150.77,
+        "low": 592.24,
+        "expected": 906.06,
+        "high": 1290.28,
         "unit": "USD"
       },
       "co2_kg": {
@@ -3490,13 +3700,13 @@
           "value": null
         }
       ],
-      "impact_note": "A service upgrade could add up to $4,500 to rooftop solar. At the high end, solar no longer fits the budget and the selected measures change."
+      "impact_note": "A service upgrade is likely and could add $2,250 to $4,500 to rooftop solar. It is not in the installed cost; at the high end, solar no longer fits the budget and the selected measures change."
     }
   ],
-  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline: 5,200 kWh of electricity and 7,200 kWh of gas a year, about $1,912 (range $1,696 to $2,197).\n\nWithin the $10,000 budget the plan selects 2 measures for $9,302 upfront, saving about $1,052 a year (range $993 to $1,096). Attic insulation and a heat pump save energy too but do not fit the budget.\n\nNo federal tax credit applies to a home: the residential credits ended in 2025. LADWP rebates are paid after installation, so they do not lower the upfront cost.\n\nYou answered \"I don't know\" to the electrical panel question, so a possible service upgrade stays outside the solar cost and is flagged.\n\nOwned rooftop solar may add up to $8,600 to the home's value (expected $8,600, possibly nothing). This is not counted as a saving.\n",
+  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline: 5,200 kWh of electricity and 7,200 kWh of gas a year, about $2,159 (range $1,869 to $2,521). Electricity is priced at the EIA California residential average, not your LADWP bill.\n\nWithin the $10,000 budget the plan selects 2 measures for $9,302 upfront, saving about $1,253 a year (range $1,114 to $1,383). Attic insulation and a heat pump save energy too but do not fit the budget; a cool roof now just breaks even and does not fit either.\n\nNo federal tax credit applies to a home: the residential credits ended in 2025. LADWP rebates are paid after installation, so they do not lower the upfront cost.\n\nTwo-prong outlets and no visible panel make a service upgrade likely ($2,250 to $4,500). You answered \"I don't know\" to the electrical panel question, so the upgrade stays outside the solar cost and is flagged.\n\nOwned rooftop solar may add up to $8,600 to the home's value (expected $8,600, possibly nothing). This is not counted as a saving.\n",
   "warnings": [
     "PV_ROOF may exceed budget at the high end of its cost range.",
-    "The electrical service size is unknown (flag electrical.service).",
+    "The electrical service likely needs an upgrade for solar (flag electrical.service).",
     "Example subset: 4 of 19 rooms are modelled."
   ]
 }

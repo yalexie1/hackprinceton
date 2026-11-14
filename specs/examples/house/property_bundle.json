@@ -681,101 +681,198 @@
     "detections": [
       {
         "label": "roof",
-        "confidence": 0.7,
+        "confidence": 0.694,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.3170965 34.0934892, -118.3171003 34.0935387, -118.3171902 34.0935340, -118.3171864 34.0934845, -118.3170965 34.0934892))",
+        "bbox_wkt": "POLYGON((-118.3172939 34.0936410, -118.3172939 34.0937056, -118.3172162 34.0937056, -118.3172162 34.0936410, -118.3172939 34.0936410))",
         "pixel_bbox": [
-          689,
-          731,
-          115,
-          80
+          401,
+          398,
+          116,
+          116
         ],
         "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det01.png",
-        "mask_wkt": "POLYGON((-118.3170977 34.0934900, -118.3171013 34.0935377, -118.3171890 34.0935331, -118.3171854 34.0934854, -118.3170977 34.0934900))"
+        "mask_wkt": null,
+        "mask_area_m2": 36.5
       },
       {
         "label": "roof",
-        "confidence": 0.58,
+        "confidence": 0.483,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.3171864 34.0934845, -118.3171902 34.0935340, -118.3172877 34.0935289, -118.3172839 34.0934794, -118.3171864 34.0934845))",
+        "bbox_wkt": "POLYGON((-118.3172947 34.0934767, -118.3172947 34.0935908, -118.3170932 34.0935908, -118.3170932 34.0934767, -118.3172947 34.0934767))",
         "pixel_bbox": [
-          569,
-          738,
-          124,
-          81
+          400,
+          605,
+          300,
+          205
         ],
         "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det02.png",
-        "mask_wkt": "POLYGON((-118.3171876 34.0934853, -118.3171912 34.0935330, -118.3172865 34.0935280, -118.3172829 34.0934803, -118.3171876 34.0934853))"
+        "mask_wkt": null,
+        "mask_area_m2": 181.2
       },
       {
         "label": "roof",
-        "confidence": 0.52,
+        "confidence": 0.617,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.3171003 34.0935387, -118.3171040 34.0935881, -118.3172101 34.0935826, -118.3172064 34.0935331, -118.3171003 34.0935387))",
+        "bbox_wkt": "POLYGON((-118.3172875 34.0935316, -118.3172875 34.0935859, -118.3171842 34.0935859, -118.3171842 34.0935316, -118.3172875 34.0935316))",
         "pixel_bbox": [
-          665,
-          657,
-          135,
-          81
+          410,
+          613,
+          154,
+          98
         ],
         "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det03.png",
-        "mask_wkt": "POLYGON((-118.3171014 34.0935395, -118.3171051 34.0935872, -118.3172090 34.0935817, -118.3172054 34.0935341, -118.3171014 34.0935395))"
+        "mask_wkt": null,
+        "mask_area_m2": 49.4
       },
       {
         "label": "roof",
-        "confidence": 0.41,
+        "confidence": 0.588,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.3172064 34.0935331, -118.3172101 34.0935826, -118.3172914 34.0935783, -118.3172877 34.0935289, -118.3172064 34.0935331))",
+        "bbox_wkt": "POLYGON((-118.3171940 34.0934827, -118.3171940 34.0935359, -118.3171023 34.0935359, -118.3171023 34.0934827, -118.3171940 34.0934827))",
         "pixel_bbox": [
-          565,
-          666,
-          105,
-          79
+          550,
+          703,
+          136,
+          96
         ],
         "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det04.png",
-        "mask_wkt": "POLYGON((-118.3172075 34.0935339, -118.3172112 34.0935816, -118.3172903 34.0935775, -118.3172867 34.0935298, -118.3172075 34.0935339))"
+        "mask_wkt": null,
+        "mask_area_m2": 40.5
       },
       {
         "label": "roof",
-        "confidence": 0.36,
-        "image_id": "oriented-1",
-        "bbox_wkt": "POLYGON((-118.3170965 34.0934892, -118.3171003 34.0935387, -118.3172877 34.0935289, -118.3172839 34.0934794, -118.3170965 34.0934892))",
+        "confidence": 0.552,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.3172836 34.0934848, -118.3172836 34.0935337, -118.3171959 34.0935337, -118.3171959 34.0934848, -118.3172836 34.0934848))",
         "pixel_bbox": [
-          569,
-          731,
-          235,
+          416,
+          707,
+          131,
           88
         ],
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det05.png",
+        "mask_wkt": null,
+        "mask_area_m2": 32.5
+      },
+      {
+        "label": "roof",
+        "confidence": 0.476,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.3171901 34.0935337, -118.3171901 34.0935838, -118.3170984 34.0935838, -118.3170984 34.0935337, -118.3171901 34.0935337))",
+        "pixel_bbox": [
+          556,
+          617,
+          136,
+          90
+        ],
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det06.png",
+        "mask_wkt": null,
+        "mask_area_m2": 43.6
+      },
+      {
+        "label": "roof",
+        "confidence": 0.412,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.3172329 34.0935011, -118.3172329 34.0935664, -118.3171550 34.0935664, -118.3171550 34.0935011, -118.3172329 34.0935011))",
+        "pixel_bbox": [
+          492,
+          649,
+          116,
+          117
+        ],
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det07.png",
+        "mask_wkt": null,
+        "mask_area_m2": 22.4
+      },
+      {
+        "label": "roof",
+        "confidence": 0.367,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.3171355 34.0935446, -118.3171355 34.0935827, -118.3170848 34.0935827, -118.3170848 34.0935446, -118.3171355 34.0935446))",
+        "pixel_bbox": [
+          637,
+          619,
+          76,
+          68
+        ],
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det08.png",
+        "mask_wkt": null,
+        "mask_area_m2": 11.4
+      },
+      {
+        "label": "roof",
+        "confidence": 0.341,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.3172719 34.0935555, -118.3172719 34.0935827, -118.3172232 34.0935827, -118.3172232 34.0935555, -118.3172719 34.0935555))",
+        "pixel_bbox": [
+          434,
+          619,
+          73,
+          49
+        ],
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det09.png",
+        "mask_wkt": null,
+        "mask_area_m2": 9.1
+      },
+      {
+        "label": "roof",
+        "confidence": 0.318,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.3173011 34.0934957, -118.3173011 34.0935283, -118.3172524 34.0935283, -118.3172524 34.0934957, -118.3173011 34.0934957))",
+        "pixel_bbox": [
+          390,
+          717,
+          73,
+          59
+        ],
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det10.png",
+        "mask_wkt": null,
+        "mask_area_m2": 8.5
+      },
+      {
+        "label": "roof",
+        "confidence": 0.336,
+        "image_id": "oriented-1",
+        "bbox_wkt": "POLYGON((-118.3173011 34.0934685, -118.3173011 34.0935903, -118.3170868 34.0935903, -118.3170868 34.0934685, -118.3173011 34.0934685))",
+        "pixel_bbox": [
+          279,
+          433,
+          228,
+          156
+        ],
         "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/oriented-1_det01.png",
-        "mask_wkt": null
+        "mask_wkt": null,
+        "mask_area_m2": 165.7
       },
       {
         "label": "roof vent",
         "confidence": 0.33,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.3172217 34.0935206, -118.3172220 34.0935242, -118.3172263 34.0935239, -118.3172261 34.0935203, -118.3172217 34.0935206))",
+        "bbox_wkt": "POLYGON((-118.3172263 34.0935203, -118.3172263 34.0935242, -118.3172217 34.0935242, -118.3172217 34.0935203, -118.3172263 34.0935203))",
         "pixel_bbox": [
-          645,
-          752,
-          6,
-          6
+          502,
+          724,
+          7,
+          7
         ],
-        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det05.png",
-        "mask_wkt": "POLYGON((-118.3172229 34.0935214, -118.3172230 34.0935232, -118.3172252 34.0935231, -118.3172251 34.0935213, -118.3172229 34.0935214))"
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det11.png",
+        "mask_wkt": null,
+        "mask_area_m2": 0.1
       },
       {
         "label": "tree",
         "confidence": 0.47,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.3172049 34.0934410, -118.3172076 34.0934770, -118.3172563 34.0934745, -118.3172536 34.0934385, -118.3172049 34.0934410))",
+        "bbox_wkt": "POLYGON((-118.3172563 34.0934385, -118.3172563 34.0934770, -118.3172049 34.0934770, -118.3172049 34.0934385, -118.3172563 34.0934385))",
         "pixel_bbox": [
-          608,
-          822,
-          63,
-          57
+          457,
+          809,
+          77,
+          69
         ],
-        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det06.png",
-        "mask_wkt": "POLYGON((-118.3172060 34.0934419, -118.3172086 34.0934761, -118.3172551 34.0934736, -118.3172526 34.0934395, -118.3172060 34.0934419))"
+        "mask_png_path": "data/cache/zvKHR9DHNjJ/vexcel/masks/ortho-1_det12.png",
+        "mask_wkt": null,
+        "mask_area_m2": 11.8
       }
     ]
   },
@@ -813,12 +910,12 @@
   },
   "tariff": {
     "utility": "LADWP (electricity), SoCalGas (gas)",
-    "electricity_usd_per_kwh": 0.25,
+    "electricity_usd_per_kwh": 0.2975,
     "gas_usd_per_kwh": 0.065,
     "export_usd_per_kwh": null,
     "export_regime": "net_metering",
     "fixed_usd_per_month": 12.0,
-    "source": "ILLUSTRATIVE flat prices, not a retrieved LADWP schedule. Under net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03).",
+    "source": "Electricity: EIA state average retail price, CA RES, 2026-08 (0.2975 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas and the fixed charge: ILLUSTRATIVE, no source opened.",
     "retrieved": "2026-11-14"
   },
   "provenance": [
@@ -868,7 +965,7 @@
       "layer": "vexcel",
       "what": "ortho, elements/detect (SAM 3, label 'roof', threshold 0.3)",
       "status": "ok",
-      "detail": "roof fragments, not planes; obstruction counts come from the precomputed attributes"
+      "detail": "roof fragments, not planes: 10 roof masks on ortho-1, nested (most sit wholly inside the largest one's box); the largest single mask, 181.2 m2, is within 5 % of the 190.39 m2 footprint, and the most confident detection (0.694) is the second structure. Masks are never summed; mask_wkt is left unset and mask_area_m2 carries each mask's area (data-integration 4.4a). Obstruction counts come from the precomputed attributes"
     },
     {
       "layer": "vexcel",
@@ -889,10 +986,16 @@
       "detail": null
     },
     {
-      "layer": "tariff",
-      "what": "LADWP residential rate (URDB lookup)",
+      "layer": "place",
+      "what": "Census geocoder, incorporated place",
       "status": "ok",
-      "detail": "the prices in this example are illustrative"
+      "detail": "Los Angeles city: the electric utility is LADWP (data-integration 5.1d)"
+    },
+    {
+      "layer": "tariff",
+      "what": "electricity price (EIA retail sales, CA RES)",
+      "status": "fallback",
+      "detail": "EIA state average retail price, CA RES, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)"
     }
   ]
 }

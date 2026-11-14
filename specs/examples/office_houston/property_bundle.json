@@ -680,73 +680,138 @@
     "detections": [
       {
         "label": "roof",
-        "confidence": 0.61,
+        "confidence": 0.437,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4568016 29.7449927, -95.4565328 29.7451280, -95.4567397 29.7454403, -95.4570085 29.7453050, -95.4568016 29.7449927))",
+        "bbox_wkt": "POLYGON((-95.4570085 29.7449927, -95.4570085 29.7455755, -95.4562640 29.7455755, -95.4562640 29.7449927, -95.4570085 29.7449927))",
         "pixel_bbox": [
-          402,
-          445,
-          613,
-          662
+          333,
+          333,
+          958,
+          864
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det01.png",
-        "mask_wkt": "POLYGON((-95.4568012 29.7449940, -95.4565342 29.7451283, -95.4567401 29.7454390, -95.4570071 29.7453047, -95.4568012 29.7449940))"
+        "mask_wkt": null,
+        "mask_area_m2": 2296.4
       },
       {
         "label": "roof",
-        "confidence": 0.52,
+        "confidence": 0.668,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4565328 29.7451280, -95.4562640 29.7452632, -95.4564709 29.7455755, -95.4567397 29.7454403, -95.4565328 29.7451280))",
+        "bbox_wkt": "POLYGON((-95.4567107 29.7452375, -95.4567107 29.7454473, -95.4564725 29.7454473, -95.4564725 29.7452375, -95.4567107 29.7452375))",
         "pixel_bbox": [
-          749,
-          245,
-          613,
-          662
+          717,
+          523,
+          307,
+          311
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det02.png",
-        "mask_wkt": "POLYGON((-95.4565324 29.7451292, -95.4562654 29.7452635, -95.4564713 29.7455743, -95.4567383 29.7454399, -95.4565324 29.7451292))"
+        "mask_wkt": null,
+        "mask_area_m2": 423.9
       },
       {
         "label": "roof",
-        "confidence": 0.37,
-        "image_id": "oriented-1",
-        "bbox_wkt": "POLYGON((-95.4567000 29.7452000, -95.4563774 29.7453623, -95.4565131 29.7455670, -95.4568356 29.7454047, -95.4567000 29.7452000))",
+        "confidence": 0.552,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-95.4569936 29.7450218, -95.4569936 29.7453132, -95.4566363 29.7453132, -95.4566363 29.7450218, -95.4569936 29.7450218))",
         "pixel_bbox": [
-          625,
-          257,
-          590,
-          543
+          353,
+          722,
+          460,
+          432
+        ],
+        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det03.png",
+        "mask_wkt": null,
+        "mask_area_m2": 648.4
+      },
+      {
+        "label": "roof",
+        "confidence": 0.498,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-95.4566511 29.7450102, -95.4566511 29.7452550, -95.4562789 29.7452550, -95.4562789 29.7450102, -95.4566511 29.7450102))",
+        "pixel_bbox": [
+          793,
+          809,
+          479,
+          363
+        ],
+        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det04.png",
+        "mask_wkt": null,
+        "mask_area_m2": 606.5
+      },
+      {
+        "label": "roof",
+        "confidence": 0.405,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-95.4569713 29.7453132, -95.4569713 29.7455580, -95.4566735 29.7455580, -95.4566735 29.7453132, -95.4569713 29.7453132))",
+        "pixel_bbox": [
+          381,
+          359,
+          383,
+          363
+        ],
+        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det05.png",
+        "mask_wkt": null,
+        "mask_area_m2": 399.1
+      },
+      {
+        "label": "roof",
+        "confidence": 0.352,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-95.4570383 29.7451675, -95.4570383 29.7453424, -95.4568596 29.7453424, -95.4568596 29.7451675, -95.4570383 29.7451675))",
+        "pixel_bbox": [
+          295,
+          679,
+          230,
+          259
+        ],
+        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det06.png",
+        "mask_wkt": null,
+        "mask_area_m2": 234.8
+      },
+      {
+        "label": "roof",
+        "confidence": 0.371,
+        "image_id": "oriented-1",
+        "bbox_wkt": "POLYGON((-95.4567256 29.7452258, -95.4567256 29.7454939, -95.4564427 29.7454939, -95.4564427 29.7452258, -95.4567256 29.7452258))",
+        "pixel_bbox": [
+          498,
+          325,
+          260,
+          284
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/oriented-1_det01.png",
-        "mask_wkt": null
+        "mask_wkt": null,
+        "mask_area_m2": 602.5
       },
       {
         "label": "ac unit",
         "confidence": 0.41,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4566811 29.7452616, -95.4566542 29.7452751, -95.4566645 29.7452907, -95.4566914 29.7452772, -95.4566811 29.7452616))",
+        "bbox_wkt": "POLYGON((-95.4566914 29.7452616, -95.4566914 29.7452907, -95.4566542 29.7452907, -95.4566542 29.7452616, -95.4566914 29.7452616))",
         "pixel_bbox": [
-          811,
-          666,
+          742,
+          756,
           48,
           43
         ],
-        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det03.png",
-        "mask_wkt": "POLYGON((-95.4566807 29.7452628, -95.4566556 29.7452754, -95.4566649 29.7452895, -95.4566900 29.7452769, -95.4566807 29.7452628))"
+        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det07.png",
+        "mask_wkt": null,
+        "mask_area_m2": 9.4
       },
       {
         "label": "ac unit",
         "confidence": 0.36,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4565108 29.7453472, -95.4564839 29.7453607, -95.4564943 29.7453764, -95.4565212 29.7453628, -95.4565108 29.7453472))",
+        "bbox_wkt": "POLYGON((-95.4565212 29.7453472, -95.4565212 29.7453764, -95.4564839 29.7453764, -95.4564839 29.7453472, -95.4565212 29.7453472))",
         "pixel_bbox": [
-          1030,
-          539,
+          961,
+          629,
           48,
           43
         ],
-        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det04.png",
-        "mask_wkt": "POLYGON((-95.4565104 29.7453485, -95.4564854 29.7453611, -95.4564947 29.7453751, -95.4565198 29.7453625, -95.4565104 29.7453485))"
+        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det08.png",
+        "mask_wkt": null,
+        "mask_area_m2": 9.0
       }
     ]
   },
@@ -891,7 +956,7 @@
       "layer": "vexcel",
       "what": "elements/detect (SAM 3, label 'roof', threshold 0.3)",
       "status": "ok",
-      "detail": "roof fragments, not planes"
+      "detail": "roof fragments, not planes: 6 roof masks on ortho-1, nested in the largest one's box; the largest single mask, 2,296.4 m2, is within 5 % of the 2,400 m2 podium footprint, and the most confident detection (0.668) is the tower roof, a different structure from the footprint. Masks are never summed; mask_wkt is left unset and mask_area_m2 carries each mask's area (data-integration 4.4a)"
     },
     {
       "layer": "vexcel",

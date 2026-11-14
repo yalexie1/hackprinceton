@@ -1,24 +1,22 @@
-"""FastAPI app for SPEC 10. G7 skeleton: every route answers from the G0 run door
-(which replays fixtures) and from specs/examples/search_results.json."""
+"""FastAPI app for SPEC 10. Run and document routes answer from the run door
+(backend/agent/api.py); search, property and asset routes from the data door."""
 from __future__ import annotations
 
-import json
-from pathlib import Path
+import mimetypes
 from typing import Optional, Union
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.agent import api
+from backend.data_layer import api as data
 from backend.schema import (SCHEMA_VERSION, DocumentDraft, DocumentRequest, PropertySummary,
-                            RunRequest, RunResult)
+                            RunRequest, RunResult, Segment, UseType)
 
-_SEARCH = Path(__file__).resolve().parents[3] / "specs" / "examples" / "search_results.json"
-
-_CODES = {400: "bad_request", 404: "not_found", 422: "invalid_request"}
+_CODES = {400: "bad_request", 404: "not_found", 409: "conflict", 422: "invalid_request"}
 
 
 class AnswerBody(BaseModel):
@@ -34,10 +32,6 @@ class PatchBody(BaseModel):
 class ApiError(Exception):
     def __init__(self, status: int, code: str, message: str):
         self.status, self.code, self.message = status, code, message
-
-
-def _summaries() -> list[PropertySummary]:
-    return [PropertySummary.model_validate(p) for p in json.loads(_SEARCH.read_text())]
 
 
 def create_app() -> FastAPI:
@@ -70,22 +64,19 @@ def create_app() -> FastAPI:
         return {"status": "ok", "schema_version": SCHEMA_VERSION}
 
     @app.get("/api/properties/search", response_model=list[PropertySummary])
-    def search(q: str = "", segment: Optional[str] = None, use_type: Optional[str] = None,
-               lat: Optional[float] = None, lon: Optional[float] = None,
-               radius_m: Optional[float] = None, limit: int = 20):
-        needle = q.lower()
-        hits = [p for p in _summaries()
-                if (not needle or needle in f"{p.name} {p.address}".lower())
-                and (segment is None or p.segment == segment)
-                and (use_type is None or p.use_type == use_type)]
-        return hits[:max(limit, 0)]
+    def search(q: Optional[str] = None, segment: Optional[Segment] = None,
+               use_type: Optional[UseType] = None, lat: Optional[float] = None,
+               lon: Optional[float] = None, radius_m: Optional[float] = None,
+               limit: int = 20):
+        return data.search_properties(q=q, segment=segment, use_type=use_type, lat=lat,
+                                      lon=lon, radius_m=radius_m, limit=limit)
 
     @app.get("/api/properties/{sid}", response_model=PropertySummary)
     def property_by_sid(sid: str):
-        for p in _summaries():
-            if p.sid == sid:
-                return p
-        raise ApiError(404, "property_not_found", f"unknown sid: {sid}")
+        try:
+            return data.get_property_summary(sid)
+        except LookupError:
+            raise ApiError(404, "property_not_found", f"unknown sid: {sid}")
 
     @app.post("/api/runs")
     def create_run(request: RunRequest):
@@ -107,7 +98,16 @@ def create_app() -> FastAPI:
 
     @app.post("/api/runs/{run_id}/answers")
     def post_answer(run_id: str, body: AnswerBody):
-        run_of(run_id)
+        run = run_of(run_id)
+        if run.status != "waiting_for_user":
+            raise ApiError(409, "run_not_waiting", f"run {run_id} is {run.status}, not waiting")
+        question = next((q for q in run.questions if q.id == body.question_id), None)
+        if question is None:
+            raise ApiError(404, "question_not_found", f"unknown question_id: {body.question_id}")
+        if body.value not in [c.value for c in question.choices]:   # None = "I don't know"
+            raise ApiError(422, "invalid_answer", f"{body.value!r} is not a choice of {question.id}")
+        # The run door resumes the paused graph with Command(resume={"value": value}); the
+        # server never builds that itself (a bare None resume breaks langgraph).
         api.answer(run_id, body.question_id, body.value)
         return {"ok": True}
 
@@ -119,9 +119,11 @@ def create_app() -> FastAPI:
 
     @app.post("/api/runs/{run_id}/documents", response_model=DocumentDraft)
     def create_document(run_id: str, request: DocumentRequest):
-        run_of(run_id)
+        run = run_of(run_id)
         if request.run_id != run_id:
             raise ApiError(400, "run_id_mismatch", "body run_id differs from the path")
+        if run.status != "done":
+            raise ApiError(409, "run_not_done", f"run {run_id} is {run.status}; documents need a finished run")
         return api.draft_document(request)
 
     @app.get("/api/runs/{run_id}/documents/{doc_id}", response_model=DocumentDraft)
@@ -134,7 +136,11 @@ def create_app() -> FastAPI:
 
     @app.get("/api/assets/{path:path}")
     def get_asset(path: str):
-        # No assets exist before the Data lane's get_asset door is live.
-        raise ApiError(404, "asset_not_found", f"no asset at {path}")
+        # A path outside the cache and a missing file are both "no such asset" (404).
+        try:
+            body = data.get_asset(path)
+        except (ValueError, FileNotFoundError):
+            raise ApiError(404, "asset_not_found", f"no asset at {path}")
+        return Response(body, media_type=mimetypes.guess_type(path)[0] or "application/octet-stream")
 
     return app

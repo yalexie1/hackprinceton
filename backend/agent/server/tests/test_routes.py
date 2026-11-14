@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from backend.agent import api
 from backend.schema import (SCHEMA_VERSION, DocumentDraft, PropertySummary, RunEvent,
                             RunResult)
 from backend.server import app
@@ -44,7 +45,6 @@ def test_run_flow_all_routes():
         run = RunResult.model_validate(client.get(f"/api/runs/{run_id}").json())
         assert run.run_id == run_id
 
-        assert client.post(f"/api/runs/{run_id}/answers", json={"question_id": "q", "value": "x"}).json() == {"ok": True}
         assert client.patch(f"/api/runs/{run_id}", json={"budget_usd": 500}).json() == {"ok": True}
         assert client.get(f"/api/runs/{run_id}").json()["request"]["budget_usd"] == 500
 
@@ -71,3 +71,111 @@ def test_document_errors_and_validation():
     r = client.post("/api/runs", json={"bad": 1})
     assert r.status_code == 422 and "error" in r.json()
     assert client.get("/api/assets/x/y.jpg").status_code == 404
+
+
+# ---- G8: routes on the data door ----
+
+def test_search_passes_all_seven_parameters(monkeypatch):
+    from backend.data_layer import api as data
+    seen = {}
+
+    def fake(**kw):
+        seen.update(kw)
+        return []
+
+    monkeypatch.setattr(data, "search_properties", fake)
+    r = client.get("/api/properties/search", params={
+        "q": "west", "segment": "commercial", "use_type": "office", "lat": 29.7,
+        "lon": -95.4, "radius_m": 500, "limit": 3})
+    assert r.status_code == 200 and r.json() == []
+    assert seen == {"q": "west", "segment": "commercial", "use_type": "office",
+                    "lat": 29.7, "lon": -95.4, "radius_m": 500.0, "limit": 3}
+
+
+def test_search_rejects_unknown_enum():
+    r = client.get("/api/properties/search", params={"segment": "industrial"})
+    assert r.status_code == 422 and set(r.json()["error"]) == {"code", "message"}
+
+
+def test_unknown_sid_is_404():
+    r = client.get("/api/properties/does-not-exist")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "property_not_found"
+
+
+def test_asset_outside_cache_is_404(monkeypatch):
+    from backend.data_layer import api as data
+    assert client.get("/api/assets/..%2F..%2Fetc%2Fpasswd").status_code == 404
+    assert client.get("/api/assets/%2Fetc%2Fpasswd").status_code == 404
+    r = client.get("/api/assets/not/cached.jpg")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "asset_not_found"
+    monkeypatch.setattr(data, "get_asset", lambda path: b"\xff\xd8img")
+    ok = client.get("/api/assets/roof/a.jpg")
+    assert ok.status_code == 200 and ok.content == b"\xff\xd8img"
+    assert ok.headers["content-type"] == "image/jpeg"
+
+
+# ---- G9: routes on the run door ----
+
+def _waiting_run(monkeypatch):
+    request = _body("house", "run_request.json")
+    run_id = client.post("/api/runs", json=request).json()["run_id"]
+    run = api.get_run(run_id)
+    monkeypatch.setattr(run, "status", "waiting_for_user")
+    return run_id, run.questions[0]
+
+
+def test_event_stream_ends_with_done():
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    with client.stream("GET", f"/api/runs/{run_id}/events") as s:
+        events = [RunEvent.model_validate_json(l[6:]) for l in s.iter_lines() if l.startswith("data: ")]
+    assert events and events[-1].type == "done"
+
+
+def test_answer_to_waiting_run_reaches_the_door(monkeypatch):
+    run_id, q = _waiting_run(monkeypatch)
+    seen = []
+    monkeypatch.setattr(api, "answer", lambda *a: seen.append(a))
+    value = next(c.value for c in q.choices if c.value is not None)
+    assert client.post(f"/api/runs/{run_id}/answers",
+                       json={"question_id": q.id, "value": value}).json() == {"ok": True}
+    # "I don't know" is a null value and still reaches the door
+    assert client.post(f"/api/runs/{run_id}/answers", json={"question_id": q.id}).json() == {"ok": True}
+    assert seen == [(run_id, q.id, value), (run_id, q.id, None)]
+
+
+def test_bad_answers_are_refused(monkeypatch):
+    run_id, q = _waiting_run(monkeypatch)
+    seen = []
+    monkeypatch.setattr(api, "answer", lambda *a: seen.append(a))
+    r = client.post(f"/api/runs/{run_id}/answers", json={"question_id": "nope", "value": 1})
+    assert r.status_code == 404 and r.json()["error"]["code"] == "question_not_found"
+    r = client.post(f"/api/runs/{run_id}/answers", json={"question_id": q.id, "value": "banana"})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_answer"
+    assert seen == []
+
+
+def test_answer_to_a_run_that_is_not_waiting_is_409():
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    r = client.post(f"/api/runs/{run_id}/answers", json={"question_id": "q_service_amps", "value": 100.0})
+    assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_waiting"
+
+
+def test_invalid_run_request_is_422_envelope():
+    r = client.post("/api/runs", json={"sid": "x", "budget_usd": "lots"})
+    assert r.status_code == 422 and set(r.json()["error"]) == {"code", "message"}
+
+
+# ---- G10: document routes ----
+
+def test_document_roundtrip_and_refusals(monkeypatch):
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    dreq = {**_body("house", "document_request.json"), "run_id": run_id}
+    post = client.post(f"/api/runs/{run_id}/documents", json=dreq)
+    draft = DocumentDraft.model_validate(post.json())
+    assert client.get(f"/api/runs/{run_id}/documents/{draft.doc_id}").json() == post.json()
+    r = client.post(f"/api/runs/{run_id}/documents", json={**dreq, "run_id": "other"})
+    assert r.status_code == 400 and r.json()["error"]["code"] == "run_id_mismatch"
+    monkeypatch.setattr(api.get_run(run_id), "status", "waiting_for_user")
+    r = client.post(f"/api/runs/{run_id}/documents", json=dreq)
+    assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_done"
+    assert client.post("/api/runs/zzz/documents", json=dreq).status_code == 404

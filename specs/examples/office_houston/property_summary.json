@@ -1,0 +1,19 @@
+{
+  "sid": "L3266YcPPvd",
+  "name": "2100 West Loop S Fwy - Full Floor Suite 500",
+  "segment": "commercial",
+  "use_type": "office",
+  "address": "2100 West Loop S, Houston, TX 77027",
+  "city": "Houston",
+  "state": "TX",
+  "lat": 29.7452,
+  "lon": -95.4567,
+  "costar_property_id": "234088",
+  "costar_listing_id": null,
+  "costar_residential_listing_id": null,
+  "has_splat": false,
+  "has_defurnished": false,
+  "pano_count": 88,
+  "room_count": 6,
+  "floor_count": 1
+}

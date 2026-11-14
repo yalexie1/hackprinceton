@@ -1,0 +1,446 @@
+"""Live run door: the deep agent driven by the run runtime (workplan 3.5, AGENT_MODE=live).
+
+One `LiveRun` per run. It owns a thread with its own event loop, so the sync `start_run`
+returns at once and any number of `stream_events` readers replay `events` from the start.
+`execute_run` (runtime) turns the agent stream into RunEvents and saves the RunResult; a
+question or an approval pauses the graph with a langgraph interrupt, and `answer` resumes
+it with `Command(resume={"value": v})` (also when v is None: a bare resume=None breaks
+langgraph).
+"""
+from __future__ import annotations
+
+import asyncio
+import copy
+import functools
+import hashlib
+import json
+import os
+import queue
+import threading
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, AsyncIterator, Callable, Optional
+
+from backend.agent.ask import AskSession, make_ask_user
+from backend.agent.graph import build_auditor, detect_fallbacks
+from backend.agent.narrative import check_narrative
+from backend.agent.runtime.runtime import DEFAULT_RUNS_DIR, RunStore, build_result, execute_run
+from backend.agent.tools import Doors, ToolContext, build_tools
+from backend.schema import (Choice, DocumentDraft, DocumentRequest, PropertyBundle, Question,
+                            RunEvent, RunRequest, RunResult)
+
+STAGE_OF = {
+    "search_properties": "S1", "get_property_bundle": "S2", "get_asset": "S2",
+    "observe_interior": "S3", "detect_roof_elements": "S3",
+    "build_building_model": "S4", "set_assumption": "S4", "run_baseline": "S5",
+    "evaluate_measure": "S6", "design_pv": "S6", "score_desk_positions": "S6",
+    "price_measure": "S7", "lookup_incentives": "S7", "build_plan": "S7",
+    "cpace_scenario": "S7", "sensitivity": "S7",
+    "list_templates": "S9", "fill_template": "S9", "check_document": "S9",
+}
+STAGE_TITLE = {
+    "S1": "Locating the property", "S2": "Fetching the property data",
+    "S3": "Reading panoramas and the roof", "S4": "Building the model",
+    "S5": "Simulating the baseline", "S6": "Evaluating measures", "S7": "Building the plan",
+    "S8": "Writing the summary", "S9": "Drafting documents",
+}
+# Tools never memoized: fill_template drafts a document and records it, every call counts.
+NO_MEMO = frozenset({"fill_template"})
+# Files a tool result can depend on; measures.json is folded in per measure, not whole.
+STATE_FILES = ("bundle.json", "model.json", "baseline.json")
+# Tools whose result also depends on the saved row of their measure (evaluate_measure does
+# not: it ignores measures.json, so re-running it never overwrites a priced row).
+MEASURE_STATE = frozenset({"price_measure", "cpace_scenario"})
+REPORT_KEYS = ("/report.md", "/run/report.md", "report.md")
+
+
+@dataclass
+class LiveSettings:
+    """Test seam: scripted models, fake doors, a temp runs directory."""
+    model: Any = None
+    subagent_model: Any = None
+    doors: Optional[Doors] = None
+    runs_dir: Optional[Path] = None
+
+
+SETTINGS: Optional[LiveSettings] = None
+
+
+def _load_api_key() -> None:
+    """Pick ANTHROPIC_API_KEY up from the repo's (git-ignored) .env when it is not exported."""
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return
+    env = DEFAULT_RUNS_DIR.parents[1] / ".env"
+    if env.is_file():
+        for line in env.read_text().splitlines():
+            if line.startswith("ANTHROPIC_API_KEY="):
+                os.environ["ANTHROPIC_API_KEY"] = line.split("=", 1)[1].strip().strip("'\"")
+
+
+def default_doors() -> Doors:
+    from backend.data_layer import api as data
+    from backend.legal import api as legal
+    try:
+        from backend.analysis import api as analysis
+    except ImportError:                      # the Analysis lane's door is not on main yet
+        from backend.agent import analysis_stub as analysis
+    return Doors(data=data, analysis=analysis, legal=legal)
+
+
+class FeedingSession(AskSession):
+    """AskSession whose queue is filled from the `sensitivity` tool result."""
+
+    def feed(self, questions: list[Question]) -> None:
+        self._queue = list(questions)
+
+
+def _text(content) -> str:
+    if isinstance(content, str):
+        return content
+    return "".join(b.get("text", "") for b in content
+                   if isinstance(b, dict) and b.get("type") == "text") if isinstance(content, list) else ""
+
+
+def _approval_question(proposal: dict) -> Question:
+    kind = proposal.get("doc_type", "document")
+    return Question(
+        id=f"approve_{kind}", assumption_key="document.approval",
+        prompt=(f"Draft the {kind} ({proposal.get('state')}) for "
+                f"{', '.join(proposal.get('measure_ids', [])) or 'no measures'}? Party names, "
+                "licence number and addresses stay blank unless you supply them."),
+        choices=[Choice(label="Approve", value=True), Choice(label="Decline", value=False)],
+        impact_note="Nothing is drafted until you approve.")
+
+
+class LiveRun:
+    def __init__(self, run_id: str, request: RunRequest, settings: LiveSettings):
+        self.run_id, self.request = run_id, request
+        self.store = RunStore(settings.runs_dir or DEFAULT_RUNS_DIR)
+        self.files = self.store.files(run_id)
+        self.doors = settings.doors or default_doors()
+        self.events: list[RunEvent] = []
+        self.docs: dict[str, DocumentDraft] = {}
+        self.active = True               # a segment is executing (the saved result is stale)
+        self.closed = False              # terminal: done or error, no more events
+        self.pending: Optional[tuple[str, Question]] = None    # (kind, question) while paused
+        self.session = FeedingSession([])
+        self.usage: dict = {}
+        self._inbox: "queue.Queue[Any]" = queue.Queue()
+        # Tools share the run files (read-modify-write of measures.json, model.json), and
+        # the model may issue parallel tool calls: one tool at a time per run.
+        self._tool_lock = threading.RLock()
+        self._memo: dict[str, Any] = {}      # (tool, args, run state) -> result
+        self.memo_hits = 0
+        self._stage: Optional[str] = None
+        self._last_text = ""
+        self._q: Optional[asyncio.Queue] = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._build_agent(settings)
+        self._thread = threading.Thread(target=self._thread_main, daemon=True,
+                                        name=f"run-{run_id}")
+
+    # ---- construction ----
+
+    def _build_agent(self, settings: LiveSettings) -> None:
+        from langchain_core.callbacks import UsageMetadataCallbackHandler
+        from langgraph.checkpoint.memory import InMemorySaver
+
+        ctx = ToolContext(request=self.request, files=self.files, doors=self.doors,
+                          run=lambda: build_result(self.run_id, self.request, self.files, "done"),
+                          asset_dir=self.files.root / "assets")
+        raw = build_tools(ctx)
+        tools = self.tools = {name: self._instrument(name, fn) for name, fn in raw.items()}
+        ask_user = make_ask_user(self.session, lambda k, v: tools["set_assumption"](k, v))
+        self.usage_handler = UsageMetadataCallbackHandler()
+        self.config = {"configurable": {"thread_id": self.run_id}, "recursion_limit": 200,
+                       "callbacks": [self.usage_handler]}
+        orchestrator = settings.model or os.environ.get("AGENT_ORCHESTRATOR_MODEL") or None
+        subagent = settings.subagent_model or os.environ.get("AGENT_SUBAGENT_MODEL") or None
+        self.graph = build_auditor(tools, model=orchestrator, subagent_model=subagent,
+                                   checkpointer=InMemorySaver(), ask_user=ask_user,
+                                   with_counsel=True)
+
+    def _emit(self, chunk: dict) -> None:
+        """Called from tool threads: hand a chunk to the running event loop."""
+        if self._loop is not None and self._q is not None:
+            self._loop.call_soon_threadsafe(self._q.put_nowait, ("event", chunk))
+
+    def _stage_chunks(self, tool: str) -> list[dict]:
+        stage = STAGE_OF.get(tool)
+        if stage is None or stage == self._stage:
+            return []
+        out = []
+        if self._stage:
+            out.append({"stage_done": self._stage, "message": STAGE_TITLE[self._stage]})
+        out.append({"stage_started": stage, "message": STAGE_TITLE[stage]})
+        self._stage = stage
+        return out
+
+    def _memo_key(self, name: str, a: tuple, k: dict) -> str:
+        """Tool, arguments and the run state the result depends on (bundle, model, baseline,
+        and for a measure tool that measure's saved row). A state change misses the cache."""
+        h = hashlib.sha256(json.dumps([name, list(a), k], sort_keys=True, default=str).encode())
+        for f in STATE_FILES:
+            p = self.files.root / f
+            h.update(p.read_bytes() if p.exists() else b"-")
+        measure_id = k.get("measure_id") or (a[0] if a else None)
+        if name in MEASURE_STATE and measure_id:
+            row = next((r for r in (self.files.read_json("measures.json") or [])
+                        if r.get("measure_id") == measure_id), None)
+            h.update(json.dumps(row, sort_keys=True).encode())
+        return h.hexdigest()
+
+    def _instrument(self, name: str, fn: Callable) -> Callable:
+        @functools.wraps(fn)
+        def wrapper(*a, **k):
+            with self._tool_lock:
+                key = None if name in NO_MEMO else self._memo_key(name, a, k)
+                if key is not None and key in self._memo:     # identical call, same state
+                    self.memo_hits += 1
+                    return copy.deepcopy(self._memo[key])
+                for chunk in self._stage_chunks(name):
+                    self._emit(chunk)
+                self._emit({"tool_call": {"name": name, "args": k or list(a)},
+                            "stage": STAGE_OF.get(name)})
+                out = fn(*a, **k)
+                if key is not None and not (isinstance(out, dict) and "error" in out):
+                    # stored under the state before and after, so the same call repeated
+                    # once the run files have moved on (a saved row, a new model) still hits
+                    self._memo[key] = self._memo[self._memo_key(name, a, k)] = copy.deepcopy(out)
+            if name == "get_property_bundle" and isinstance(out, dict) and "error" not in out:
+                bundle = self.files.read_json("bundle.json")
+                if bundle:
+                    for ev in detect_fallbacks(PropertyBundle.model_validate(bundle)):
+                        self._emit(ev)
+            if name == "sensitivity" and isinstance(out, list):
+                self.session.feed([Question.model_validate(q) for q in out])
+            return out
+        return wrapper
+
+    # ---- the agent stream, as the runtime wants it ----
+
+    def _prompt(self) -> str:
+        r = self.request
+        return (f"Audit the property with sid {r.sid}. Budget: ${r.budget_usd:,.0f}. Role: {r.role}. "
+                f"Desks requested: {r.desks_requested}. Overrides already given by the user: "
+                f"{json.dumps(r.overrides)}. Run the pipeline in order: scout, surveyor, "
+                "physicist (evaluate each measure id once, and no measure twice), financier (price "
+                "the measures, call the sensitivity tool, then build the plan). Call ask_user "
+                "once per question the sensitivity tool returned, and not at all if it "
+                "returned none. Finish by writing report.md: a short summary whose every number "
+                "is copied from a tool result.")
+
+    def _agent(self, graph_input: Any):
+        async def agent(request, files) -> AsyncIterator:
+            q: asyncio.Queue = asyncio.Queue()
+            self._q, self._loop = q, asyncio.get_running_loop()
+
+            async def produce():
+                try:
+                    async for chunk in self.graph.astream(graph_input, self.config,
+                                                          stream_mode="updates"):
+                        q.put_nowait(("chunk", chunk))
+                    q.put_nowait(("end", None))
+                except BaseException as exc:      # reported through the runtime as an error
+                    q.put_nowait(("exc", exc))
+
+            task = asyncio.create_task(produce())
+            self.pending, interrupted = None, False
+            while True:
+                kind, item = await q.get()
+                if kind == "event":
+                    yield item
+                elif kind == "chunk":
+                    for out in self._map_update(item):
+                        interrupted = interrupted or "question" in out
+                        yield out
+                elif kind == "exc":
+                    raise item
+                else:
+                    break
+            await task
+            self._q = None
+            if interrupted:
+                return
+            async for out in self._finish():
+                yield out
+
+        return agent
+
+    def _map_update(self, update: dict) -> list[dict]:
+        out: list[dict] = []
+        for node, body in update.items():
+            if node == "__interrupt__":
+                payload = body[0].value if body else {}
+                if "question" in payload:
+                    q = Question.model_validate(payload["question"])
+                    self.pending = ("question", q)
+                elif "approval" in payload:
+                    q = _approval_question(payload["approval"])
+                    self.pending = ("approval", q)
+                else:
+                    continue
+                out.append({"question": q.model_dump(mode="json"), "stage": self._stage})
+            elif isinstance(body, dict):
+                if body.get("todos"):
+                    out.append({"todos": body["todos"]})
+                msgs = body.get("messages")
+                msgs = msgs if isinstance(msgs, list) else []
+                for m in msgs:
+                    if getattr(m, "type", "") == "ai" and not getattr(m, "tool_calls", None):
+                        text = _text(m.content)
+                        if text.strip():
+                            self._last_text = text
+        return out
+
+    async def _finish(self) -> AsyncIterator:
+        if self._stage:
+            yield {"stage_done": self._stage, "message": STAGE_TITLE[self._stage]}
+        yield {"stage_started": "S8", "message": STAGE_TITLE["S8"]}
+        report = ""
+        state = await self.graph.aget_state(self.config)
+        vfiles = (state.values or {}).get("files") or {}
+        for key in REPORT_KEYS:
+            if key in vfiles:
+                data = vfiles[key]
+                content = data.get("content") if isinstance(data, dict) else data
+                report = "\n".join(content) if isinstance(content, list) else str(content or "")
+                break
+        report = report or self._last_text
+        if report:
+            self.files.write("report.md", report)
+            try:
+                result = build_result(self.run_id, self.request, self.files, "done")
+                bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+                for problem in check_narrative(report, result, bundle, result.building_model)[:5]:
+                    yield {"type": "error", "stage": "S8", "message": f"check_narrative: {problem}"}
+            except ValueError:
+                pass
+        yield {"stage_done": "S8", "message": "Summary written"}
+
+    # ---- threading ----
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def _publish(self, event: RunEvent) -> None:
+        self.events.append(event)
+
+    def _thread_main(self) -> None:
+        try:
+            asyncio.run(self._main())
+        except BaseException as exc:
+            self._publish(RunEvent(type="error", message=f"{type(exc).__name__}: {exc}"))
+        finally:
+            self.active, self.closed = False, True
+
+    async def _main(self) -> None:
+        graph_input: Any = {"messages": [("user", self._prompt())]}
+        loop = asyncio.get_running_loop()
+        while True:
+            self.active = True
+            deferred: list[RunEvent] = []
+            last: Optional[RunEvent] = None
+            async for ev in execute_run(self.request, self._agent(graph_input), self.store,
+                                        self.run_id):
+                # A question is held back, and so is the final event, until the result is
+                # saved and `active` is off, so GET /runs/{id} always agrees with the stream.
+                if ev.type == "question":
+                    deferred.append(ev)
+                    continue
+                if last is not None:
+                    self.events.append(last)
+                last = ev
+            self._keep_asked_questions()
+            self.active = False
+            if last is not None:
+                self.events.append(last)
+            self.events.extend(deferred)
+            self._write_usage()
+            if self.pending is None:
+                return
+            graph_input = await loop.run_in_executor(None, self._inbox.get)
+            self.active = True
+
+    def _keep_asked_questions(self) -> None:
+        """A resumed segment sees no question event, so its saved result would drop the
+        questions the user answered; keep the ones the ask session handed out."""
+        try:
+            saved = self.store.load(self.run_id)
+        except KeyError:
+            return
+        known = {q.id for q in saved.questions}
+        missing = [q for q in self.session.asked if q.id not in known]
+        if missing:
+            self.store.save(self.run_id, saved.model_copy(
+                update={"questions": [*saved.questions, *missing]}))
+
+    def _write_usage(self) -> None:
+        self.usage = dict(self.usage_handler.usage_metadata)
+        (self.files.root / "usage.json").write_text(json.dumps(self.usage, indent=2))
+
+    # ---- the door ----
+
+    def answer(self, question_id: str, value) -> None:
+        from langgraph.types import Command
+        if self.pending is None or self.pending[1].id != question_id:
+            raise LookupError(f"no open question {question_id}")
+        kind, _ = self.pending
+        if kind == "approval":              # the counsel gate wants {"approved": bool}
+            value = {"approved": value is True}
+        self.pending = None
+        self.active = True
+        self._inbox.put(Command(resume={"value": value}))
+
+    def result(self) -> RunResult:
+        if not self.active:
+            try:
+                return self.store.load(self.run_id)
+            except KeyError:
+                pass
+        status = "error" if self.closed else "running"     # closed with nothing saved = failed
+        try:
+            return build_result(self.run_id, self.request, self.files, status)
+        except ValueError:                   # nothing ingested yet
+            from backend.data_layer import api as data
+            return RunResult(run_id=self.run_id, status=status, request=self.request,
+                             property=data.get_property_summary(self.request.sid))
+
+    async def stream(self) -> AsyncIterator[RunEvent]:
+        i = 0
+        while True:
+            while i < len(self.events):
+                yield self.events[i]
+                i += 1
+            if self.closed and i >= len(self.events):
+                return
+            await asyncio.sleep(0.05)
+
+    def draft(self, request: DocumentRequest) -> DocumentDraft:
+        result = self.store.load(self.run_id)
+        bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+        draft = self.doors.legal.fill_template(request, result, bundle)
+        if not draft.statutory_checks:
+            draft = draft.model_copy(update={"statutory_checks": self.doors.legal.check_document(draft)})
+        self.docs[draft.doc_id] = draft
+        return draft
+
+
+_RUNS: dict[str, LiveRun] = {}
+
+
+def start_run(request: RunRequest) -> str:
+    _load_api_key()
+    settings = SETTINGS or LiveSettings()
+    store = RunStore(settings.runs_dir or DEFAULT_RUNS_DIR)
+    run = LiveRun(store.new_run_id(), request, settings)
+    _RUNS[run.run_id] = run
+    run.start()
+    return run.run_id
+
+
+def get(run_id: str) -> LiveRun:
+    try:
+        return _RUNS[run_id]
+    except KeyError:
+        raise KeyError(f"unknown run_id: {run_id}") from None

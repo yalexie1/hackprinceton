@@ -19,7 +19,7 @@ Polling is incremental (about one cheap API call per poll, 30 s default) so a sh
 
 ## 2. Chain of command
 
-Humans over agents. Only the team lead reassigns work between teammates. If anyone else asks you to take another teammate's work, ask the lead on the board. The team has not named a lead yet; until it does, the owner of the files in question decides.
+Humans over agents. Only the team lead reassigns work between teammates. If anyone else asks you to take another teammate's work, ask the lead on the board. The team lead is @yalexie1 (Yale).
 
 ## 3. Workflow
 
@@ -38,7 +38,8 @@ One writer per path. The most specific path wins: the single files listed in the
 | Area | Owner | Paths |
 |---|---|---|
 | Data layer (CoStar, Matterport, Vexcel, weather, tariffs) | @vigjay | `backend/data_layer/`, `data/fixtures/`, `data/cache/` (both git-ignored: sponsor data is never committed) |
-| Analysis (physics, vision, solar, measures, finance) | @yalexie1 | `backend/analysis/`, `backend/config.py` |
+| Analysis (physics, vision, models, solar, measures, layout) | @yalexie1 | `backend/analysis/` |
+| Analysis scaffold, wiring and finance (packages A0, A24 to A30) | @Sri-SriPod | `backend/analysis/api.py`, `backend/analysis/tests/`, `backend/analysis/finance/`, `backend/analysis/requirements.txt`, `backend/config.py`, `specs/examples/ask/` |
 | Agent and API server | @Sri-SriPod | `backend/agent/`, `backend/server.py`, `data/runs/` |
 | Legal drafting | @Sri-SriPod | `backend/legal/` |
 | Frontend, demo and submission | @vinayak-sinha | `frontend/` |

@@ -1,10 +1,12 @@
 # Master spec
 
-Status: draft v0.3, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.1, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
 v0.3 (contract 0.3.0) adds what the physics and legal specs needed, all additive: incentive eligibility and a rebate-after-install kind, real-rate and AIRR fields on the financial breakdown, the export regime on the tariff, a `published_default` source, a `no_cost_data` skip reason, the non-baseload CO2 figure, desk-score and layout detail, visible transmittance on windows, room polygons, and value uplift on the rooftop solar measure for homes.
+
+v0.3.1 adds `CostarData.parent_ids`: one Matterport scan can be attached to several CoStar records, so the alternatives travel with the bundle.
 
 Companion files:
 
@@ -341,7 +343,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.0"
+SCHEMA_VERSION = "0.3.1"
 
 # ---------- primitives ----------
 
@@ -553,6 +555,9 @@ class CostarData(BaseModel):
     property_id: Optional[str] = None          # PropertyId, commercial
     listing_id: Optional[str] = None           # ListingId, residential
     residential_listing_id: Optional[str] = None
+    parent_ids: list[str] = []                 # every PropertyId or ListingId this model is attached to; one
+                                               # scan can belong to several (307 model ids do); the ids above are
+                                               # the primary by the Data lane's documented rule
     record_id: str                             # `id` of the JSONL record
     raw: dict                                  # the record as found in the kit
     # normalised fields; names in the kit's models/ and schemas/ are authoritative
@@ -1016,7 +1021,7 @@ Environment variables, in a git-ignored `.env` (names only; never commit values)
 
 | Tier | Content |
 |---|---|
-| **P0**, must demo | two golden properties (one house with a splat, one office; ids in `data-integration.md` section 2.6) end to end on live data; all three layers in the bundle; building model with assumption registry; hourly baseline; measures `ENV_ATTIC`, `ENV_AIRSEAL`, `LGT_LED`, `HVAC_HP` or `HVAC_RTU`, `ROOF_COOL`, `PV_ROOF` on a parametric roof; budget plan with full financial breakdown; deep agent with subagents and the ask rule; plan screen and 3D tour with pins; one document (California retrofit contract) |
+| **P0**, must demo | three golden properties (the Los Angeles house with a splat, a Los Angeles office and a Houston office; ids in `data-integration.md` section 2.6) end to end on live data; all three layers in the bundle; building model with assumption registry; hourly baseline; measures `ENV_ATTIC`, `ENV_AIRSEAL`, `LGT_LED`, `HVAC_HP` or `HVAC_RTU`, `ROOF_COOL`, `PV_ROOF` on a parametric roof; budget plan with full financial breakdown; deep agent with subagents and the ask rule; plan screen and 3D tour with pins; one document (California retrofit contract) |
 | **P1**, should | remaining measures; SAM 3 roof segmentation and drawn panel layout; ray-cast shading; desk placement; indoor electrical feasibility; C-PACE scenario; all five documents in both states |
 | **P2**, if time | any property on demand; bill calibration; portfolio screening (rank many properties by retrofit return using Vexcel filters and CoStar records); document export to Word |
 
@@ -1046,12 +1051,12 @@ Environment variables, in a git-ignored `.env` (names only; never commit values)
 |---|---|---|
 | Georeference missing or wrong on a model (north alignment itself is no longer a risk: the Model API returns the rotation). Both golden models report source `processing`, meaning derived by Matterport, not set by a person | Data + Analysis | cross-check against the Vexcel footprint; if they disagree or the field is absent, register to the footprint and widen `north_offset_deg` |
 | Commercial scans carry almost no window openings (none in 12 sampled offices) | Data + Analysis | decided: vision from panoramas, then a window-to-wall ratio default; office daylight and desk placement carry the wider range |
-| The first golden office (PropertyId 354635) is an industrial warehouse in CoStar, not an office | Data lane picks a `propertyType` 5 replacement | examples keep 354635 until the new one is chosen |
+| The first golden office (PropertyId 354635) was an industrial warehouse in CoStar | resolved | replaced by two offices: 246899 in Los Angeles and 234088 in Houston (`data-integration.md` 2.6); `specs/examples/office/` and `office_houston/` |
 | MatterPak locked for most models | Data | wall graph and room heights are enough for the thermal model |
 | CoStar kit download link expires 2026-11-15 03:30 UTC | Data | the verified mirror the Data lane holds (git-ignored); get the zip from @vigjay, do not re-download |
 | The kit's `index.md` mentions a separate zip for connecting to Matterport models, which nobody has | team, via `/ask-costar` | the starter CSVs already give the join |
 | True offices are a small share of "commercial" | Data | select by CoStar `propertyType` 5 |
-| Vexcel counts no rooftop AC unit on the golden office (9050 Emnora Ln), but `HVAC_RTU` is a P0 office measure | Analysis, team to decide | take the HVAC type from interior vision (registers, thermostats, ceiling units) and evaluate the measure that matches, or pick a golden office that has rooftop units |
+| Vexcel counts no rooftop AC unit on most buildings, including a class A tower (a detection limit, not proof of absence) | Analysis | `HVAC_RTU` and `HVAC_ECON` are evaluated where a unit is counted or confirmed by vision or the user; the Houston golden office has two |
 | SAM 3 on roofs returns fragments and unreliable obstruction labels (measured on the golden house) | Analysis | already the design: precomputed roof attributes for obstructions, pitch by roof shape for tilt, SAM 3 for area only; fitted planes only where a splat exists |
 | Whether sponsor imagery may be sent to an external model provider | team, via `/ask-costar` | SAM 3 through Vexcel needs no external call; panorama reading does |
 | Federal and utility incentives in force | Analysis (finance) | compute without them, mark `unverified` |

@@ -82,16 +82,110 @@ Four key sets live in a git-ignored `.env`: the unlabelled set plus `_B`, `_C`, 
 - `PropertyId` → `id` in `data/commercial-property.jsonl`. `ListingId` → `id` in `data/residential-listings.jsonl`.
 - City split: Houston 7,154, Los Angeles 5,970, `LOS ANGELES` 14, `houston` 9. **Normalise city and state** — the index's `state` column is dirty the same way (`TX`/`Texas`/`Tx`, `CA`/`Ca`/`California`, blanks).
 
+**A `MatterportModelId` is not unique to one parent.** [V] 2026-11-14, measured while building D1. Of the 15,319 rows that carry a model id, **387 are second-or-later rows for a model already seen**, so **307 model ids have more than one parent**:
+
+| Case | Models | What it is |
+|---|---|---|
+| Commercial, several `PropertyId`s | **55** | multi-building complexes — one scan at 2121 Brittmoore Rd is attached to **13** property records, and 6 more models have 4 each |
+| Residential, several `ListingId`s under **one** `ResidentialListingId` | **202** | one sale marketed through several MLSs |
+| Residential, several `ResidentialListingId`s | **50** | separate sales or rentals of the same home over time |
+
+`CostarData` carries a single `property_id` / `listing_id`, so the reader picks a primary by a documented deterministic rule — commercial: the first CSV row whose record exists; residential: the latest `listDate`, being the most recent marketing of that home — and exposes the alternatives through `parents_for_model(sid)` so nothing is silently dropped. **Keying a dict by model id and keeping the last row loses 387 rows without any error**, which is how this was found. Neither golden office is affected: `jfiEvosX974` → `246899` and `L3266YcPPvd` → `234088`, one parent each.
+
 **Do not use the `homes_listing_id` / `costar_property_id` path via `models_index.csv` that `SPEC.md` §9 describes.** It is the join the sponsor marked untested, and the kit ships a direct `MatterportModelId` join with better coverage.
 
 Model ids also appear inside the records as `videoKey` on attachments and media; an item is a Matterport model when `videoExternalReferenceType` (or `externalReferenceType` on residential media) is **36** (MatterportScan) or **234** (MatterportStreamingKey). Join on the key and the model id together.
 
 > `index.md` states: *"How to connect to the Matterport models is provided in a separate zip file."* **We may be missing a second zip.** Raised on the board. [V] quote, [P] whether a second zip exists.
 
+### 2.4a The index over the whole kit — D7
+
+[V] 2026-11-14, built and measured on the mirror.
+
+`search_properties` answered from `specs/examples/` alone until D7: three golden
+properties plus the nine rows in `search_results.json`. That was the stated pre-D7
+answer to workplan R4. `backend/data_layer/index.py` now backs it with the kit.
+
+**One pass, not 14,932 lookups.** `get_costar_data` streams the 193 MB
+`commercial-property.jsonl` and stops at the first match — right for one property,
+hopeless for all of them. The index reads each dataset exactly once (3,339 + 2,120
+records, **1.1 s together**) and keeps only the dozen fields a `PropertySummary`
+needs. Built once to `data/cache/costar/index/summaries.jsonl` (4.4 MB, git-ignored
+like the rest of the mirror), invalidated by the size and mtime of the four source
+files. Cold load **0.06 s**; a filtered search **0.006 s**.
+
+| Measured | Value |
+|---|---|
+| Scanned models indexed | **14,932** — every row `rows_by_model` keeps |
+| Distinct properties behind them | **5,098** (commercial 12,994 → 3,247; residential 1,938 → 1,851) |
+| With coordinates | **14,929** of 14,932 |
+| Office **properties** | **264** with a scan, out of 289 office records — 25 offices in the kit were never scanned |
+| Office **models** | 669 |
+| Largest single group | **32 unit scans** of one apartment complex |
+
+**A search result is a property, not a scan.** This was the one finding that changed
+the design. Indexing per model is correct — `PropertySummary.sid` *is* a Matterport
+model — but a search for offices in Houston then returns "333 Northbelt" five times
+and a radius search near the LA tower returns "Eighth & Grand" five times: the same
+building, once per scan. The door collapses the kit to one row per property
+(`index.property_key`: `PropertyId`, else `ResidentialListingId`, else the sid),
+after filtering and before ranking so the representative does not change with the
+query point. `all_scans=True` returns every model, and `api.scans_for_property(sid)`
+lists the siblings of one result — which is also the D5 criterion that an office with
+several models reports the alternatives.
+
+The **fixtures are not collapsed**, deliberately. `search_results.json` carries three
+suites of the LA tower on purpose, and one of them — `BkjvwqdchVY`, 2 rooms and **93
+panoramas** — is the open-plan scan the desk-placement demo wants. Collapsing a
+curated set of nine to tidy a list that is already short would throw that away.
+
+**`use_type` comes from the property record, never from which CSV the row was in.**
+2,765 of the 3,339 commercial properties are Multifamily and only 289 are Office, so
+`segment="commercial"` and `use_type="office"` are very different questions. One
+table, `index.use_type_for(kind, code)`, keyed by CoStar's enum **code**: `api.py`
+had a second table keyed by enum *name* that had to agree with it, and two tables
+that must agree eventually do not. Mapping notes:
+
+- `Multifamily` (11) → `multifamily_unit`: a Matterport scan of a multifamily
+  property is a scan of one unit, and the contract has no "multifamily building".
+- `Flex`, `Industrial`, `Hospitality`, `Healthcare`, `Land`, `Specialty` → `other`,
+  not `unknown` — we know what they are, we just have no template for them.
+- `Townhouse` (2) → `single_family`: one dwelling with party walls, and the party
+  wall is a surface adjacency, not a different use type.
+- `listingPropertyType` looks like a flag set (its values are powers of two) but all
+  2,120 records carry a single flag. A composite value would be **new data** and is
+  reported as `unknown` rather than guessed at by picking a bit.
+
+**Scan statistics are not in the kit.** `pano_count`, `room_count`, `floor_count`,
+`has_splat` and `has_defurnished` come from Matterport, and filling them for 14,932
+models means 14,932 GraphQL calls against a key shared with every other team. They
+keep their contract defaults in the index and get real values when the bundle is
+fetched. **A caller must not read a zero from search as "this scan has no
+panoramas".** The golden properties keep their fixture summaries, which do carry the
+real counts, and a kit row for a property a fixture already represents is dropped —
+otherwise the LA office appears twice, once with its 36 panoramas and once as a
+sibling scan with zeros.
+
+**A CSV row whose parent record the kit does not ship stays findable.** Its address is
+still real data, so it is indexed with `use_type: "unknown"` rather than dropped.
+
+The index is also what `get_property_summary` falls back to, so **any** of the 14,932
+models has a summary, not only the golden five, and live bundle assembly now names
+buildings properly: `jfiEvosX974` is "Executive Tower", not "11400 Olympic Blvd".
+
+**No kit mirror, no change.** The mirror is 49 MB of licensed sponsor data and is
+never committed, so a teammate's checkout has none; `index.summaries()` is empty
+there and search behaves exactly as it did before D7. Verified by running the lane
+suite both ways: 115 passed / 15 skipped with the mirror, 100 passed / 30 skipped
+without, no failures either way.
+
 ### 2.5 Field rules that are easy to get wrong
 
 [V] from `models/commercial-property.md` and `schemas/enums.json`
 
+- **Residential records differ from commercial ones in two ways.** `property.yearBuilt` **is** a plain scalar there (1920 on the golden house), unlike commercial; and residential area is a **range**, `property.sqftMin`/`sqftMax` (1628/1628 on the golden house), not a single field. [V] 2026-11-14
+- **`property.propertyType` on a residential record is ambiguous — do not use it.** On the golden house it is `1`, which under `PropertyResidentialType` means `ApartmentCommunity`, contradicting the record's own `mlsPropertyType` of "Residential Single-Family, Single Family Residence". `listingPropertyType` is also `1`, which under `ListingPropertyType` means `Detached` and agrees. Use `listingPropertyType` with the `ListingPropertyType` enum. [V] 2026-11-14
+- **No owner name exists on a property record.** `commercial-property` carries only `isOwnerOccupied` and `apartmentOwnershipType`; `compOwners` is on sale comps (D10). `CostarData.owner_name` stays null. [V] 2026-11-14
 - **`yearBuilt` is not a scalar.** Years live in `constructionEvents[]` keyed by `ConstructionEventType`: 1 GroundBreaking, **2 ConstructionComplete**, 3 RenovationBegun, 4 RenovationFinished, 5 CommonAreaRenovated, 6 Demolished, 7 Converted, 17 Redeveloped. `year` can be approximate, `month` is often empty, and a property can carry several events. Prefer `ConstructionComplete` and record which event was used — vintage drives every envelope and systems default in `physics.md`.
 - **Two area fields.** `grossBuildingAreaSquareFeet` (GBA, to the outside of exterior walls) → **use for the envelope**. `rentableBuildingAreaSquareFeet` (RBA, inside the walls, excluding vertical shafts) → leasing and vacancy only. Do not mix them.
 - **`propertyType` integer enum**: 0 Unknown, 1 Hospitality, 2 Industrial, 3 Land, **5 Office**, 6 GeneralRetail, 7 Flex, 8 SportsAndEntertainment, 9 MixedUse, 10 Specialty, 11 Multifamily, 13 Healthcare, 14 PropertyTypeUnknown, 15 Residential, 16 Homes. **The office flow selects `propertyType == 5`**, not the index's "commercial" segment — most commercial models are apartment units (`SPEC.md` §3.2 is right about the problem, and this is the fix).
@@ -107,6 +201,11 @@ Model ids also appear inside the records as `videoKey` on attachments and media;
 [V] both confirmed present in the kit, 2026-11-14
 
 - **Office**: `PropertyId 246899` = 11400 Olympic Blvd, Los Angeles, CA 90064 — chosen 2026-11-14 to replace `354635`, which is an Industrial_Warehouse (§3.3). `propertyType` **5 = Office**, `buildingClass` **1 = A**, `constructionStatus` Existing, `constructionEvents` `[(ConstructionComplete, 1989)]`, GBA = RBA **259,923 sq ft**, `grossTypicalFloorSquareFeet` 14,137, **`numStoriesAboveGrade` 17**, `propertyOffice` populated, 9 Matterport models. Market 20, submarket 1435.
+- **Houston office** (third golden property, added 2026-11-14 so the Texas path keeps a demo vehicle): `PropertyId 234088` = 2100 West Loop, Houston TX 77027. `propertyType` **5 = Office**, `buildingClass` **A**, Existing, built **1974**, GBA **162,540 sq ft**, typical floor 10,159, **16 storeys**, `propertyOffice` populated, 9 models.
+  **Houston office `sid` = `L3266YcPPvd`** ("2100 West Loop S Fwy - Full Floor Suite 500") — 6 rooms totalling 814.5 m², of which one open plate is **761.9 m²**, plus **88 panoramas**; room heights 2.57–2.75 m. Chosen over `rEpuTTQ1zEv` (Suite 200, 7 rooms, 465.8 m², 48 panoramas) because a full open floor plate suits desk placement and gives the richest tour. None of the nine has a defurnished view.
+  **It passes the City of Houston test, and CoStar cannot answer that question.** Texas PACE lists the city, not Harris County outside it. Resolved against the **US Census Bureau geocoder** (`geocoding.geo.census.gov/geocoder/geographies/coordinates`, `layers=Incorporated Places`): `234088` and `23551` return **"Houston city"**; `240022` (3934 FM-1960, 77068) returns **no place — unincorporated**, so it would fail PACE. **All three carry CoStar `cityId` 5316 "Houston", including the unincorporated one**, so that field is the mailing city and must never be used for PACE eligibility. [V] 2026-11-14
+  **eGRID: ERCT.** ZIP 77027 inside the city limits means CenterPoint Energy Houston Electric is the TDU, which EMI-01 maps to **ERCT**, `EF_avg` 0.33413 kg CO₂e/kWh. Confirm from a bill if one becomes available. `23551` (7457 Harwin Dr, 77036, class B, 1983, 10 models) is the backup.
+
   **Office `sid` = `jfiEvosX974`** ("Executive Tower - Suite 140 - 4,410 SF") — richest of the nine: 8 rooms, 36 panoramas, 1 floor. Others: `2cLAWCVj1tA` (Suite 1530, 6 rooms), `vNxGNVDgVs9` (Suite 400, 5 rooms), `YbKz5PKbzwp` (Brentwood Executive Plaza, 5), `BkjvwqdchVY` (Suite 1100, 2 rooms but **93 panoramas** — the open-plan alternative for desk placement), `C7sMGY7UZfL`, `5xViZEoqi5n`, `bZ8jxbUviCF`, `iAw7TsDLoof`. **None of the nine has a defurnished view.**
 - **House**: Matterport `zvKHR9DHNjJ` = 5836 La Mirada Avenue, Los Angeles, CA. Residential — correctly absent from `commercial-properties.csv`. Its row: `ListingId 235967170`, `ResidentialListingId 221139020`. [V]
 
@@ -119,6 +218,14 @@ Model ids also appear inside the records as `videoKey` on attachments and media;
 - `POST https://api.matterport.com/api/models/graph`, GraphQL, HTTP basic auth: key as user, token as password. [V]
 - Production only. Well under 10 req/s; keys are shared. [V]
 - Null fields are **omitted, not sent as null** — code for absent keys. [V]
+- **A response can carry `errors` and usable `data` at the same time, and treating any `errors` as fatal throws away a complete answer.** [V] 2026-11-14, found while building D2. Asking for `view(type: "matterport.model.defurnished")` on a model that has none returns:
+
+  ```json
+  {"errors": [{"path": ["model","view"], "extensions": {"code": "not.found", "httpCode": 404}}],
+   "data":   {"model": {"id": "...", "rooms": [ ...8 rooms... ], "view": null}}}
+  ```
+
+  The model is **fully populated**; only the optional field failed. So a client must fail only when `data.model` is unusable, and turn field-scoped errors into provenance. D2 records a `not.found` as `FetchRecord{layer: "matterport", status: "missing"}` — a normal outcome, since only 6,979 models have a defurnished view — and anything else as `status: "error"`.
 - Signed asset URLs expire. **Re-query for a fresh URL; never cache a URL.** Cache bytes instead. [V]
 - 266 types in the schema; introspection works. [V]
 
@@ -139,7 +246,9 @@ Verified georeferences: [V] 2026-11-14
 | House `zvKHR9DHNjJ` | 34.093491667 | -118.3171 | 120.200 | 0.7289896, 0.6845248 | **≈93.7°** | `processing` |
 | Office `jfiEvosX974` "Executive Tower - Suite 140" | 34.036533908 | -118.443118175 | **0.0** | −0.3548537, 0.9349218 | **≈41.6°** | `processing` |
 
-The office reports **`altitude` 0.0** against the house's 120.2, so altitude is not reliably populated and must not be used as terrain elevation — take that from Vexcel `ground-elevation`. The office quaternion also has a **negative** z, so its rotation runs the other way from the house's; whatever convention the contract fixes has to handle both signs.
+| Houston office `L3266YcPPvd` "Full Floor Suite 500" | 29.746027599 | −95.457545726 | **0.0** | −0.6983887, 0.7157187 | **≈88.6°** | `processing` |
+
+**`altitude` is unusable.** It reads 0.0 on `L3266YcPPvd` but **29.6 on `rEpuTTQ1zEv`, another model in the same building** — so it is inconsistently populated even within one property. The LA office reports **`altitude` 0.0** against the house's 120.2, so altitude is not reliably populated and must not be used as terrain elevation — take that from Vexcel `ground-elevation`. The office quaternion also has a **negative** z, so its rotation runs the other way from the house's; whatever convention the contract fixes has to handle both signs.
 
 `Mutation.patchModelGeoCoordinates` / `resetModelGeoCoordinates` / `updateModelAddress` / `addEdgeOpenings` / `patchEdgeOpening` / `removeEdgeOpenings` all exist. **This lane never calls a mutation** — the keys are shared and point at production sponsor data. [V]
 
@@ -174,7 +283,7 @@ There is no shortage of real offices: **289 properties are `propertyType` 5 and 
 | Office 246899, **all 9 of its models** | **0 / 9** | none at all — not even a doorway |
 | Residential (12 listings) | **12 / 12** | `doorway` 154, `opening` 35, **`window` 34**, `divider` 5 |
 
-That is **21 office models sampled with no windows between them**, including all nine models of the chosen golden office. The openings graph is populated on residential scans and essentially absent on commercial ones. This is systemic, not a property-selection artefact: **office window surfaces can never come from the scan**, whichever office is chosen.
+Adding all nine models of the Houston office `234088`, also zero openings, that is **30 office models sampled with no windows between them**, including every model of both golden offices. The openings graph is populated on residential scans and essentially absent on commercial ones. This is systemic, not a property-selection artefact: **office window surfaces can never come from the scan**, whichever office is chosen.
 
 Consequence for the analysis lane: `A9` builds window surfaces and true north from openings, and that path is **home-flow only**. The office flow needs windows from another source — Vexcel obliques or facade imagery, or footprint plus storey count plus a window-to-wall ratio from the vintage tables, or the panorama vision model — and whichever is chosen must carry its uncertainty as an `Assumption`. Office daylight, glare and desk placement (`SPEC.md` §6.4) all sit downstream of that choice.
 
@@ -227,6 +336,15 @@ Working query: `floors { id label edges { id type thickness openings { id type w
 - Base `https://api.vexcelgroup.com/v2`, header `X-API-KEY`. [V]
 - **WKT is longitude first.** Always send `srid=4326`. [V]
 - Layers `urban`, `urban-r`, `wide-area`, `urban-g`; obliques only in `urban`. Houston and Los Angeles only. [V]
+- **The `layer` set changes which collection is selected, and so changes every attribute.** [V] 2026-11-14, found while building D3. The same point on the LA office:
+
+  | `layer` | collection | structures | primary footprint | height |
+  |---|---|---|---|---|
+  | `urban` | `us-ca-losangeles-2023` | **1** | 2,207.43 m² | −15.338 |
+  | `urban,urban-r,wide-area,urban-g` | `us-ca-losangeles_rf08-2023` | **2** | 2,473.94 m² | −14.223 |
+
+  Structure count, footprint, roof elevation and height all move, so the tutorial's advice to pass every layer silently changes the parcel decomposition. **D3 pins `layer=urban`** — both cities are urban and obliques exist only there — and carries the collection on `VexcelData.collection` so any result can be traced to the flight it came from.
+- **`403` means outside the licensed coverage, as distinct from `404` meaning no parcel inside it.** A point at 0°,0° answers 403. Both are normal outcomes and are reported as `FetchRecord`s. [V] 2026-11-14
 - `404` = no parcel at that point, a **normal outcome**. `429` = too fast, exponential backoff. [V]
 - `GET /oriented/collections` verified 200; returns a FeatureCollection of collections with `product-type` (e.g. `us-ca-glendale-2025`, `nadir`). Use it to learn which obliques exist before asking for imagery. [V]
 
@@ -266,16 +384,21 @@ Under `include=precomputed`, **all of these are `None`**: `maximum-roof-height`,
 
 **The fix: `include=precomputed,calculated` in one call.** Verified — 71,347 bytes, 92 keys on the primary structure, carrying `primary-structure`, `footprint.area`, `ground-elevation.value` **and** `roof-characteristics.{elevation,height}` together. Use this; never two separate calls. [V] 2026-11-14
 
-**`roof-characteristics.height` = ground elevation − roof elevation** — note the sign: it is **negative for a building that rises above grade**. [V] 2026-11-14, from consistent `include=precomputed,calculated` calls:
+**`|roof-characteristics.height|` = `|roof elevation − ground elevation|`, and the sign is unreliable.** [V] 2026-11-14, three lots each measured with a single `include=precomputed,calculated` call:
 
-| Lot | ground | roof | reported height | ground − roof |
+| Lot | ground | roof | reported height | signed fit |
 |---|---|---|---|---|
-| House (190.4 m², shingle gable) | 100.584 | 100.220123 | **+0.363877** | +0.363877 ✓ |
-| Office 246899 (2,207.4 m², flat membrane, **17 storeys**) | 54.5592 | 70.056587 | **−15.497387** | −15.497387 ✓ |
+| House (190.4 m², gable, 1 storey) | 100.584 | 100.220123 | **+0.363877** | ground − roof |
+| LA office 246899 (2,207.4 m², flat, **17 storeys**) | 54.5592 | 70.056587 | **−15.497387** | ground − roof |
+| Houston office 234088 (4,320.2 m², flat, **16 storeys**) | 19.5072 | 35.216709 | **+15.709509** | **roof − ground** |
 
-> **Correction to an earlier version of this section.** It gave the formula as *roof − ground*, derived from the old office lot where `ground` came from an `include=precomputed` call and `roof` from a separate `include=calculated` call. By this section's own rule those two responses cannot be paired, so that match was spurious. Both lots measured with a single combined call fit **ground − roof**.
+The absolute value matches `|roof − ground|` on all three; the sign comes out +, −, + with no apparent pattern. **Take `abs()` and never rely on the sign.**
 
-**The magnitude is wrong too.** The tower reports 15.5 m against 17 storeys — about 54 m at the 2.90–3.21 m floor-to-floor heights measured in its own scan. Its detected footprint of 2,207 m² is ~1.7× the CoStar typical floor plate (14,137 sq ft = 1,313 m²), so Vexcel is almost certainly outlining a low podium or garage rather than the tower. The house value also **changed between calls** (0.4254 standalone vs 0.3639 combined), so it is not even stable.
+> **This section has now been corrected twice.** The first version said *roof − ground*, inferred from a `precomputed`-only response paired with a `calculated`-only one, which this section's own rule forbids. The second said *ground − roof*, which fitted the house and the LA office but is contradicted by the Houston office above. Three samples were needed before the real behaviour was visible — one sample can confirm a wrong formula.
+
+**The magnitude is wrong on both towers, and now the cause is clear.** They report 15.5 m and 15.7 m against roughly 47 m and 44 m expected at their own measured room heights. Their detected footprints are **1.7× and 4.6×** the CoStar typical floor plate (1,313 m² and 944 m²), so Vexcel is outlining a low podium or garage on both. **So `footprint.area` and `height` describe the podium, not the tower** — which also bounds how `footprint.area` may be used for rooftop PV area on a tower. The house value additionally **changed between calls** (0.4254 standalone vs 0.3639 combined), and the LA office returned **−15.497 then −15.338 for identical parameters**, so the calculated elevation and height are **not reproducible**. Never assert equality on them and never derive a dimension from them.
+
+**Catching the podium case needs the storey count.** An absolute floor alone (reject under ~2.5 m) catches the house's 0.36 m but not a tower's 15.5 m, which looks like an ordinary low building. D3's `plausible_building_height(attrs, stories=...)` compares the rise against `stories × 2.2 m`, so the caller passes CoStar `numStoriesAboveGrade`; both golden towers then fail it as they should.
 
 **Conclusion: do not use `roof-characteristics.height` for building height.** Take storey count from CoStar `numStoriesAboveGrade` and multiply by a floor-to-floor height, or use the scan's own room heights. Keep the Vexcel figure only as a weak cross-check, with its sign stated explicitly.
 
@@ -339,6 +462,10 @@ Four conclusions the analysis lane needs:
 - **House**: `POINT(-118.3171 34.093491667)`, from the model's own `geocoordinates`. 2 structures. [V] `primary-structure` True, `footprint.area` 190.39 m², `ground-elevation` 100.584, roof `gable`/`shingle`, `condition.precise-value` 4.53, `tree-cover` 4.0, `ac-unit.count` 2, `chimney.count` 1, `roof-vent.count` 5, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
 - **Office**: `POINT(-118.44311817454468 34.036533907520074)` = 11400 Olympic Blvd, LA 90064 (`PropertyId 246899`), from `geocoordinates` on `jfiEvosX974`. [V] 2026-11-14 — 1 structure, `primary-structure` True, `footprint.area` **2,207.43 m²**, `ground-elevation` 54.5592, roof **`flat`** / **`membrane`**, `condition.precise-value` 3.17, roof `tree-cover` 0.0, parcel `tree-cover` 5.0, `ac-unit.count` **0**, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
 
+- **Houston office**: `POINT(-95.45754572577202 29.74602759879178)` = 2100 West Loop, Houston 77027 (`PropertyId 234088`), from `geocoordinates` on `L3266YcPPvd`. [V] 2026-11-14 — 1 structure, `footprint.area` **4,320.15 m²**, `ground-elevation` 19.5072, roof **`flat`** / **`membrane`**, `condition.precise-value` **2.88** (more degraded than the LA office's 3.17, so a stronger retrofit case), parcel `tree-cover` 6.0, `skylight.count` 0, `solar.value` False, **`building-type.class` `"commercial"`** — populated here where it is null on the house and the LA office, confirming it is usable only as an optional cross-check.
+
+**`HVAC_RTU` becomes demonstrable on the Houston office.** Vexcel reports **`ac-unit.count` = 2** on this building, against 0 on both the LA office and the house. `physics.md` has `HVAC_RTU` and `HVAC_ECON` returning not-applicable until a rooftop unit is confirmed; this property confirms one, so the two measures have a demo vehicle.
+
 **Good news for office solar: the roof is flat.** A flat membrane roof removes the pitch problem entirely — tilt becomes a racking design choice rather than a value inferred from `shape.value`. So the §4.3 height failure and the §4.4 SAM 3 plane-fragmentation problem both stop blocking office PV. The house still needs pitch from `shape.value` plus the `physics.md` table.
 
 Two cautions carried over:
@@ -384,7 +511,9 @@ Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 | `ghi_w_m2` | W/m² | `shortwave_radiation` |
 | `dni_w_m2` | W/m² | `direct_normal_irradiance` |
 | `dhi_w_m2` | W/m² | `diffuse_radiation` |
-| `wind_m_s` | m/s (Open-Meteo returns km/h — convert) | `wind_speed_10m` |
+| `wind_m_s` | m/s (Open-Meteo returns km/h — convert, ×1000/3600) | `wind_speed_10m` |
+
+**What D9 writes is one real calendar year, not a TMY.** Building a true typical meteorological year needs multi-year statistics that are out of scope here, so `weather_source` names the exact year fetched and the inter-annual spread comes from PVGIS `SD_y` rather than being invented. A year short of 8,760 rows is reported as `FetchRecord{layer:"weather", status:"fallback"}` rather than passing silently.
 
 **`weather_time_convention` = `hour_end`.** [V] 2026-11-14, verified two independent ways on the golden house:
 
@@ -400,7 +529,9 @@ Choosing `246899` over the Houston warehouse puts **both** golden properties in 
 1. **Both use the real LADWP tariff** from URDB (`eiaid` 11208), so the EIA state-average fallback is **off the demo path**. It stays implemented and documented — any Houston property still needs it, and 183 of the 274 office candidates are in Houston.
 2. **Both are eGRID subregion CAMX.** ZIP 90064 has prefix 900, inside the range EMI-01 confirmed for all 533 LA-area ZIPs (900–918). So `EF_avg` = **0.19504 kg CO₂e/kWh** for both, and the ERCT-versus-SRMV ambiguity that affected Houston ZIP 77080 **disappears**.
 3. **The 3.35× Texas/California price gap leaves the demo.** The weaker-Houston-economics warning below no longer applies to either golden property, though it stays true for any Houston run.
-4. **Texas now has no demo vehicle.** `specs/legal/texas.md`, the Texas documents 2–6 and the Texas PACE Act route in `SPEC.md` §6.6 have no golden property to run against, while California does. That is a real cost of this choice: either accept that Texas is specified but not demonstrated, or add a Houston office as a third property. Flagged, not decided — candidates are in §3.3.
+**Resolved 2026-11-14:** a third golden property, the Houston office `234088` / `L3266YcPPvd`, was added so the Texas path keeps a demo vehicle. The demo now shows both states — LADWP and CAMX on the LA house and LA office, and the Texas price, ERCT 0.33413, the Texas documents and the Texas C-PACE route on the Houston office. The EIA state-average fallback is therefore **back on the demo path** for that property, and the 3.35× price gap becomes a visible, honest contrast between the two offices rather than a hidden surprise. Items 1–3 above still describe the two Los Angeles properties.
+
+4. **~~Texas now has no demo vehicle.~~** `specs/legal/texas.md`, the Texas documents 2–6 and the Texas PACE Act route in `SPEC.md` §6.6 have no golden property to run against, while California does. That is a real cost of this choice: either accept that Texas is specified but not demonstrated, or add a Houston office as a third property. Flagged, not decided — candidates are in §3.3.
 
 ### 5.2 What is blocked, and the caveats
 
@@ -415,6 +546,8 @@ Choosing `246899` over the Houston warehouse puts **both** golden properties in 
   | TX | Residential | 2026-08 | 15.91 ¢/kWh |
   | CA | Commercial | 2026-08 | 30.02 ¢/kWh |
   | CA | Residential | 2026-08 | 29.75 ¢/kWh |
+
+  **EIA returns numeric fields as JSON strings** — `"price": "8.96"` — so an `isinstance(v, (int, float))` guard silently rejects every real response. A hand-written fixture using a float will not catch it: that is exactly what happened here, and only the live test found it. [V] 2026-11-14
 
   **This is a state monthly average, not the building's actual retail contract.** In deregulated ERCOT the real price varies widely by retail plan, so the office `Tariff` must carry `source` naming EIA with the state, sector and period, and a `FetchRecord{layer: "tariff", status: "fallback"}` beside it. It is defensible and traceable; it is not a lookup of that building's tariff. The LA home flow still uses the real LADWP rate from URDB.
 
@@ -444,7 +577,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D4 | P0 | Cache + fetch records | `data-cache` | `backend/data_layer/cache.py` | `FetchRecord` |
 | D5 | P0 | The one public door | `data-api` | `backend/data_layer/api.py` | `PropertyBundle`, `PropertySummary` |
 | D6 | P0 | Golden fixtures | each source agent, in its own subdirectory | `data/fixtures/costar/`, `/matterport/`, `/vexcel/` — **never the parent** | — |
-| D7 | P1 | Index + office selection | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
+| D7 | P1 | Index + office selection — **done**, see 2.4a | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
 | D8 | P1 | Imagery + SAM 3 | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique |
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
 | D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
@@ -460,6 +593,10 @@ One writer per path. Dependencies name **contract types only**, never another pa
 - Each agent on its own `<issue#>-<slug>` branch, or a git worktree when two need the same dependency tree.
 - **Branch from fresh `main` and open PRs against `main`** (AGENTS.md §3.2). `spec-draft` is **retired** as of PR #19 — do not commit to it or target it. `Closes #N` works again now that `main` is the merge target, so issues auto-close.
 - **Tests** live in `backend/data_layer/tests/test_<package>.py`, one file per package, so two agents never write the same test file (workplan R11).
+- **Live bundle assembly is opt-in: `live=True` or `DATA_LAYER_LIVE=1`.** Six modules import `data_layer/api.py`, including `backend/server.py` and the agent tools, and the server lane's checkpoint asserts `pytest backend -q` makes no network call. So the ordinary call path replays `specs/examples/` and records a `fallback` `FetchRecord` saying so; no caller can mistake a fixture for live data.
+- **The bundle cache belongs to the live path only.** If the offline path read it, a machine where someone had once assembled live data would silently test against that instead of the fixtures, and the suite would behave differently from one checkout to the next. A regression test asserts a cached live bundle cannot leak into the offline path. On the live path the cache is what satisfies SPEC §14's "a second call is served from cache": measured 2.46 s to assemble against 0.0006 s from cache.
+- **`climate` and `tariff` are required, so a missing one raises `IncompleteBundle` carrying the provenance** rather than substituting the fixture's numbers for live ones — that would fabricate data while looking successful.
+- **Network tests are opt-in: set `RUN_LIVE_NETWORK=1`.** A plain `pytest backend -q` must stay offline for every lane, because the server lane's checkpoint asserts the whole suite makes no network call. Gating a live test on "a key happens to be present" quietly breaks that the moment someone fills in `.env`, so every network-touching test in this lane requires the flag as well as its key. The D1 kit tests are the exception and gate on the mirror being on disk, since reading a local file is not a network call.
 - **`backend/schema.py` exists** as of PR #28 (`SCHEMA_VERSION` 0.2.0), with `backend/__init__.py` alongside it so `import backend.schema` works. `SPEC.md` §9 remains the source and **only @yalexie1 edits the module** — this lane imports it and never writes it. Independently verified 2026-11-14: the module is the §9 block, imports clean under pydantic 2.14.3, defines 56 models, and all 27 payloads in `specs/examples/` validate against it (99 `model_validate` calls, 0 failures). Note three example files are **arrays** — `measures.json` is `MeasureResult[]`, `run_events.json` is `RunEvent[]`, `search_results.json` is `PropertySummary[]` — so a validator assuming one object per file reports false failures.
 - Launch with `/data-wp <ID>`; check lane state with `/data-status`. Subagent definitions live in `.claude/agents/data-*.md` and carry the verified facts for their source inline, so an agent starts from evidence rather than from the stale spec.
 - **Fixtures ship with the package**, not after it. D5 and the other three lanes must never wait on live keys.
@@ -520,6 +657,13 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Field rules | `models/commercial-property.md` | 2026-11-14 | `constructionEvents[]`, GBA vs RBA |
 | Golden properties present | CSV lookup | 2026-11-14 | house residential; office now `246899` (9 models) |
 | Office exterior assets | track site, all 9 models | 2026-11-14 | **all 404 — no splat, no drone photos** |
+| Houston office 234088 | kit record + 9 models profiled | 2026-11-14 | type 5 Office, class A, 1974, 162,540 sq ft, 16 storeys; `sid` `L3266YcPPvd` |
+| City of Houston test | US Census geocoder, Incorporated Places | 2026-11-14 | 234088 and 23551 **"Houston city"**; 240022 **unincorporated** |
+| CoStar `cityId` vs incorporation | 3 candidates | 2026-11-14 | **all `cityId` 5316 Houston incl. the unincorporated one — unusable for PACE** |
+| Houston office Vexcel lot | live combined call | 2026-11-14 | flat/membrane, condition 2.88, **`ac-unit.count` 2**, `building-type.class` commercial |
+| `roof-characteristics.height` rule | 3 lots, combined calls | 2026-11-14 | **`abs()` only** — magnitude = \|roof−ground\|, sign +/−/+ with no pattern |
+| Tower footprint vs floor plate | 2 towers | 2026-11-14 | 1.7x and 4.6x the CoStar plate — Vexcel outlines the **podium**, not the tower |
+| `altitude` within one building | 2 models of 234088 | 2026-11-14 | 0.0 and 29.6 — **inconsistent, unusable** |
 | Matterport schema | GraphQL introspection | 2026-11-14 | 266 types; `geocoordinates.rotation`; `Edge.openings` |
 | Georeference live | live query, golden house | 2026-11-14 | quaternion z=0.72899 w=0.68452 → ≈93.7° |
 | Openings live | live query, golden house | 2026-11-14 | `type: "doorway"` on real edges |
@@ -535,12 +679,26 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Open-Meteo archive | live, golden house | 2026-11-14 | 200; GHI/DNI/DHI + temp/RH/wind, units documented |
 | PVGIS v5_3 `PVcalc` | live, both golden lots | 2026-11-14 | 200; `E_y`, `SD_y`, `H(i)_y`; ERA5 only for the US |
 | NREL PVWatts / NSRDB | DNS | 2026-11-14 | **unreachable here** — `Could not resolve host` |
+| Kit index built (D7) | one pass over both datasets | 2026-11-14 | 14,932 models → **5,098 properties**; 264 office properties; 14,929 with coordinates; build 1.1 s, load 0.06 s |
+| Search collapses repeated scans | `use_type=office, q=houston` | 2026-11-14 | before: "333 Northbelt" **5x**; after: once per property |
+| Lane suite with and without the mirror | `pytest backend/data_layer -q` | 2026-11-14 | 115/15 skipped with, 100/30 skipped without — **no failures either way** |
+| Search makes no network call | `socket.socket.connect` patched to raise | 2026-11-14 | first call 0.069 s, second 0.006 s, no connection attempted |
+| Live bundle after D7 | all three golden, `refresh=True` | 2026-11-14 | 2.2–2.9 s; names now `Executive Tower`, `5836 La Mirada Avenue`, `2100 West Loop South` |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; open blocker |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |
 | EPA eGRID factors | page only | 2026-11-14 | eGRID2023 current; **values not opened, unverified** |
 | EIA API v2 retail price | live, TX + CA, both sectors | 2026-11-14 | 200; TX com 8.96, TX res 15.91, CA com 30.02, CA res 29.75 ¢/kWh (2026-08) |
 | Measure cost data | — | — | **[P] not started, no owner** |
+| Model-id uniqueness | both CSVs, full scan | 2026-11-14 | **307 ids have >1 parent** (55 commercial, 252 residential); 387 extra rows |
+| GraphQL partial errors | live, office model | 2026-11-14 | `errors` **and** populated `data` together; absent `view` is a field-scoped `not.found` |
+| Vexcel `layer` affects the answer | live, LA office, 2 layer sets | 2026-11-14 | different collection, **1 vs 2 structures**, different footprint and height |
+| Vexcel calculated values reproducible? | live, repeated calls | 2026-11-14 | **no** — −15.497 then −15.338 on identical parameters |
+| Vexcel 403 vs 404 | live, 0°,0° | 2026-11-14 | **403 = outside coverage**, 404 = no parcel inside it |
+| Open-Meteo hour-end, re-checked | live, as an opt-in test | 2026-11-14 | hourly sum reconciles with the daily total, ratio 1.0001 |
+| EIA numeric fields | live | 2026-11-14 | **`price` is a JSON string** (`"8.96"`), not a number — parse it |
+| Live bundle, all 3 golden properties | `api.get_property_bundle(live=True)` | 2026-11-14 | all assemble in ~2.5-2.9 s and validate; 2nd call from cache in 0.6 ms |
+| Residential field shapes | kit record + models/ | 2026-11-14 | `yearBuilt` scalar, area is `sqftMin`/`sqftMax` range, `propertyType` ambiguous |
 | Contract v0.2 extract + examples | independent check, pydantic 2.14.3 | 2026-11-14 | 538 lines, imports clean, 56 models, 27/27 examples valid (99 checks, 0 fail) |
 | Open-Meteo time convention | hourly-vs-daily reconciliation + sunrise boundary | 2026-11-14 | **`hour_end`** — ratio 1.0001; 05:00 stamp = 04:00–05:00 mean |
 | Golden office openings | live query | 2026-11-14 | **5 openings, all `doorway` — no windows** |

@@ -8,9 +8,9 @@
   {
     "type": "stage_done",
     "stage": "S1",
-    "message": "Found Suite A - 2,000SF",
+    "message": "Found Executive Tower - Suite 140",
     "payload": {
-      "sid": "HjEyXryhRLk"
+      "sid": "jfiEvosX974"
     }
   },
   {
@@ -56,28 +56,18 @@
       "agent": "scout",
       "tool": "get_property_bundle",
       "args": {
-        "sid": "HjEyXryhRLk"
+        "sid": "jfiEvosX974"
       }
     }
   },
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "No aerial splat for this model; using the Vexcel roof shape",
+    "message": "No aerial splat for this model; using the Vexcel flat roof",
     "payload": {
       "layer": "matterport",
       "from": "aerial splat",
       "to": "Vexcel parametric roof"
-    }
-  },
-  {
-    "type": "fallback",
-    "stage": "S2",
-    "message": "No utility tariff for this address; using the published default price",
-    "payload": {
-      "layer": "tariff",
-      "from": "utility tariff",
-      "to": "published default (TAR-06)"
     }
   },
   {
@@ -95,7 +85,7 @@
   {
     "type": "error",
     "stage": "S3",
-    "message": "Vexcel returned 429 for two obliques; continuing without them",
+    "message": "Vexcel returned 429 for one oblique; continuing without it",
     "payload": {
       "code": "vexcel_rate_limited",
       "message": "HTTP 429",
@@ -117,7 +107,7 @@
   {
     "type": "fallback",
     "stage": "S4",
-    "message": "No window openings in the wall graph; using window sizes read by vision",
+    "message": "No openings in the wall graph; using window sizes read by vision",
     "payload": {
       "layer": "matterport",
       "from": "measured window openings",
@@ -135,23 +125,23 @@
         "prompt": "What heats and cools this suite?",
         "choices": [
           {
+            "label": "The building's central plant (chillers, air handlers)",
+            "value": "central_plant"
+          },
+          {
             "label": "A packaged unit on the roof",
             "value": "rooftop_unit"
           },
           {
-            "label": "A split system with a furnace",
+            "label": "A split system serving the suite",
             "value": "central_ac_furnace"
-          },
-          {
-            "label": "The building's central plant",
-            "value": "central_plant"
           },
           {
             "label": "I don't know",
             "value": null
           }
         ],
-        "impact_note": "No rooftop unit is visible from the air. The answer decides whether unit replacement and an economizer are evaluated at all."
+        "impact_note": "No rooftop unit is visible from the air, which proves little on a tower. The answer decides whether unit replacement and an economizer are evaluated at all, and who could do them."
       }
     }
   },
@@ -177,9 +167,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 2614.29,
-        "expected": 3078.2,
-        "high": 4611.33,
+        "low": 9866.97,
+        "expected": 12338.0,
+        "high": 15632.63,
         "unit": "USD"
       }
     }
@@ -204,7 +194,7 @@
       "agent": "physicist",
       "tool": "score_desk_positions",
       "args": {
-        "room_id": "room_open_office",
+        "room_id": "room_01",
         "desks_requested": 4
       }
     }
@@ -217,11 +207,11 @@
       "kind": "finding",
       "measure_id": "LGT_LED",
       "anchor": {
-        "room_id": "room_open_office",
+        "room_id": "room_01",
         "pano_id": "pano_01",
         "x": 5.0,
-        "y": 4.2,
-        "z": 2.74,
+        "y": 3.0,
+        "z": 2.9,
         "label": "Fluorescent troffers"
       }
     }
@@ -229,7 +219,7 @@
   {
     "type": "stage_done",
     "stage": "S6",
-    "message": "11 measures evaluated",
+    "message": "12 measures evaluated",
     "payload": {
       "artifact": "/run/measures.json"
     }
@@ -248,7 +238,7 @@
       "agent": "financier",
       "tool": "cpace_scenario",
       "args": {
-        "measure_id": "LGT_LED"
+        "measure_id": "ENV_AIRSEAL"
       }
     }
   },

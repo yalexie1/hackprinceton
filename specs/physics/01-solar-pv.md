@@ -891,7 +891,9 @@ Lookup used on the parametric path to fill `RoofPlane.tilt_deg` (a `Ranged`, deg
 
 Pitch conversion: `tilt = atan(rise / 12)`. 2:12 = 9.46, 4:12 = 18.43, 6:12 = 26.57, 8:12 = 33.69, 12:12 = 45.00 degrees (computed, and 6:12 checked against the ROOF-01 example).
 
-**Golden lots.** House (gable, shingle, footprint 190.4 m2, small): 15.8 / 28.4 / 41.1; the shingle minimum of 9.46 does not bind. Office (gable, metal, footprint 1,215.9 m2 = 13,088 ft2, medium): 1.2 / 15.8 / 28.4 if the seam type is unknown.
+**Golden lots.** House (gable, shingle, footprint 190.4 m2, small): 15.8 / 28.4 / 41.1; the shingle minimum of 9.46 does not bind. Both golden offices have flat membrane roofs: the Los Angeles office (PropertyId 246899, 17 storeys) and the Houston office (PropertyId 234088, 16 storeys). On a flat roof, tilt is a racking choice, not a roof property: use the flat-roof row and LAY-02 for row spacing. (The first golden office, a gabled metal warehouse, was dropped on 2026-11-14.)
+
+**Footprints of towers and of different flights.** Two facts verified by the Data lane, 2026-11-14. (1) On both golden towers the Vexcel footprint outlines a podium or garage, not the tower: 1.7 and 4.6 times the CoStar typical floor plate. So for a building of more than three storeys, the roof area available for PV is taken as gross building area divided by storeys, not the footprint, and the footprint is used only as an upper bound. (2) A footprint depends on the layer set it was fetched with: on the LA office, `layer=urban` gave one structure of 2,207 m2, and the full layer list gave two structures, the primary 2,474 m2, from a different flight. The Data lane pins `layer=urban` and records the flight in `VexcelData.collection`; any area used here names that collection. Vexcel's calculated roof height is not used at all: its sign varies and it differs between identical calls.
 
 **How the range reaches the yield.** PV-09, with a worked example on the golden house.
 
@@ -956,7 +958,8 @@ gable:  ridge along the long side (assumption).
 hip (equal pitch on all four sides):
         two trapezoids: gamma = (a_L + 90) mod 360 and (a_L + 270) mod 360,  A_plan = k * (L * W / 2 - W^2 / 4) each
         two triangles:  gamma = a_L and (a_L + 180) mod 360,                  A_plan = k * W^2 / 4 each
-flat:   one plane, A_plan = A_footprint, tilt from ROOF-03, azimuth None
+flat:   one plane, A_plan = A_footprint (towers: GBA / storeys), tilt from ROOF-03; the plane has no azimuth of its own,
+        so RoofPlane.azimuth_deg (required in the contract) carries the azimuth chosen for the racks, 180 by default
 All:    A_plane = A_plan / cos(beta)
 ```
 
@@ -1004,7 +1007,7 @@ These are design defaults for a feasibility study. The authority having jurisdic
 - **California, houses.** Section 1205.2.1 exception 1 says the R-3 rules do not apply to structures built under the residential code. The governing text for a house is therefore the 2025 California Residential Code, section R329 "Solar Energy Systems" (R329.6, roof access and pathways). Its text could not be opened; only the section's existence in the 2025 table of contents was seen. The table above is used as the design default on the expectation that the residential code mirrors it. [U], section 8.
 - **Texas.** There is no single statewide text for rooftop PV access. Local Government Code section 214.212 adopts the International Residential Code as it existed on 1 May 2012 as the municipal residential code and lets each municipality adopt amendments and later editions (read in a reproduction, not on the official site). Each city therefore has its own adopted edition. The table above (2021 IFC, as published by one Texas city) is the design default for Texas lots. The edition and amendments in force in Houston for the golden office were not verified. [P] Agent lane (`specs/legal/`), per city.
 
-**Golden lots.** House in Los Angeles: pitched gable, slope above 2 in 12, so ridge setback and pathways apply (ROOF-04 example). Office in Houston: footprint 1,215.9 m2, so at least one axis is below 76.2 m and the 4 ft (1.219 m) perimeter applies. Interior pathways for spacing are needed only if a roof dimension exceeds 45.72 m; check the long side of the footprint against that.
+**Golden lots.** House in Los Angeles: pitched gable, slope above 2 in 12, so ridge setback and pathways apply (ROOF-04 example). Offices in Los Angeles and Houston: flat roofs; take the roof dimensions from gross building area over storeys (ROOF-03), check each axis against 76.2 m to choose the perimeter width, and confirm the local adoption (section 8). Interior pathways for spacing are needed only if a roof dimension exceeds 45.72 m; check the long side of the footprint against that.
 
 **Tool function.** `fire_setbacks(state, building_group, roof_slope_deg, array_plan_share, sprinklered=False, building_axes_m=None) -> {ridge_setback_m, pathway_width_m, perimeter_m, interior_interval_m, basis, status}`.
 

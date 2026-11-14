@@ -31,7 +31,7 @@ One writer per path. Paths marked *proposed* are proposals to confirm on the boa
 | Frontend, demo, submission | `F` | @vinayak-sinha | `frontend/` | SPEC 11 and 15 |
 | Contract and specs | `C` | @yalexie1 | `backend/schema.py`, `specs/` except the Data lane's spec file and the legal framework file (so including `specs/legal/` and `specs/examples/`), root files (2.5) | `specs/SPEC.md` |
 
-`AGENTS.md` does not name the team lead. Wherever this file says "the lead", it means the person the team names on the board (open item O16).
+The team lead is @yalexie1 (Yale), recorded in `AGENTS.md` section 2. Wherever this file says "the lead", it means @yalexie1.
 
 Three paths are agreed on the board and not yet in `AGENTS.md` (open item O19): the data spec is @vigjay's (recorded at the top of that file); `backend/legal/` and `specs/legal.md` are @Sri-SriPod's (accepted and handed over on 2026-11-14; SPEC's companion table records the second). The owner table in `AGENTS.md` still lists all of `specs/` under @yalexie1, has no row for `backend/legal/`, and says nothing about `.claude/`.
 
@@ -93,13 +93,13 @@ Fixture files. They are in the repository under `specs/examples/` (package `C2`)
 
 | Alias | File in `specs/examples/` | Content |
 |---|---|---|
-| `bundle` | `house/property_bundle.json`, `office/property_bundle.json` | `PropertyBundle`. Both have a `georeference`. The office has eight openings of type `window`, and `costar.occupancy` and `costar.market`. The house has doorways only, on purpose, to show the vision fallback for windows |
-| `model` | `house/building_model.json`, `office/building_model.json` | `BuildingModel` with `north_source` and `systems.occupants` |
-| `run` | `house/run_result.json`, `office/run_result.json` | `RunResult` with `request`, `property`, `building_model`, `baseline`, `measures`, `plan`, `questions`, `narrative_md` filled; the office plan has a `value_uplift`, the house plan has none |
-| `docreq` | `house/document_request.json`, `office/document_request.json` | `DocumentRequest` |
-| `draft` | `house/document_draft.json`, `office/document_draft.json` | `DocumentDraft` |
+| `bundle` | `house/property_bundle.json`, `office/property_bundle.json`, `office_houston/property_bundle.json` | `PropertyBundle`. All three have a `georeference`. The house has measured window openings; the two offices have no openings, as every office scan sampled so far, so their windows come from vision. The offices carry `costar.occupancy` and `costar.market`. `office/` is the Los Angeles office (LADWP), `office_houston/` the Houston office (Texas default tariff with a `fallback` record) |
+| `model` | `house/building_model.json`, `office/building_model.json`, `office_houston/building_model.json` | `BuildingModel` with `north_source` and `systems.occupants` |
+| `run` | `house/run_result.json`, `office/run_result.json`, `office_houston/run_result.json` | `RunResult` with `request`, `property`, `building_model`, `baseline`, `measures`, `plan`, `questions`, `narrative_md` filled; the office plans have a `value_uplift`, the house carries its uplift on the `PV_ROOF` measure |
+| `docreq` | `house/document_request.json`, `office/document_request.json`, `office_houston/document_request.json` | `DocumentRequest` |
+| `draft` | `house/document_draft.json`, `office/document_draft.json`, `office_houston/document_draft.json` | `DocumentDraft`: California residential retrofit contract, California commercial retrofit contract, Texas C-PACE package |
 | `search` | `search_results.json` | `PropertySummary[]`, the search response |
-| `events` | `house/run_events.json`, `office/run_events.json` | one JSON array of `RunEvent` for a full run, with every event type at least once |
+| `events` | `house/run_events.json`, `office/run_events.json`, `office_houston/run_events.json` | one JSON array of `RunEvent` for a full run, with every event type at least once |
 | `ask` | not written yet. Proposed: `ask/building_model_wide.json`, `ask/building_model_narrow.json` | two `BuildingModel` files, one built so the ask rule fires and one so it stays silent (SPEC 14). Work of `A27`, the first package that needs them |
 | `weather` | not written yet. Proposed: `weather/typical_year_hourly.csv` | one typical year of hourly weather. Work of `A1`, the first package that needs it. It is the reference format until the Data lane writes one into data spec section 5 (O9) |
 
@@ -340,6 +340,8 @@ How this table differs from the other lanes' tables:
 | D8 | Imagery + SAM 3: ortho and oblique image bytes, and `elements/detect` with SAM 3 on them, label `roof` at a detection threshold near 0.3 (SPEC 6.3 step 3). Each detection keeps its confidence, its map-coordinate bounding polygon and its pixel mask, cached at `VexcelDetection.mask_png_path` | P1 | `backend/data_layer/imagery.py` | latitude and longitude; labels | `VexcelDetection`; the `VexcelData` fields `ortho_path`, `oblique_paths` and `detections` | `bundle#/vexcel` | Proposed: a hand-written detect reply parses into `VexcelDetection` items with `bbox_wkt`, `pixel_bbox` and a cached mask at `mask_png_path`; a 429 is retried with backoff; no image URL is stored. live: the label `roof` on the golden house returns at least one detection | `VexcelData`, `VexcelDetection`, `FetchRecord`; fx `bundle` |
 | D9 | External data: for a site, the typical-year hourly weather file, time zone and climate zone; electricity, gas and export prices; and the sources and citations for the emission factors and measure costs that the physics spec tabulates (data spec 5: the hourly source is the Open-Meteo archive and the Los Angeles tariff comes from the NREL rate database; Houston has no tariff source yet) | P1 | `backend/data_layer/external.py` | latitude, longitude, state | `ClimateSite`, `Tariff` | `bundle#/climate`, `bundle#/tariff`, `weather` | Proposed: the file at `ClimateSite.weather_path` has 8,760 rows in the format of `weather`; `Tariff.source` and `Tariff.retrieved` are set. live: one Los Angeles and one Houston point | `ClimateSite`, `Tariff`, `FetchRecord`; fx `bundle`, `weather` |
 | D10 | The five unused datasets: tenancies and tenant companies into `CostarData.occupancy`; sale comparables and asking rents into `CostarData.market`, the inputs to value uplift | P2 | `backend/data_layer/costar_extra.py` | a CoStar property id | `OccupancyData`, `Tenancy`, `MarketData` | `bundle.office#/costar` | Proposed: synthetic tenancy and company rows give a valid `OccupancyData`; synthetic sale comparables give a valid `MarketData` whose `comp_count` is the number of comparables used; a property with no such records gives neither, not an exception | `CostarData`, `OccupancyData`, `Tenancy`, `MarketData`, `Ranged`; fx `bundle` |
+| D12 | Splat + drone photos (track site): download them for the models that have them (about 21 commercial and 211 residential; none of the golden offices): download selectively into the cache, never a whole model folder (the golden house totals 15.6 GB) | P1 | `backend/data_layer/tracksite.py` | a Matterport model id | `MatterportData` with `splat_path` and `drone_photo_paths` set, or a `FetchRecord` saying there are none | `bundle.house#/matterport` | Proposed: a synthetic track-site listing gives cache paths, never URLs; a model with no entry (HTTP 404) gives a `FetchRecord` with status `missing`, not an exception; the total downloaded stays under a stated cap | `MatterportData`, `FetchRecord`; fx `bundle` |
+| D13 | Portfolio screening by Vexcel filters: for SPEC 13 P2, find candidate properties by Vexcel attribute filters (for example roof material, solar present) inside the licensed area | P2 | `backend/data_layer/screening.py` | filters and a bounding area | `PropertySummary` list | `search` | Proposed: synthetic filter results map to valid `PropertySummary` values joined to CoStar records; an empty result is an empty list | `PropertySummary`; fx `search` |
 
 Tasks of the lane owner, listed in data spec 6.1 with no tier and no sub-agent:
 
@@ -522,10 +524,10 @@ Found while writing this plan. Each has a default that applies if the board has 
 | O13 | SPEC names `physics.md` and `legal.md`. The physics text is in four files under `specs/physics/` and the statutory text in two files under `specs/legal/`. Of the two files SPEC's names point to, the legal framework `specs/legal.md` exists as a draft with its first document, and the physics index `specs/physics.md` is not written yet | `C5` writes the physics index and `L9` completes the legal framework; SPEC keeps its names |
 | O14 | SPEC 13 P0 says "`HVAC_HP` or `HVAC_RTU`"; SPEC 6.2 offers the first to homes only and the second to offices only, and P0 needs one house and one office | Both are P0 (`A18`) |
 | O15 | SPEC 15 demo steps 4 to 6 use the roof view with panel layout, the budget re-rank, the desk layout and the C-PACE view, which are P1 or have no tier | `F12` cuts the script to what shipped (checkpoint 4) |
-| O16 | `AGENTS.md` does not name the team lead and its mention list still has placeholders | The team names the lead on the board; the lead fills in `AGENTS.md` |
+| O16 | `AGENTS.md` does not name the team lead and its mention list still has placeholders | Resolved 2026-11-14: `AGENTS.md` names @yalexie1 as lead and lists the team (PRs #66 and this one). |
 | O17 | SPEC 16 gives the risk "georeference missing or wrong on a model" to "Data + Analysis" | Data delivers the field as returned (`D2`). Analysis owns the conversion to `BuildingModel.north_offset_deg`, the cross-check against the footprint and the fallback (`A9`) |
 | O18 | Data spec 2.6 names the golden properties: the house is Matterport model `zvKHR9DHNjJ` in Los Angeles; the office is CoStar property 354635 in Houston, which has three models. Not yet stated: which of the three is the office `sid`, and whether the house has an aerial splat, as SPEC 13 P0 says | The Data lane confirms both (R5). Until then the office `sid` in fixtures is `HjEyXryhRLk`, the model the data spec uses for the office's georeference and lot |
-| O19 | `AGENTS.md` lists all of `specs/` under @yalexie1 and has no row for `backend/legal/`. Agreed on the board since: the data spec is @vigjay's; `backend/legal/` and `specs/legal.md` are @Sri-SriPod's. The Data lane also added `.claude/agents/data-*.md` and `.claude/commands/data-*.md`; who owns `.claude/agents/` is open (data spec 7), and 2.5 treats the rest of `.claude/` as the untouched board template | 1.1 and 8.2 of this file. The `data-*` files under `.claude/` are the Data lane's; hooks and `settings.json` stay untouched. The lead updates the owner table in `AGENTS.md` |
+| O19 | `AGENTS.md` lists all of `specs/` under @yalexie1 and has no row for `backend/legal/`. Agreed on the board since: the data spec is @vigjay's; `backend/legal/` and `specs/legal.md` are @Sri-SriPod's. The Data lane also added `.claude/agents/data-*.md` and `.claude/commands/data-*.md`; who owns `.claude/agents/` is open (data spec 7), and 2.5 treats the rest of `.claude/` as the untouched board template | Resolved 2026-11-14: the owner table in `AGENTS.md` now records these paths (PR #66). |
 | O20 | `PropertyBundle.climate` and `PropertyBundle.tariff` are required fields and P0 analysis packages read them. The Data lane delivers external data in `D9`, which is P1 and which it reports as done on the strength of its source checks (data spec 5); `external.py` is not written, and Houston has no tariff source | For the two golden sites both are delivered by checkpoint 3 (R2). Until then the `bundle` fixtures stand in, and office dollar savings in Houston are illustrative |
 | O21 | The Data agent definitions expect things contract 0.2.0 does not have: more fetch outcomes than the five values of `FetchRecord.status`; which model a bundle used when one property has several, and the alternatives; the unit-or-building distinction of SPEC 3.5; a confidence flag on the roof height; typed Vexcel fields where `VexcelStructure.attributes` is a flat map | Each is carried in `FetchRecord.what`, `FetchRecord.detail` or `VexcelStructure.attributes` until the Data lane posts a `CONTRACT-CHANGE:` and it lands |
 | O22 | Vexcel counts no rooftop AC unit on the golden office (data spec 4.5, SPEC 16), but `HVAC_RTU` is the P0 office HVAC measure (O14) | The fallback of SPEC 16: the HVAC type comes from interior vision (`A7`, through the registry of `A10`) and the measure that matches it is evaluated. The team decides on the board whether to pick another golden office instead |
@@ -545,8 +547,8 @@ P1 and P2 packages are in brackets: start them only when the P0 packages of the 
 | Sub-lane | Paths | Packages, in order |
 |---|---|---|
 | `data-costar` | `backend/data_layer/costar.py`, `data/fixtures/costar/`, `backend/data_layer/index.py`, `backend/data_layer/external.py`, `backend/data_layer/costar_extra.py` | D1, [D7], [D9], [D10] |
-| `data-matterport` | `backend/data_layer/matterport.py`, `data/fixtures/matterport/` | D2 |
-| `data-vexcel` | `backend/data_layer/vexcel.py`, `data/fixtures/vexcel/`, `backend/data_layer/imagery.py` | D3, [D8] |
+| `data-matterport` | `backend/data_layer/matterport.py`, `data/fixtures/matterport/`, `backend/data_layer/tracksite.py` | D2, [D12] |
+| `data-vexcel` | `backend/data_layer/vexcel.py`, `data/fixtures/vexcel/`, `backend/data_layer/imagery.py`, `backend/data_layer/screening.py` | D3, [D8], [D13] |
 | `data-cache` | `backend/data_layer/cache.py` | D4 |
 | `data-api` | `backend/data_layer/api.py` | D5 |
 | the three source agents, each in its own fixture folder | the three fixture folders above | D6 |
@@ -702,7 +704,7 @@ A missed checkpoint is not moved. The cut in the last column happens, the lead p
 |---|---|---|---|---|---|
 | 1 | Schema freeze | T-30 h | `C1` and `C2` merged: `backend/schema.py` imports and the examples validator (2.3) passes. `C4` merged. Every open item O1 to O22 has an answer or takes its default, and every request R1 to R12 has a reply or a date for one. The five door stubs are merged (`D5` returning fixture data, `A0`, `G0`, `L0`, `F0`) and each has posted `INTERFACE-LIVE: stub`. The golden office `sid` is confirmed (R5). | @yalexie1 runs the validator and posts `CONTRACT-CHANGE: frozen <version>` | No P2 package is started for the rest of the event. Open items take the defaults of 4.6.1 with no further discussion. The freeze is declared on whatever loads. |
 | 2 | Walking skeleton on fixtures | T-22 h | With every door still a stub: `POST /api/runs` for the house fixture streams events to `done`, `GET /api/runs/{run_id}` returns a valid `RunResult`, a document request returns a draft (`G7`, `G0`). The frontend, pointed at that server, goes Find, Set up, Audit, Plan, Documents with no page reload (`F0` and at least a first pass of `F1`, `F3`, `F4`, `F6`, `F11`). | @Sri-SriPod runs the server check; @vinayak-sinha confirms from the browser; both post | P2 is dropped entirely. No P1 package starts until the skeleton is green. Each owner puts one agent on whatever part of the skeleton is missing. |
-| 3 | Live data on the two golden properties | T-12 h | SPEC 14 holds for the P0 scope. Data: `get_property_bundle` real for both `sid` values, each layer present or explained by a `FetchRecord`, second call from cache (`D1` to `D6`), with a real weather file and a tariff for both sites (R2). Analysis: real door functions, plan reproduces exactly on re-run (`A29`). Agent: a run on each golden property completes with no manual step and its narrative passes `check_narrative`; the ask rule fires on the wide fixture and not on the narrow one (`G1` to `G6`, `G9`). Frontend: the run is driven from Find to Documents against the live server, pins appear in the tour (`F5`), one California retrofit contract is drafted (`L1` to `L3`, `G10`, `F11`). | @vigjay checks the bundles, @yalexie1 the plan, @Sri-SriPod the run; @vinayak-sinha drives it once in the browser and posts the result | Every P1 package not yet merged is cut; its PR is closed or parked. If one golden property still fails, that flow is shown from its payloads in `data/fixtures/` and the other runs live; the submission says which. The lead decides any further reduction inside P0. |
+| 3 | Live data on the three golden properties | T-12 h | SPEC 14 holds for the P0 scope. Data: `get_property_bundle` real for all three `sid` values, each layer present or explained by a `FetchRecord`, second call from cache (`D1` to `D6`), with a real weather file and a tariff for both sites (R2). Analysis: real door functions, plan reproduces exactly on re-run (`A29`). Agent: a run on each golden property completes with no manual step and its narrative passes `check_narrative`; the ask rule fires on the wide fixture and not on the narrow one (`G1` to `G6`, `G9`). Frontend: the run is driven from Find to Documents against the live server, pins appear in the tour (`F5`), one California retrofit contract is drafted (`L1` to `L3`, `G10`, `F11`). | @vigjay checks the bundles, @yalexie1 the plan, @Sri-SriPod the run; @vinayak-sinha drives it once in the browser and posts the result | Every P1 package not yet merged is cut; its PR is closed or parked. If one golden property still fails, that flow is shown from its payloads in `data/fixtures/` and the other runs live; the submission says which. The lead decides any further reduction inside P0. |
 | 4 | Feature freeze, then demo rehearsal | freeze at T-5 h, rehearsal at T-3 h, submission filed by T-1 h | At the freeze: `main` is green (every merged package's acceptance test passes) and the SPEC 14 criteria hold. After the freeze only fixes for bugs that break the demo are merged, each approved by the lead. At the rehearsal: `F12` passes, meaning the shipped steps of SPEC 15 run twice in a row from a cold start. | @vinayak-sinha runs the rehearsal and posts; each owner confirms their lane's tests on `main` | Anything not merged is cut, whatever its tier. The demo runs from the last green commit. Demo steps whose features did not ship are removed from the script; any P0 item that did not ship is stated in the submission. |
 
 ## 8. Definition of done and code owners
@@ -772,7 +774,7 @@ The items are the P0 row of SPEC 13, split at its semicolons.
 
 | P0 item of SPEC 13 | Packages |
 |---|---|
-| two golden properties (one house with a splat, one office; ids in `data-integration.md` section 2.6) end to end on live data | `D1`, `D2`, `D3`, `D5`, `D6`, `G2`, `G5`, `G9`, `F12` |
+| three golden properties (the Los Angeles house with a splat, a Los Angeles office and a Houston office; ids in `data-integration.md` section 2.6) end to end on live data | `D1`, `D2`, `D3`, `D5`, `D6`, `G2`, `G5`, `G9`, `F12` |
 | all three layers in the bundle | `D1`, `D2`, `D3`, `D4`, `D5` |
 | building model with assumption registry | `A9`, `A10` |
 | hourly baseline | `A1`, `A2`, `A3` |
@@ -792,40 +794,40 @@ The items are the P0 row of SPEC 13, split at its semicolons.
 
 The output of the last run, unedited. 17 of 18 checks pass; check 18 fails with five findings, explained below the output.
 
-Inputs: `specs/SPEC.md` sha256 13d44a007475, `specs/data-integration.md` sha256 99bed0b37afe.
+Inputs: `specs/SPEC.md` sha256 f9c980a9f0cf, `specs/data-integration.md` sha256 4a6a3ebd04c0.
 
 | # | Check | Items | Result |
 |---|---|---|---|
-| 1 | Contract block of SPEC 9 loads under Pydantic 2 and every model builds a JSON schema (SCHEMA_VERSION 0.2.0: 55 models, 6 literal aliases) | 61 | pass |
-| 2 | Package ids are unique | 87 | pass |
-| 3 | Every work package has all nine columns filled, a valid id and tier, and sits in its own lane's table (85 packages; the 2 owner tasks have their four columns filled) | 87 | pass |
-| 4 | No path is owned by two owners: no path is listed under two lanes in 1.1, and every package's bound path resolves, by the most specific path of 1.1, to its own lane's owner (18 lane paths, 111 bound paths, 92 distinct) | 111 | pass |
-| 5 | The proposed CODEOWNERS block of 8.2 (17 rules, last match wins) gives every lane path, bound path and root file the same owner as 1.1 | 116 | pass |
-| 6 | Inside a lane, a path bound by more than one package is never bound across lanes, and every later package states its order with 'after' (13 shared paths); no bound path lies inside another package's bound folder | 92 | pass |
-| 7 | Every dependency is a type that exists in the contract block of SPEC 9 or a fixture alias of 2.3, and no 'Depends on' cell names a package | 520 | pass |
-| 8 | Every type named in an In or Out cell exists in the contract, and every fixture named is an alias of 2.3 | 344 | pass |
+| 1 | Contract block of SPEC 9 loads under Pydantic 2 and every model builds a JSON schema (SCHEMA_VERSION 0.3.1: 55 models, 6 literal aliases) | 61 | pass |
+| 2 | Package ids are unique | 89 | pass |
+| 3 | Every work package has all nine columns filled, a valid id and tier, and sits in its own lane's table (87 packages; the 2 owner tasks have their four columns filled) | 89 | pass |
+| 4 | No path is owned by two owners: no path is listed under two lanes in 1.1, and every package's bound path resolves, by the most specific path of 1.1, to its own lane's owner (18 lane paths, 113 bound paths, 94 distinct) | 113 | pass |
+| 5 | The proposed CODEOWNERS block of 8.2 (17 rules, last match wins) gives every lane path, bound path and root file the same owner as 1.1 | 118 | pass |
+| 6 | Inside a lane, a path bound by more than one package is never bound across lanes, and every later package states its order with 'after' (13 shared paths); no bound path lies inside another package's bound folder | 94 | pass |
+| 7 | Every dependency is a type that exists in the contract block of SPEC 9 or a fixture alias of 2.3, and no 'Depends on' cell names a package | 525 | pass |
+| 8 | Every type named in an In or Out cell exists in the contract, and every fixture named is an alias of 2.3 | 349 | pass |
 | 9 | Every `Type.field` reference names a real field of the contract; each of the 7 new types and 10 new fields of contract 0.2.0, and 5 of the fields added to it since, is used in sections 1 to 8; no retired name remains there (the old listing-id join key, the model index file, schema versions 0.1.x) | 111 | pass |
 | 10 | Every contract type is named in the Out cell of at least one package (56 types) or is listed in 9.2 as a type no package outputs (5 types) | 61 | pass |
 | 11 | Every P0 item of SPEC 13 (9 items, split at semicolons) has a row in 9.1 with at least one package, all of them P0; each of the 7 measures the P0 row names is in a P0 package | 9 | pass |
 | 12 | Every MeasureId (18, equal to the rows of SPEC 6.2) is named in the Package cell of an analysis package | 18 | pass |
 | 13 | Every stage of SPEC 6.1 (9), agent (6) and tool (20) of SPEC 8, route of SPEC 10 (11) and screen of SPEC 11 (8) is named in a package; every tool is in 3.4 and its door call is defined in 3.1 to 3.3 | 54 | pass |
-| 14 | Every package and owner task is in exactly one sub-lane of 5.2; P1 and P2 packages are in brackets there and P0 packages are not | 87 | pass |
-| 15 | The Data lane table of 4.1 agrees with the table of data spec 6.1: same ids, tiers, package names, owned paths and sub-agents, and every contract type the data spec gives as output is in Out | 12 | pass |
+| 14 | Every package and owner task is in exactly one sub-lane of 5.2; P1 and P2 packages are in brackets there and P0 packages are not | 89 | pass |
+| 15 | The Data lane table of 4.1 agrees with the table of data spec 6.1: same ids, tiers, package names, owned paths and sub-agents, and every contract type the data spec gives as output is in Out | 14 | pass |
 | 16 | Open items are O1 to O22 and requests R1 to R12, numbered without gaps; every O, R and package id referenced in the text exists; 7 counts stated in prose match the tables | 41 | pass |
-| 17 | Every fixture file that 2.3 describes as existing is on disk under specs/examples/, the two it describes as not written yet are absent, and the README has the validator section | 31 | pass |
-| 18 | No package depends on a type whose only producers are in a lower tier than itself | 385 | FAIL (5) |
+| 17 | Every fixture file that 2.3 describes as existing is on disk under specs/examples/, the two it describes as not written yet are absent, and the README has the validator section | 37 | pass |
+| 18 | No package depends on a type whose only producers are in a lower tier than itself | 388 | FAIL (5) |
 
 Packages per lane and tier:
 
 | Lane | P0 | P1 | P2 | Total |
 |---|---|---|---|---|
-| `D` Data | 6 | 3 | 1 | 10 |
+| `D` Data | 6 | 4 | 2 | 12 |
 | `A` Analysis | 19 | 10 | 2 | 31 |
 | `G` Agent and server | 11 | 1 | 2 | 14 |
 | `L` Legal drafting | 5 | 4 | 1 | 10 |
 | `F` Frontend, demo, submission | 9 | 4 | 1 | 14 |
 | `C` Contract and specs | 6 | 0 | 0 | 6 |
-| All | 56 | 22 | 7 | 85 |
+| All | 56 | 23 | 8 | 87 |
 
 Tiers inferred by this file (†): 9 packages: A7, A13, A30, G11, F1, F2, F3, F7, F8. Owner tasks outside the tiers: D0, D11.
 

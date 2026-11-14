@@ -1,14 +1,14 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "run_id": "run_house_example",
   "status": "done",
   "request": {
     "sid": "zvKHR9DHNjJ",
-    "budget_usd": 14000.0,
+    "budget_usd": 10000.0,
     "role": "owner_occupier",
     "bills": null,
     "overrides": {
-      "occupants.count": 3
+      "occupancy.count": 3
     },
     "desks_requested": null
   },
@@ -32,12 +32,13 @@
     "floor_count": 1
   },
   "building_model": {
-    "schema_version": "0.2.0",
+    "schema_version": "0.3.0",
     "sid": "zvKHR9DHNjJ",
+    "bedrooms": 2,
     "north_offset_deg": {
-      "low": 92.6,
-      "expected": 93.6,
-      "high": 94.6,
+      "low": 265.4,
+      "expected": 266.4,
+      "high": 267.4,
       "unit": "deg"
     },
     "north_source": "georeference",
@@ -53,180 +54,74 @@
         "use": "living",
         "floor_area_m2": 82.04,
         "volume_m3": 220.28,
-        "conditioned": true
+        "conditioned": true,
+        "mass_class": "medium"
       }
     ],
     "surfaces": [
       {
-        "id": "surf_wall_e",
+        "id": "surf_wall_e01",
         "zone_id": "zone_main",
         "kind": "wall",
         "boundary": "exterior",
-        "area_m2": 20.94,
+        "area_m2": 10.12,
         "azimuth_deg": 86.4,
         "tilt_deg": 90.0,
         "u_value": {
-          "low": 1.4,
-          "expected": 1.9,
-          "high": 2.4,
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
           "unit": "W/m2K"
         },
         "shgc": null,
-        "parent_surface_id": null
-      },
-      {
-        "id": "surf_wall_n",
-        "zone_id": "zone_main",
-        "kind": "wall",
-        "boundary": "exterior",
-        "area_m2": 29.42,
-        "azimuth_deg": 356.4,
-        "tilt_deg": 90.0,
-        "u_value": {
-          "low": 1.4,
-          "expected": 1.9,
-          "high": 2.4,
-          "unit": "W/m2K"
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e01",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
         },
-        "shgc": null,
-        "parent_surface_id": null
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
       },
       {
-        "id": "surf_wall_w",
-        "zone_id": "zone_main",
-        "kind": "wall",
-        "boundary": "exterior",
-        "area_m2": 26.44,
-        "azimuth_deg": 266.4,
-        "tilt_deg": 90.0,
-        "u_value": {
-          "low": 1.4,
-          "expected": 1.9,
-          "high": 2.4,
-          "unit": "W/m2K"
-        },
-        "shgc": null,
-        "parent_surface_id": null
-      },
-      {
-        "id": "surf_wall_s",
-        "zone_id": "zone_main",
-        "kind": "wall",
-        "boundary": "exterior",
-        "area_m2": 26.42,
-        "azimuth_deg": 176.4,
-        "tilt_deg": 90.0,
-        "u_value": {
-          "low": 1.4,
-          "expected": 1.9,
-          "high": 2.4,
-          "unit": "W/m2K"
-        },
-        "shgc": null,
-        "parent_surface_id": null
-      },
-      {
-        "id": "surf_roof",
-        "zone_id": "zone_main",
-        "kind": "roof",
-        "boundary": "exterior",
-        "area_m2": 82.04,
-        "azimuth_deg": null,
-        "tilt_deg": 0.0,
-        "u_value": {
-          "low": 1.2,
-          "expected": 2.2,
-          "high": 2.9,
-          "unit": "W/m2K"
-        },
-        "shgc": null,
-        "parent_surface_id": null
-      },
-      {
-        "id": "surf_floor",
-        "zone_id": "zone_main",
-        "kind": "floor",
-        "boundary": "adjacent_unconditioned",
-        "area_m2": 82.04,
-        "azimuth_deg": null,
-        "tilt_deg": 180.0,
-        "u_value": {
-          "low": 0.5,
-          "expected": 0.8,
-          "high": 1.2,
-          "unit": "W/m2K"
-        },
-        "shgc": null,
-        "parent_surface_id": null
-      },
-      {
-        "id": "surf_win_e",
+        "id": "surf_win_e01_1",
         "zone_id": "zone_main",
         "kind": "window",
         "boundary": "exterior",
-        "area_m2": 3.6,
+        "area_m2": 1.44,
         "azimuth_deg": 86.4,
         "tilt_deg": 90.0,
         "u_value": {
-          "low": 4.8,
-          "expected": 5.6,
-          "high": 5.9,
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
           "unit": "W/m2K"
         },
         "shgc": {
-          "low": 0.65,
-          "expected": 0.76,
-          "high": 0.82,
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
           "unit": "-"
         },
-        "parent_surface_id": "surf_wall_e"
-      },
-      {
-        "id": "surf_win_n",
-        "zone_id": "zone_main",
-        "kind": "window",
-        "boundary": "exterior",
-        "area_m2": 2.4,
-        "azimuth_deg": 356.4,
-        "tilt_deg": 90.0,
-        "u_value": {
-          "low": 4.8,
-          "expected": 5.6,
-          "high": 5.9,
-          "unit": "W/m2K"
-        },
-        "shgc": {
-          "low": 0.65,
-          "expected": 0.76,
-          "high": 0.82,
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
           "unit": "-"
         },
-        "parent_surface_id": "surf_wall_n"
+        "parent_surface_id": "surf_wall_e01",
+        "source_edge_id": "e01",
+        "source_opening_id": "op_e01_1",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
       },
       {
-        "id": "surf_win_s",
-        "zone_id": "zone_main",
-        "kind": "window",
-        "boundary": "exterior",
-        "area_m2": 5.4,
-        "azimuth_deg": 176.4,
-        "tilt_deg": 90.0,
-        "u_value": {
-          "low": 4.8,
-          "expected": 5.6,
-          "high": 5.9,
-          "unit": "W/m2K"
-        },
-        "shgc": {
-          "low": 0.65,
-          "expected": 0.76,
-          "high": 0.82,
-          "unit": "-"
-        },
-        "parent_surface_id": "surf_wall_s"
-      },
-      {
-        "id": "surf_door_e",
+        "id": "surf_door_e01_2",
         "zone_id": "zone_main",
         "kind": "door",
         "boundary": "exterior",
@@ -240,30 +135,626 @@
           "unit": "W/m2K"
         },
         "shgc": null,
-        "parent_surface_id": "surf_wall_e"
+        "visible_transmittance": null,
+        "parent_surface_id": "surf_wall_e01",
+        "source_edge_id": "e01",
+        "source_opening_id": "op_e01_2",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e02",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 8.54,
+        "azimuth_deg": 86.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e02",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_win_e02_1",
+        "zone_id": "zone_main",
+        "kind": "window",
+        "boundary": "exterior",
+        "area_m2": 3.25,
+        "azimuth_deg": 86.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
+          "unit": "W/m2K"
+        },
+        "shgc": {
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
+          "unit": "-"
+        },
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "parent_surface_id": "surf_wall_e02",
+        "source_edge_id": "e02",
+        "source_opening_id": "op_e02_1",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e03",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 11.17,
+        "azimuth_deg": 356.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e03",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_win_e03_1",
+        "zone_id": "zone_main",
+        "kind": "window",
+        "boundary": "exterior",
+        "area_m2": 1.8,
+        "azimuth_deg": 356.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
+          "unit": "W/m2K"
+        },
+        "shgc": {
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
+          "unit": "-"
+        },
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "parent_surface_id": "surf_wall_e03",
+        "source_edge_id": "e03",
+        "source_opening_id": "op_e03_1",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e04",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 1.06,
+        "azimuth_deg": 86.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e04",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e05",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 7.34,
+        "azimuth_deg": 356.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e05",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_win_e05_1",
+        "zone_id": "zone_main",
+        "kind": "window",
+        "boundary": "exterior",
+        "area_m2": 0.82,
+        "azimuth_deg": 356.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
+          "unit": "W/m2K"
+        },
+        "shgc": {
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
+          "unit": "-"
+        },
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "parent_surface_id": "surf_wall_e05",
+        "source_edge_id": "e05",
+        "source_opening_id": "op_e05_1",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e06",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 12.57,
+        "azimuth_deg": 266.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e06",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_win_e06_1",
+        "zone_id": "zone_main",
+        "kind": "window",
+        "boundary": "exterior",
+        "area_m2": 0.46,
+        "azimuth_deg": 266.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
+          "unit": "W/m2K"
+        },
+        "shgc": {
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
+          "unit": "-"
+        },
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "parent_surface_id": "surf_wall_e06",
+        "source_edge_id": "e06",
+        "source_opening_id": "op_e06_1",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e07",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 5.82,
+        "azimuth_deg": 176.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e07",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e11",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 2.59,
+        "azimuth_deg": 266.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e11",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e13",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 9.86,
+        "azimuth_deg": 176.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e13",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_win_e13_1",
+        "zone_id": "zone_main",
+        "kind": "window",
+        "boundary": "exterior",
+        "area_m2": 2.68,
+        "azimuth_deg": 176.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
+          "unit": "W/m2K"
+        },
+        "shgc": {
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
+          "unit": "-"
+        },
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "parent_surface_id": "surf_wall_e13",
+        "source_edge_id": "e13",
+        "source_opening_id": "op_e13_1",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_win_e13_2",
+        "zone_id": "zone_main",
+        "kind": "window",
+        "boundary": "exterior",
+        "area_m2": 2.68,
+        "azimuth_deg": 176.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
+          "unit": "W/m2K"
+        },
+        "shgc": {
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
+          "unit": "-"
+        },
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "parent_surface_id": "surf_wall_e13",
+        "source_edge_id": "e13",
+        "source_opening_id": "op_e13_2",
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e14",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 10.73,
+        "azimuth_deg": 356.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e14",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e15",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 10.95,
+        "azimuth_deg": 266.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e15",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_wall_e16",
+        "zone_id": "zone_main",
+        "kind": "wall",
+        "boundary": "exterior",
+        "area_m2": 9.23,
+        "azimuth_deg": 176.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": "e16",
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.3,
+          "expected": 0.6,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_win_bedroom_vision",
+        "zone_id": "zone_main",
+        "kind": "window",
+        "boundary": "exterior",
+        "area_m2": 1.5,
+        "azimuth_deg": 176.4,
+        "tilt_deg": 90.0,
+        "u_value": {
+          "low": 4.77,
+          "expected": 4.77,
+          "high": 6.59,
+          "unit": "W/m2K"
+        },
+        "shgc": {
+          "low": 0.63,
+          "expected": 0.63,
+          "high": 0.76,
+          "unit": "-"
+        },
+        "visible_transmittance": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "parent_surface_id": "surf_wall_e16",
+        "source_edge_id": "e16",
+        "source_opening_id": null,
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_roof",
+        "zone_id": "zone_main",
+        "kind": "roof",
+        "boundary": "exterior",
+        "area_m2": 82.04,
+        "azimuth_deg": null,
+        "tilt_deg": 0.0,
+        "u_value": {
+          "low": 0.182,
+          "expected": 0.403,
+          "high": 1.703,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": null,
+        "source_opening_id": null,
+        "solar_absorptance": {
+          "low": 0.75,
+          "expected": 0.85,
+          "high": 0.92,
+          "unit": "-"
+        },
+        "emittance": 0.9,
+        "exposed_perimeter_m": null
+      },
+      {
+        "id": "surf_floor",
+        "zone_id": "zone_main",
+        "kind": "floor",
+        "boundary": "ground",
+        "area_m2": 82.04,
+        "azimuth_deg": null,
+        "tilt_deg": 180.0,
+        "u_value": {
+          "low": 0.667,
+          "expected": 0.731,
+          "high": 0.918,
+          "unit": "W/m2K"
+        },
+        "shgc": null,
+        "visible_transmittance": null,
+        "parent_surface_id": null,
+        "source_edge_id": null,
+        "source_opening_id": null,
+        "solar_absorptance": null,
+        "emittance": null,
+        "exposed_perimeter_m": 43.32
       }
     ],
     "systems": {
-      "hvac_type": "central_ac_gas_furnace",
+      "hvac_type": "central_ac_furnace",
       "heating_fuel": "gas",
       "cooling_cop": {
-        "low": 2.3,
-        "expected": 2.9,
-        "high": 3.4,
+        "low": 2.931,
+        "expected": 3.81,
+        "high": 4.103,
         "unit": "W/W"
       },
       "heating_efficiency": {
-        "low": 0.7,
+        "low": 0.64,
         "expected": 0.78,
-        "high": 0.82,
+        "high": 0.8,
         "unit": "-"
       },
-      "dhw_type": "storage_tank",
+      "dhw_type": "storage",
       "dhw_fuel": "gas",
       "dhw_efficiency": {
-        "low": 0.55,
-        "expected": 0.6,
-        "high": 0.65,
+        "low": 0.54,
+        "expected": 0.58,
+        "high": 0.64,
         "unit": "-"
       },
       "lighting_w_per_m2": {
@@ -279,18 +770,68 @@
         "unit": "W/m2"
       },
       "infiltration_ach": {
-        "low": 0.5,
-        "expected": 0.8,
-        "high": 1.2,
+        "low": 0.3,
+        "expected": 0.75,
+        "high": 1.5,
         "unit": "1/h"
       },
-      "occupancy_schedule": "residential_default",
+      "occupancy_schedule": "home",
       "occupants": {
         "low": 3.0,
         "expected": 3.0,
         "high": 3.0,
         "unit": "people"
-      }
+      },
+      "infiltration_ach50": {
+        "low": 6.0,
+        "expected": 15.0,
+        "high": 30.0,
+        "unit": "1/h at 50 Pa"
+      },
+      "envelope_leakage_l_s_m2_75pa": null,
+      "cooling_rating": {
+        "low": 10.0,
+        "expected": 13.0,
+        "high": 14.0,
+        "unit": "SEER"
+      },
+      "cooling_rating_metric": "SEER",
+      "heating_rating": {
+        "low": 0.64,
+        "expected": 0.78,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "heating_rating_metric": "AFUE",
+      "compressor_type": "unknown",
+      "cooling_capacity_w": 10551.0,
+      "heating_cop_47f": null,
+      "hvac_install_year": null,
+      "distribution_efficiency": {
+        "low": 0.8,
+        "expected": 0.867,
+        "high": 0.933,
+        "unit": "-"
+      },
+      "duct_location": "attic",
+      "outdoor_air_m3_s": null,
+      "has_economizer": null,
+      "economizer_limit_c": null,
+      "heating_setpoint_c": {
+        "low": 20.7,
+        "expected": 21.7,
+        "high": 22.7,
+        "unit": "C"
+      },
+      "cooling_setpoint_c": {
+        "low": 23.4,
+        "expected": 24.4,
+        "high": 25.4,
+        "unit": "C"
+      },
+      "heating_setback_c": null,
+      "cooling_setup_c": null,
+      "dhw_location": "conditioned"
     },
     "roof_planes": [
       {
@@ -304,7 +845,7 @@
           "unit": "deg"
         },
         "azimuth_deg": 176.4,
-        "usable_area_m2": 46.0,
+        "usable_area_m2": 75.9,
         "obstructions": [
           {
             "label": "roof vent",
@@ -335,6 +876,15 @@
             "mask_wkt": "POLYGON((-118.3172060 34.0934419, -118.3172086 34.0934761, -118.3172551 34.0934736, -118.3172526 34.0934395, -118.3172060 34.0934419))"
           }
         ],
+        "obstruction_counts": {
+          "chimney": 1,
+          "roof-vent": 5,
+          "skylight": 0,
+          "ac-unit": 2
+        },
+        "ridge_confirmed": true,
+        "eave_length_m": 17.308,
+        "slope_length_m": 5.853,
         "geometry_source": "splat"
       },
       {
@@ -348,14 +898,23 @@
           "unit": "deg"
         },
         "azimuth_deg": 356.4,
-        "usable_area_m2": 44.0,
+        "usable_area_m2": 75.9,
         "obstructions": [],
+        "obstruction_counts": {
+          "chimney": 1,
+          "roof-vent": 5,
+          "skylight": 0,
+          "ac-unit": 2
+        },
+        "ridge_confirmed": true,
+        "eave_length_m": 17.308,
+        "slope_length_m": 5.853,
         "geometry_source": "splat"
       }
     ],
     "assumptions": [
       {
-        "key": "occupants.count",
+        "key": "occupancy.count",
         "label": "Number of occupants",
         "value": {
           "low": 3.0,
@@ -368,7 +927,7 @@
         "evidence": [
           {
             "kind": "user",
-            "ref": "run_request.overrides.occupants.count"
+            "ref": "run_request.overrides.occupancy.count"
           }
         ],
         "user_editable": true
@@ -394,31 +953,12 @@
         "user_editable": false
       },
       {
-        "key": "envelope.exterior_wall_thickness_m",
-        "label": "Exterior wall thickness",
-        "value": {
-          "low": 0.28,
-          "expected": 0.28,
-          "high": 0.28,
-          "unit": "m"
-        },
-        "source": "measured",
-        "confidence": 0.9,
-        "evidence": [
-          {
-            "kind": "matterport_field",
-            "ref": "floors.edges.thickness"
-          }
-        ],
-        "user_editable": false
-      },
-      {
         "key": "geometry.north_offset_deg",
-        "label": "Rotation from model +y to true north",
+        "label": "Azimuth of model +y, clockwise from true north",
         "value": {
-          "low": 92.6,
-          "expected": 93.6,
-          "high": 94.6,
+          "low": 265.4,
+          "expected": 266.4,
+          "high": 267.4,
           "unit": "deg"
         },
         "source": "measured",
@@ -427,7 +967,27 @@
           {
             "kind": "matterport_field",
             "ref": "geocoordinates.rotation",
-            "note": "rotation about z from the quaternion; the sign convention is an assumption of this example"
+            "note": "physics 01 ROOF-02; which way the quaternion rotates is still to be confirmed against the Vexcel footprint"
+          }
+        ],
+        "user_editable": false
+      },
+      {
+        "key": "window.area_m2",
+        "label": "Window area from measured openings",
+        "value": {
+          "low": 12.47,
+          "expected": 13.13,
+          "high": 13.79,
+          "unit": "m2"
+        },
+        "source": "measured",
+        "confidence": 0.9,
+        "evidence": [
+          {
+            "kind": "matterport_field",
+            "ref": "floors.edges.openings",
+            "note": "seven openings of type window; plus or minus 5 percent (physics 02 DEF-03)"
           }
         ],
         "user_editable": false
@@ -481,12 +1041,12 @@
         "user_editable": true
       },
       {
-        "key": "window.area_m2",
-        "label": "Total window area",
+        "key": "window.room_bedroom.area_m2",
+        "label": "Bedroom window area (vision fallback)",
         "value": {
-          "low": 8.5,
-          "expected": 11.4,
-          "high": 14.5,
+          "low": 1.05,
+          "expected": 1.5,
+          "high": 1.95,
           "unit": "m2"
         },
         "source": "vision",
@@ -494,28 +1054,33 @@
         "evidence": [
           {
             "kind": "pano",
-            "ref": "pano_01",
-            "note": "windows counted and sized from the panoramas"
+            "ref": "pano_03",
+            "note": "one window seen on the bedroom's south wall"
           },
           {
             "kind": "matterport_field",
             "ref": "floors.edges.openings",
-            "note": "doorway openings only, so vision supplies the windows and the range is wider"
+            "note": "no window opening on the bedroom's edges, so this one room uses the vision fallback: plus or minus 30 percent (physics 02 DEF-03)"
           }
         ],
         "user_editable": true
       },
       {
-        "key": "window.glazing",
-        "label": "Window glazing",
-        "value": "single_pane",
+        "key": "window.type",
+        "label": "Window type",
+        "value": "single_clear_non_metal",
         "source": "vision",
         "confidence": 0.6,
         "evidence": [
           {
             "kind": "pano",
             "ref": "pano_01",
-            "note": "single reflection in the living room windows"
+            "note": "single reflection, wood frames"
+          },
+          {
+            "kind": "default_table",
+            "ref": "DEF-03",
+            "note": "U and SHGC of the type read by vision; high is the metal-frame single pane"
           }
         ],
         "user_editable": true
@@ -556,12 +1121,52 @@
         "user_editable": true
       },
       {
+        "key": "glazing.visible_transmittance",
+        "label": "Visible transmittance of the glazing",
+        "value": {
+          "low": 0.4,
+          "expected": 0.68,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "source": "published_default",
+        "confidence": 0.5,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "physics 03 section 0.4",
+            "note": "0.68 is the BRE standard value; the bounds are a design range"
+          }
+        ],
+        "user_editable": true
+      },
+      {
+        "key": "pv.degradation_rate",
+        "label": "PV output loss per year",
+        "value": {
+          "low": 0.005,
+          "expected": 0.005,
+          "high": 0.008,
+          "unit": "1/year"
+        },
+        "source": "published_default",
+        "confidence": 0.7,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "PV-07",
+            "note": "median 0.5 percent a year, mean 0.8, Jordan and Kurtz 2012"
+          }
+        ],
+        "user_editable": false
+      },
+      {
         "key": "wall.u_value",
         "label": "Exterior wall U-value",
         "value": {
-          "low": 1.4,
-          "expected": 1.9,
-          "high": 2.4,
+          "low": 0.625,
+          "expected": 2.021,
+          "high": 2.021,
           "unit": "W/m2K"
         },
         "source": "vintage_default",
@@ -569,7 +1174,8 @@
         "evidence": [
           {
             "kind": "default_table",
-            "ref": "DEF (vintage default table; table ids pending in specs/physics/)"
+            "ref": "DEF-01",
+            "note": "wood-frame wall, before 1970"
           }
         ],
         "user_editable": true
@@ -578,9 +1184,9 @@
         "key": "roof.u_value",
         "label": "Attic ceiling U-value",
         "value": {
-          "low": 1.2,
-          "expected": 2.2,
-          "high": 2.9,
+          "low": 0.182,
+          "expected": 0.403,
+          "high": 1.703,
           "unit": "W/m2K"
         },
         "source": "vintage_default",
@@ -588,26 +1194,148 @@
         "evidence": [
           {
             "kind": "default_table",
-            "ref": "DEF (vintage default table; table ids pending in specs/physics/)"
+            "ref": "DEF-01",
+            "note": "ceiling under a vented attic, before 1950"
           }
         ],
         "user_editable": true
       },
       {
-        "key": "infiltration.ach",
-        "label": "Air changes per hour",
+        "key": "roof.absorptance",
+        "label": "Roof solar absorptance",
         "value": {
-          "low": 0.5,
-          "expected": 0.8,
-          "high": 1.2,
-          "unit": "1/h"
+          "low": 0.75,
+          "expected": 0.85,
+          "high": 0.92,
+          "unit": "-"
+        },
+        "source": "vintage_default",
+        "confidence": 0.5,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "DEF-02",
+            "note": "asphalt shingle, colour unknown"
+          }
+        ],
+        "user_editable": true
+      },
+      {
+        "key": "infiltration.ach50",
+        "label": "Air leakage at 50 Pa",
+        "value": {
+          "low": 6.0,
+          "expected": 15.0,
+          "high": 30.0,
+          "unit": "1/h at 50 Pa"
         },
         "source": "vintage_default",
         "confidence": 0.4,
         "evidence": [
           {
             "kind": "default_table",
-            "ref": "DEF (vintage default table; table ids pending in specs/physics/)"
+            "ref": "DEF-04",
+            "note": "Los Angeles, before 1960"
+          }
+        ],
+        "user_editable": true
+      },
+      {
+        "key": "hvac.cooling_rating",
+        "label": "Air conditioner rating (SEER)",
+        "value": {
+          "low": 10.0,
+          "expected": 13.0,
+          "high": 14.0,
+          "unit": "SEER"
+        },
+        "source": "vintage_default",
+        "confidence": 0.4,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "DEF-05",
+            "note": "building older than 2006, equipment year not observed"
+          }
+        ],
+        "user_editable": true
+      },
+      {
+        "key": "hvac.heating_rating",
+        "label": "Furnace AFUE",
+        "value": {
+          "low": 0.64,
+          "expected": 0.78,
+          "high": 0.8,
+          "unit": "-"
+        },
+        "source": "vintage_default",
+        "confidence": 0.4,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "DEF-05",
+            "note": "unknown furnace, building older than 1992"
+          }
+        ],
+        "user_editable": true
+      },
+      {
+        "key": "hvac.distribution_efficiency",
+        "label": "Duct distribution efficiency (upper bound)",
+        "value": {
+          "low": 0.8,
+          "expected": 0.867,
+          "high": 0.933,
+          "unit": "-"
+        },
+        "source": "vintage_default",
+        "confidence": 0.3,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "DEF-06",
+            "note": "ducts outside the conditioned space; an upper bound, HVAC-08"
+          }
+        ],
+        "user_editable": true
+      },
+      {
+        "key": "dhw.uef",
+        "label": "Water heater efficiency",
+        "value": {
+          "low": 0.54,
+          "expected": 0.58,
+          "high": 0.64,
+          "unit": "-"
+        },
+        "source": "vintage_default",
+        "confidence": 0.4,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "DEF-07",
+            "note": "unknown gas storage heater"
+          }
+        ],
+        "user_editable": true
+      },
+      {
+        "key": "setpoint.cooling",
+        "label": "Cooling setpoint",
+        "value": {
+          "low": 23.4,
+          "expected": 24.4,
+          "high": 25.4,
+          "unit": "C"
+        },
+        "source": "vintage_default",
+        "confidence": 0.5,
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "DEF-08",
+            "note": "home, all hours"
           }
         ],
         "user_editable": true
@@ -644,7 +1372,7 @@
           {
             "kind": "vexcel_attr",
             "ref": "roof-objects.chimney.count",
-            "note": "1: the chimney is on the north plane; SAM 3 did not detect it, so the plane carries no detection for it"
+            "note": "1: counted by Vexcel, not detected by SAM 3, so it has no position"
           },
           {
             "kind": "vexcel_attr",
@@ -661,7 +1389,7 @@
       {
         "key": "dhw.space",
         "status": "blocked",
-        "message": "Water heater sits in a closet too small for a heat pump unit's air volume.",
+        "message": "The water heater sits in a closet inside the conditioned space. DHW_HPWH assumes the heater is outside it (SPEC.md section 6.2), and the closet is too small for a heat pump unit's air volume.",
         "evidence": [
           {
             "kind": "pano",
@@ -675,9 +1403,9 @@
   "baseline": {
     "annual": {
       "electricity_kwh": {
-        "low": 3400.0,
-        "expected": 4000.0,
-        "high": 4800.0,
+        "low": 4420.0,
+        "expected": 5200.0,
+        "high": 6240.0,
         "unit": "kWh"
       },
       "gas_kwh": {
@@ -687,39 +1415,40 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 1368.4,
-        "expected": 1612.0,
-        "high": 1929.0,
+        "low": 1695.7,
+        "expected": 1912.0,
+        "high": 2197.11,
         "unit": "USD"
       },
       "co2_kg": {
-        "low": 2062.56,
-        "expected": 2503.2,
-        "high": 3069.0,
+        "low": 2016.99,
+        "expected": 2319.06,
+        "high": 2703.2,
         "unit": "kg"
-      }
+      },
+      "co2_nonbaseload_kg": null
     },
     "end_use_kwh": {
       "heating": 4300.0,
+      "cooling": 1730.0,
       "water_heating": 2900.0,
-      "cooling": 1150.0,
-      "fans": 180.0,
       "lighting": 720.0,
-      "plug_loads": 1950.0
+      "plug": 1750.0,
+      "appliances": 1000.0
     },
     "monthly_electricity_kwh": [
-      272.0,
-      238.0,
-      249.3,
-      249.3,
-      294.6,
-      373.9,
-      475.9,
-      509.9,
-      453.3,
-      339.9,
-      260.6,
-      283.3
+      353.5,
+      309.3,
+      324.1,
+      324.1,
+      383.0,
+      486.1,
+      618.7,
+      662.9,
+      589.2,
+      441.9,
+      338.8,
+      368.4
     ],
     "monthly_gas_kwh": [
       1159.3,
@@ -737,28 +1466,32 @@
     ],
     "peak_cooling_w": 5200.0,
     "peak_heating_w": 6800.0,
-    "calibrated_to_bills": false
+    "calibrated_to_bills": false,
+    "heating_need_kwh": 2907.9,
+    "cooling_need_kwh": 5414.6,
+    "latent_cooling_kwh": 300.0,
+    "hourly_path": "data/cache/zvKHR9DHNjJ/analysis/baseline_hourly.csv"
   },
   "measures": [
     {
       "measure_id": "PV_ROOF",
-      "title": "Rooftop solar, 2.8 kW",
+      "title": "Rooftop solar, 2.15 kW",
       "applicable": true,
       "not_applicable_reason": null,
-      "description": "Seven 400 W panels on the south roof plane. Layout stopped when annual production reached the site's annual electricity use.",
+      "description": "5 modules of 430 W on the south roof plane. The layout stopped at the budget: one more module would not fit it.",
       "params": {
-        "panel_w": 400,
-        "cost_usd_per_w": 3.3,
-        "base_cost_usd": 9240,
-        "service_upgrade_allowance_usd": 1500,
-        "stop_reason": "production_reached_consumption",
-        "export_usd_per_kwh": 0.08
+        "stop_reason": "budget",
+        "yield_kwh_per_kw": 1806.9,
+        "sigma_w": 0.02301,
+        "l_in_kwh": 3655.3,
+        "h_in_kwh": 3806.0,
+        "netted_kwh": 3768.3
       },
       "savings": {
         "electricity_kwh": {
-          "low": 3864.96,
-          "expected": 4294.4,
-          "high": 4637.95,
+          "low": 3547.46,
+          "expected": 3768.3,
+          "high": 3918.22,
           "unit": "kWh"
         },
         "gas_kwh": {
@@ -768,29 +1501,35 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 604.86,
-          "expected": 672.07,
-          "high": 725.84,
+          "low": 886.86,
+          "expected": 942.08,
+          "high": 979.55,
           "unit": "USD"
         },
         "co2_kg": {
-          "low": 1159.49,
-          "expected": 1288.32,
-          "high": 1391.39,
+          "low": 691.9,
+          "expected": 734.97,
+          "high": 764.21,
+          "unit": "kg"
+        },
+        "co2_nonbaseload_kg": {
+          "low": 1546.66,
+          "expected": 1642.94,
+          "high": 1708.3,
           "unit": "kg"
         }
       },
       "finance": {
         "installed_cost_usd": {
-          "low": 8400.0,
-          "expected": 10740.0,
-          "high": 14200.0,
+          "low": 5762.0,
+          "expected": 9030.0,
+          "high": 11180.0,
           "unit": "USD"
         },
-        "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+        "cost_source": "NREL-2023 Table 3 and TTS-2024 executive summary, not CPI-adjusted; physics 04 COST-01: 4.2 USD per W DC x 2150",
         "incentives": [
           {
-            "name": "Federal residential clean energy credit (IRC section 25D)",
+            "name": "Federal residential clean energy credit (26 U.S.C. 25D)",
             "kind": "tax_credit",
             "amount_usd": {
               "low": 0.0,
@@ -799,42 +1538,46 @@
               "unit": "USD"
             },
             "status": "expired",
-            "citation": "SPEC.md section 6.6: ended for 2025 per secondary sources [U]; confirm against a primary source"
+            "eligibility": "not_eligible",
+            "conditions": [],
+            "citation": "physics 04 INC-02: section 25D(h), no credit for expenditures made after 2025-12-31"
           }
         ],
         "net_upfront_usd": {
-          "low": 8400.0,
-          "expected": 10740.0,
-          "high": 14200.0,
+          "low": 5762.0,
+          "expected": 9030.0,
+          "high": 11180.0,
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 604.86,
-          "expected": 672.07,
-          "high": 725.84,
+          "low": 886.86,
+          "expected": 942.08,
+          "high": 979.55,
           "unit": "USD"
         },
-        "annual_om_change_usd": 40.0,
+        "annual_om_change_usd": 75.27,
         "useful_life_years": 25,
         "simple_payback_years": {
-          "low": 11.57,
-          "expected": 15.98,
-          "high": 23.48,
+          "low": 6.62,
+          "expected": 10.42,
+          "high": 13.0,
           "unit": "years"
         },
-        "discounted_payback_years": null,
+        "discounted_payback_years": 13.5,
         "npv_usd": {
-          "low": -5041.93,
-          "expected": -508.98,
-          "high": 2689.38,
+          "low": 2036.69,
+          "expected": 4847.51,
+          "high": 8639.12,
           "unit": "USD"
         },
-        "sir": 0.95,
-        "irr": 0.0449,
-        "discount_rate": 0.05,
-        "electricity_escalation": 0.03,
-        "gas_escalation": 0.02,
-        "analysis_period_years": 20,
+        "npv_sensitivity_usd": 384.17,
+        "sir": 1.537,
+        "irr": 0.0749,
+        "airr": 0.0479,
+        "discount_rate": 0.03,
+        "electricity_escalation": -0.0018,
+        "gas_escalation": -0.0047,
+        "analysis_period_years": 25,
         "financing": [
           {
             "kind": "cash",
@@ -844,13 +1587,14 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": -13635.14,
-              "expected": -10107.93,
-              "high": -7714.16,
+              "low": 811.59,
+              "expected": 866.81,
+              "high": 904.28,
               "unit": "USD"
             },
+            "program_sir": null,
             "notes": [
-              "Paid in full at installation."
+              "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
             ]
           }
         ]
@@ -886,7 +1630,7 @@
             {
               "kind": "vexcel_attr",
               "ref": "roof-objects.chimney.count",
-              "note": "1: the chimney is on the north plane; SAM 3 did not detect it, so the plane carries no detection for it"
+              "note": "1: counted by Vexcel, not detected by SAM 3, so it has no position"
             },
             {
               "kind": "vexcel_attr",
@@ -931,66 +1675,66 @@
         }
       ],
       "formula_ids": [
-        "SOL",
-        "IRR",
-        "PV",
-        "SHD",
-        "LAY"
+        "SOL-01",
+        "IRR-08",
+        "PV-04",
+        "PV-06",
+        "PV-09",
+        "SHD-03",
+        "ROOF-04",
+        "LAY-03",
+        "TAR-03",
+        "ECO-07",
+        "EMI-01",
+        "VAL-03"
       ],
       "solar": {
-        "system_kw_dc": 2.8,
-        "panel_count": 7,
+        "system_kw_dc": 2.15,
+        "panel_count": 5,
         "panels": [
           {
             "plane_id": "plane_south",
-            "polygon_wkt": "POLYGON((-118.3171122 34.0935091, -118.3171133 34.0935237, -118.3171255 34.0935231, -118.3171244 34.0935085, -118.3171122 34.0935091))",
-            "annual_kwh": 627.2,
+            "polygon_wkt": "POLYGON((-118.3171122 34.0935091, -118.3171133 34.0935237, -118.3171256 34.0935230, -118.3171245 34.0935085, -118.3171122 34.0935091))",
+            "annual_kwh": 761.4,
             "shading_loss_fraction": 0.02
           },
           {
             "plane_id": "plane_south",
-            "polygon_wkt": "POLYGON((-118.3171250 34.0935085, -118.3171261 34.0935230, -118.3171383 34.0935224, -118.3171372 34.0935078, -118.3171250 34.0935085))",
-            "annual_kwh": 627.2,
+            "polygon_wkt": "POLYGON((-118.3171246 34.0935085, -118.3171257 34.0935230, -118.3171380 34.0935224, -118.3171369 34.0935078, -118.3171246 34.0935085))",
+            "annual_kwh": 761.4,
             "shading_loss_fraction": 0.02
           },
           {
             "plane_id": "plane_south",
-            "polygon_wkt": "POLYGON((-118.3171377 34.0935078, -118.3171388 34.0935224, -118.3171511 34.0935217, -118.3171500 34.0935072, -118.3171377 34.0935078))",
-            "annual_kwh": 620.8,
+            "polygon_wkt": "POLYGON((-118.3171370 34.0935078, -118.3171381 34.0935224, -118.3171504 34.0935217, -118.3171493 34.0935072, -118.3171370 34.0935078))",
+            "annual_kwh": 753.7,
             "shading_loss_fraction": 0.03
           },
           {
             "plane_id": "plane_south",
-            "polygon_wkt": "POLYGON((-118.3171505 34.0935071, -118.3171516 34.0935217, -118.3171639 34.0935211, -118.3171627 34.0935065, -118.3171505 34.0935071))",
-            "annual_kwh": 620.8,
+            "polygon_wkt": "POLYGON((-118.3171494 34.0935072, -118.3171505 34.0935217, -118.3171628 34.0935211, -118.3171617 34.0935065, -118.3171494 34.0935072))",
+            "annual_kwh": 753.7,
             "shading_loss_fraction": 0.03
           },
           {
             "plane_id": "plane_south",
-            "polygon_wkt": "POLYGON((-118.3171633 34.0935065, -118.3171644 34.0935210, -118.3171766 34.0935204, -118.3171755 34.0935058, -118.3171633 34.0935065))",
-            "annual_kwh": 608.0,
+            "polygon_wkt": "POLYGON((-118.3171618 34.0935065, -118.3171630 34.0935211, -118.3171752 34.0935204, -118.3171741 34.0935059, -118.3171618 34.0935065))",
+            "annual_kwh": 738.1,
             "shading_loss_fraction": 0.05
-          },
-          {
-            "plane_id": "plane_south",
-            "polygon_wkt": "POLYGON((-118.3171761 34.0935058, -118.3171772 34.0935204, -118.3171894 34.0935197, -118.3171883 34.0935051, -118.3171761 34.0935058))",
-            "annual_kwh": 601.6,
-            "shading_loss_fraction": 0.06
-          },
-          {
-            "plane_id": "plane_south",
-            "polygon_wkt": "POLYGON((-118.3171888 34.0935051, -118.3171899 34.0935197, -118.3172022 34.0935191, -118.3172011 34.0935045, -118.3171888 34.0935051))",
-            "annual_kwh": 588.8,
-            "shading_loss_fraction": 0.08
           }
         ],
         "annual_kwh": {
-          "low": 3864.96,
-          "expected": 4294.4,
-          "high": 4637.95,
+          "low": 3547.46,
+          "expected": 3768.3,
+          "high": 3918.22,
           "unit": "kWh"
         },
-        "self_consumption_fraction": 0.45,
+        "self_consumption_fraction": 0.42,
+        "module_w": 430.0,
+        "dc_ac_ratio": 1.2,
+        "inverter_kw_ac": 1.792,
+        "losses_percent": 11.42,
+        "degradation_rate": 0.005,
         "electrical": {
           "key": "electrical.service",
           "status": "unknown",
@@ -1021,7 +1765,7 @@
             {
               "kind": "vexcel_attr",
               "ref": "roof-objects.chimney.count",
-              "note": "1: the chimney is on the north plane; SAM 3 did not detect it, so the plane carries no detection for it"
+              "note": "1: counted by Vexcel, not detected by SAM 3, so it has no position"
             },
             {
               "kind": "vexcel_attr",
@@ -1037,16 +1781,36 @@
         }
       },
       "layout": null,
-      "warnings": []
+      "value_uplift": {
+        "value_usd": {
+          "low": 0.0,
+          "expected": 8600.0,
+          "high": 8600.0,
+          "unit": "USD"
+        },
+        "method": "VAL-03",
+        "cap_rate": null,
+        "comp_count": 0,
+        "notes": [
+          "High is 4.00 USD per W DC, the average premium of LBNL's Selling into the Sun (sales 2002 to 2013); expected is capped at the net installed cost; low is zero.",
+          "For a new, owned system. The premium falls with the system's age.",
+          "Never added to savings, NPV, SIR, payback or the ranking."
+        ]
+      },
+      "warnings": [
+        "Electrical service size is unknown: a service upgrade could add 0 to 4,500 USD, which is not in the installed cost.",
+        "Net metering is modelled as steady-state annual netting at the energy price; fixed and minimum charges are never offset.",
+        "Shading was computed by ray casting against the splat, so the 3 percent default allowance is not applied; the far horizon is not included."
+      ]
     },
     {
       "measure_id": "ENV_ATTIC",
-      "title": "Attic insulation to RSI 6.7",
+      "title": "Attic insulation to R-38",
       "applicable": true,
       "not_applicable_reason": null,
-      "description": "Blow insulation over the uninsulated attic floor.",
+      "description": "Blow insulation over the attic floor to R-38 (U 0.148 W/m2K).",
       "params": {
-        "target_rsi_m2k_per_w": 6.7,
+        "target_u_w_m2k": 0.148,
         "area_m2": 82.04
       },
       "savings": {
@@ -1069,38 +1833,51 @@
           "unit": "USD"
         },
         "co2_kg": {
-          "low": 220.77,
-          "expected": 315.39,
-          "high": 410.01,
+          "low": 200.92,
+          "expected": 287.03,
+          "high": 373.14,
+          "unit": "kg"
+        },
+        "co2_nonbaseload_kg": {
+          "low": 246.97,
+          "expected": 352.81,
+          "high": 458.66,
           "unit": "kg"
         }
       },
       "finance": {
         "installed_cost_usd": {
-          "low": 1800.0,
-          "expected": 2200.0,
-          "high": 2650.0,
+          "low": 1702.33,
+          "expected": 2226.57,
+          "high": 3357.9,
           "unit": "USD"
         },
-        "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+        "cost_source": "LBNL-2021 section 10.3 and Table 13 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 27.14 USD per m2 of attic floor x 82.04",
         "incentives": [
           {
-            "name": "ILLUSTRATIVE utility point-of-sale insulation rebate",
-            "kind": "upfront_rebate",
+            "name": "LADWP Attic Insulation Rebate Program",
+            "kind": "rebate_after_install",
             "amount_usd": {
-              "low": 300.0,
-              "expected": 300.0,
-              "high": 300.0,
+              "low": 0.0,
+              "expected": 0.0,
+              "high": 441.54,
               "unit": "USD"
             },
             "status": "verified",
-            "citation": "Illustrative example entry, not a real programme lookup"
+            "eligibility": "needs_confirmation",
+            "conditions": [
+              "batt and roll insulation only; the costed measure is blown insulation",
+              "purchased and installed on or after 2025-09-01",
+              "finalled LADBS permit",
+              "before and after photos"
+            ],
+            "citation": "physics 04 INC-17: 0.50 USD per sq ft above R-19, paid after installation"
           }
         ],
         "net_upfront_usd": {
-          "low": 1500.0,
-          "expected": 1900.0,
-          "high": 2350.0,
+          "low": 1702.33,
+          "expected": 2226.57,
+          "high": 3357.9,
           "unit": "USD"
         },
         "annual_savings_usd": {
@@ -1110,26 +1887,28 @@
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
-        "useful_life_years": 30,
+        "useful_life_years": 25,
         "simple_payback_years": {
-          "low": 7.59,
-          "expected": 12.49,
-          "high": 22.07,
+          "low": 9.81,
+          "expected": 14.64,
+          "high": 24.37,
           "unit": "years"
         },
-        "discounted_payback_years": 15.6,
+        "discounted_payback_years": 20.5,
         "npv_usd": {
-          "low": -726.5,
-          "expected": 419.29,
-          "high": 1515.08,
+          "low": -1069.94,
+          "expected": 321.67,
+          "high": 1299.63,
           "unit": "USD"
         },
-        "sir": 1.22,
-        "irr": 0.0726,
-        "discount_rate": 0.05,
-        "electricity_escalation": 0.03,
-        "gas_escalation": 0.02,
-        "analysis_period_years": 20,
+        "npv_sensitivity_usd": -510.61,
+        "sir": 1.144,
+        "irr": 0.0427,
+        "airr": 0.0356,
+        "discount_rate": 0.03,
+        "electricity_escalation": -0.0018,
+        "gas_escalation": -0.0047,
+        "analysis_period_years": 25,
         "financing": [
           {
             "kind": "cash",
@@ -1139,13 +1918,14 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": -2243.53,
-              "expected": -1747.9,
-              "high": -1302.27,
+              "low": 106.47,
+              "expected": 152.1,
+              "high": 197.73,
               "unit": "USD"
             },
+            "program_sir": null,
             "notes": [
-              "Paid in full at installation."
+              "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
             ]
           }
         ]
@@ -1164,16 +1944,22 @@
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "DEF (vintage default table; table ids pending in specs/physics/)",
-          "note": "attic ceiling U-value by era"
+          "ref": "DEF-01",
+          "note": "attic ceiling U-value by vintage"
         }
       ],
       "formula_ids": [
-        "ENV",
-        "ZON"
+        "ENV-01",
+        "ENV-03",
+        "ZON-04",
+        "HVAC-03",
+        "HVAC-06",
+        "ECO-07",
+        "EMI-01"
       ],
       "solar": null,
       "layout": null,
+      "value_uplift": null,
       "warnings": []
     },
     {
@@ -1183,7 +1969,10 @@
       "not_applicable_reason": null,
       "description": "Replace the central air conditioner and gas furnace with a ducted heat pump.",
       "params": {
-        "seasonal_heating_cop": 3.2
+        "capacity_tons": 3,
+        "seer2": 16.5,
+        "hspf2": 8.2,
+        "cop_47f": 3.6
       },
       "savings": {
         "electricity_kwh": {
@@ -1205,38 +1994,51 @@
           "unit": "USD"
         },
         "co2_kg": {
-          "low": 421.33,
-          "expected": 601.9,
-          "high": 752.38,
+          "low": 465.22,
+          "expected": 664.61,
+          "high": 830.76,
+          "unit": "kg"
+        },
+        "co2_nonbaseload_kg": {
+          "low": 366.05,
+          "expected": 522.93,
+          "high": 653.66,
           "unit": "kg"
         }
       },
       "finance": {
         "installed_cost_usd": {
-          "low": 12500.0,
-          "expected": 14500.0,
-          "high": 17500.0,
+          "low": 8004.0,
+          "expected": 13416.0,
+          "high": 17415.0,
           "unit": "USD"
         },
-        "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+        "cost_source": "EIA-2023 (2022 USD) and LBNL-2021 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 4472 USD per ton of capacity x 3",
         "incentives": [
           {
-            "name": "ILLUSTRATIVE utility heat pump rebate",
-            "kind": "upfront_rebate",
+            "name": "LADWP Consumer Rebate Program, central ducted heat pump",
+            "kind": "rebate_after_install",
             "amount_usd": {
-              "low": 1500.0,
-              "expected": 2500.0,
-              "high": 3000.0,
+              "low": 3150.0,
+              "expected": 3150.0,
+              "high": 3150.0,
               "unit": "USD"
             },
-            "status": "unverified",
-            "citation": "Illustrative example entry; unverified incentives are not subtracted from net upfront cash (SPEC.md section 6.6)"
+            "status": "verified",
+            "eligibility": "confirmed",
+            "conditions": [
+              "equipment purchased and installed on or after 2025-11-01",
+              "finalled building permit",
+              "apply within 12 months of purchase",
+              "not new construction or an ADU"
+            ],
+            "citation": "physics 04 INC-13: 1,050 USD per ton above 16 SEER2 and 8.0 HSPF2, paid by cheque after installation"
           }
         ],
         "net_upfront_usd": {
-          "low": 12500.0,
-          "expected": 14500.0,
-          "high": 17500.0,
+          "low": 8004.0,
+          "expected": 13416.0,
+          "high": 17415.0,
           "unit": "USD"
         },
         "annual_savings_usd": {
@@ -1248,24 +2050,26 @@
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 75.47,
-          "expected": 109.43,
-          "high": 188.68,
+          "low": 55.66,
+          "expected": 101.25,
+          "high": 154.11,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -16489.66,
-          "expected": -13056.65,
-          "high": -10695.82,
+          "low": -12975.4,
+          "expected": -8953.07,
+          "high": -3528.64,
           "unit": "USD"
         },
-        "sir": 0.1,
-        "irr": -0.1785,
-        "discount_rate": 0.05,
-        "electricity_escalation": 0.03,
-        "gas_escalation": 0.02,
-        "analysis_period_years": 20,
+        "npv_sensitivity_usd": -9388.27,
+        "sir": 0.136,
+        "irr": null,
+        "airr": -0.0983,
+        "discount_rate": 0.03,
+        "electricity_escalation": -0.0062,
+        "gas_escalation": -0.0108,
+        "analysis_period_years": 15,
         "financing": [
           {
             "kind": "cash",
@@ -1275,13 +2079,14 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": -17407.25,
-              "expected": -14367.5,
-              "high": -12334.38,
+              "low": 92.75,
+              "expected": 132.5,
+              "high": 165.62,
               "unit": "USD"
             },
+            "program_sir": null,
             "notes": [
-              "Paid in full at installation."
+              "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
             ]
           }
         ]
@@ -1305,11 +2110,16 @@
         }
       ],
       "formula_ids": [
-        "HVAC",
-        "ZON"
+        "HVAC-01",
+        "HVAC-05",
+        "ZON-04",
+        "ECO-07",
+        "ECO-13",
+        "EMI-03"
       ],
       "solar": null,
       "layout": null,
+      "value_uplift": null,
       "warnings": []
     },
     {
@@ -1341,25 +2151,31 @@
           "unit": "USD"
         },
         "co2_kg": {
-          "low": 102.69,
-          "expected": 128.36,
-          "high": 154.03,
+          "low": 64.73,
+          "expected": 80.91,
+          "high": 97.09,
+          "unit": "kg"
+        },
+        "co2_nonbaseload_kg": {
+          "low": 151.85,
+          "expected": 189.82,
+          "high": 227.78,
           "unit": "kg"
         }
       },
       "finance": {
         "installed_cost_usd": {
-          "low": 300.0,
-          "expected": 380.0,
-          "high": 494.0,
+          "low": 144.0,
+          "expected": 272.4,
+          "high": 408.6,
           "unit": "USD"
         },
-        "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+        "cost_source": "LBNL-2021 Table 13 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 9.08 USD per lamp x 30",
         "incentives": [],
         "net_upfront_usd": {
-          "low": 300.0,
-          "expected": 380.0,
-          "high": 494.0,
+          "low": 144.0,
+          "expected": 272.4,
+          "high": 408.6,
           "unit": "USD"
         },
         "annual_savings_usd": {
@@ -1369,26 +2185,28 @@
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
-        "useful_life_years": 15,
+        "useful_life_years": 10,
         "simple_payback_years": {
-          "low": 2.26,
-          "expected": 3.44,
-          "high": 5.59,
+          "low": 1.23,
+          "expected": 2.47,
+          "high": 3.85,
           "unit": "years"
         },
-        "discounted_payback_years": 3.7,
+        "discounted_payback_years": 2.7,
         "npv_usd": {
-          "low": 614.22,
-          "expected": 1005.28,
-          "high": 1362.34,
+          "low": 389.48,
+          "expected": 618.23,
+          "high": 842.97,
           "unit": "USD"
         },
-        "sir": 3.65,
-        "irr": 0.3131,
-        "discount_rate": 0.05,
-        "electricity_escalation": 0.03,
-        "gas_escalation": 0.02,
-        "analysis_period_years": 20,
+        "npv_sensitivity_usd": 463.36,
+        "sir": 3.27,
+        "irr": 0.3755,
+        "airr": 0.1596,
+        "discount_rate": 0.03,
+        "electricity_escalation": -0.0108,
+        "gas_escalation": -0.0174,
+        "analysis_period_years": 10,
         "financing": [
           {
             "kind": "cash",
@@ -1398,13 +2216,14 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": -405.68,
-              "expected": -269.6,
-              "high": -167.52,
+              "low": 88.32,
+              "expected": 110.4,
+              "high": 132.48,
               "unit": "USD"
             },
+            "program_sir": null,
             "notes": [
-              "Paid in full at installation."
+              "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
             ]
           }
         ]
@@ -1428,12 +2247,91 @@
         }
       ],
       "formula_ids": [
-        "LGT",
-        "HVAC"
+        "LGT-01",
+        "LGT-03",
+        "ZON-04",
+        "ECO-07",
+        "EMI-01"
       ],
       "solar": null,
       "layout": null,
+      "value_uplift": null,
       "warnings": []
+    },
+    {
+      "measure_id": "WIN_SHADE",
+      "title": "Exterior shading on the south windows",
+      "applicable": true,
+      "not_applicable_reason": null,
+      "description": "Shades over the two south-facing living room windows.",
+      "params": {
+        "window_surface_ids": [
+          "surf_win_e13_1",
+          "surf_win_e13_2"
+        ]
+      },
+      "savings": {
+        "electricity_kwh": {
+          "low": 55.0,
+          "expected": 110.0,
+          "high": 165.0,
+          "unit": "kWh"
+        },
+        "gas_kwh": {
+          "low": -37.5,
+          "expected": -25.0,
+          "high": -12.5,
+          "unit": "kWh"
+        },
+        "cost_usd": {
+          "low": 12.94,
+          "expected": 25.88,
+          "high": 38.81,
+          "unit": "USD"
+        },
+        "co2_kg": {
+          "low": 8.46,
+          "expected": 16.92,
+          "high": 25.39,
+          "unit": "kg"
+        },
+        "co2_nonbaseload_kg": {
+          "low": 21.71,
+          "expected": 43.43,
+          "high": 65.14,
+          "unit": "kg"
+        }
+      },
+      "finance": null,
+      "flags": [],
+      "anchors": [
+        {
+          "room_id": "room_living",
+          "pano_id": "pano_01",
+          "x": 0.2,
+          "y": 2.8,
+          "z": 1.4,
+          "label": "South windows"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "matterport_field",
+          "ref": "floors.edges.openings",
+          "note": "op_e13_1 and op_e13_2"
+        }
+      ],
+      "formula_ids": [
+        "WIN-02",
+        "ZON-04",
+        "EMI-01"
+      ],
+      "solar": null,
+      "layout": null,
+      "value_uplift": null,
+      "warnings": [
+        "no verified cost source; get a quote"
+      ]
     },
     {
       "measure_id": "ROOF_COOL",
@@ -1442,75 +2340,97 @@
       "not_applicable_reason": null,
       "description": "Reflective coating on the roof to cut solar heat gain.",
       "params": {
-        "solar_reflectance": 0.65
+        "absorptance_after": 0.3
       },
       "savings": {
         "electricity_kwh": {
-          "low": 46.0,
-          "expected": 92.0,
-          "high": 138.0,
+          "low": 30.0,
+          "expected": 60.0,
+          "high": 90.0,
           "unit": "kWh"
         },
         "gas_kwh": {
-          "low": -105.0,
-          "expected": -70.0,
-          "high": -35.0,
+          "low": -390.0,
+          "expected": -260.0,
+          "high": -130.0,
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 9.22,
-          "expected": 18.45,
-          "high": 27.67,
+          "low": -2.85,
+          "expected": -1.9,
+          "high": -0.95,
           "unit": "USD"
         },
         "co2_kg": {
-          "low": 7.46,
-          "expected": 14.93,
-          "high": 22.39,
+          "low": -53.13,
+          "expected": -35.42,
+          "high": -17.71,
+          "unit": "kg"
+        },
+        "co2_nonbaseload_kg": {
+          "low": -31.44,
+          "expected": -20.96,
+          "high": -10.48,
           "unit": "kg"
         }
       },
       "finance": {
         "installed_cost_usd": {
-          "low": 2400.0,
-          "expected": 3100.0,
-          "high": 3900.0,
+          "low": 1109.18,
+          "expected": 1662.95,
+          "high": 2217.54,
           "unit": "USD"
         },
-        "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
-        "incentives": [],
+        "cost_source": "EPA-2008 section 3.3 (2006 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 20.27 USD per m2 of roof x 82.04",
+        "incentives": [
+          {
+            "name": "LADWP Consumer Rebate Program, cool roof",
+            "kind": "rebate_after_install",
+            "amount_usd": {
+              "low": 0.0,
+              "expected": 0.0,
+              "high": 529.84,
+              "unit": "USD"
+            },
+            "status": "verified",
+            "eligibility": "needs_confirmation",
+            "conditions": [
+              "steep slope: 3-year SRI of 20 earns 0.20, 35 earns 0.60 USD per sq ft",
+              "CRRC-rated product",
+              "finalled building permit"
+            ],
+            "citation": "physics 04 INC-10: 0.20 or 0.60 USD per sq ft of cool roof over conditioned space, paid after installation"
+          }
+        ],
         "net_upfront_usd": {
-          "low": 2400.0,
-          "expected": 3100.0,
-          "high": 3900.0,
+          "low": 1109.18,
+          "expected": 1662.95,
+          "high": 2217.54,
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 9.22,
-          "expected": 18.45,
-          "high": 27.67,
+          "low": -2.85,
+          "expected": -1.9,
+          "high": -0.95,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
-        "useful_life_years": 15,
-        "simple_payback_years": {
-          "low": 86.74,
-          "expected": 168.02,
-          "high": 422.99,
-          "unit": "years"
-        },
+        "useful_life_years": 20,
+        "simple_payback_years": null,
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -3782.65,
-          "expected": -2865.3,
-          "high": -2047.95,
+          "low": -2237.31,
+          "expected": -1682.63,
+          "high": -1128.77,
           "unit": "USD"
         },
-        "sir": 0.08,
-        "irr": -0.1906,
-        "discount_rate": 0.05,
-        "electricity_escalation": 0.03,
-        "gas_escalation": 0.02,
+        "npv_sensitivity_usd": -1677.71,
+        "sir": -0.012,
+        "irr": null,
+        "airr": null,
+        "discount_rate": 0.03,
+        "electricity_escalation": -0.0036,
+        "gas_escalation": -0.007,
         "analysis_period_years": 20,
         "financing": [
           {
@@ -1521,13 +2441,14 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": -3890.78,
-              "expected": -3081.55,
-              "high": -2372.33,
+              "low": -2.85,
+              "expected": -1.9,
+              "high": -0.95,
               "unit": "USD"
             },
+            "program_sir": null,
             "notes": [
-              "Paid in full at installation."
+              "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
             ]
           }
         ]
@@ -1538,21 +2459,31 @@
         {
           "kind": "vexcel_attr",
           "ref": "roof-characteristics.material.class"
+        },
+        {
+          "kind": "default_table",
+          "ref": "DEF-02",
+          "note": "shingle 0.85, cool roof 0.30"
         }
       ],
       "formula_ids": [
-        "ENV",
-        "ZON"
+        "ENV-05",
+        "ZON-04",
+        "ECO-07",
+        "EMI-01"
       ],
       "solar": null,
       "layout": null,
-      "warnings": []
+      "value_uplift": null,
+      "warnings": [
+        "Vented attic: the result is an upper bound (SPEC.md section 6.2). Even the upper bound is a net loss here, because the winter heating penalty outweighs the cooling saving."
+      ]
     },
     {
       "measure_id": "DHW_HPWH",
       "title": "Heat pump water heater",
       "applicable": false,
-      "not_applicable_reason": "Blocked by feasibility flag dhw.space: the water heater closet is too small.",
+      "not_applicable_reason": "Blocked by feasibility flag dhw.space: the water heater is in a small closet inside the conditioned space.",
       "description": "",
       "params": {},
       "savings": null,
@@ -1561,7 +2492,7 @@
         {
           "key": "dhw.space",
           "status": "blocked",
-          "message": "Water heater sits in a closet too small for a heat pump unit's air volume.",
+          "message": "The water heater sits in a closet inside the conditioned space. DHW_HPWH assumes the heater is outside it (SPEC.md section 6.2), and the closet is too small for a heat pump unit's air volume.",
           "evidence": [
             {
               "kind": "pano",
@@ -1582,6 +2513,7 @@
       "formula_ids": [],
       "solar": null,
       "layout": null,
+      "value_uplift": null,
       "warnings": []
     },
     {
@@ -1614,6 +2546,25 @@
       "formula_ids": [],
       "solar": null,
       "layout": null,
+      "value_uplift": null,
+      "warnings": []
+    },
+    {
+      "measure_id": "HVAC_DUCT",
+      "title": "Duct sealing",
+      "applicable": false,
+      "not_applicable_reason": "Distribution efficiency not sourced: the measure is not evaluated (physics 02 HVAC-08, SPEC.md section 6.2).",
+      "description": "",
+      "params": {},
+      "savings": null,
+      "finance": null,
+      "flags": [],
+      "anchors": [],
+      "evidence": [],
+      "formula_ids": [],
+      "solar": null,
+      "layout": null,
+      "value_uplift": null,
       "warnings": []
     },
     {
@@ -1631,33 +2582,34 @@
       "formula_ids": [],
       "solar": null,
       "layout": null,
+      "value_uplift": null,
       "warnings": []
     }
   ],
   "plan": {
-    "budget_usd": 14000.0,
+    "budget_usd": 10000.0,
     "selected": [
       {
         "rank": 1,
         "measure": {
           "measure_id": "PV_ROOF",
-          "title": "Rooftop solar, 2.8 kW",
+          "title": "Rooftop solar, 2.15 kW",
           "applicable": true,
           "not_applicable_reason": null,
-          "description": "Seven 400 W panels on the south roof plane. Layout stopped when annual production reached the site's annual electricity use.",
+          "description": "5 modules of 430 W on the south roof plane. The layout stopped at the budget: one more module would not fit it.",
           "params": {
-            "panel_w": 400,
-            "cost_usd_per_w": 3.3,
-            "base_cost_usd": 9240,
-            "service_upgrade_allowance_usd": 1500,
-            "stop_reason": "production_reached_consumption",
-            "export_usd_per_kwh": 0.08
+            "stop_reason": "budget",
+            "yield_kwh_per_kw": 1806.9,
+            "sigma_w": 0.02301,
+            "l_in_kwh": 3655.3,
+            "h_in_kwh": 3806.0,
+            "netted_kwh": 3768.3
           },
           "savings": {
             "electricity_kwh": {
-              "low": 3864.96,
-              "expected": 4294.4,
-              "high": 4637.95,
+              "low": 3547.46,
+              "expected": 3768.3,
+              "high": 3918.22,
               "unit": "kWh"
             },
             "gas_kwh": {
@@ -1667,29 +2619,35 @@
               "unit": "kWh"
             },
             "cost_usd": {
-              "low": 604.86,
-              "expected": 672.07,
-              "high": 725.84,
+              "low": 886.86,
+              "expected": 942.08,
+              "high": 979.55,
               "unit": "USD"
             },
             "co2_kg": {
-              "low": 1159.49,
-              "expected": 1288.32,
-              "high": 1391.39,
+              "low": 691.9,
+              "expected": 734.97,
+              "high": 764.21,
+              "unit": "kg"
+            },
+            "co2_nonbaseload_kg": {
+              "low": 1546.66,
+              "expected": 1642.94,
+              "high": 1708.3,
               "unit": "kg"
             }
           },
           "finance": {
             "installed_cost_usd": {
-              "low": 8400.0,
-              "expected": 10740.0,
-              "high": 14200.0,
+              "low": 5762.0,
+              "expected": 9030.0,
+              "high": 11180.0,
               "unit": "USD"
             },
-            "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+            "cost_source": "NREL-2023 Table 3 and TTS-2024 executive summary, not CPI-adjusted; physics 04 COST-01: 4.2 USD per W DC x 2150",
             "incentives": [
               {
-                "name": "Federal residential clean energy credit (IRC section 25D)",
+                "name": "Federal residential clean energy credit (26 U.S.C. 25D)",
                 "kind": "tax_credit",
                 "amount_usd": {
                   "low": 0.0,
@@ -1698,42 +2656,46 @@
                   "unit": "USD"
                 },
                 "status": "expired",
-                "citation": "SPEC.md section 6.6: ended for 2025 per secondary sources [U]; confirm against a primary source"
+                "eligibility": "not_eligible",
+                "conditions": [],
+                "citation": "physics 04 INC-02: section 25D(h), no credit for expenditures made after 2025-12-31"
               }
             ],
             "net_upfront_usd": {
-              "low": 8400.0,
-              "expected": 10740.0,
-              "high": 14200.0,
+              "low": 5762.0,
+              "expected": 9030.0,
+              "high": 11180.0,
               "unit": "USD"
             },
             "annual_savings_usd": {
-              "low": 604.86,
-              "expected": 672.07,
-              "high": 725.84,
+              "low": 886.86,
+              "expected": 942.08,
+              "high": 979.55,
               "unit": "USD"
             },
-            "annual_om_change_usd": 40.0,
+            "annual_om_change_usd": 75.27,
             "useful_life_years": 25,
             "simple_payback_years": {
-              "low": 11.57,
-              "expected": 15.98,
-              "high": 23.48,
+              "low": 6.62,
+              "expected": 10.42,
+              "high": 13.0,
               "unit": "years"
             },
-            "discounted_payback_years": null,
+            "discounted_payback_years": 13.5,
             "npv_usd": {
-              "low": -5041.93,
-              "expected": -508.98,
-              "high": 2689.38,
+              "low": 2036.69,
+              "expected": 4847.51,
+              "high": 8639.12,
               "unit": "USD"
             },
-            "sir": 0.95,
-            "irr": 0.0449,
-            "discount_rate": 0.05,
-            "electricity_escalation": 0.03,
-            "gas_escalation": 0.02,
-            "analysis_period_years": 20,
+            "npv_sensitivity_usd": 384.17,
+            "sir": 1.537,
+            "irr": 0.0749,
+            "airr": 0.0479,
+            "discount_rate": 0.03,
+            "electricity_escalation": -0.0018,
+            "gas_escalation": -0.0047,
+            "analysis_period_years": 25,
             "financing": [
               {
                 "kind": "cash",
@@ -1743,13 +2705,14 @@
                 "term_years": null,
                 "annual_payment_usd": 0.0,
                 "net_cashflow_year1_usd": {
-                  "low": -13635.14,
-                  "expected": -10107.93,
-                  "high": -7714.16,
+                  "low": 811.59,
+                  "expected": 866.81,
+                  "high": 904.28,
                   "unit": "USD"
                 },
+                "program_sir": null,
                 "notes": [
-                  "Paid in full at installation."
+                  "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
                 ]
               }
             ]
@@ -1785,7 +2748,7 @@
                 {
                   "kind": "vexcel_attr",
                   "ref": "roof-objects.chimney.count",
-                  "note": "1: the chimney is on the north plane; SAM 3 did not detect it, so the plane carries no detection for it"
+                  "note": "1: counted by Vexcel, not detected by SAM 3, so it has no position"
                 },
                 {
                   "kind": "vexcel_attr",
@@ -1830,66 +2793,66 @@
             }
           ],
           "formula_ids": [
-            "SOL",
-            "IRR",
-            "PV",
-            "SHD",
-            "LAY"
+            "SOL-01",
+            "IRR-08",
+            "PV-04",
+            "PV-06",
+            "PV-09",
+            "SHD-03",
+            "ROOF-04",
+            "LAY-03",
+            "TAR-03",
+            "ECO-07",
+            "EMI-01",
+            "VAL-03"
           ],
           "solar": {
-            "system_kw_dc": 2.8,
-            "panel_count": 7,
+            "system_kw_dc": 2.15,
+            "panel_count": 5,
             "panels": [
               {
                 "plane_id": "plane_south",
-                "polygon_wkt": "POLYGON((-118.3171122 34.0935091, -118.3171133 34.0935237, -118.3171255 34.0935231, -118.3171244 34.0935085, -118.3171122 34.0935091))",
-                "annual_kwh": 627.2,
+                "polygon_wkt": "POLYGON((-118.3171122 34.0935091, -118.3171133 34.0935237, -118.3171256 34.0935230, -118.3171245 34.0935085, -118.3171122 34.0935091))",
+                "annual_kwh": 761.4,
                 "shading_loss_fraction": 0.02
               },
               {
                 "plane_id": "plane_south",
-                "polygon_wkt": "POLYGON((-118.3171250 34.0935085, -118.3171261 34.0935230, -118.3171383 34.0935224, -118.3171372 34.0935078, -118.3171250 34.0935085))",
-                "annual_kwh": 627.2,
+                "polygon_wkt": "POLYGON((-118.3171246 34.0935085, -118.3171257 34.0935230, -118.3171380 34.0935224, -118.3171369 34.0935078, -118.3171246 34.0935085))",
+                "annual_kwh": 761.4,
                 "shading_loss_fraction": 0.02
               },
               {
                 "plane_id": "plane_south",
-                "polygon_wkt": "POLYGON((-118.3171377 34.0935078, -118.3171388 34.0935224, -118.3171511 34.0935217, -118.3171500 34.0935072, -118.3171377 34.0935078))",
-                "annual_kwh": 620.8,
+                "polygon_wkt": "POLYGON((-118.3171370 34.0935078, -118.3171381 34.0935224, -118.3171504 34.0935217, -118.3171493 34.0935072, -118.3171370 34.0935078))",
+                "annual_kwh": 753.7,
                 "shading_loss_fraction": 0.03
               },
               {
                 "plane_id": "plane_south",
-                "polygon_wkt": "POLYGON((-118.3171505 34.0935071, -118.3171516 34.0935217, -118.3171639 34.0935211, -118.3171627 34.0935065, -118.3171505 34.0935071))",
-                "annual_kwh": 620.8,
+                "polygon_wkt": "POLYGON((-118.3171494 34.0935072, -118.3171505 34.0935217, -118.3171628 34.0935211, -118.3171617 34.0935065, -118.3171494 34.0935072))",
+                "annual_kwh": 753.7,
                 "shading_loss_fraction": 0.03
               },
               {
                 "plane_id": "plane_south",
-                "polygon_wkt": "POLYGON((-118.3171633 34.0935065, -118.3171644 34.0935210, -118.3171766 34.0935204, -118.3171755 34.0935058, -118.3171633 34.0935065))",
-                "annual_kwh": 608.0,
+                "polygon_wkt": "POLYGON((-118.3171618 34.0935065, -118.3171630 34.0935211, -118.3171752 34.0935204, -118.3171741 34.0935059, -118.3171618 34.0935065))",
+                "annual_kwh": 738.1,
                 "shading_loss_fraction": 0.05
-              },
-              {
-                "plane_id": "plane_south",
-                "polygon_wkt": "POLYGON((-118.3171761 34.0935058, -118.3171772 34.0935204, -118.3171894 34.0935197, -118.3171883 34.0935051, -118.3171761 34.0935058))",
-                "annual_kwh": 601.6,
-                "shading_loss_fraction": 0.06
-              },
-              {
-                "plane_id": "plane_south",
-                "polygon_wkt": "POLYGON((-118.3171888 34.0935051, -118.3171899 34.0935197, -118.3172022 34.0935191, -118.3172011 34.0935045, -118.3171888 34.0935051))",
-                "annual_kwh": 588.8,
-                "shading_loss_fraction": 0.08
               }
             ],
             "annual_kwh": {
-              "low": 3864.96,
-              "expected": 4294.4,
-              "high": 4637.95,
+              "low": 3547.46,
+              "expected": 3768.3,
+              "high": 3918.22,
               "unit": "kWh"
             },
-            "self_consumption_fraction": 0.45,
+            "self_consumption_fraction": 0.42,
+            "module_w": 430.0,
+            "dc_ac_ratio": 1.2,
+            "inverter_kw_ac": 1.792,
+            "losses_percent": 11.42,
+            "degradation_rate": 0.005,
             "electrical": {
               "key": "electrical.service",
               "status": "unknown",
@@ -1920,7 +2883,7 @@
                 {
                   "kind": "vexcel_attr",
                   "ref": "roof-objects.chimney.count",
-                  "note": "1: the chimney is on the north plane; SAM 3 did not detect it, so the plane carries no detection for it"
+                  "note": "1: counted by Vexcel, not detected by SAM 3, so it has no position"
                 },
                 {
                   "kind": "vexcel_attr",
@@ -1936,157 +2899,34 @@
             }
           },
           "layout": null,
+          "value_uplift": {
+            "value_usd": {
+              "low": 0.0,
+              "expected": 8600.0,
+              "high": 8600.0,
+              "unit": "USD"
+            },
+            "method": "VAL-03",
+            "cap_rate": null,
+            "comp_count": 0,
+            "notes": [
+              "High is 4.00 USD per W DC, the average premium of LBNL's Selling into the Sun (sales 2002 to 2013); expected is capped at the net installed cost; low is zero.",
+              "For a new, owned system. The premium falls with the system's age.",
+              "Never added to savings, NPV, SIR, payback or the ranking."
+            ]
+          },
           "warnings": [
+            "Electrical service size is unknown: a service upgrade could add 0 to 4,500 USD, which is not in the installed cost.",
+            "Net metering is modelled as steady-state annual netting at the energy price; fixed and minimum charges are never offset.",
+            "Shading was computed by ray casting against the splat, so the 3 percent default allowance is not applied; the far horizon is not included.",
             "may exceed budget"
           ]
         },
-        "cumulative_upfront_usd": 10740.0,
-        "remaining_budget_usd": 3260.0
+        "cumulative_upfront_usd": 9030.0,
+        "remaining_budget_usd": 970.0
       },
       {
         "rank": 2,
-        "measure": {
-          "measure_id": "ENV_ATTIC",
-          "title": "Attic insulation to RSI 6.7",
-          "applicable": true,
-          "not_applicable_reason": null,
-          "description": "Blow insulation over the uninsulated attic floor.",
-          "params": {
-            "target_rsi_m2k_per_w": 6.7,
-            "area_m2": 82.04
-          },
-          "savings": {
-            "electricity_kwh": {
-              "low": 191.1,
-              "expected": 273.0,
-              "high": 354.9,
-              "unit": "kWh"
-            },
-            "gas_kwh": {
-              "low": 903.0,
-              "expected": 1290.0,
-              "high": 1677.0,
-              "unit": "kWh"
-            },
-            "cost_usd": {
-              "low": 106.47,
-              "expected": 152.1,
-              "high": 197.73,
-              "unit": "USD"
-            },
-            "co2_kg": {
-              "low": 220.77,
-              "expected": 315.39,
-              "high": 410.01,
-              "unit": "kg"
-            }
-          },
-          "finance": {
-            "installed_cost_usd": {
-              "low": 1800.0,
-              "expected": 2200.0,
-              "high": 2650.0,
-              "unit": "USD"
-            },
-            "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
-            "incentives": [
-              {
-                "name": "ILLUSTRATIVE utility point-of-sale insulation rebate",
-                "kind": "upfront_rebate",
-                "amount_usd": {
-                  "low": 300.0,
-                  "expected": 300.0,
-                  "high": 300.0,
-                  "unit": "USD"
-                },
-                "status": "verified",
-                "citation": "Illustrative example entry, not a real programme lookup"
-              }
-            ],
-            "net_upfront_usd": {
-              "low": 1500.0,
-              "expected": 1900.0,
-              "high": 2350.0,
-              "unit": "USD"
-            },
-            "annual_savings_usd": {
-              "low": 106.47,
-              "expected": 152.1,
-              "high": 197.73,
-              "unit": "USD"
-            },
-            "annual_om_change_usd": 0.0,
-            "useful_life_years": 30,
-            "simple_payback_years": {
-              "low": 7.59,
-              "expected": 12.49,
-              "high": 22.07,
-              "unit": "years"
-            },
-            "discounted_payback_years": 15.6,
-            "npv_usd": {
-              "low": -726.5,
-              "expected": 419.29,
-              "high": 1515.08,
-              "unit": "USD"
-            },
-            "sir": 1.22,
-            "irr": 0.0726,
-            "discount_rate": 0.05,
-            "electricity_escalation": 0.03,
-            "gas_escalation": 0.02,
-            "analysis_period_years": 20,
-            "financing": [
-              {
-                "kind": "cash",
-                "eligible": true,
-                "financed_usd": 0.0,
-                "rate": null,
-                "term_years": null,
-                "annual_payment_usd": 0.0,
-                "net_cashflow_year1_usd": {
-                  "low": -2243.53,
-                  "expected": -1747.9,
-                  "high": -1302.27,
-                  "unit": "USD"
-                },
-                "notes": [
-                  "Paid in full at installation."
-                ]
-              }
-            ]
-          },
-          "flags": [],
-          "anchors": [
-            {
-              "room_id": "room_living",
-              "pano_id": "pano_01",
-              "x": 2.5,
-              "y": 2.8,
-              "z": 2.67,
-              "label": "Attic above the living room"
-            }
-          ],
-          "evidence": [
-            {
-              "kind": "default_table",
-              "ref": "DEF (vintage default table; table ids pending in specs/physics/)",
-              "note": "attic ceiling U-value by era"
-            }
-          ],
-          "formula_ids": [
-            "ENV",
-            "ZON"
-          ],
-          "solar": null,
-          "layout": null,
-          "warnings": []
-        },
-        "cumulative_upfront_usd": 12640.0,
-        "remaining_budget_usd": 1360.0
-      },
-      {
-        "rank": 3,
         "measure": {
           "measure_id": "LGT_LED",
           "title": "LED lamps throughout",
@@ -2116,25 +2956,31 @@
               "unit": "USD"
             },
             "co2_kg": {
-              "low": 102.69,
-              "expected": 128.36,
-              "high": 154.03,
+              "low": 64.73,
+              "expected": 80.91,
+              "high": 97.09,
+              "unit": "kg"
+            },
+            "co2_nonbaseload_kg": {
+              "low": 151.85,
+              "expected": 189.82,
+              "high": 227.78,
               "unit": "kg"
             }
           },
           "finance": {
             "installed_cost_usd": {
-              "low": 300.0,
-              "expected": 380.0,
-              "high": 494.0,
+              "low": 144.0,
+              "expected": 272.4,
+              "high": 408.6,
               "unit": "USD"
             },
-            "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+            "cost_source": "LBNL-2021 Table 13 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 9.08 USD per lamp x 30",
             "incentives": [],
             "net_upfront_usd": {
-              "low": 300.0,
-              "expected": 380.0,
-              "high": 494.0,
+              "low": 144.0,
+              "expected": 272.4,
+              "high": 408.6,
               "unit": "USD"
             },
             "annual_savings_usd": {
@@ -2144,26 +2990,28 @@
               "unit": "USD"
             },
             "annual_om_change_usd": 0.0,
-            "useful_life_years": 15,
+            "useful_life_years": 10,
             "simple_payback_years": {
-              "low": 2.26,
-              "expected": 3.44,
-              "high": 5.59,
+              "low": 1.23,
+              "expected": 2.47,
+              "high": 3.85,
               "unit": "years"
             },
-            "discounted_payback_years": 3.7,
+            "discounted_payback_years": 2.7,
             "npv_usd": {
-              "low": 614.22,
-              "expected": 1005.28,
-              "high": 1362.34,
+              "low": 389.48,
+              "expected": 618.23,
+              "high": 842.97,
               "unit": "USD"
             },
-            "sir": 3.65,
-            "irr": 0.3131,
-            "discount_rate": 0.05,
-            "electricity_escalation": 0.03,
-            "gas_escalation": 0.02,
-            "analysis_period_years": 20,
+            "npv_sensitivity_usd": 463.36,
+            "sir": 3.27,
+            "irr": 0.3755,
+            "airr": 0.1596,
+            "discount_rate": 0.03,
+            "electricity_escalation": -0.0108,
+            "gas_escalation": -0.0174,
+            "analysis_period_years": 10,
             "financing": [
               {
                 "kind": "cash",
@@ -2173,13 +3021,14 @@
                 "term_years": null,
                 "annual_payment_usd": 0.0,
                 "net_cashflow_year1_usd": {
-                  "low": -405.68,
-                  "expected": -269.6,
-                  "high": -167.52,
+                  "low": 88.32,
+                  "expected": 110.4,
+                  "high": 132.48,
                   "unit": "USD"
                 },
+                "program_sir": null,
                 "notes": [
-                  "Paid in full at installation."
+                  "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
                 ]
               }
             ]
@@ -2203,108 +3052,128 @@
             }
           ],
           "formula_ids": [
-            "LGT",
-            "HVAC"
+            "LGT-01",
+            "LGT-03",
+            "ZON-04",
+            "ECO-07",
+            "EMI-01"
           ],
           "solar": null,
           "layout": null,
+          "value_uplift": null,
           "warnings": []
         },
-        "cumulative_upfront_usd": 13020.0,
-        "remaining_budget_usd": 980.0
+        "cumulative_upfront_usd": 9302.4,
+        "remaining_budget_usd": 697.6
       }
     ],
     "financeable": [
       {
-        "measure_id": "HVAC_HP",
-        "title": "Heat pump replacing AC and furnace",
+        "measure_id": "ENV_ATTIC",
+        "title": "Attic insulation to R-38",
         "applicable": true,
         "not_applicable_reason": null,
-        "description": "Replace the central air conditioner and gas furnace with a ducted heat pump.",
+        "description": "Blow insulation over the attic floor to R-38 (U 0.148 W/m2K).",
         "params": {
-          "seasonal_heating_cop": 3.2
+          "target_u_w_m2k": 0.148,
+          "area_m2": 82.04
         },
         "savings": {
           "electricity_kwh": {
-            "low": -490.75,
-            "expected": -392.6,
-            "high": -274.82,
+            "low": 191.1,
+            "expected": 273.0,
+            "high": 354.9,
             "unit": "kWh"
           },
           "gas_kwh": {
-            "low": 2135.0,
-            "expected": 3050.0,
-            "high": 3812.5,
+            "low": 905.8,
+            "expected": 1294.0,
+            "high": 1682.2,
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 70.07,
-            "expected": 100.1,
-            "high": 125.12,
+            "low": 106.65,
+            "expected": 152.36,
+            "high": 198.07,
             "unit": "USD"
           },
           "co2_kg": {
-            "low": 303.99,
-            "expected": 434.27,
-            "high": 542.84,
+            "low": 201.43,
+            "expected": 287.76,
+            "high": 374.08,
+            "unit": "kg"
+          },
+          "co2_nonbaseload_kg": {
+            "low": 247.48,
+            "expected": 353.54,
+            "high": 459.6,
             "unit": "kg"
           }
         },
         "finance": {
           "installed_cost_usd": {
-            "low": 12500.0,
-            "expected": 14500.0,
-            "high": 17500.0,
+            "low": 1702.33,
+            "expected": 2226.57,
+            "high": 3357.9,
             "unit": "USD"
           },
-          "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+          "cost_source": "LBNL-2021 section 10.3 and Table 13 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 27.14 USD per m2 of attic floor x 82.04",
           "incentives": [
             {
-              "name": "ILLUSTRATIVE utility heat pump rebate",
-              "kind": "upfront_rebate",
+              "name": "LADWP Attic Insulation Rebate Program",
+              "kind": "rebate_after_install",
               "amount_usd": {
-                "low": 1500.0,
-                "expected": 2500.0,
-                "high": 3000.0,
+                "low": 0.0,
+                "expected": 0.0,
+                "high": 441.54,
                 "unit": "USD"
               },
-              "status": "unverified",
-              "citation": "Illustrative example entry; unverified incentives are not subtracted from net upfront cash (SPEC.md section 6.6)"
+              "status": "verified",
+              "eligibility": "needs_confirmation",
+              "conditions": [
+                "batt and roll insulation only; the costed measure is blown insulation",
+                "purchased and installed on or after 2025-09-01",
+                "finalled LADBS permit",
+                "before and after photos"
+              ],
+              "citation": "physics 04 INC-17: 0.50 USD per sq ft above R-19, paid after installation"
             }
           ],
           "net_upfront_usd": {
-            "low": 12500.0,
-            "expected": 14500.0,
-            "high": 17500.0,
+            "low": 1702.33,
+            "expected": 2226.57,
+            "high": 3357.9,
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 70.07,
-            "expected": 100.1,
-            "high": 125.12,
+            "low": 106.65,
+            "expected": 152.36,
+            "high": 198.07,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
-          "useful_life_years": 15,
+          "useful_life_years": 25,
           "simple_payback_years": {
-            "low": 99.9,
-            "expected": 144.86,
-            "high": 249.75,
+            "low": 9.8,
+            "expected": 14.61,
+            "high": 24.33,
             "unit": "years"
           },
-          "discounted_payback_years": null,
+          "discounted_payback_years": 20.4,
           "npv_usd": {
-            "low": -16729.71,
-            "expected": -13399.58,
-            "high": -11124.48,
+            "low": -1066.46,
+            "expected": 325.96,
+            "high": 1305.12,
             "unit": "USD"
           },
-          "sir": 0.08,
-          "irr": -0.1972,
-          "discount_rate": 0.05,
-          "electricity_escalation": 0.03,
-          "gas_escalation": 0.02,
-          "analysis_period_years": 20,
+          "npv_sensitivity_usd": -507.71,
+          "sir": 1.146,
+          "irr": 0.0429,
+          "airr": 0.0356,
+          "discount_rate": 0.03,
+          "electricity_escalation": -0.0018,
+          "gas_escalation": -0.0047,
+          "analysis_period_years": 25,
           "financing": [
             {
               "kind": "cash",
@@ -2314,13 +3183,175 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": -17429.93,
-                "expected": -14399.9,
-                "high": -12374.88,
+                "low": 106.65,
+                "expected": 152.36,
+                "high": 198.07,
                 "unit": "USD"
               },
+              "program_sir": null,
               "notes": [
-                "Paid in full at installation."
+                "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
+              ]
+            }
+          ]
+        },
+        "flags": [],
+        "anchors": [
+          {
+            "room_id": "room_living",
+            "pano_id": "pano_01",
+            "x": 2.5,
+            "y": 2.8,
+            "z": 2.67,
+            "label": "Attic above the living room"
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "default_table",
+            "ref": "DEF-01",
+            "note": "attic ceiling U-value by vintage"
+          }
+        ],
+        "formula_ids": [
+          "ENV-01",
+          "ENV-03",
+          "ZON-04",
+          "HVAC-03",
+          "HVAC-06",
+          "ECO-07",
+          "EMI-01"
+        ],
+        "solar": null,
+        "layout": null,
+        "value_uplift": null,
+        "warnings": []
+      },
+      {
+        "measure_id": "HVAC_HP",
+        "title": "Heat pump replacing AC and furnace",
+        "applicable": true,
+        "not_applicable_reason": null,
+        "description": "Replace the central air conditioner and gas furnace with a ducted heat pump.",
+        "params": {
+          "capacity_tons": 3,
+          "seer2": 16.5,
+          "hspf2": 8.2,
+          "cop_47f": 3.6
+        },
+        "savings": {
+          "electricity_kwh": {
+            "low": -741.25,
+            "expected": -593.0,
+            "high": -415.1,
+            "unit": "kWh"
+          },
+          "gas_kwh": {
+            "low": 3038.0,
+            "expected": 4340.0,
+            "high": 5425.0,
+            "unit": "kWh"
+          },
+          "cost_usd": {
+            "low": 93.7,
+            "expected": 133.85,
+            "high": 167.31,
+            "unit": "USD"
+          },
+          "co2_kg": {
+            "low": 469.62,
+            "expected": 670.88,
+            "high": 838.6,
+            "unit": "kg"
+          },
+          "co2_nonbaseload_kg": {
+            "low": 369.6,
+            "expected": 528.0,
+            "high": 660.0,
+            "unit": "kg"
+          }
+        },
+        "finance": {
+          "installed_cost_usd": {
+            "low": 8004.0,
+            "expected": 13416.0,
+            "high": 17415.0,
+            "unit": "USD"
+          },
+          "cost_source": "EIA-2023 (2022 USD) and LBNL-2021 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 4472 USD per ton of capacity x 3",
+          "incentives": [
+            {
+              "name": "LADWP Consumer Rebate Program, central ducted heat pump",
+              "kind": "rebate_after_install",
+              "amount_usd": {
+                "low": 3150.0,
+                "expected": 3150.0,
+                "high": 3150.0,
+                "unit": "USD"
+              },
+              "status": "verified",
+              "eligibility": "confirmed",
+              "conditions": [
+                "equipment purchased and installed on or after 2025-11-01",
+                "finalled building permit",
+                "apply within 12 months of purchase",
+                "not new construction or an ADU"
+              ],
+              "citation": "physics 04 INC-13: 1,050 USD per ton above 16 SEER2 and 8.0 HSPF2, paid by cheque after installation"
+            }
+          ],
+          "net_upfront_usd": {
+            "low": 8004.0,
+            "expected": 13416.0,
+            "high": 17415.0,
+            "unit": "USD"
+          },
+          "annual_savings_usd": {
+            "low": 93.7,
+            "expected": 133.85,
+            "high": 167.31,
+            "unit": "USD"
+          },
+          "annual_om_change_usd": 0.0,
+          "useful_life_years": 15,
+          "simple_payback_years": {
+            "low": 55.1,
+            "expected": 100.23,
+            "high": 152.55,
+            "unit": "years"
+          },
+          "discounted_payback_years": null,
+          "npv_usd": {
+            "low": -12961.46,
+            "expected": -8938.66,
+            "high": -3513.97,
+            "unit": "USD"
+          },
+          "npv_sensitivity_usd": -9377.16,
+          "sir": 0.137,
+          "irr": null,
+          "airr": -0.0978,
+          "discount_rate": 0.03,
+          "electricity_escalation": -0.0062,
+          "gas_escalation": -0.0108,
+          "analysis_period_years": 15,
+          "financing": [
+            {
+              "kind": "cash",
+              "eligible": true,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": 93.7,
+                "expected": 133.85,
+                "high": 167.31,
+                "unit": "USD"
+              },
+              "program_sir": null,
+              "notes": [
+                "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
               ]
             }
           ]
@@ -2344,79 +3375,95 @@
           }
         ],
         "formula_ids": [
-          "HVAC",
-          "ZON"
+          "HVAC-01",
+          "HVAC-05",
+          "ZON-04",
+          "ECO-07",
+          "ECO-13",
+          "EMI-03"
         ],
         "solar": null,
         "layout": null,
+        "value_uplift": null,
         "warnings": []
       }
     ],
     "skipped": [
       {
+        "measure_id": "ENV_ATTIC",
+        "reason": "over_budget",
+        "detail": "Net upfront cost is above the budget left after rooftop solar; listed as financeable."
+      },
+      {
         "measure_id": "HVAC_HP",
         "reason": "over_budget",
-        "detail": "Net upfront cost is above the budget left after the selected measures; listed as financeable."
+        "detail": "Net upfront cost is above the whole budget; listed as financeable."
       },
       {
         "measure_id": "DHW_HPWH",
         "reason": "feasibility",
-        "detail": "Flag dhw.space is blocked: the water heater closet is too small."
+        "detail": "Flag dhw.space is blocked: the water heater is in a small closet inside the conditioned space."
       },
       {
         "measure_id": "ROOF_COOL",
         "reason": "no_savings",
-        "detail": "Positive against the baseline, but after ENV_ATTIC the heating penalty outweighs the cooling saving."
+        "detail": "The heating penalty outweighs the cooling saving, even as an upper bound."
       },
       {
         "measure_id": "CTRL_TSTAT",
         "reason": "already_done",
         "detail": "A smart thermostat is already installed (pano_01)."
+      },
+      {
+        "measure_id": "WIN_SHADE",
+        "reason": "no_cost_data",
+        "detail": "no verified cost; needs a quote"
       }
     ],
     "total_upfront_usd": {
-      "low": 10200.0,
-      "expected": 13020.0,
-      "high": 17044.0,
+      "low": 5906.0,
+      "expected": 9302.4,
+      "high": 11588.6,
       "unit": "USD"
     },
     "total_annual_savings_usd": {
-      "low": 799.65,
-      "expected": 934.57,
-      "high": 1056.05,
+      "low": 993.02,
+      "expected": 1052.48,
+      "high": 1095.98,
       "unit": "USD"
     },
     "total_co2_kg": {
-      "low": 1482.95,
-      "expected": 1732.07,
-      "high": 1955.43,
+      "low": 769.87,
+      "expected": 815.88,
+      "high": 849.3,
       "unit": "kg"
     },
     "baseline_after": {
       "electricity_kwh": {
-        "low": -2135.25,
-        "expected": -1019.4,
-        "high": 382.34,
+        "low": 180.3,
+        "expected": 979.7,
+        "high": 2046.73,
         "unit": "kWh"
       },
       "gas_kwh": {
-        "low": 4115.0,
-        "expected": 5950.0,
-        "high": 8145.0,
+        "low": 5799.98,
+        "expected": 7240.0,
+        "high": 9040.02,
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 312.35,
-        "expected": 677.43,
-        "high": 1129.35,
+        "low": 638.89,
+        "expected": 859.52,
+        "high": 1150.77,
         "unit": "USD"
       },
       "co2_kg": {
-        "low": 107.13,
-        "expected": 771.13,
-        "high": 1586.05,
+        "low": 1199.27,
+        "expected": 1503.18,
+        "high": 1890.07,
         "unit": "kg"
-      }
+      },
+      "co2_nonbaseload_kg": null
     },
     "value_uplift": null
   },
@@ -2446,9 +3493,10 @@
       "impact_note": "A service upgrade could add up to $4,500 to rooftop solar. At the high end, solar no longer fits the budget and the selected measures change."
     }
   ],
-  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline: 4,000 kWh of electricity and 7,200 kWh of gas a year, about $1,612 (range $1,368 to $1,929).\n\nWithin the $14,000 budget the plan selects 3 measures for $13,020 upfront, saving about $935 a year (range $800 to $1,056).\n\nYou answered \"I don't know\" to the electrical panel question, so the solar cost keeps its full range and carries the warning \"may exceed budget\".\n",
+  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline: 5,200 kWh of electricity and 7,200 kWh of gas a year, about $1,912 (range $1,696 to $2,197).\n\nWithin the $10,000 budget the plan selects 2 measures for $9,302 upfront, saving about $1,052 a year (range $993 to $1,096). Attic insulation and a heat pump save energy too but do not fit the budget.\n\nNo federal tax credit applies to a home: the residential credits ended in 2025. LADWP rebates are paid after installation, so they do not lower the upfront cost.\n\nYou answered \"I don't know\" to the electrical panel question, so a possible service upgrade stays outside the solar cost and is flagged.\n\nOwned rooftop solar may add up to $8,600 to the home's value (expected $8,600, possibly nothing). This is not counted as a saving.\n",
   "warnings": [
-    "PV_ROOF may exceed budget: the electrical service size is unknown.",
+    "PV_ROOF may exceed budget at the high end of its cost range.",
+    "The electrical service size is unknown (flag electrical.service).",
     "Example subset: 4 of 19 rooms are modelled."
   ]
 }

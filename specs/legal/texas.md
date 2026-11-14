@@ -1,6 +1,6 @@
 # Texas legal requirements for retrofit documents
 
-Status: complete draft, 2026-11-14. Every row marked V2 was confirmed twice against the official text (method in section 0 and section 8). Items that could not be confirmed are in section 7 and are not stated as law anywhere else. Draft for attorney review, not legal advice.
+Status: complete draft, 2026-11-14. Every row marked V2 was confirmed twice against the official text (method in section 0 and section 8). The exact statutory notice texts, with one stable anchor per template placeholder (including the full Property Code §53.255(b) disclosure statement), are in section 9; they were cut from the saved official text by script and compared back by a second script (section 8.1). Items that could not be confirmed are in section 7 and are not stated as law anywhere else. Draft for attorney review, not legal advice.
 
 Scope: what Texas law requires in the five document types in `specs/SPEC.md` section 9 (`DocType`), for a home or office in Houston (Harris County). Source for every statute: the Texas Legislative Council's official site `statutes.capitol.texas.gov`. That site is a JavaScript app; it loads each chapter's text from its file server `https://tcss.legis.texas.gov/resources/<CODE>/htm/<CODE>.<CH>.htm`, which is the URL cited below. Draft for attorney review, not legal advice.
 
@@ -13,6 +13,7 @@ Scope: what Texas law requires in the five document types in `specs/SPEC.md` sec
 - Statutory text quoted here is public law (not copyrighted). Quotes were copied from the official text listed in the verification log, with only whitespace normalised.
 - Status keys: **V2** = written from the official text, then confirmed in a second, separate pass on 2026-11-14 in which each cited section was re-opened and every number, deadline, type size and quoted notice was compared with it (sections 1 and 2: full re-read by a second session; sections 3 to 6: 316 targeted text assertions against the downloaded sources; every quotation: exact string match after whitespace normalisation). **V1** = read once only. Anything not confirmed from an official source is in section 7, not in the tables.
 - Sources used beyond the statutes site: the Texas Administrative Code as published by the Secretary of State (the publisher TDLR links to for its own rules), `tdlr.texas.gov`, and `texaspaceauthority.org`. No secondary source (law firm articles, trade summaries) was used.
+- Verbatim texts: section 9 holds every statutory notice in a fenced block under an anchor named after its placeholder in `specs/legal.md` (for example `stat_tx_rcla_notice`). Where a row below quotes a notice and section 9 has it too, section 9 controls.
 - Every draft carries "Draft for attorney review, not legal advice."
 
 Defined terms used in the "Applies when" column:
@@ -81,7 +82,7 @@ Applies to a "residential construction contract": a contract to construct or rep
 
 | ID | Requirement | Citation | Verbatim? | Applies when | Status |
 |---|---|---|---|---|---|
-| TX-RC-20 | **Before the owner signs**, the original contractor must deliver a disclosure statement that reads substantially similar to the statutory text. The full mandated text is in §53.255(b) and begins "KNOW YOUR RIGHTS AND RESPONSIBILITIES UNDER THE LAW. You are about to enter into a transaction to build a new home or remodel existing residential property." and ends "...from the date the original title policy is issued to the date of the endorsement." It has 12 headed paragraphs: KNOW YOUR RIGHTS AND RESPONSIBILITIES UNDER THE LAW; CONVEYANCE TO CONTRACTOR NOT REQUIRED; KNOW YOUR CONTRACTOR; GET IT IN WRITING; READ BEFORE YOU SIGN; GET A LIST OF SUBCONTRACTORS AND SUPPLIERS; MONITOR THE WORK; MONITOR PAYMENTS; CLAIMS BY SUBCONTRACTORS AND SUPPLIERS (with numbered items (1) and (2)); SOME CLAIMS MAY NOT BE VALID; OBTAIN A LIEN RELEASE AND A BILLS-PAID AFFIDAVIT; OBTAIN TITLE INSURANCE PROTECTION; plus one unheaded paragraph ("If a claim is not paid within a certain time period...") between the ninth and tenth. Template: separate pre-signing document, reproduced word for word from the official §53.255(b) text at the URL in the log (the template agent must copy it from that source; do not retype from memory). No type size is prescribed. Failure does not invalidate a lien. | Prop. Code §53.255(a)-(c) | **Yes** (substantially similar) | Residence | V2 |
+| TX-RC-20 | **Before the owner signs**, the original contractor must deliver a disclosure statement that reads substantially similar to the statutory text. The full mandated text is in §53.255(b) and begins "KNOW YOUR RIGHTS AND RESPONSIBILITIES UNDER THE LAW. You are about to enter into a transaction to build a new home or remodel existing residential property." and ends "...from the date the original title policy is issued to the date of the endorsement." It has 12 headed paragraphs: KNOW YOUR RIGHTS AND RESPONSIBILITIES UNDER THE LAW; CONVEYANCE TO CONTRACTOR NOT REQUIRED; KNOW YOUR CONTRACTOR; GET IT IN WRITING; READ BEFORE YOU SIGN; GET A LIST OF SUBCONTRACTORS AND SUPPLIERS; MONITOR THE WORK; MONITOR PAYMENTS; CLAIMS BY SUBCONTRACTORS AND SUPPLIERS (with numbered items (1) and (2)); SOME CLAIMS MAY NOT BE VALID; OBTAIN A LIEN RELEASE AND A BILLS-PAID AFFIDAVIT; OBTAIN TITLE INSURANCE PROTECTION; plus one unheaded paragraph ("If a claim is not paid within a certain time period...") between the ninth and tenth. Template: separate pre-signing document, reproduced word for word from the full text at anchor `stat_tx_53255_disclosure` in section 9 (all 15 paragraphs; do not retype from memory). No type size is prescribed. Failure does not invalidate a lien. | Prop. Code §53.255(a)-(c) | **Yes** (substantially similar) | Residence | V2 |
 | TX-RC-21 | "GET IT IN WRITING" items that the disclosure tells the owner to expect, so the contract must contain them: (1) description of the work; (2) required or estimated completion time; (3) cost or how it is determined; (4) procedure and method of payment, including statutory reservation of funds and conditions for final payment; and any promise, warranty or representation made about the work. | Prop. Code §53.255(b) ("GET IT IN WRITING") | No | Residence (best practice for all) | V2 |
 | TX-RC-22 | Before construction starts, the contractor must give the owner a written list of each subcontractor and supplier (name, address, telephone), and an updated list within **15 days** after one is added or deleted. The list must carry, in at least **10-point boldface**, conspicuous: "NOTICE: THIS LIST OF SUBCONTRACTORS AND SUPPLIERS MAY NOT BE A FINAL LISTING. UNLESS YOU SIGN A WAIVER OF YOUR RIGHT TO RECEIVE UPDATED INFORMATION, THE CONTRACTOR IS REQUIRED BY LAW TO SUPPLY UPDATED INFORMATION, AS THE INFORMATION BECOMES AVAILABLE, FOR EACH SUBCONTRACTOR OR SUPPLIER USED IN THE WORK PERFORMED ON YOUR RESIDENCE." | Prop. Code §53.256(a), (b) | **Yes** | Residence | V2 |
 | TX-RC-23 | Optional owner waiver of the list: in writing, may be in the contract (otherwise a separate statement signed by the owner), conspicuous, at least **10-point bold**, substantially: "WAIVER OF THE LIST OF SUBCONTRACTORS AND SUPPLIERS. AN OWNER IS NOT REQUIRED TO WAIVE THE RIGHT GRANTED BY SECTION 53.256, PROPERTY CODE, TO RECEIVE FROM THE CONTRACTOR AN ORIGINAL OR UPDATED LIST OF SUBCONTRACTORS AND SUPPLIERS. / BY SIGNING THIS DOCUMENT, I AGREE TO WAIVE MY RIGHT TO RECEIVE FROM THE CONTRACTOR AN ORIGINAL OR UPDATED LIST OF SUBCONTRACTORS AND SUPPLIERS. / I UNDERSTAND AND ACKNOWLEDGE THAT, AFTER SIGNING THIS DOCUMENT, THIS WAIVER MAY NOT BE CANCELED AT A LATER DATE. / I HAVE VOLUNTARILY CONSENTED TO THIS WAIVER." (slashes mark paragraph breaks). Default: omit. | Prop. Code §53.256(d) | **Yes** (substantially) | Residence, only if owner elects | V2 |
@@ -383,6 +384,8 @@ Nothing in this list may be presented to a user as a legal requirement or as a l
 | U-21 | The session-law transition sections of S.B. 1036 (Acts 2025, ch. 1062, sections after Sec. 1). | Not opened. The 2026-09-01 dates in 3.1 come from 16 TAC §71.2(a) and TDLR's "What's in Effect When" page, which agree. | None needed. |
 | U-22 | TDLR's published penalty matrix for solar retailers cites rule numbers that differ from the adopted rule text (for example it cites §71.22 for insurance and §71.26 for change notices; the adopted text has insurance at §71.21 and has no §71.26). | The Secretary of State text is the adopted rule and is what this file cites; the matrix appears not to have been renumbered. | Cite the adopted rule numbers. |
 | U-23 | TDLR's web summary says multifamily buildings with "four or more" units are exempt from the solar law. | The statute and rule say a dwelling that "exceeds four dwelling units or stories" (§1806.005(a)(2)(C)(ii); 16 TAC §71.30(b)(2)). The statute controls: a fourplex is covered. | Treat one to four units as covered. |
+| U-24 | What "business day" means in Bus. & Com. Code ch. 601: whether Saturday counts, and which holidays are excluded. | Chapter 601 does not define the term; neither does Bus. & Com. Code §1.201 or the Code Construction Act (Gov't Code §311.005). The federal cooling-off rule that §601.054 accepts has its own definition, not opened. Section 9.4 sets out what the text does settle. | Print on the cancellation form the latest date any reading gives (skip Saturdays, Sundays, Gov't Code §662.021 legal holidays and federal public holidays); §601.053(b)(4) permits a date later than the third business day, never an earlier one. Keep the "check before signing" mark. |
+| U-25 | Homestead rescission (Const. art. XVI §50(a)(5)(C)): whether the three days are extended when the third day is a Saturday, Sunday or legal holiday; whether the day of execution counts; and whether a contract that states a longer period still "expressly provides" what the Constitution requires. | The text says "three days" with no qualifier, read in section 9.4 as calendar days because the same section says "business day" elsewhere. It has no weekend or holiday rule, and the Code Construction Act's rule (Gov't Code §311.014(b)) applies to codes, not the Constitution. No court or agency interpretation was consulted. | Keep the constitutional words in the clause; print a last day not earlier than the third calendar day after the last signature, moved to the next day that is not a Saturday, Sunday or legal holiday. |
 
 ## 8. Verification log
 
@@ -455,4 +458,401 @@ Corrections made during pass 2 (2026-11-14):
 7. Section 2 lacked last-amendment dates; added as 2.9. Notable: ch. 53 was rewritten by H.B. 2237 effective 2022-01-01 (retainage remains 10 percent for 30 days after completion); ch. 162 was amended by S.B. 841 effective 2025-09-01; ch. 27 was amended twice in 2023.
 8. No number, deadline, type size or quoted notice written in pass 1 for sections 1 and 2 was found to be wrong.
 
-Count of rows confirmed in both passes (status V2), by document type: common rules 12; retrofit construction contract 52 (TX-RC, excluding the unverified TX-RC-07); solar installation agreement 30 (plus 5 applicability facts in 3.1); bid package 17; energy savings guarantee 14; C-PACE 34 (17 statutory, 17 program rules). Unverified items: 23 (section 7).
+Count of rows confirmed in both passes (status V2), by document type: common rules 12; retrofit construction contract 52 (TX-RC, excluding the unverified TX-RC-07); solar installation agreement 30 (plus 5 applicability facts in 3.1); bid package 17; energy savings guarantee 14; C-PACE 34 (17 statutory, 17 program rules). Unverified items: 25 (section 7).
+
+### 8.1 Verbatim anchors (section 9) and the two counting questions, 2026-11-14
+
+**Anchors.** Every fenced block in section 9 was generated by one script from the saved official text (statute and Constitution pages saved 2026-11-13 from `tcss.legis.texas.gov`; Texas Administrative Code records 173187, 190589 and 228783 saved 2026-11-14 from the Secretary of State portal) and then compared with that saved text by a second script written separately (it extracts the text with an HTML parser instead of the first script's pattern matching, and reads the blocks back out of this file as saved). Comparison removes white space and maps typographic quotation marks to straight ones; nothing else.
+
+| Check | Result |
+|---|---|
+| Anchors in section 9 | 18 (13 notices, 5 reference provisions) |
+| Fenced blocks compared | 19 |
+| Units compared (one unit = one paragraph or form line of the law) | 68 |
+| Units not found character for character in the saved official text | **0** |
+| Blocks whose units are not contiguous and in order in the source | 0 |
+| Notices not running exactly from the law's opening quotation mark to its closing mark | 0 of 13 |
+| Whole-notice check (the block is everything between the provision's lead-in words and the next subsection or history note), run on the ten notices that stand as their own paragraphs | 10 of 10 pass, including `stat_tx_53255_disclosure` (15 paragraphs, 6,970 characters without spaces) and `stat_tx_notice_of_cancellation_form` (10 lines) |
+| `stat_tx_` anchors with other than exactly one fenced block | 0 |
+| `stat_tx_` names used in `specs/legal.md` (9) that have no anchor here | 0 |
+| Quotations of format rules and of the provisions relied on in 9.4, checked as exact strings | 36 checked, 0 failed |
+| Requirement row ids added, removed or renamed by this change | 0 |
+
+The first run of the second script reported two failures. Both were faults in the comparison script, not in the blocks: it located the form by the first occurrence of "NOTICE OF CANCELLATION" in the chapter, which is in §601.052, and one of its lead-in strings lacked the hyphen of "bold-faced". The script was corrected, no block was changed, and the rerun gave the table above.
+
+**Anchors with no verbatim text in the law.** None of the nine placeholders in legal.md lacks statutory words. Content without fixed words exists beside two of them (the contractor's name, address, phone and licence number that accompany each TDLR statement) and for two related clauses that legal.md already drafts itself (homestead rescission; residential solar cancellation). Those provisions are reproduced under `ref_tx_` anchors.
+
+**Counting questions (9.4).** Additional official text opened on 2026-11-14: Gov't Code ch. 311 (`tcss:GV.311`; §§311.002, 311.005, 311.014) and ch. 662 (`tcss:GV.662`; §§662.003, 662.021), and the other subsections of Const. art. XVI §50 that use "business day". Result: the text settles that the homestead period is counted in days without qualification (read as calendar days) from execution by all parties; it does not define "business day" for ch. 601. The open parts are U-24 and U-25.
+
+## 9. Verbatim statutory notices (anchors for the template agent)
+
+This section is the single source of the statutory words for Texas. The template agent copies from here and never paraphrases. Each anchor id equals the placeholder name used in `specs/legal.md` section 12.1. Requirement rows elsewhere in this file quote the same words; if a row and a block here ever differ, the block here controls.
+
+How the blocks were made and what was changed:
+
+- Every block was cut by script from the official text saved from the Texas Legislative Council file server (statutes and Constitution) or from the Secretary of State's Texas Administrative Code portal (the two TDLR rules), then compared again with that saved text by a second, separately written script (result in section 8.1). No block rests on a mirror or was typed by hand.
+- Three typographic changes only: (1) typographic quotation marks, where the source has any, become straight ASCII marks (the saved Texas text already uses straight marks, so this changed nothing); (2) the outer quotation marks with which the law encloses a quoted notice are removed, that is one opening mark at the start of each quoted paragraph and the closing mark at the end of the notice (inner marks, such as the single quotes around 'completion of improvements', are kept); (3) runs of spaces are single spaces (the official text puts two spaces after a full stop). Paragraph breaks are the official text's paragraphs. Capital letters are as enacted.
+- In a fenced block, each paragraph of the law is one line, with an empty line between paragraphs. The Notice of Cancellation form is the exception: it is a form, shown line by line with no empty lines.
+- Parenthesised items in lower case inside the capitalised cancellation form, such as `(name of merchant)`, are the statute's own blanks. The line under the anchor says what the drafter substitutes.
+- "Substantially" wording: several provisions say the notice must be "in substantially the following form" or "read substantially similar to" the text. The template still prints the enacted words exactly; the latitude is noted so a reviewer knows a harmless deviation is not automatically a violation.
+- Under every `stat_tx_` anchor there is exactly one fenced block, and that block is the notice. Sections 9.1 and 9.2 contain no other fenced blocks.
+- Anchors that begin `ref_tx_` are **not notices**. They reproduce a provision for reference where the law prescribes content but no words. Text under a `ref_tx_` anchor must never be printed in a contract as if it were a statutory notice.
+
+Index:
+
+| Anchor (= placeholder) | Citation | Requirement ID | Verbatim text in the law? |
+|---|---|---|---|
+| `stat_tx_homestead_warning` | Prop. Code §41.007(a)(3) | TX-RC-17 | yes |
+| `stat_tx_tdlr_electrical_statement` | 16 TAC §73.51(f) | TX-RC-08 | yes for the statement; the name, address, phone and licence number that must accompany it have no fixed words |
+| `stat_tx_tdlr_acr_statement` | 16 TAC §75.71(i) | TX-RC-09 | yes for the statement; the company details and licence number have no fixed words |
+| `stat_tx_rcla_notice` | Prop. Code §27.007(a) | TX-RC-60 | yes ("substantially similar") |
+| `stat_tx_cancel_statement` | Bus. & Com. Code §601.052(b)(4) | TX-RC-31 | yes, one text (three business days). No other period exists in ch. 601 |
+| `stat_tx_notice_of_cancellation_form` | Bus. & Com. Code §601.053(a)(3) | TX-RC-32 | yes, one text, with the statute's blanks |
+| `stat_tx_sub_list_notice` | Prop. Code §53.256(b) | TX-RC-22 | yes |
+| `stat_tx_sub_list_waiver` | Prop. Code §53.256(d) | TX-RC-23 | yes ("substantially similar") |
+| `stat_tx_53255_disclosure` | Prop. Code §53.255(b) | TX-RC-20, -21 | yes, full text, 15 paragraphs ("substantially similar") |
+| extra: `stat_tx_lien_affidavit_notice` | Prop. Code §53.254(f) | TX-RC-28 | yes (lien affidavit, not a contract term) |
+| extra: `stat_tx_homestead_owner_notice_statement` | Prop. Code §53.254(g) | TX-RC-28 | yes (claimant's notice to owner, not a contract term) |
+| extra: `stat_tx_disaster_statement` | Bus. & Com. Code §58.003(b)(3) | TX-RC-70 | yes |
+| extra: `stat_tx_dtpa_waiver` | Bus. & Com. Code §17.42(c) | TX-ALL-10 | yes ("substantially"); default is not to use it |
+| reference: `ref_tx_homestead_rescission` | Tex. Const. art. XVI §50(a)(5) | TX-RC-10 to -14 | **no: content prescribed, wording free** |
+| reference: `ref_tx_solar_cancel_statement` | Occ. Code §1806.156; 16 TAC §71.42 | TX-SOL-06 to -08 | **no: content and format prescribed, wording free** |
+| reference: `ref_tx_cancel_form_required_items` | Bus. & Com. Code §601.053(b) | TX-RC-32 | not a notice: the four items that must be filled in on the form |
+| reference: `ref_tx_tdlr_electrical_rule`, `ref_tx_tdlr_acr_rule` | 16 TAC §73.51(f); §75.71(i) | TX-RC-08, -09 | not notices: the whole subsections, for the fields that have no fixed words |
+
+All nine `stat_tx_` names in `specs/legal.md` section 12.1 (read 2026-11-14) are covered. The four marked "extra" are verbatim texts quoted in rows of this file that have no placeholder in legal.md yet.
+
+### 9.1 Notices with verbatim text
+
+<a id="stat_tx_homestead_warning"></a>
+#### `stat_tx_homestead_warning`
+
+- Citation: Prop. Code §41.007(a)(3); requirement row TX-RC-17
+- Format the law imposes: "conspicuously printed, stamped, or typed in a size equal to at least 10-point bold type or computer equivalent". No placement rule. The section has no "substantially" allowance: print the words exactly.
+- Source matched: official text on the Texas Legislative Council file server (`tcss:PR.41`, §41.007 last amended by H.B. 1038, effective 2007-09-01), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- Applies to "a contract for improvements to an existing residence described by Section 41.001(b)(3)", that is a homestead. A violation is a deceptive act under the DTPA (§41.007(b)).
+- Capitals as enacted: only the first two words and the last sentence are in capitals.
+
+```text
+IMPORTANT NOTICE: You and your contractor are responsible for meeting the terms and conditions of this contract. If you sign this contract and you fail to meet the terms and conditions of this contract, you may lose your legal ownership rights in your home. KNOW YOUR RIGHTS AND DUTIES UNDER THE LAW.
+```
+
+<a id="stat_tx_tdlr_electrical_statement"></a>
+#### `stat_tx_tdlr_electrical_statement`
+
+- Citation: 16 TAC §73.51(f); requirement row TX-RC-08
+- Format the law imposes: no type size or placement rule. It "shall be listed on all proposals, invoices, and written contracts".
+- Source matched: Texas Administrative Code as published by the Secretary of State (record 173187, §73.51 last amended 40 TexReg 5147, effective 2015-09-01), saved 2026-11-14; block cut by script and compared with the saved text by a second script the same day (section 8.1).
+- The same subsection also requires the electrical contractor's name, address, phone number and licence number on the same documents. The rule gives no words for those; the template prints them as fields (`electrical_contractor_license_no`; the rule text is at `ref_tx_tdlr_electrical_rule` in 9.3).
+- This statement and the air conditioning statement differ near the end ("512-463-6599; website: www.tdlr.texas.gov" here, "512-463-6599, www.tdlr.texas.gov" there). Each is as adopted; do not harmonise them.
+
+```text
+Regulated by The Texas Department of Licensing and Regulation, P.O. Box 12157, Austin, Texas 78711, 1-800-803-9202, 512-463-6599; website: www.tdlr.texas.gov
+```
+
+<a id="stat_tx_tdlr_acr_statement"></a>
+#### `stat_tx_tdlr_acr_statement`
+
+- Citation: 16 TAC §75.71(i); requirement row TX-RC-09
+- Format the law imposes: no type size or placement rule. It "must be listed on" proposals and invoices, written contracts, and a sign at the place of business if customers may visit it.
+- Source matched: Texas Administrative Code as published by the Secretary of State (record 190589, §75.71 last amended 43 TexReg 2401, effective 2018-05-01), saved 2026-11-14; block cut by script and compared with the saved text by a second script the same day (section 8.1).
+- The same subsection requires the company name, address and phone number, and the affiliated licensee's licence number, on all proposals and invoices. No words are given for those; the template prints them as fields (`hvac_contractor_license_no`; the rule text is at `ref_tx_tdlr_acr_rule` in 9.3).
+
+```text
+Regulated by The Texas Department of Licensing and Regulation, P.O. Box 12157, Austin, Texas 78711, 1-800-803-9202, 512-463-6599, www.tdlr.texas.gov
+```
+
+<a id="stat_tx_rcla_notice"></a>
+#### `stat_tx_rcla_notice`
+
+- Citation: Prop. Code §27.007(a); requirement row TX-RC-60
+- Format the law imposes: "must contain in the contract a notice printed or typed in 10-point boldface type or the computer equivalent that reads substantially similar to the following". No placement rule.
+- Source matched: official text on the Texas Legislative Council file server (`tcss:PR.27`, §27.007 last amended in 2023 (S.B. 1768 and H.B. 2022, which repealed subsection (c))), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- Omission: civil penalty of $500 recoverable by the claimant (§27.007(b)).
+
+```text
+This contract is subject to Chapter 27 of the Texas Property Code. The provisions of that chapter may affect your right to recover damages arising from a construction defect. If you have a complaint concerning a construction defect and that defect has not been corrected as may be required by law or by contract, you must provide the notice required by Chapter 27 of the Texas Property Code to the contractor by certified mail, return receipt requested, not later than the 60th day before the date you file suit to recover damages in a court of law or initiate arbitration. The notice must refer to Chapter 27 of the Texas Property Code and must describe the construction defect. If requested by the contractor, you must provide the contractor an opportunity to inspect and cure the defect as provided by Section 27.004 of the Texas Property Code.
+```
+
+<a id="stat_tx_cancel_statement"></a>
+#### `stat_tx_cancel_statement`
+
+- Citation: Bus. & Com. Code §601.052(b)(4); requirement row TX-RC-31
+- Format the law imposes: "in immediate proximity to the space reserved in the contract for the signature of the consumer or on the front page of the receipt if a contract is not used"; "in boldfaced type of a minimum size of 10 points"; "in substantially the following form". Capitals as enacted. The document that carries it must be in the same language as that principally used in the oral sales presentation and must show the date of the transaction and the name and address of the merchant (§601.052(b)(1)-(3)).
+- Source matched: official text on the Texas Legislative Council file server (`tcss:BC.601`, unamended since H.B. 2278, effective 2009-04-01), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- **Variants.** Chapter 601 has one period, three business days, and prints one text. There is no senior, disaster or other period in ch. 601 and no substitution rule. Do not derive a text with a different number from this one.
+- The statement says "THIRD BUSINESS DAY AFTER THE DATE OF THIS TRANSACTION" and carries no date. The actual last day is written only on the attached form (`stat_tx_notice_of_cancellation_form`, the `(date)` after "MIDNIGHT OF"). How to count it: section 9.3.
+- Alternative allowed by §601.054: the forms and notices of the Federal Trade Commission cooling-off rule "constitutes compliance with Sections 601.052 and 601.053". Those federal texts were not opened and are not reproduced (U-19).
+- Residential solar is different: its five-business-day right has no statutory words (see `ref_tx_solar_cancel_statement`), and whether this ch. 601 statement must also appear in a solar agreement is U-06.
+
+```text
+YOU, THE BUYER, MAY CANCEL THIS TRANSACTION AT ANY TIME PRIOR TO MIDNIGHT OF THE THIRD BUSINESS DAY AFTER THE DATE OF THIS TRANSACTION. SEE THE ATTACHED NOTICE OF CANCELLATION FORM FOR AN EXPLANATION OF THIS RIGHT.
+```
+
+<a id="stat_tx_notice_of_cancellation_form"></a>
+#### `stat_tx_notice_of_cancellation_form`
+
+- Citation: Bus. & Com. Code §601.053(a)(3); requirement row TX-RC-32
+- Format the law imposes: a **completed** notice of cancellation form, **in duplicate**, attached to the contract or receipt; "easily detachable"; "in the same language as the document provided under Section 601.052"; "contain the following information and statements in 10-point boldfaced type". Capitals as enacted. The section has no "substantially" allowance.
+- Source matched: official text on the Texas Legislative Council file server (`tcss:BC.601`, unamended since 2009-04-01), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- The statute's blanks, and what the drafter does with each: `(enter date of transaction)` becomes the transaction date; `(name of merchant)` the contractor's name; `(address of merchant's place of business)` the contractor's business address; the `(date)` after "NOT LATER THAN MIDNIGHT OF" the last day to cancel; the final `(date)` and `(buyer's signature)` stay blank for the buyer.
+- Both copies must show the four items in §601.053(b) (text at `ref_tx_cancel_form_required_items` in 9.3). A contract that omits any of them is **void** (§601.201).
+- As enacted, each paragraph of the form opens with a quotation mark except the line "I HEREBY CANCEL THIS TRANSACTION.", and the closing mark follows "(buyer's signature)". Those marks are the statute's enclosing marks and are removed here. In the official text "NOTICE OF CANCELLATION" and "(buyer's signature)" are centred; that layout is not stated as a requirement.
+- **Variants.** One text only. The words "WITHIN THREE BUSINESS DAYS" and "WITHIN 10 BUSINESS DAYS" and "WITHIN 20 DAYS" are fixed. The only variable period is the filled `(date)`, which §601.053(b)(4) allows to be later than the third business day but not earlier.
+
+```text
+NOTICE OF CANCELLATION
+(enter date of transaction)
+YOU MAY CANCEL THIS TRANSACTION, WITHOUT ANY PENALTY OR OBLIGATION, WITHIN THREE BUSINESS DAYS FROM THE ABOVE DATE.
+IF YOU CANCEL, ANY PROPERTY TRADED IN, ANY PAYMENTS MADE BY YOU UNDER THE CONTRACT OR SALE, AND ANY NEGOTIABLE INSTRUMENT EXECUTED BY YOU WILL BE RETURNED WITHIN 10 BUSINESS DAYS FOLLOWING RECEIPT BY THE MERCHANT OF YOUR CANCELLATION NOTICE, AND ANY SECURITY INTEREST ARISING OUT OF THE TRANSACTION WILL BE CANCELLED.
+IF YOU CANCEL, YOU MUST MAKE AVAILABLE TO THE MERCHANT AT YOUR RESIDENCE, IN SUBSTANTIALLY AS GOOD CONDITION AS WHEN RECEIVED, ANY GOODS DELIVERED TO YOU UNDER THIS CONTRACT OR SALE; OR YOU MAY IF YOU WISH, COMPLY WITH THE INSTRUCTIONS OF THE MERCHANT REGARDING THE RETURN SHIPMENT OF THE GOODS AT THE MERCHANT'S EXPENSE AND RISK.
+IF YOU DO NOT AGREE TO RETURN THE GOODS TO THE MERCHANT OR IF THE MERCHANT DOES NOT PICK THEM UP WITHIN 20 DAYS OF THE DATE OF YOUR NOTICE OF CANCELLATION, YOU MAY RETAIN OR DISPOSE OF THE GOODS WITHOUT ANY FURTHER OBLIGATION.
+TO CANCEL THIS TRANSACTION, MAIL OR DELIVER A SIGNED AND DATED COPY OF THIS CANCELLATION NOTICE OR ANY OTHER WRITTEN NOTICE, OR SEND A TELEGRAM, TO (name of merchant), AT (address of merchant's place of business) NOT LATER THAN MIDNIGHT OF (date).
+I HEREBY CANCEL THIS TRANSACTION.
+(date)
+(buyer's signature)
+```
+
+<a id="stat_tx_sub_list_notice"></a>
+#### `stat_tx_sub_list_notice`
+
+- Citation: Prop. Code §53.256(b); requirement row TX-RC-22
+- Format the law imposes: on the list of subcontractors and suppliers; "conspicuously printed, stamped, or typed in a size equal to at least 10-point boldface or the computer equivalent". Capitals as enacted. No "substantially" allowance.
+- Source matched: official text on the Texas Legislative Council file server (`tcss:PR.53`, §53.256 last amended 1999), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- The list itself (name, address and telephone number of each subcontractor and supplier, before construction starts, updated within 15 days) has no fixed words.
+
+```text
+NOTICE: THIS LIST OF SUBCONTRACTORS AND SUPPLIERS MAY NOT BE A FINAL LISTING. UNLESS YOU SIGN A WAIVER OF YOUR RIGHT TO RECEIVE UPDATED INFORMATION, THE CONTRACTOR IS REQUIRED BY LAW TO SUPPLY UPDATED INFORMATION, AS THE INFORMATION BECOMES AVAILABLE, FOR EACH SUBCONTRACTOR OR SUPPLIER USED IN THE WORK PERFORMED ON YOUR RESIDENCE.
+```
+
+<a id="stat_tx_sub_list_waiver"></a>
+#### `stat_tx_sub_list_waiver`
+
+- Citation: Prop. Code §53.256(d); requirement row TX-RC-23
+- Format the law imposes: "in writing"; may be a provision of the residential construction contract, otherwise "the separate waiver statement must be signed by the owner"; "conspicuously printed in at least 10-point bold-faced type and read substantially similar to the following". Capitals as enacted; four paragraphs.
+- Source matched: official text on the Texas Legislative Council file server (`tcss:PR.53`, §53.256 last amended 1999), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- Optional. Print only if the owner elects to waive the list.
+
+```text
+WAIVER OF THE LIST OF SUBCONTRACTORS AND SUPPLIERS. AN OWNER IS NOT REQUIRED TO WAIVE THE RIGHT GRANTED BY SECTION 53.256, PROPERTY CODE, TO RECEIVE FROM THE CONTRACTOR AN ORIGINAL OR UPDATED LIST OF SUBCONTRACTORS AND SUPPLIERS.
+
+BY SIGNING THIS DOCUMENT, I AGREE TO WAIVE MY RIGHT TO RECEIVE FROM THE CONTRACTOR AN ORIGINAL OR UPDATED LIST OF SUBCONTRACTORS AND SUPPLIERS.
+
+I UNDERSTAND AND ACKNOWLEDGE THAT, AFTER SIGNING THIS DOCUMENT, THIS WAIVER MAY NOT BE CANCELED AT A LATER DATE.
+
+I HAVE VOLUNTARILY CONSENTED TO THIS WAIVER.
+```
+
+<a id="stat_tx_53255_disclosure"></a>
+#### `stat_tx_53255_disclosure`
+
+- Citation: Prop. Code §53.255(a), (b); requirement rows TX-RC-20, TX-RC-21
+- Format the law imposes: no type size, bolding or placement is prescribed. It is a statement the original contractor "shall deliver to the owner" **before** the residential construction contract is executed by the owner, and it "must read substantially similar to the following". Headings in capitals as enacted.
+- Source matched: official text on the Texas Legislative Council file server (`tcss:PR.53`, §53.255 last amended by H.B. 2237, effective 2022-01-01), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- Full text: 15 paragraphs. Twelve open with a heading in capitals; two are the numbered items (1) and (2) under "CLAIMS BY SUBCONTRACTORS AND SUPPLIERS"; one, beginning "If a claim is not paid within a certain time period", has no heading and follows item (2).
+- Failure to deliver it does not invalidate a lien (§53.255(c)). A lender financing the work must also give the owner this statement before closing (§53.257(b)).
+- Nothing in it is a blank to fill. It names no contractor and no amount.
+
+```text
+KNOW YOUR RIGHTS AND RESPONSIBILITIES UNDER THE LAW. You are about to enter into a transaction to build a new home or remodel existing residential property. Texas law requires your contractor to provide you with this brief overview of some of your rights, responsibilities, and risks in this transaction.
+
+CONVEYANCE TO CONTRACTOR NOT REQUIRED. Your contractor may not require you to convey your real property to your contractor as a condition to the agreement for the construction of improvements on your property.
+
+KNOW YOUR CONTRACTOR. Before you enter into your agreement for the construction of improvements to your real property, make sure that you have investigated your contractor. Obtain and verify references from other people who have used the contractor for the type and size of construction project on your property.
+
+GET IT IN WRITING. Make sure that you have a written agreement with your contractor that includes: (1) a description of the work the contractor is to perform; (2) the required or estimated time for completion of the work; (3) the cost of the work or how the cost will be determined; and (4) the procedure and method of payment, including provisions for statutory reservation of funds and conditions for final payment. If your contractor made a promise, warranty, or representation to you concerning the work the contractor is to perform, make sure that promise, warranty, or representation is specified in the written agreement. An oral promise that is not included in the written agreement may not be enforceable under Texas law.
+
+READ BEFORE YOU SIGN. Do not sign any document before you have read and understood it. NEVER SIGN A DOCUMENT THAT INCLUDES AN UNTRUE STATEMENT. Take your time in reviewing documents. If you borrow money from a lender to pay for the improvements, you are entitled to have the loan closing documents furnished to you for review at least one business day before the closing. Do not waive this requirement unless a bona fide emergency or another good cause exists, and make sure you understand the documents before you sign them. If you fail to comply with the terms of the documents, you could lose your property. You are entitled to have your own attorney review any documents. If you have any question about the meaning of a document, consult an attorney.
+
+GET A LIST OF SUBCONTRACTORS AND SUPPLIERS. Before construction commences, your contractor is required to provide you with a list of the subcontractors and suppliers the contractor intends to use on your project. Your contractor is required to supply updated information on any subcontractors and suppliers added after the list is provided. Your contractor is not required to supply this information if you sign a written waiver of your rights to receive this information.
+
+MONITOR THE WORK. Lenders and governmental authorities may inspect the work in progress from time to time for their own purposes. These inspections are not intended as quality control inspections. Quality control is a matter for you and your contractor. To ensure that your home is being constructed in accordance with your wishes and specifications, you should inspect the work yourself or have your own independent inspector review the work in progress.
+
+MONITOR PAYMENTS. If you use a lender, your lender is required to provide you with a periodic statement showing the money disbursed by the lender from the proceeds of your loan. Each time your contractor requests payment from you or your lender for work performed, your contractor is also required to furnish you with a disbursement statement that lists the name and address of each subcontractor or supplier that the contractor intends to pay from the requested funds. Review these statements and make sure that the money is being properly disbursed.
+
+CLAIMS BY SUBCONTRACTORS AND SUPPLIERS. Under Texas law, if a subcontractor or supplier who furnishes labor or materials for the construction of improvements on your property is not paid, you may become liable and your property may be subject to a lien for the unpaid amount, even if you have not contracted directly with the subcontractor or supplier. To avoid liability, you should take the following actions:
+
+(1) If you receive a written notice from a subcontractor or supplier, you should withhold payment from your contractor for the amount of the claim stated in the notice until the dispute between your contractor and the subcontractor or supplier is resolved. If your lender is disbursing money directly to your contractor, you should immediately provide a copy of the notice to your lender and instruct the lender to withhold payment in the amount of the claim stated in the notice. If you continue to pay the contractor after receiving the written notice without withholding the amount of the claim, you may be liable and your property may be subject to a lien for the amount you failed to withhold.
+
+(2) During construction and for 30 days after final completion, termination, or abandonment of the contract by the contractor, you should reserve or cause your lender to reserve 10 percent of the amount of payments made for the work performed by your contractor. If you choose not to reserve the 10 percent for at least 30 days after final completion, termination, or abandonment of the contract by the contractor and if a valid claim is timely made by a claimant and your contractor fails to pay the claim, you may be personally liable and your property may be subject to a lien up to the amount that you failed to reserve.
+
+If a claim is not paid within a certain time period, the claimant is required to file a mechanic's lien affidavit in the real property records in the county where the property is located. A mechanic's lien affidavit is not a lien on your property, but the filing of the affidavit could result in a court imposing a lien on your property if the claimant is successful in litigation to enforce the lien claim.
+
+SOME CLAIMS MAY NOT BE VALID. When you receive a written notice of a claim or when a mechanic's lien affidavit is filed on your property, you should know your legal rights and responsibilities regarding the claim. Not all claims are valid. A notice of a claim by a subcontractor or supplier is required to be sent, and the mechanic's lien affidavit is required to be filed, within strict time periods. The notice and the affidavit must contain certain information. All claimants may not fully comply with the legal requirements to collect on a claim. If you have paid the contractor in full before receiving a notice of a claim and have withheld the 10 percent of the contract price or value of work, you may not be liable for that claim. Accordingly, you should consult your attorney when you receive a written notice of a claim to determine the true extent of your liability or potential liability for that claim.
+
+OBTAIN A LIEN RELEASE AND A BILLS-PAID AFFIDAVIT. When you receive a notice of claim, do not release withheld funds without obtaining a signed and notarized release of lien and claim from the claimant. You can also reduce the risk of having a claim filed by a subcontractor or supplier by requiring as a condition of each payment made by you or your lender that your contractor furnish you with an affidavit stating that all bills have been paid. Under Texas law, on final completion of the work and before final payment, the contractor is required to furnish you with an affidavit stating that all bills have been paid. If the contractor discloses any unpaid bill in the affidavit, you should withhold payment in the amount of the unpaid bill until you receive a waiver of lien or release from that subcontractor or supplier.
+
+OBTAIN TITLE INSURANCE PROTECTION. You may be able to obtain a title insurance policy to insure that the title to your property and the existing improvements on your property are free from liens claimed by subcontractors and suppliers. If your policy is issued before the improvements are completed and covers the value of the improvements to be completed, you should obtain, on the completion of the improvements and as a condition of your final payment, a 'completion of improvements' policy endorsement. This endorsement will protect your property from liens claimed by subcontractors and suppliers that may arise from the date the original title policy is issued to the date of the endorsement.
+```
+
+### 9.2 Extra verbatim texts (no placeholder in legal.md yet)
+
+<a id="stat_tx_lien_affidavit_notice"></a>
+#### `stat_tx_lien_affidavit_notice` (extra)
+
+- Citation: Prop. Code §53.254(f); requirement row TX-RC-28
+- Format the law imposes: on an affidavit for lien that relates to a homestead; "conspicuously printed, stamped, or typed in a size equal to at least 10-point boldface or the computer equivalent, at the top of the page".
+- Source matched: official text on the Texas Legislative Council file server (`tcss:PR.53`, §53.254 last amended by H.B. 2237, effective 2022-01-01), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- A lien-filing document, not a contract term. Listed so no template contradicts it.
+
+```text
+NOTICE: THIS IS NOT A LIEN. THIS IS ONLY AN AFFIDAVIT CLAIMING A LIEN.
+```
+
+<a id="stat_tx_homestead_owner_notice_statement"></a>
+#### `stat_tx_homestead_owner_notice_statement` (extra)
+
+- Citation: Prop. Code §53.254(g); requirement row TX-RC-28
+- Format the law imposes: no type size. "For the lien on a homestead to be valid, the notice required to be given to the owner under Subchapter C must include or have attached the following statement".
+- Source matched: official text on the Texas Legislative Council file server (`tcss:PR.53`, §53.254 last amended by H.B. 2237, effective 2022-01-01), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- A claimant's notice, not a contract term. As enacted the first and fourth paragraphs open with a quotation mark and the closing mark follows the fourth; removed here.
+
+```text
+If a subcontractor or supplier who furnishes materials or performs labor for construction of improvements on your property is not paid, your property may be subject to a lien for the unpaid amount if:
+
+(1) after receiving notice of the unpaid claim from the claimant, you fail to withhold payment to your contractor that is sufficient to cover the unpaid claim until the dispute is resolved; or
+
+(2) during construction and for 30 days after completion of your contractor's work, you fail to reserve 10 percent of the contract price or 10 percent of the value of the work performed by your contractor.
+
+If you have complied with the law regarding the reservation of 10 percent of the contract price or value of work and you have withheld payment to the contractor sufficient to cover any written notice of claim and have paid that amount, if any, to the claimant, any lien claim filed on your property by a subcontractor or supplier, other than a person who contracted directly with you, will not be a valid lien on your property. In addition, except for the required 10 percent reservation, you are not liable to a subcontractor or supplier for any amount paid to your contractor before you received written notice of the claim.
+```
+
+<a id="stat_tx_disaster_statement"></a>
+#### `stat_tx_disaster_statement` (extra)
+
+- Citation: Bus. & Com. Code §58.003(b)(3); requirement row TX-RC-70
+- Format the law imposes: "in conspicuous, boldfaced type of at least 10 points in size", in "any contract for disaster remediation services".
+- Source matched: official text on the Texas Legislative Council file server (`tcss:BC.58`, §58.003 last amended 2013), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- Only for a disaster remediation contract within §58.002 (TX-RC-70).
+
+```text
+This contract is subject to Chapter 58, Business & Commerce Code. A contractor may not require a full or partial payment before the contractor begins work and may not require partial payments in an amount that exceeds an amount reasonably proportionate to the work performed, including any materials delivered.
+```
+
+<a id="stat_tx_dtpa_waiver"></a>
+#### `stat_tx_dtpa_waiver` (extra)
+
+- Citation: Bus. & Com. Code §17.42(c); requirement row TX-ALL-10
+- Format the law imposes: "conspicuous and in bold-face type of at least 10 points in size"; "identified by the heading "Waiver of Consumer Rights," or words of similar meaning"; "in substantially the following form".
+- Source matched: official text on the Texas Legislative Council file server (`tcss:BC.17`, §17.42 last amended 1995), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+- Default: do not use. A waiver is valid only if the consumer is represented by counsel not identified, suggested or selected by the other side and is not in a significantly disparate bargaining position (§17.42(a), (b)). The heading words are part of the requirement and are not in the block.
+
+```text
+I waive my rights under the Deceptive Trade Practices-Consumer Protection Act, Section 17.41 et seq., Business & Commerce Code, a law that gives consumers special rights and protections. After consultation with an attorney of my own selection, I voluntarily consent to this waiver.
+```
+
+### 9.3 Provisions with prescribed content but no prescribed words (reference only)
+
+<a id="ref_tx_homestead_rescission"></a>
+#### `ref_tx_homestead_rescission` (reference)
+
+- Citation: Tex. Const. art. XVI §50(a)(5)(A)-(D); requirement rows TX-RC-10 to -14. Used by the `homestead_rescission_block`, `execution_place_block` and `spouse_party_block` of `specs/legal.md`.
+- Format the law imposes: none. The Constitution requires that the contract "expressly provides that the owner may rescind the contract without penalty or charge within three days after the execution of the contract by all parties". It gives no notice text, no type size and no placement.
+- Source matched: official text on the Texas Legislative Council file server (`tcss:CN.16`, section 50 last amended by the amendment adopted 2017-11-07), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+
+**No verbatim notice exists.** The template must supply its own sentence and must not mark it as statutory text. Its content check is: the clause says the owner may rescind; without penalty or charge; within three days; after execution by all parties. Neither the Constitution nor Property Code chs. 41 and 53 contains a rescission notice (the word "rescind" does not occur in either chapter). For reference, the provision reads:
+
+```text
+(5) work and material used in constructing new improvements thereon, if contracted for in writing, or work and material used to repair or renovate existing improvements thereon if:
+(A) the work and material are contracted for in writing, with the consent of both spouses, in the case of a family homestead, given in the same manner as is required in making a sale and conveyance of the homestead;
+(B) the contract for the work and material is not executed by the owner or the owner's spouse before the fifth day after the owner makes written application for any extension of credit for the work and material, unless the work and material are necessary to complete immediate repairs to conditions on the homestead property that materially affect the health or safety of the owner or person residing in the homestead and the owner of the homestead acknowledges such in writing;
+(C) the contract for the work and material expressly provides that the owner may rescind the contract without penalty or charge within three days after the execution of the contract by all parties, unless the work and material are necessary to complete immediate repairs to conditions on the homestead property that materially affect the health or safety of the owner or person residing in the homestead and the owner of the homestead acknowledges such in writing; and
+(D) the contract for the work and material is executed by the owner and the owner's spouse only at the office of a third-party lender making an extension of credit for the work and material, an attorney at law, or a title company;
+```
+
+<a id="ref_tx_solar_cancel_statement"></a>
+#### `ref_tx_solar_cancel_statement` (reference)
+
+- Citation: Occ. Code §1806.156; 16 TAC §71.42; requirement rows TX-SOL-06 to -08.
+- Format the law imposes: the contract must contain "in bold, capitalized letters in 14-point font or larger, a plain statement of" the three items in §71.42(b), and must state the last calendar date of the cancellation period and the mailing or e-mail address for the notice (§1806.156(c)).
+- Source matched: official text on the Texas Legislative Council file server (`tcss:OC.1806`, added by S.B. 1036, effective 2025-09-01), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1). Rule: Texas Administrative Code as published by the Secretary of State (record 228783, adopted 51 TexReg 4167, effective 2026-07-01), saved 2026-11-14; block cut by script and compared with the saved text by a second script the same day (section 8.1).
+
+**No verbatim notice exists, and there is no substitution rule.** Texas did not enact a five-business-day version of the ch. 601 text. Do not make one by changing "THREE" to "FIVE" in `stat_tx_cancel_statement`: that would be a derived text presented as statutory. The solar template drafts its own statement and checks it for: the right to cancel; without penalty or further obligation; by written notice on or before the fifth business day after the buyer or lessee signs; the process; the address; the last calendar date; bold capitals of 14 points or more. For reference, the statute reads:
+
+```text
+Sec. 1806.156. RIGHT TO CANCEL AGREEMENT. (a) In this section, "business day" means a calendar day excluding Saturday, Sunday, or any legal holiday, as that term is defined by Section 662.021, Government Code.
+(b) Notwithstanding any other law, a solar retailer shall allow a buyer or lessee who enters into an agreement to purchase or lease a residential solar energy system to cancel the agreement without penalty or further obligation by providing written notice of the cancellation on or before the fifth business day after the date on which the agreement was executed by the buyer or lessee.
+(c) A solar retailer shall include in an agreement for the sale or lease of a residential solar energy system the last calendar date of the cancellation period prescribed by Subsection (b) and the mailing address or e-mail address for providing the notice of cancellation.
+(d) If the agreement does not contain the address for cancellation required by Subsection (c), the buyer or lessee may cancel the agreement during the period described by Subsection (b) by providing written notice of cancellation to the solar retailer by any reasonable method.
+```
+
+and the rule reads:
+
+```text
+(a) A consumer may cancel a solar contract, without penalty or further obligation, by providing written notice of cancellation to the solar retailer on or before the fifth business day after the date the consumer signs the contract.
+(b) A solar contract must contain, in bold, capitalized letters in 14-point font or larger, a plain statement of:
+(1) the consumer's right to cancel the contract;
+(2) the process for canceling the contract; and
+(3) the mailing address or e-mail address to which a notice of cancellation may be sent.
+(c) If a solar contract does not contain the address or e-mail address for cancellation required by subsection (b), a consumer may cancel the contract during the period described by subsection (b) by providing written notice of cancellation to the solar retailer by any reasonable method.
+(d) If a solar contract provides for cancellation only by mail, a mailed notice of cancellation is effective on the date the notice is placed in the mail. A cancellation notice is rebuttably presumed to have been mailed on the date noted on the form by the consumer.
+```
+
+<a id="ref_tx_cancel_form_required_items"></a>
+#### `ref_tx_cancel_form_required_items` (reference)
+
+- Citation: Bus. & Com. Code §601.053(b); requirement row TX-RC-32. Not part of the form: these are the four items the merchant must fill in on both copies. Omitting any makes the sale or contract void (§601.201).
+- Source matched: official text on the Texas Legislative Council file server (`tcss:BC.601`), saved 2026-11-13; block cut by script on 2026-11-14 and compared with the saved text by a second script the same day (section 8.1).
+
+```text
+(b) A merchant may not fail to include on both copies of the form described by Subsection (a):
+(1) the name of the merchant;
+(2) the address of the merchant's place of business;
+(3) the date of the transaction; and
+(4) a date not earlier than the third business day after the date of the transaction by which the consumer must give notice of cancellation.
+```
+
+<a id="ref_tx_tdlr_electrical_rule"></a>
+#### `ref_tx_tdlr_electrical_rule` (reference)
+
+- Citation: 16 TAC §73.51(f), whole subsection. The first sentence prescribes content (name, address, phone number, licence number) with no fixed words; the second contains the verbatim statement at `stat_tx_tdlr_electrical_statement`.
+- Source matched: Texas Administrative Code as published by the Secretary of State (record 173187), saved 2026-11-14; block cut by script and compared with the saved text by a second script the same day (section 8.1).
+
+```text
+(f) The electrical contractor's name, address, phone number, and license number shall appear on all proposals, invoices, and written contracts from the contractor. The following information: "Regulated by The Texas Department of Licensing and Regulation, P.O. Box 12157, Austin, Texas 78711, 1-800-803-9202, 512-463-6599; website: www.tdlr.texas.gov" shall be listed on all proposals, invoices, and written contracts.
+```
+
+<a id="ref_tx_tdlr_acr_rule"></a>
+#### `ref_tx_tdlr_acr_rule` (reference)
+
+- Citation: 16 TAC §75.71(i), whole subsection. The first three sentences prescribe content with no fixed words; the fourth contains the verbatim statement at `stat_tx_tdlr_acr_statement`.
+- Source matched: Texas Administrative Code as published by the Secretary of State (record 190589), saved 2026-11-14; block cut by script and compared with the saved text by a second script the same day (section 8.1).
+
+```text
+(i) An invoice must be provided to the consumer for all air conditioning and refrigeration work performed. The company name, address, and phone number must appear on all proposals and invoices. The affiliated licensee's number must appear on all proposals and invoices for air conditioning and refrigeration work. The following information: "Regulated by The Texas Department of Licensing and Regulation, P.O. Box 12157, Austin, Texas 78711, 1-800-803-9202, 512-463-6599, www.tdlr.texas.gov" must be listed on:
+(1) proposals and invoices;
+(2) written contracts; and
+(3) a sign prominently displayed in the place of business if the consumer or service recipient may visit the place of business for service.
+```
+
+### 9.4 Two counting questions from the template owner
+
+These are readings of the statute text only. They are not legal advice, and where the text does not settle a point it is in section 7 for counsel.
+
+**Question 1. How is "business day" counted for the ch. 601 home solicitation cancellation?**
+
+What the text settles:
+
+1. The right lasts until "midnight of the third business day after the date the consumer signs an agreement or offer to purchase" (§601.051). The count starts the day after signing, and the deadline is the end of the third business day, not close of business. The Code Construction Act says the same about starting: "In computing a period of days, the first day is excluded and the last day is included" (Gov't Code §311.014(a)).
+2. The cancellation form must show "a date not earlier than the third business day after the date of the transaction by which the consumer must give notice of cancellation" (§601.053(b)(4)). On its words a later date is allowed and an earlier one is not; an earlier one makes the contract void (§601.201).
+3. The same undefined term governs the merchant's duties: refunds within the 10th business day (§601.154) and no assignment of the note before midnight of the fifth business day (§601.153).
+
+What the text does not settle:
+
+- **"Business day" is not defined for ch. 601.** Section 601.001 defines four terms (consumer, consumer transaction, merchant, merchant's place of business) and not this one. Bus. & Com. Code §1.201 does not define it. The Code Construction Act's general definitions (Gov't Code §311.005) do not define it. So the text does not say whether a Saturday is a business day or which holidays are excluded. This is U-24.
+- By contrast the residential solar law does define it, for that section only: "a calendar day excluding Saturday, Sunday, or any legal holiday, as that term is defined by Section 662.021, Government Code" (Occ. Code §1806.156(a)). Gov't Code §662.021 makes a legal holiday the national holidays of §662.003(a) and the state holidays of §662.003(b)(1) to (6).
+- Section 601.054 accepts the Federal Trade Commission cooling-off rule's forms. That rule has its own definition of business day; federal text was not opened (U-19).
+
+Drafting consequence, from point 2: compute `solicitation_cancel_by` with the count that gives the **latest** date, that is skip Saturdays, Sundays, every legal holiday in Gov't Code §662.021, and any federal public holiday not on that list. A date computed that way can never be earlier than the third business day under any narrower meaning of the term, and §601.053(b)(4) permits a later date. A count that treats Saturday as a business day gives the earliest candidate date and is the one reading that risks a void contract if it is wrong. Keep the "check before signing" mark until counsel answers U-24.
+
+**Question 2. Does the homestead three-day period run in calendar or business days?**
+
+What the text settles:
+
+1. The only source is the Constitution: the contract must provide that the owner may rescind "within three days after the execution of the contract by all parties" (art. XVI §50(a)(5)(C); full text at `ref_tx_homestead_rescission`). The Property Code does not restate it: §53.254 covers the written contract, signing before work, the spouse's signature and filing, and the word "rescind" does not occur in ch. 41 or ch. 53.
+2. The unit is "days" with no qualifier. The same section says "business day" where it means one: "one business day after the date that the owner of the homestead receives a copy of the loan application" (§50(a)(6)(M)(ii)) and "not later than the third business day after the date the owner submits the loan application" (§50(f)(2)(D)). Read against those, the unqualified "three days" in (a)(5)(C), like the "three days" of the home-equity rescission in §50(a)(6)(Q)(viii), means **calendar days**.
+3. The period runs from execution "by all parties", that is from the last required signature (owner, spouse if any, contractor), not from the owner's own signature.
+
+What the text does not settle (U-25): whether the period is extended when the third day is a Saturday, Sunday or legal holiday (Gov't Code §311.014(b) has such a rule but by §311.002 it applies to codes, and this is the Constitution); whether the day of execution counts as day one (the words "after the execution" point to no); and any court or agency interpretation, none of which was consulted.
+
+Drafting consequence: the clause is the template's own wording, so it should keep the constitutional words ("within three days after the execution of the contract by all parties") and print a last day that is not earlier than the third calendar day after the last signature. If that day is a Saturday, Sunday or legal holiday, printing the next day that is not gives the owner at least the constitutional period under either reading. Whether a longer stated period still "expressly provides" what §50(a)(5)(C) requires is part of U-25.

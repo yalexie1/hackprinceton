@@ -1488,3 +1488,80 @@ textarea {
 .insight-card.insight-main {
   margin-bottom: 1.5rem;
 }
+
+/* How it works: the method, the sources, the equations (#357 item 6). */
+.how-it-works h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 2rem 0 0.6rem;
+}
+.how-it-works h4 {
+  margin: 1.2rem 0 0.4rem;
+  font-size: 1.05rem;
+  opacity: 0.85;
+}
+.hiw-stages {
+  padding-left: 1.3rem;
+  margin: 0;
+}
+.hiw-stages li {
+  margin-bottom: 0.9rem;
+}
+.hiw-stages strong {
+  display: block;
+  margin-bottom: 0.15rem;
+}
+.hiw-stages p {
+  margin: 0;
+}
+.hiw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+.hiw-table th,
+.hiw-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem 0.7rem 0.5rem 0;
+  border-bottom: 1px solid rgb(0 0 0 / 12%);
+}
+.hiw-table th {
+  font-weight: 650;
+  white-space: nowrap;
+}
+.hiw-table td:first-child {
+  white-space: nowrap;
+  font-weight: 600;
+}
+.hiw-equations dt {
+  font-weight: 650;
+  margin-top: 0.9rem;
+}
+.hiw-equations dd {
+  margin: 0.2rem 0 0;
+}
+.hiw-equations code,
+.how-it-works code {
+  font-size: 0.95rem;
+  background: #ecebe2;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}
+.hiw-limits {
+  padding-left: 1.2rem;
+}
+.hiw-limits li {
+  margin-bottom: 0.5rem;
+}
+/* Wide tables scroll inside themselves rather than the page. */
+@media (max-width: 760px) {
+  .how-it-works {
+    overflow-x: hidden;
+  }
+  .hiw-table {
+    display: block;
+    overflow-x: auto;
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  BookOpen,
   ArrowLeft,
   ArrowRight,
   Box,
@@ -56,6 +57,7 @@ import Warnings, { AuditNarrative } from "./components/Warnings";
 import Calibration from "./components/Calibration";
 import RunSource from "./components/RunSource";
 import { AuditProgress } from "./components/AuditProgress";
+import HowItWorks from "./components/HowItWorks";
 import AuditTasks from "./components/AuditTasks";
 import { replayBatch } from "./lib/audit-replay";
 import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
@@ -67,7 +69,8 @@ type View =
   | "roof"
   | "layout"
   | "assumptions"
-  | "documents";
+  | "documents"
+  | "how";
 const views: { id: View; label: string; icon: typeof Home }[] = [
   { id: "find", label: "Properties", icon: Home },
   { id: "plan", label: "Energy plan", icon: ClipboardList },
@@ -75,6 +78,7 @@ const views: { id: View; label: string; icon: typeof Home }[] = [
   { id: "layout", label: "Workspace", icon: Layers3 },
   { id: "assumptions", label: "Assumptions", icon: Settings2 },
   { id: "documents", label: "Documents", icon: FileText },
+  { id: "how", label: "How it works", icon: BookOpen },
 ];
 function bills(text: string): number[] | undefined {
   if (!text.trim()) return undefined;
@@ -716,6 +720,8 @@ export default function App() {
               {notice}
             </p>
           )}
+          {/* The only view that needs no run: it describes the method, not a building. */}
+          {view === "how" && <HowItWorks />}
           {view === "find" && (
             <Find
               properties={properties}

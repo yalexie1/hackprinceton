@@ -1,18 +1,20 @@
-import { MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PropertySummary } from "../lib/types";
 import {
-  loadPropertyObliques,
+  loadPropertyImagery,
+  type PropertyImagery,
   type PropertyOblique,
 } from "../lib/property-imagery";
-import {
-  aerialAttribution,
-  aerialImageUrl,
-  propertyLocation,
-  listedPropertyLocation,
-} from "../lib/property-geospatial";
+import PropertyViews from "./PropertyViews";
 import "./property-discovery.css";
 
+/**
+ * The imagery on a property card, with the view the reader chooses.
+ *
+ * The rendering lives in `PropertyViews`; this fetches what is available and hands it over. The
+ * read is cached-only: browsing cards must not start an audit or expose a sponsor API key to the
+ * client, and `/preview` never fetches upstream imagery.
+ */
 export default function PropertyPreview({
   property,
   allowListedLocation = false,
@@ -20,112 +22,59 @@ export default function PropertyPreview({
   property: PropertySummary;
   allowListedLocation?: boolean;
 }) {
-  const [obliques, setObliques] = useState<PropertyOblique[]>([]);
+  const [imagery, setImagery] = useState<PropertyImagery>({
+    obliques: [],
+    ortho: null,
+  });
   useEffect(() => {
     const controller = new AbortController();
-    setObliques([]);
-    // This endpoint only reads cached imagery; browsing cards must not start an
-    // audit or expose a sponsor API key to the client.
-    void loadPropertyObliques(
+    setImagery({ obliques: [], ortho: null });
+    void loadPropertyImagery(
       property.sid,
       AbortSignal.any([controller.signal, AbortSignal.timeout(6000)]),
     )
-      .then((images) => {
-        if (!controller.signal.aborted) setObliques(images);
+      .then((next) => {
+        if (!controller.signal.aborted) setImagery(next);
       })
       .catch(() => undefined);
     return () => controller.abort();
   }, [property.sid]);
   return (
     <PropertyPreviewImage
-      key={`${property.sid}:${obliques.map((image) => image.url).join(",")}`}
+      key={`${property.sid}:${imagery.obliques.map((image) => image.url).join(",")}:${imagery.ortho ?? ""}`}
       property={property}
       allowListedLocation={allowListedLocation}
-      obliques={obliques}
+      obliques={imagery.obliques}
+      ortho={imagery.ortho}
     />
   );
 }
 
+/**
+ * The same card with imagery supplied directly, for tests and for any caller that has already
+ * loaded it. Kept on its original props so existing callers do not have to change.
+ */
 export function PropertyPreviewImage({
   property,
   allowListedLocation = false,
   obliques = [],
+  ortho = null,
 }: {
   property: PropertySummary;
   allowListedLocation?: boolean;
   obliques?: PropertyOblique[];
+  ortho?: string | null;
 }) {
-  const location =
-    propertyLocation(property.sid) ||
-    (allowListedLocation ? listedPropertyLocation(property) : null);
-  const overhead =
-    location && aerialImageUrl(location, property.segment === "commercial");
-  const candidates = [
-    ...obliques,
-    ...(overhead ? [{ url: overhead, direction: null }] : []),
-  ];
-  const [imageIndex, setImageIndex] = useState(0);
-  const image = candidates[imageIndex];
-  const isOblique = Boolean(image?.direction);
-  const failed = imageIndex > 0;
   return (
-    <div className={`property-geospatial${isOblique ? " has-oblique" : ""}`}>
-      {image ? (
-        <>
-          <img
-            key={image.url}
-            src={image.url}
-            alt={
-              isOblique
-                ? `Side-angle aerial photo of ${property.name}, ${image.direction} view`
-                : `Overhead aerial context for ${property.name}, centred on its ${location!.source === "scan" ? "scan-computed" : location!.source === "listing" ? "reported listing" : "street-address"} location`
-            }
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            onError={() => setImageIndex((index) => index + 1)}
-          />
-          {!isOblique && (
-            <>
-              <span className="property-location-pin">
-                <MapPin size={22} />
-              </span>
-              <span className="property-map-north">N ↑</span>
-            </>
-          )}
-          <div className="property-map-footer">
-            <span className="property-map-caption">
-              {isOblique ? (
-                `Side-angle aerial · ${image.direction} view`
-              ) : (
-                <>
-                  Overhead view ·{" "}
-                  {location!.source === "scan"
-                    ? "scan location"
-                    : location!.source === "listing"
-                      ? "listing location"
-                      : "address location"}
-                </>
-              )}
-            </span>
-            <span className="property-map-credit">
-              {isOblique ? "Vexcel aerial imagery" : aerialAttribution}
-            </span>
-          </div>
-        </>
-      ) : (
-        <div className="property-map-unavailable">
-          <MapPin size={27} />
-          <strong>
-            {failed ? "Aerial image unavailable" : "Location not verified yet"}
-          </strong>
-          <span>
-            {[property.address, property.city, property.state]
-              .filter(Boolean)
-              .join(", ") || property.name}
-          </span>
-        </div>
-      )}
-    </div>
+    <PropertyViews
+      property={property}
+      imagery={{ obliques, ortho }}
+      allowListedLocation={allowListedLocation}
+      modelKey={
+        typeof __MATTERPORT_SDK_KEY__ === "string"
+          ? __MATTERPORT_SDK_KEY__
+          : undefined
+      }
+    />
   );
 }

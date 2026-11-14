@@ -159,3 +159,81 @@
     gap: 10px;
   }
 }
+
+/* The view toggle on a card: aerial / side angle / 3D model / map. Sits under the segment and
+   index badges at the top of the image, clear of the caption bar at the bottom. */
+.property-view-strip {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: #152b20f2;
+  max-width: calc(100% - 30px);
+  /* At 390px the four tabs are wider than the card, and `hidden` would clip the last one out of
+     reach. It scrolls instead; the bar itself is hidden so it does not sit over the photo. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x proximity;
+}
+.property-view-strip::-webkit-scrollbar {
+  display: none;
+}
+.property-view-strip > button {
+  scroll-snap-align: end;
+}
+.property-view-strip > button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: #e8efe9;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.property-view-strip > button:hover {
+  background: #ffffff26;
+}
+.property-view-strip > button.selected {
+  background: #fdfcf7;
+  color: #19543d;
+  font-weight: 600;
+}
+.property-view-strip > button:focus-visible {
+  outline: 2px solid #fdfcf7;
+  outline-offset: 1px;
+}
+.property-view-next {
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.property-model-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #152b20;
+}
+/* The model fills the frame, so the north marker and the pin do not apply to it. */
+.property-geospatial > .property-model-frame ~ .property-map-north {
+  display: none;
+}

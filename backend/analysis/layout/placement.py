@@ -138,10 +138,11 @@ def point_segment_distance(pts: np.ndarray, segs: np.ndarray) -> np.ndarray:
 
 def candidate_grid(matterport: MatterportData, *, grid_m: float = GRID_M,
                    wall_clearance_m: float = WALL_CLEARANCE_M) -> list[Candidate]:
-    """Every grid point inside a work-area room, `wall_clearance_m` from every wall face and
-    outside every door keep-out zone. The door zone is the opening buffered by its leaf width
-    (the swing on either side) plus the wall clearance. A point on an invisible edge between two
-    rooms belongs to the first room listed."""
+    """Every grid point strictly inside a work-area room, `wall_clearance_m` from every wall face
+    and outside every door keep-out zone. The door zone is the opening buffered by its leaf width
+    (the swing on either side) plus the wall clearance. A point on a room's boundary is dropped:
+    on an invisible edge between two rooms no wall clearance removes it, and the daylight scorer's
+    point-in-polygon test may put a boundary point outside the room."""
     floors = {f.id: f for f in matterport.floors}
     seen: set[tuple[str, float, float]] = set()
     out: list[Candidate] = []
@@ -163,7 +164,7 @@ def candidate_grid(matterport: MatterportData, *, grid_m: float = GRID_M,
             continue
         gx, gy = np.meshgrid(xs, ys)
         pts = np.column_stack([gx.ravel(), gy.ravel()])
-        ok = shapely.intersects_xy(poly, pts[:, 0], pts[:, 1])
+        ok = shapely.contains_xy(poly, pts[:, 0], pts[:, 1])      # interior only, never the boundary
         pts = pts[ok]
         if len(pts) and len(walls):
             clear = point_segment_distance(pts, walls) - half[None, :]

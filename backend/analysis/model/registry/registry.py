@@ -179,8 +179,10 @@ def count_bedrooms(bundle: PropertyBundle) -> int:
     return sum(1 for r in bundle.matterport.rooms if r.label and "bedroom" in r.label.lower())
 
 
-def _gas_at_site(bundle: PropertyBundle) -> bool:
-    return bundle.tariff.gas_usd_per_kwh is not None
+def _gas_at_site(bundle: PropertyBundle) -> Optional[bool]:
+    """True when the tariff carries a gas price. None when it does not: a missing price means
+    the price is unknown, not that the site has no gas, so the caller keeps its default."""
+    return True if bundle.tariff.gas_usd_per_kwh is not None else None
 
 
 @dataclass(frozen=True)
@@ -559,10 +561,14 @@ def vintage_defaults(bundle: PropertyBundle, facts: Iterable[Assumption] = ()) -
         out.append(_vd("infiltration.ach50", "Air leakage at 50 Pa",
                        select_rows(_climate_rows(T.HOME_ACH50, climate), yi), "1/h at 50 Pa", 0.4, ctx))
         gas = _gas_at_site(bundle)
-        default_type = "central_ac_furnace" if gas else "heat_pump"
-        out.append(_a("hvac.system_type", "HVAC system type", default_type, "vintage_default", 0.4,
+        # A missing gas price is unknown, not "no gas": keep the gas furnace default, which is
+        # the HVAC-00 case for a home with gas, at a lower confidence (judgment).
+        default_type = "central_ac_furnace"
+        out.append(_a("hvac.system_type", "HVAC system type", default_type, "vintage_default",
+                      0.4 if gas else 0.25,
                       [_table_ev("HVAC-00", "home with gas at the site: split AC with gas furnace" if gas
-                                 else "home without gas at the site: ducted split heat pump")]))
+                                 else "gas at the site unknown (no gas price in the tariff): split AC with "
+                                      "gas furnace assumed, at lower confidence")]))
         eff_type = hvac_type if hvac_type in _HVAC_TYPES and hvac_type != "unknown" else default_type
         fuel = "gas" if eff_type == "central_ac_furnace" else "electricity"
         out.append(_a("hvac.heating_fuel", "Heating fuel", fuel, "vintage_default", 0.4,

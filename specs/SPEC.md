@@ -52,7 +52,7 @@ CoStar judging weights [V]: use of the data 30, agentic depth 30, customer usefu
 
 1. **No scan upload.** The keys reach 14,944 existing Matterport models in the Houston and Los Angeles areas. "Input the scan" means search by address or name and pick a model. [V]
 2. **What "commercial" means here.** The index marks 13,014 models commercial and 1,930 residential, but most commercial models are apartment units. Models that carry a numeric CoStar property id number 6,191; LoopNet suites (offices and shops) are about 210. The office flow finds its candidates by CoStar property type (`propertyType` 5, Office), not by the index segment. [V] counts from `models_index.csv`; [V] 2026-11-14 property-type enum from the kit's `schemas/enums.json`.
-3. **A scan has geometry, not thermal properties.** It gives room polygons, room type, area, width, depth, height, a wall graph with wall thickness, the openings in each wall (type, width, height, sill elevation, position along the wall), a georeference (latitude, longitude and the rotation of the model frame to true north), panoramas, and floor plans. So the size, position and orientation of windows and doors are data. It does not give U-values, insulation, glazing performance (U-value, solar heat gain), HVAC equipment or electrical service size. Those are inferred, section 5. Doors and windows are never wall-edge types (`EdgeType` is only `wall` or `invisible`); they are openings on an edge, typed `divider`, `doorway`, `opening` or `window`. [V] 2026-11-14 for the opening and georeference fields and both enums, live and by schema introspection; the live check returned doorway openings, so whether window openings are populated on a given model is [P] Data lane.
+3. **A scan has geometry, not thermal properties.** It gives room polygons, room type, area, width, depth, height, a wall graph with wall thickness, the openings in each wall (type, width, height, sill elevation, position along the wall), a georeference (latitude, longitude and the rotation of the model frame to true north), panoramas, and floor plans. So the size, position and orientation of windows and doors are data. It does not give U-values, insulation, glazing performance (U-value, solar heat gain), HVAC equipment or electrical service size. Those are inferred, section 5. Doors and windows are never wall-edge types (`EdgeType` is only `wall` or `invisible`); they are openings on an edge, typed `divider`, `doorway`, `opening` or `window`. [V] 2026-11-14 for the opening and georeference fields and both enums, live and by schema introspection; window openings are populated on the golden house (sills 0.63 to 1.11 m above the floor, widths 0.51 to 2.69 m), and an opening's position along its wall is a fraction of the wall's length from 0 to 1, not metres (41 of 41 openings fit their wall read that way). Whether every model carries window openings is still [P] Data lane, hence the vision fallback.
 4. **Exterior 3D exists for few models.** 232 models have an aerial Gaussian splat and drone photos (211 residential, 21 commercial). For the rest, the exterior comes from Vexcel footprints, roof attributes and obliques. [V]
 5. **Unit versus building.** An apartment unit or office suite is part of a larger building. Roof and envelope measures belong to the building owner. The run request carries the user's role, and measures are filtered by it, section 6.2.
 6. **Coverage.** Vexcel keys work only in Houston and Los Angeles. All sponsor data is licensed for the hackathon only and must not be committed. [V]
@@ -175,7 +175,7 @@ A measure is skipped with a stated reason when the role cannot do it, when the m
    - **Obstructions and existing solar: Vexcel precomputed attributes first.** `roof-objects` counts (chimney, skylight, roof vent, AC unit) and `solar` are the primary source. SAM 3 missed the house's chimney, reported two skylights that are not there, and found one of five vents.
    - **Roof extent and usable area: SAM 3** through Vexcel `elements/detect` on the ortho and the newest obliques, label `roof` at a detection threshold near 0.3, keeping each detection's confidence. The label `roof plane` returns nothing, and the default threshold of 0.5 discards most real detections (confidences ran 0.31 to 0.70). SAM 3 returns roof fragments, not clean planes (13 on one small house), so the masks give area and tree overhang, not plane geometry. Each detection comes back as a map-coordinate bounding polygon plus a pixel mask (a PNG cropped to its pixel box); the Analysis lane turns masks into map polygons.
    Usable area is the roof area minus an allowance per counted obstruction minus fire-code setbacks (setback values: `physics.md` or `legal.md`, cited). [V] 2026-11-14 request shape, labels and thresholds, live on the golden house; [P] the office lot.
-4. **Tilt, azimuth, shading.** Per plane from the geometry: fitted planes where a splat exists; otherwise the parametric roof, with azimuth from the footprint's ridge direction and tilt as the pitch range for the roof shape. Shading is computed hour by hour by casting rays from panel points toward the sun against the exterior geometry and tree masks.
+4. **Tilt, azimuth, shading.** Per plane from the geometry: fitted planes where a splat exists; otherwise the parametric roof, with azimuth from the footprint's ridge direction and tilt as the pitch range for the roof shape. On the parametric roof the ridge direction is an assumption until an oblique image confirms it, and it is the largest single source of spread in the yield (about a fifth of annual energy on the golden house, against a few percent each for pitch and weather), so both ridge hypotheses are carried in the range. Shading: where exterior geometry exists (a splat), it is computed hour by hour by casting rays from panel points toward the sun against that geometry and the tree masks; on the parametric roof there is nothing to cast against, so shading is the default loss allowance in the PV model (`specs/physics/01-solar-pv.md`, SHD entries).
 5. **Weather and production.** Typical-year irradiance and temperature for the site, then the PV model in `physics.md`.
 6. **Layout.** Fill planes in order of annual yield per panel. Stop at the first of: roof area exhausted, budget reached, or annual production reaching the site's annual consumption.
 7. **Indoor feasibility.** From section 5.2: outlet type and visible panel become an electrical flag with an added cost range for a likely service upgrade; wall material informs conduit routing cost. A flag of `unknown` raises a question under section 5.3 if it changes the plan.
@@ -387,7 +387,8 @@ class Opening(BaseModel):
     width_m: Optional[float] = None
     height_m: Optional[float] = None
     lower_elevation_m: Optional[float] = None   # bottom of the opening above the floor (sill height)
-    relative_center: Optional[float] = None     # position along the edge, as returned; origin and units [P] Data lane
+    relative_center: Optional[float] = Field(default=None, ge=0, le=1)   # NOT metres: centre as a fraction of
+                                                # the edge length; centre in metres = relative_center * edge length
 
 class WallEdge(BaseModel):
     id: str
@@ -537,6 +538,9 @@ class ClimateSite(BaseModel):
     climate_zone: Optional[str] = None
     weather_path: str                          # typical-year hourly file in the cache
     weather_source: str
+    weather_time_convention: Optional[str] = None   # what an hourly stamp means: "hour_start", "hour_end", "hour_centre"
+    pvgis_annual_kwh_per_kw: Optional[float] = None # cross-check only
+    pvgis_sd_fraction: Optional[float] = None       # inter-annual standard deviation / annual yield
 
 class Tariff(BaseModel):
     utility: str
@@ -610,14 +614,19 @@ class RoofPlane(BaseModel):
     usable_area_m2: float
     obstructions: list[VexcelDetection] = []
     obstruction_counts: dict[str, int] = {}    # from Vexcel roof-objects, e.g. {"chimney": 1}; no positions
+    ridge_confirmed: bool = False              # False = ridge direction assumed; both hypotheses are in the range
+    eave_length_m: Optional[float] = None
+    slope_length_m: Optional[float] = None
     geometry_source: Literal["splat", "vexcel_parametric", "assumed"]
 
 class BuildingModel(BaseModel):
     schema_version: str = SCHEMA_VERSION
     sid: str
-    north_offset_deg: Ranged                   # degrees clockwise from model frame +y to true north; from the
-                                               # georeference as 2*atan2(z, w) for a level model. Sign convention [P]
-                                               # Analysis lane: confirm against the Vexcel footprint on the golden house
+    north_offset_deg: Ranged                   # azimuth of the model frame's +y axis, degrees clockwise from true
+                                               # north, so azimuth_true = azimuth_in_model + north_offset_deg
+                                               # (physics ROOF-02). Derived from the georeference quaternion; which
+                                               # way that quaternion rotates is [P]: confirm on the golden house
+                                               # against the Vexcel footprint before trusting the sign
     north_source: Literal["georeference", "footprint_registration", "assumed"] = "georeference"
     zones: list[Zone]
     surfaces: list[Surface]
@@ -695,7 +704,7 @@ class Anchor(BaseModel):
 
 class PanelPlacement(BaseModel):
     plane_id: str
-    polygon_wkt: str
+    polygon_wkt: Optional[str] = None          # None when the layout is a count by area, not drawn positions
     annual_kwh: float
     shading_loss_fraction: float
 
@@ -705,6 +714,11 @@ class SolarDesign(BaseModel):
     panels: list[PanelPlacement]
     annual_kwh: Ranged
     self_consumption_fraction: Optional[float] = None
+    module_w: Optional[float] = None           # rated DC power per module
+    dc_ac_ratio: Optional[float] = None
+    inverter_kw_ac: Optional[float] = None
+    losses_percent: Optional[float] = None     # total system losses applied (physics PV entries)
+    degradation_rate: Optional[float] = None   # fraction per year
     electrical: Flag
     structural: Flag
 

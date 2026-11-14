@@ -11,12 +11,42 @@ import Warnings, { AuditNarrative } from "./Warnings";
 import Calibration from "./Calibration";
 import sharedHouse from "../../../specs/examples/house/run_result.json";
 import sharedOffice from "../../../specs/examples/office/run_result.json";
+import HouseViewer from "./HouseViewer";
+import AuditTasks from "./AuditTasks";
 const house = demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
 const office = demoRun(
   sharedOffice.property.sid,
   sharedOffice.request.budget_usd,
 );
 describe("shared contract screen compatibility", () => {
+  it("uses office language in the office concept model", () => {
+    const html = renderToStaticMarkup(<HouseViewer office />);
+    expect(html).toContain("Work area");
+    expect(html).toContain("Upper floor");
+    expect(html).not.toContain("Bedroom");
+    expect(html).not.toContain("Living room");
+  });
+  it("does not show kickoff task statuses as current after the audit finishes", () => {
+    const event = {
+      type: "todo" as const,
+      message: "Audit plan",
+      payload: { todos: [{ content: "Fetch data", status: "in_progress" }] },
+    };
+    expect(
+      renderToStaticMarkup(<AuditTasks event={event} finished={false} />),
+    ).toContain("in progress");
+    const completed = renderToStaticMarkup(
+      <AuditTasks event={event} finished />,
+    );
+    expect(completed).toContain("initial audit checklist");
+    expect(completed).not.toContain("in progress");
+    expect(completed).not.toContain("pending");
+    const earlier = renderToStaticMarkup(
+      <AuditTasks event={event} finished={false} archived />,
+    );
+    expect(earlier).toContain("earlier");
+    expect(earlier).not.toContain("in progress");
+  });
   it("explains why desk placement is unavailable when the scan has no room outlines", () => {
     const run = structuredClone(office);
     const layout = run.measures.find(
@@ -154,7 +184,14 @@ describe("shared contract screen compatibility", () => {
     expect(home).not.toContain("Estimated value uplift");
     expect(work).toContain("Estimated value uplift");
     expect(work).toContain("Shown separately from energy savings.");
-    expect(home).toContain("upper estimate may exceed your cash budget");
+    const tight = structuredClone(house);
+    tight.request.budget_usd = tight.plan!.total_upfront_usd.expected;
+    tight.plan!.budget_usd = tight.request.budget_usd;
+    expect(
+      renderToStaticMarkup(
+        <PlanView run={tight} onFocus={() => {}} onDocuments={() => {}} />,
+      ),
+    ).toContain("upper estimate may exceed your cash budget");
   });
   it("handles measured ranges, categorical assumptions, and yes/no assumptions from both examples", () => {
     for (const run of [house, office]) {
@@ -166,22 +203,24 @@ describe("shared contract screen compatibility", () => {
       expect(html).toContain("Confidence");
     }
   });
-  it("draws the shared roof geometry and office candidates, and leaves missing house layout empty", () => {
+  it("draws shared roof geometry and reports unavailable layouts using the analysis reason", () => {
     const roof = renderToStaticMarkup(<Geometry run={house} demo />);
     expect(roof).toContain("<polygon");
     expect(roof).toContain("Proposed modules");
-    const layout = renderToStaticMarkup(<Geometry run={office} layout demo />);
-    expect((layout.match(/role="button"/g) || []).length).toBe(
-      office.measures
-        .find((m) => m.layout)!
-        .layout!.candidates.filter((point) => point.recommended).length,
-    );
-    expect(layout).toContain("Recommended");
-    expect(
-      renderToStaticMarkup(<Geometry run={house} layout demo />),
-    ).toContain("No workspace candidates yet");
+    for (const run of [house, office]) {
+      const measure = run.measures.find((item) => item.measure_id === "LAYOUT");
+      const layout = renderToStaticMarkup(<Geometry run={run} layout demo />);
+      if (measure?.layout) {
+        expect((layout.match(/role="button"/g) || []).length).toBe(
+          measure.layout.candidates.filter((point) => point.recommended).length,
+        );
+        expect(layout).toContain("Recommended");
+      } else if (measure?.not_applicable_reason) {
+        expect(layout).toContain(measure.not_applicable_reason);
+      } else expect(layout).toContain("No workspace candidates yet");
+    }
   });
-  it("distinguishes shared examples from sandbox scenarios on the Find screen", () => {
+  it("offers shared analysis properties without invented sandbox properties", () => {
     const html = renderToStaticMarkup(
       <Find
         properties={demoProperties}
@@ -197,7 +236,11 @@ describe("shared contract screen compatibility", () => {
     expect(html).toContain(sharedHouse.property.name);
     expect(html).toContain(sharedOffice.property.name);
     expect(html).toContain("Shared contract example");
-    expect(html).toContain("UI sandbox");
+    expect(html).not.toContain("UI sandbox");
+    expect(html).toContain(
+      'aria-label="Explore Culver Connect in Los Angeles"',
+    );
+    expect(html).toContain('class="property-image" aria-hidden="true"');
   });
   it("requires approval before drafting and restricts residential/commercial document choices", () => {
     const home = renderToStaticMarkup(<Documents run={house} demo />);

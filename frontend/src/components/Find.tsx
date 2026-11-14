@@ -109,9 +109,10 @@ export default function Find({
           <button
             className="property-card"
             key={p.sid}
+            aria-label={`Explore ${p.name}${p.city ? ` in ${p.city}` : ""}`}
             onClick={() => onSelect(p)}
           >
-            <div className="property-image">
+            <div className="property-image" aria-hidden="true">
               <BuildingArt compact office={p.segment === "commercial"} />
               <span className="property-type">
                 {p.segment === "commercial" ? (
@@ -136,14 +137,14 @@ export default function Find({
               </p>
               <div className="property-meta">
                 <span>
-                  {p.room_count
+                  {p.room_count > 0
                     ? `${p.room_count} rooms`
-                    : "Room details pending"}
+                    : "Room count not provided"}
                 </span>
                 <span>
                   {p.pano_count
                     ? `${p.pano_count} panoramic views`
-                    : "Scan details pending"}
+                    : "No panoramic views listed"}
                 </span>
                 {p.pano_count > 0 && (
                   <span>

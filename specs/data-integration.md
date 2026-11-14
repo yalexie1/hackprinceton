@@ -1200,6 +1200,15 @@ The ZIP is downloaded once into `data/cache/<sid>/weather/` beside the CSV and r
 
 The likely cause is ERA5's hour-ending accumulations being treated as instantaneous and sampled at the EPW hour's midpoint, the half-hour issue PVGIS documents for ERA5; the Ladybug forum has a report of OneBuilding files looking shifted, without a cause. Whatever the cause, it is measured, so **`tmyx.solar_offset_hours` measures every file**: an offset under 0.25 h is kept, one within 0.25 h of +0.5 h is realigned by averaging each hour with the next (the mean over `h−1…h` of values centred at `h−1` and `h`, wrapping at the year end so the annual sum is unchanged), and anything else is refused and the bundle falls back. After realignment the clear-sky fit lands at 35 minutes (house) and 30 (Houston). Temperatures are not shifted.
 
+**The realignment is exact on annual energy and smooths the peak by about 13 %.** It is a
+two-point mean, so the annual sum is preserved to floating-point precision (measured:
+delta 0.00e+00 to 4.66e-10 over three random 8,760-hour series), but the maximum is
+reduced — 1,114 → 969 W/m² on a synthetic series. Annual PV yield is unaffected. Anything
+that reads a **peak** irradiance rather than a sum — a peak-hour calculation, an inverter
+clipping check — now sees a maximum slightly below what the EPW states. This is inherent
+to any realignment and is the right trade against a half-hour phase error on every hour
+of the year, but it should not be rediscovered later as a bug. [V] 2026-11-14
+
 #### Fallback and provenance
 
 Open-Meteo archive 2024 is used when no station qualifies, the index or the ZIP cannot be fetched, or the file fails a check. Every bundle says which:
@@ -1523,3 +1532,4 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Kit mirror end to end | live download + extract to a clean target | 2026-11-14 | 52 MB downloaded, 42 files / 404 MB mirrored, lane tests green against it |
 | State without a kit mirror | live, kit hidden | 2026-11-14 | Houston resolves **TX** and 0.0896 USD/kWh; the old default gave CA and 0.3002 |
 | Segment signals without a kit | live, 4 properties | 2026-11-14 | room labels positive-only; `property_classifications` empty on all; **Vexcel `building-type.class` says `condo_apartment` for both offices** |
+| Realignment peak cost (#295, 5.1f) | three random 8,760-h series through `_realign_half_hour` | 2026-11-14 | annual sum preserved (delta ≤ 4.7e-10); **peak reduced ~13 %** (1,114 → 969 W/m²) |

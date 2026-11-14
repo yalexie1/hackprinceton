@@ -45,3 +45,72 @@ def test_answer_update_and_documents():
     assert api.get_document(run_id, draft.doc_id) == draft
     with pytest.raises(KeyError):
         api.get_document(run_id, "missing")
+
+
+# ---------- a recorded run answers the request that was made (#362) ----------
+
+#: The example files, under the names a recording uses. Building the recording here rather than
+#: reading the developer's (`conftest` points AGENT_DEMO_DIR at an empty temp dir on purpose)
+#: keeps these tests the same on every machine - which is the whole point, since the bug they
+#: cover only shows up for a property that *has* a recording.
+_AS_RECORDED = {"property_bundle.json": "bundle.json", "building_model.json": "model.json",
+                "baseline_result.json": "baseline.json", "measures.json": "measures.json",
+                "plan.json": "plan.json"}
+
+
+def recorded_house(flavor: str = "house") -> RunRequest:
+    """Write a recording of the house example into the demo dir, and return its own request."""
+    from backend.agent.live import demo_dir
+
+    example = EX / flavor
+    result = json.loads((example / "run_result.json").read_text())
+    folder = demo_dir() / result["property"]["sid"]
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "result.json").write_text(json.dumps(result))
+    (folder / "events.json").write_text((example / "run_events.json").read_text())
+    for src, dst in _AS_RECORDED.items():
+        (folder / dst).write_text((example / src).read_text())
+    (folder / "report.md").write_text(result.get("narrative_md") or "# Recorded run\n")
+    return RunRequest.model_validate(result["request"])
+
+
+def test_a_recorded_run_reports_the_budget_that_was_asked_for():
+    """Vignesha's bug. `start_run` overwrote only `run_id`, so a recorded run returned the
+    recording's own request: asking for $10,000,000 was answered with the $15,000 the recording
+    was made with, and from the outside that is indistinguishable from a broken input field."""
+    saved = recorded_house()
+    request = saved.model_copy(update={"budget_usd": 10_000_000.0})
+    result = api.get_run(api.start_run(request))
+    assert result.request.budget_usd == 10_000_000.0
+
+
+def test_a_bigger_budget_on_a_recorded_run_really_buys_more():
+    """Carrying the request is not enough on its own - a result saying $10,000,000 above a plan
+    built for $15,000 is a worse lie than the one it replaces. The plan is rebuilt for real."""
+    saved = recorded_house()
+    small = api.get_run(api.start_run(saved))
+    large = api.get_run(api.start_run(saved.model_copy(update={"budget_usd": 10_000_000.0})))
+
+    chosen = lambda r: [i.measure.measure_id for i in (r.plan.selected if r.plan else [])]
+    assert len(chosen(large)) > len(chosen(small)), (chosen(small), chosen(large))
+    assert set(chosen(small)) <= set(chosen(large)), "the cheaper plan's measures should survive"
+
+
+def test_a_request_the_recording_cannot_answer_is_declared():
+    """Role and desks change which measures apply at all, so they cannot be re-planned. Saying
+    nothing would let the demo show an owner's plan under the word "tenant"."""
+    saved = recorded_house()
+    other = "tenant" if saved.role != "tenant" else "landlord"
+    result = api.get_run(api.start_run(saved.model_copy(update={"role": other})))
+
+    assert result.request.role == other
+    said = [w for w in result.warnings if "does not answer part of what was asked" in w]
+    assert len(said) == 1 and f"role {other!r}" in said[0]
+    assert "real analysis" in said[0], "the warning says what to do instead"
+
+
+def test_a_request_identical_to_the_recording_is_not_warned_about():
+    """The warning is about a difference. A caller who asked for exactly what was recorded has
+    nothing to be told, and a spurious warning there would train a reader to ignore them."""
+    result = api.get_run(api.start_run(recorded_house()))
+    assert not [w for w in result.warnings if "does not answer part of what was asked" in w]

@@ -272,6 +272,20 @@ def get_property_bundle(
 #: disagree with a fresh assembly, which is the worse failure: silent and invisible.
 _STRIPPED = "costar.raw"
 
+#: Bumped whenever a change to assembly makes an existing cached bundle **wrong**
+#: rather than merely old. An entry stamped with a different number is a miss.
+#:
+#: The bundle cache is keyed on the sid alone, which is right - one property, one
+#: bundle - but it means a rule change does not change the key, so a warm cache keeps
+#: serving the old answer. D16 is exactly that case: every bundle written before it
+#: names whichever structure `features[0]` happened to hold, and at the Los Angeles
+#: office that is a building 100 m from the address. A demo laptop with a warm cache
+#: would have shown the old roof with nothing in the output to say so.
+#:
+#: 1 - pre-D16: Vexcel's `primary-structure` flag from an arbitrary capture.
+#: 2 - D16: the structure enclosing the CoStar address point, floor plate deciding.
+BUNDLE_RULE_VERSION = 2
+
 
 def _write_bundle_cache(path: Path, bundle: PropertyBundle) -> Path:
     """Write the bundle atomically, with `costar.raw` left out.
@@ -291,7 +305,8 @@ def _write_bundle_cache(path: Path, bundle: PropertyBundle) -> Path:
         raise cache.SignedUrlInCache(f"URL-valued fields remain: {urls[:5]}")
     return cache.atomic_write_path(
         path,
-        json.dumps({"stripped": stripped, "bundle": payload}, separators=(",", ":")).encode(),
+        json.dumps({"rule": BUNDLE_RULE_VERSION, "stripped": stripped, "bundle": payload},
+                   separators=(",", ":")).encode(),
     )
 
 
@@ -305,10 +320,15 @@ def _read_bundle_cache(sid: str, path: Path) -> Optional[PropertyBundle]:
         entry = json.loads(path.read_text())
         payload = entry["bundle"]
         stripped = entry.get("stripped") or []
+        if entry.get("rule") != BUNDLE_RULE_VERSION:
+            # Written under an older assembly rule, so it is wrong rather than stale.
+            # `KeyError` is how the handler below is already told to bin an entry.
+            raise KeyError(f"rule {entry.get('rule')!r}, want {BUNDLE_RULE_VERSION}")
     except (json.JSONDecodeError, KeyError, TypeError, OSError):
-        # An entry this code can never read again is garbage, and a pre-D4 entry is
-        # garbage that keeps leaking the URLs D4 exists to keep out of the cache. It
-        # is git-ignored and regenerable from the live sources, so it goes.
+        # An entry this code can never read again is garbage, a pre-D4 entry is
+        # garbage that keeps leaking the URLs D4 exists to keep out of the cache, and
+        # an entry from an older assembly rule is garbage that looks exactly like a
+        # good answer. All of it is git-ignored and regenerable, so it goes.
         path.unlink(missing_ok=True)
         return None
 
@@ -327,6 +347,15 @@ def _read_bundle_cache(sid: str, path: Path) -> Optional[PropertyBundle]:
         return None
 
 
+def _parcel_at(point, locator: str, costar, plate):
+    """One parcel extract at `point`, with D16 choosing the capture and structure."""
+    from backend.data_layer import vexcel as d3
+
+    return d3.get_vexcel_data_with_notes(
+        d3.point_wkt(*point), stories=(costar.stories if costar else None),
+        at=point, floor_plate_m2=plate, locator=locator)
+
+
 def _assemble(sid: str) -> PropertyBundle:
     """Build a bundle from the live sources.
 
@@ -336,6 +365,7 @@ def _assemble(sid: str) -> PropertyBundle:
     """
     from backend.data_layer import costar as d1
     from backend.data_layer import external as d9
+    from backend.data_layer import locate as d16
     from backend.data_layer import matterport as d2
     from backend.data_layer import places as d14
     from backend.data_layer import vexcel as d3
@@ -374,11 +404,46 @@ def _assemble(sid: str) -> PropertyBundle:
     lat = geo.latitude if geo else None
     lon = geo.longitude if geo else None
 
+    # D16, on the lead's rule: **the CoStar address point decides which building this
+    # bundle is about**, not the georeference and not Vexcel's own `primary-structure`
+    # flag. At the Los Angeles office the georeference sits inside no building in any
+    # capture, 45 m from the address point, and the structure the response listed
+    # first is a 2022 capture of the building next door.
+    #
+    # The parcel is **queried at that same point**, not at the georeference. Measured
+    # over the six kit properties whose two locators are furthest apart: four returned
+    # a different set of captures from the two points, and at `9xZApYqePUx` (Piney
+    # Point Offices II, 78 m apart) the structure enclosing the address is **absent
+    # from the georeference query altogether**, so querying there cannot find it. A
+    # parcel extract costs 0.3 to 1.1 s. `locate.py` has the rest of the measurements.
+    at, locator = (lat, lon), "georeference"
+    indexed = index.by_sid().get(sid)
+    if indexed is not None and indexed.lat is not None and indexed.lon is not None:
+        at, locator = (indexed.lat, indexed.lon), "CoStar address"
+    else:
+        provenance.append(FetchRecord(
+            layer="costar", what="address:coordinates", status="fallback",
+            detail=("no CoStar address coordinates, so the Matterport georeference "
+                    "picks the building; it locates the scan, not the parcel"),
+        ))
+    plate = d16.floor_plate_m2(costar)
+
     vexcel = None
     if lat is not None and lon is not None:
-        vexcel, vnotes = d3.get_vexcel_data_with_notes(
-            d3.point_wkt(lat, lon), stories=(costar.stories if costar else None))
+        vexcel, vnotes = _parcel_at(at, locator, costar, plate)
         provenance += vnotes
+        if vexcel is None and locator != "georeference":
+            # A geocode can land off the parcel, and then there is no parcel at all to
+            # work from. The georeference is physically at the building because the
+            # scan was taken there, so it is the right second try - and saying so
+            # matters, since the building is then whatever is under the scan.
+            vexcel, gnotes = _parcel_at((lat, lon), "georeference", costar, plate)
+            provenance.append(FetchRecord(
+                layer="vexcel", what="property/extract:locator", status="fallback",
+                detail=(f"no parcel at the CoStar address point, so the georeference was "
+                        f"used instead"),
+            ))
+            provenance += gnotes
     else:
         provenance.append(FetchRecord(layer="vexcel", what="property/extract",
                                       status="missing",

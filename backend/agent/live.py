@@ -281,7 +281,8 @@ class LiveRun:
         r = self.request
         return (f"Audit the property with sid {r.sid}. Budget: ${r.budget_usd:,.0f}. Role: {r.role}. "
                 f"Desks requested: {r.desks_requested}. Overrides already given by the user: "
-                f"{json.dumps(r.overrides)}. Follow the order in your instructions: scout, surveyor, "
+                f"{json.dumps(r.overrides)}. Utility bills: {'given (12 monthly values)' if r.bills else 'not given'}. "
+                "Follow the order in your instructions: scout, surveyor, "
                 "physicist, financier, then the questions if sensitivity returned any, then report.md. "
                 "Finish only when build_plan has returned a plan and report.md is written.")
 

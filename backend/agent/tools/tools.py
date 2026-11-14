@@ -1,4 +1,4 @@
-"""Agent tools (G1): the 19 wrappers of workplan 3.4.
+"""Agent tools (G1): the 20 wrappers of workplan 3.4.
 
 A wrapper takes only the small arguments the model supplies, reads large objects from the
 run files, calls one door function, writes the result back to the run files and returns
@@ -20,11 +20,11 @@ from backend.schema import (BaselineResult, BuildingModel, DocType, DocumentDraf
 
 TOOL_NAMES = (
     "search_properties", "get_property_bundle", "get_asset", "observe_interior",
-    "detect_roof_elements", "build_building_model", "set_assumption", "run_baseline",
+    "detect_roof_elements", "build_building_model", "set_assumption", "calibrate_model", "run_baseline",
     "evaluate_measure", "design_pv", "score_desk_positions", "price_measure",
     "lookup_incentives", "build_plan", "cpace_scenario", "sensitivity", "list_templates",
     "fill_template", "check_document",
-)  # the 19 wrapper tools; ask_user (a pause, no door call) belongs to package G2
+)  # the 20 wrapper tools; ask_user (a pause, no door call) belongs to package G2
 
 
 @dataclass
@@ -177,6 +177,20 @@ def build_tools(ctx: ToolContext) -> dict[str, Callable]:
         return _json(m)
 
     @tool
+    def calibrate_model():
+        """Calibrate the building model to the utility bills the user gave (twelve monthly values), keeping every
+        input inside its range. Call it once, before run_baseline, and only when the task says bills were given;
+        the model it saves is the one every later step uses. Without bills it changes nothing and says the savings
+        are uncalibrated estimates."""
+        bills = ctx.request.bills
+        if bills is None or not hasattr(d.analysis, "calibrate_model"):
+            return {"calibrated": False, "note": "no bills were given: the savings are uncalibrated estimates"}
+        m = d.analysis.calibrate_model(bundle(), model(), bills)
+        files.write("model.json", m.model_dump_json(indent=2))
+        return {"calibrated": bool(m.calibration and m.calibration.calibrated),
+                "calibration": _json(m.calibration)}
+
+    @tool
     def run_baseline():
         """Simulate the building as it is (energy, cost and CO2 per year, with a range). Call once, after
         build_building_model."""
@@ -273,7 +287,7 @@ READABLE = ("plan.json", "measures.json", "baseline.json", "bundle.json")
 
 
 def build_reader_tools(ctx: ToolContext) -> dict[str, Callable]:
-    """The auditor's and the reviewer's read-only tools (not among the 19 wrappers): the numbers a
+    """The auditor's and the reviewer's read-only tools (not among the 20 wrappers): the numbers a
     report may state are the ones in the run files, and `check_report` tests a draft against them."""
     from backend.agent.narrative import check_narrative
     files = ctx.files

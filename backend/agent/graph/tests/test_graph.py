@@ -33,7 +33,7 @@ def test_each_subagent_gets_only_its_tools():
         assert [t.name for t in specs[name]["tools"]] == list(names)
     # no tool is shared between subagents, so none can reach another's tools
     flat = [n for names in SUBAGENT_TOOLS.values() for n in names]
-    assert len(flat) == len(set(flat)) == 18
+    assert len(flat) == len(set(flat)) == 19
 
 
 def test_todo_list_changes_during_a_scripted_run():

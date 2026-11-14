@@ -19,7 +19,7 @@ SUBAGENT_TOOLS: dict[str, tuple[str, ...]] = {
     "scout": ("search_properties", "get_property_bundle", "get_asset"),
     "surveyor": ("observe_interior", "detect_roof_elements", "build_building_model",
                  "set_assumption"),
-    "physicist": ("run_baseline", "evaluate_measure", "design_pv", "score_desk_positions"),
+    "physicist": ("calibrate_model", "run_baseline", "evaluate_measure", "design_pv", "score_desk_positions"),
     "financier": ("price_measure", "lookup_incentives", "build_plan", "cpace_scenario",
                   "sensitivity"),
     "reviewer": ("read_run_file", "check_report"),     # read-only (tools.build_reader_tools)
@@ -44,7 +44,8 @@ _JOBS = {
                  "\"roof\"), then build_building_model once, then reply with a short summary (property type, number of zones, the assumptions you "
                  "had to make) and the path /run/model.json where the model was saved; do not repeat the model. "
                  "Call set_assumption only to apply an answer the user gave, with a key from the model, and never before the model exists."),
-    "physicist": ("Simulate and evaluate. Call run_baseline once. Then call evaluate_measure exactly once for each "
+    "physicist": ("Simulate and evaluate. If the task says utility bills were given, call calibrate_model once first "
+                  "(it saves the calibrated model that every later step uses); then call run_baseline once. Then call evaluate_measure exactly once for each "
                   "measure id of the property's type, taken from this list and no other. " + _MEASURES_TEXT +
                   " Decide the type from the bundle summary (use_type; an office or commercial property is an "
                   "office, everything else a home). A measure that does not apply is reported as it is; never "
@@ -84,7 +85,8 @@ you need it (read_run_file):
      If it returned none, ask nothing.
   6. You: write report.md last, only from the run files. Read /run/plan.json, /run/measures.json and
      /run/baseline.json with read_run_file, then write a short plain summary of the property, the baseline,
-     the selected measures with cost and saving, what is financeable, and what was skipped and why. Copy each
+     the selected measures with cost and saving, what is financeable, and what was skipped and why. Say whether the model was calibrated to the bills (baseline.json: calibrated_to_bills; copy the fit figures
+     from its calibration) or that the savings are uncalibrated estimates when it was not. Copy each
      figure from those files with the same digits and units. Then run check_report on the draft; if it lists
      a number, replace it with the value from the file or delete the sentence, and check again.
   7. reviewer: last. It reads plan.json and report.md in its own context, runs check_report and compares the

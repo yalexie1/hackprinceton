@@ -681,3 +681,55 @@ def test_sensitivity_asks_the_same_questions_whether_or_not_it_runs_in_parallel(
            [(r.key, r.y_low_run, r.y_high_run, r.changes) for r in side_by_side[1]]
     assert [q.model_dump() for q in S.sensitivity(model, plan, asked=asked)] == \
            [q.model_dump() for q in S.sensitivity(model, plan, asked=asked, run_all=api._run_all)]
+
+
+# ---- A6: the door calibrates to bills and the result says so ----
+
+def _bills_from(bundle, model, **truth):
+    import numpy as np
+    from backend.schema import UtilityBills
+    for k, v in truth.items():
+        model = api.set_assumption(model, k, v, "user")
+    token = api._FAST.set(True)
+    try:
+        r = api._simulate_baseline(bundle, model)
+    finally:
+        api._FAST.reset(token)
+    return UtilityBills(electricity_kwh=[float(x) for x in np.asarray(r.monthly_electricity_kwh)],
+                        gas_kwh=[float(x) for x in r.monthly_gas_kwh])
+
+
+def test_without_calibration_the_baseline_says_so():
+    bundle, request = load("house")
+    base = api.run_baseline(bundle, model_of(bundle, request))
+    assert base.calibrated_to_bills is False and base.calibration is None
+
+
+def test_calibrate_model_returns_the_model_every_later_step_uses_and_the_baseline_reports_it():
+    bundle, request = load("house")
+    model = api.build_building_model(bundle, *api.observe_interior(bundle), {"occupancy.count": 3})
+    bills = _bills_from(bundle, model, **{"infiltration.ach50": 6.0})
+    calibrated = api.calibrate_model(bundle, model, bills)
+    assert calibrated.calibration is not None and calibrated.calibration.fits
+    base = api.run_baseline(bundle, calibrated, bills)
+    assert base.calibration == calibrated.calibration
+    assert base.calibrated_to_bills is calibrated.calibration.calibrated
+    assert model.calibration is None                                   # the input model is unchanged
+
+
+def test_sensitivity_keeps_what_the_bills_calibrated(monkeypatch):
+    """A variant model is rebuilt from overrides; an assumption with `bills.` evidence stays fixed in it."""
+    from backend.schema import EvidenceRef
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    key = "infiltration.ach50"
+    marked = model.model_copy(update={"assumptions": [
+        a.model_copy(update={"source": "heuristic" if a.source == "user" else a.source,
+                             "evidence": [*a.evidence, EvidenceRef(kind="user", ref="bills.gas_kwh")]})
+        if a.key == key else a for a in model.assumptions]})
+    seen = {}
+    monkeypatch.setattr(api, "build_building_model",
+                        lambda b, vision, flags, overrides: seen.update(overrides=dict(overrides)) or model)
+    monkeypatch.setattr(api, "_plan_fast", lambda b, m, r: None)
+    api._responsive_plan(bundle, marked, request)(marked)
+    assert key in seen["overrides"]

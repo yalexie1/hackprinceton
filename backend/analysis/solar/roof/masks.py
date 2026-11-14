@@ -48,7 +48,10 @@ from .planes import _Frame, _primary, _wkt
 # mask missing a wing. Engineering judgment [U].
 ROOF_AREA_TOLERANCE = 0.15
 # A roof detection belongs to the target building when at least this share of its
-# own geometry lies inside the footprint (keeps the garage out). [U]
+# mask can lie inside the footprint (keeps the garage out). With only a box and a
+# mask area, the share is the box's overlap with the footprint over the mask area:
+# the box of a whole-roof mask on a rotated footprint overhangs it at the corners,
+# so dividing by the box area would drop it. [U]
 MIN_FOOTPRINT_OVERLAP = 0.5
 ROOF_LABELS = {"roof"}
 TREE_LABELS = {"tree", "trees"}
@@ -202,6 +205,21 @@ def _measure(i: int, d: VexcelDetection, frame: _Frame) -> Optional[_Det]:
     return _Det(i, d, box_m, box_m.area, 1.0, "bbox")
 
 
+def _footprint_share(x: _Det, target: BaseGeometry) -> float:
+    """Share of the detection's mask that can lie inside ``target``.
+
+    With a mask polygon (or only a box) this is the overlap over its own area. With
+    a box and ``mask_area_m2`` the mask's position inside the box is unknown, so the
+    overlap is divided by the mask area and capped at 1: an upper bound, which keeps
+    a whole-roof mask whose axis-aligned box overhangs a rotated footprint.
+    """
+    g = x.geom_m
+    if g.area <= 0:
+        return 0.0
+    denom = min(g.area, x.area_m2) if x.area_m2 > 0 else g.area
+    return min(1.0, g.intersection(target).area / denom)
+
+
 def _pick_images(dets: list[_Det]) -> list[_Det]:
     """Ortho detections when there are any: an oblique box leans with height."""
     ortho = [x for x in dets if x.det.image_id.lower().startswith(ORTHO_PREFIX)]
@@ -285,8 +303,7 @@ def refine_with_masks(planes: Sequence[RoofPlane], vexcel: VexcelData,
     on_building = []
     if target is not None:
         for x in roofs:
-            g = x.geom_m
-            if g.area > 0 and g.intersection(target).area / g.area >= MIN_FOOTPRINT_OVERLAP:
+            if _footprint_share(x, target) >= MIN_FOOTPRINT_OVERLAP:
                 on_building.append(x)
     best = max(on_building, key=lambda x: (x.basis != "bbox", x.area_m2), default=None)
     check = RoofAreaCheck(None, round(fp_area, 2) if fp_area else None, round(plan_total, 2), None)

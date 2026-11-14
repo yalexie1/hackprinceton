@@ -235,7 +235,13 @@ _LOAD_KEYS = ("wall.u_value", "roof.u_value", "roof.absorptance", "window.u_valu
 
 def _climate(bundle: PropertyBundle) -> tuple[ClimateHours, Weather, tuple[str, ...]]:
     """The site's weather year with the sun for every hour (A1). When the cached file of the
-    site is not on disk, the example year of the same state is used and the notes say so."""
+    site is not on disk, the example year of the same state is used and the notes say so.
+
+    **The third element is not decoration.** Whether this substitution happened decides every
+    energy figure downstream - measured on the golden set it moves annual gas by about 25 per
+    cent - and it depends on nothing but whether one file exists on the machine running the
+    audit. `climate_notes` is the public way to read it; `run_baseline` reports it.
+    """
     key = (bundle.summary.sid, bundle.climate.weather_path)
     if key not in _CLIMATE_CACHE:
         site, notes = bundle.climate, ()
@@ -245,9 +251,22 @@ def _climate(bundle: PropertyBundle) -> tuple[ClimateHours, Weather, tuple[str, 
             sample = _WEATHER_SAMPLES / _SAMPLE_FILE[bundle.summary.state]
             weather = read_weather(sample, site.timezone, site.weather_time_convention,
                                    source=f"example year {sample.name}")
-            notes = (f"weather: the site file is not cached, so the example year {sample.name} was used",)
+            notes = (f"The site's own weather year is not on this machine "
+                     f"({site.weather_path}), so the example year {sample.name} was used "
+                     f"instead. Every energy figure here is for that year, not for the "
+                     f"site's; expect them to move when the site file is present.",)
         _CLIMATE_CACHE[key] = (load_climate(site, weather=weather), weather, notes)
     return _CLIMATE_CACHE[key]
+
+
+def climate_notes(bundle: PropertyBundle) -> list[str]:
+    """What the A1 climate step had to substitute for this bundle, in plain words.
+
+    Public because a caller that reports rather than computes - the agent, writing run events -
+    needs the same fact `run_baseline` puts in its warnings, and must not have to read it back
+    out of a result's prose.
+    """
+    return list(_climate(bundle)[2])
 
 
 def _weather_csv(bundle: PropertyBundle) -> Optional[str]:
@@ -405,9 +424,12 @@ def _benchmarked(bundle: PropertyBundle, model: BuildingModel, result: BaselineR
     warnings, _ = check_baseline(result, _floor_area(model), bundle.summary.use_type,
                                  bundle.climate.climate_zone,
                                  building_area_m2=bundle.costar.building_area_m2 if bundle.costar else None)
-    if not warnings:
+    # The weather note comes first: it says which year produced every number below it, so a
+    # reader who stops after one line has read the one that changes how to read the rest.
+    added = [*climate_notes(bundle), *warnings]
+    if not added:
         return result
-    return result.model_copy(update={"warnings": [*result.warnings, *warnings]})
+    return result.model_copy(update={"warnings": [*result.warnings, *added]})
 
 
 # ---------- S6 Measures ----------

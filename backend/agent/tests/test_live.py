@@ -652,3 +652,44 @@ def test_the_same_bundle_read_twice_does_not_warn_twice(tmp_path):
     once = list(run._warnings)
     tool(sid=raw["summary"]["sid"])
     assert run._warnings == once and once, "warnings are deduplicated, and there were some"
+
+
+# ---------- the substituted weather year is a run fallback (issue #328) ----------
+
+def test_a_substituted_weather_year_becomes_a_run_event_and_a_warning(tmp_path):
+    """The analysis door substitutes the committed example year when the site's own cached weather
+    file is absent, which moves every energy figure in the run. It is a fallback like any other."""
+    from backend.schema import PropertyBundle
+
+    run = live.LiveRun("run_weather", request(), live.LiveSettings(runs_dir=tmp_path))
+    bundle = PropertyBundle.model_validate_json(
+        (EXAMPLES / "house" / "property_bundle.json").read_text())
+    absent = bundle.model_copy(update={"climate": bundle.climate.model_copy(
+        update={"weather_path": "data/cache/__not_a_cached_site__/weather/typical_year_hourly.csv"})})
+    run.files.write("bundle.json", absent.model_dump(mode="json"))
+
+    emitted: list = []
+    run._emit = emitted.append
+    run._instrument("run_baseline", lambda: {"annual": {}})()
+
+    said = [e for e in emitted if getattr(e, "type", None) == "fallback"
+            and e.payload.get("fallback") == "weather:example_year"]
+    assert len(said) == 1 and "not on this machine" in said[0].message
+    assert any("not on this machine" in w for w in run._warnings)
+
+
+def test_a_door_that_cannot_report_its_weather_does_not_fail_the_run(tmp_path, monkeypatch):
+    """A missing warning must never be the thing that ends a run. The stub door offers
+    `climate_notes`; an older or broken one may not, and that is survivable."""
+    run = live.LiveRun("run_weather2", request(), live.LiveSettings(runs_dir=tmp_path))
+    raw = json.loads((EXAMPLES / "house" / "property_bundle.json").read_text())
+    run.files.write("bundle.json", raw)
+
+    class Mute:
+        def climate_notes(self, bundle):
+            raise RuntimeError("this door cannot say")
+
+    monkeypatch.setattr(run.doors, "analysis", Mute(), raising=False)
+    assert run._climate_notes(raw) == []
+    monkeypatch.setattr(run.doors, "analysis", object(), raising=False)
+    assert run._climate_notes(raw) == []

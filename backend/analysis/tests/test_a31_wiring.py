@@ -54,6 +54,12 @@ def crosscheck_warnings(card):
     return [w for w in card.warnings if "PVGIS" in w]
 
 
+def benchmark_warnings(baseline):
+    """The baseline's warnings minus the weather-source note (#328), which every bundle here
+    carries because they all pin the weather to a path that cannot exist."""
+    return [w for w in baseline.warnings if "weather year is not on this machine" not in w]
+
+
 # ---- PV-10, the yield against PVGIS ----
 
 def test_a_yield_that_disagrees_with_pvgis_warns_on_the_card():
@@ -141,7 +147,7 @@ def test_a_baseline_outside_the_band_warns_on_the_result():
     weather year, so the door must say so on the object a caller reads. Deliberately not the
     house: its gas sits near the band edge and which side it falls on depends on the weather."""
     _, _, baseline = baseline_of("office_houston")
-    gas = [w for w in baseline.warnings if "Gas use intensity" in w]
+    gas = [w for w in benchmark_warnings(baseline) if "Gas use intensity" in w]
     assert len(gas) == 1
     assert "percentile" in gas[0] and "CBECS2018" in gas[0]
     assert "water heating" in gas[0], "the warning names the end uses to look at (BEN-03)"
@@ -151,7 +157,7 @@ def test_a_baseline_inside_the_band_is_silent():
     """80 percent of real comparable buildings are inside the band, so a model that is must not
     be warned about - otherwise the warning means nothing."""
     _, _, baseline = baseline_of("office")
-    assert [w for w in baseline.warnings if "intensity" in w] == []
+    assert [w for w in benchmark_warnings(baseline) if "intensity" in w] == []
 
 
 def test_the_benchmark_changes_no_number_in_the_baseline():
@@ -170,7 +176,8 @@ def test_a_property_with_no_climate_zone_is_not_benchmarked_and_says_so():
     observed, flags = api.observe_interior(off)
     model = api.build_building_model(off, observed, flags, request.overrides)
     baseline = api.run_baseline(off, model)
-    assert len(baseline.warnings) == 1 and "climate zone" in baseline.warnings[0].lower()
+    said = benchmark_warnings(baseline)
+    assert len(said) == 1 and "climate zone" in said[0].lower()
 
 
 def test_an_office_is_benchmarked_against_its_whole_building_not_its_suite():
@@ -191,7 +198,7 @@ def test_the_house_is_typical_on_the_committed_weather_year():
     machine that has that older file cached at the fixture's `weather_path` - which is why every
     test here pins the weather rather than trusting whatever the machine happens to hold."""
     _, _, baseline = baseline_of("house")
-    assert baseline.warnings == []
+    assert benchmark_warnings(baseline) == []
 
 
 def test_the_measures_engine_baseline_is_not_benchmarked():

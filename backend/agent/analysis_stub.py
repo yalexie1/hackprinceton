@@ -60,6 +60,12 @@ def run_baseline(bundle: PropertyBundle, model: BuildingModel, bills=None) -> Ba
     return BaselineResult.model_validate(load(_flavor(bundle.summary.sid), "baseline_result.json"))
 
 
+def climate_notes(bundle: PropertyBundle) -> list[str]:
+    """Nothing: this door reads no weather, so it substitutes none. The run is already warned
+    that the whole analysis is a replay (`Doors.degraded`), which covers more than the weather."""
+    return []
+
+
 def evaluate_measure(bundle: PropertyBundle, model: BuildingModel, measure_id: str, role: str,
                      desks_requested: Optional[int] = None) -> MeasureResult:
     return _measure(bundle.summary.sid, measure_id).model_copy(update={"finance": None})

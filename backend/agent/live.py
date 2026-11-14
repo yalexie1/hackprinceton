@@ -274,10 +274,33 @@ class LiveRun:
                     for line in provenance_warnings(parsed):      # and into RunResult.warnings
                         if line not in self._warnings:
                             self._warnings.append(line)
+            if name == "run_baseline" and isinstance(out, dict) and "error" not in out:
+                # The analysis door substitutes the example weather year when the site's own
+                # cached file is absent, which moves every energy figure. It is a fallback of
+                # the run like any other, so it is said once, here, where it is decided.
+                bundle = self.files.read_json("bundle.json")
+                notes = self._climate_notes(bundle) if bundle else []
+                for note in notes:
+                    self._emit(RunEvent(type="fallback", stage=STAGE_OF.get(name), message=note,
+                                        payload={"fallback": "weather:example_year"}))
+                    if note not in self._warnings:
+                        self._warnings.append(note)
             if name == "sensitivity" and isinstance(out, list):
                 self.session.feed([Question.model_validate(q) for q in out])
             return out
         return wrapper
+
+    def _climate_notes(self, bundle: dict) -> list[str]:
+        """What the analysis door had to substitute for the site's weather. Never raises: a door
+        that does not offer this (the stub, or an older one) simply has nothing to report, and a
+        missing warning must not be the thing that fails a run."""
+        reader = getattr(self.doors.analysis, "climate_notes", None)
+        if reader is None:
+            return []
+        try:
+            return list(reader(PropertyBundle.model_validate(bundle)))
+        except Exception:
+            return []
 
     # ---- the agent stream, as the runtime wants it ----
 

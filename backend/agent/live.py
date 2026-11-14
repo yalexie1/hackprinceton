@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 import queue
+import shutil
 import time
 import threading
 import uuid
@@ -73,6 +74,11 @@ SETTINGS: Optional[LiveSettings] = None
 _ENV_KEYS = ("ANTHROPIC_API_KEY", "LANGSMITH_API_KEY", "LANGSMITH_PROJECT", "LANGSMITH_TRACING",
              "LANGSMITH_ENDPOINT", "LANGSMITH_WORKSPACE_ID")
 DEFAULT_PROJECT = "energy-consultant"
+
+
+def demo_dir() -> Path:
+    """Where successful live runs are kept for demo replay (AGENT_DEMO_DIR overrides)."""
+    return Path(os.environ.get("AGENT_DEMO_DIR") or DEFAULT_RUNS_DIR / "_demo")
 
 
 def _load_env() -> None:
@@ -460,6 +466,7 @@ class LiveRun:
     def _thread_main(self) -> None:
         try:
             asyncio.run(self._main())
+            self._record()
         except BaseException as exc:
             self._publish(RunEvent(type="error", message=f"{type(exc).__name__}: {exc}"))
         finally:
@@ -509,6 +516,23 @@ class LiveRun:
         if missing or warnings != saved.warnings:
             self.store.save(self.run_id, saved.model_copy(update={
                 "questions": [*saved.questions, *missing], "warnings": warnings}))
+
+    def _record(self) -> None:
+        """A run that finished with a plan is kept for demo replay: its events and its files, under
+        data/runs/_demo/{sid}/ (git-ignored: they are derived from sponsor data). The replay mode of the
+        run door serves it. Never raises."""
+        try:
+            result = self.store.load(self.run_id)
+            if result.status != "done" or result.plan is None:
+                return
+            (self.files.root / "events.json").write_text(json.dumps(
+                [e.model_dump(mode="json") for e in self.events], indent=1))
+            target = demo_dir() / self.request.sid
+            if target.exists():
+                shutil.rmtree(target)
+            shutil.copytree(self.files.root, target, ignore=shutil.ignore_patterns("assets", "*.tmp"))
+        except Exception:
+            pass
 
     def _write_usage(self) -> None:
         self.usage = dict(self.usage_handler.usage_metadata)

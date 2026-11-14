@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import itertools
+import json
 import os
 import sys
 from typing import AsyncIterator
@@ -57,6 +58,14 @@ def start_run(request: RunRequest) -> str:
     if mode() == "live":
         from backend.agent import live
         return live.start_run(request)
+    recorded = _recorded(request.sid)
+    if recorded is not None:                 # a live run that was kept for the demo
+        run_id = f"run_demo_{next(_counter)}"
+        result, events, bundle = recorded
+        result["run_id"] = run_id
+        _runs[run_id] = {"flavor": None, "bundle": bundle, "result": RunResult.model_validate(result),
+                         "events": [RunEvent.model_validate(e) for e in events], "answers": {}, "docs": {}}
+        return run_id
     flavor = _flavor_for_sid(request.sid)
     run_id = f"run_{flavor}_{next(_counter)}"
     result = _load(flavor, "run_result.json")
@@ -70,6 +79,19 @@ def start_run(request: RunRequest) -> str:
         "docs": {},
     }
     return run_id
+
+
+def _recorded(sid: str):
+    """(result, events, bundle) of a successful live run kept for this sid, or None. Replay serves it
+    in place of the example, so the demo shows a real run without calling a model."""
+    from backend.agent.live import demo_dir
+    folder = demo_dir() / sid
+    try:
+        return (json.loads((folder / "result.json").read_text()),
+                json.loads((folder / "events.json").read_text()),
+                json.loads((folder / "bundle.json").read_text()))
+    except (OSError, ValueError):
+        return None
 
 
 async def stream_events(run_id: str) -> AsyncIterator[RunEvent]:
@@ -122,6 +144,12 @@ def draft_document(request: DocumentRequest) -> DocumentDraft:
     if live_run is not None:
         return live_run.draft(request)
     run = _get(request.run_id)
+    if run["flavor"] is None:                # a recorded live run: draft with the legal door, offline
+        from backend.legal import api as legal
+        from backend.schema import PropertyBundle
+        draft = legal.fill_template(request, run["result"], PropertyBundle.model_validate(run["bundle"]))
+        run["docs"][draft.doc_id] = draft
+        return draft
     draft = DocumentDraft.model_validate(_load(run["flavor"], "document_draft.json"))
     draft.doc_type = request.doc_type
     draft.state = request.state

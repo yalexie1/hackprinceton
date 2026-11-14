@@ -15,7 +15,7 @@ from langchain_core.messages import AIMessage
 from backend.agent import api, live
 from backend.agent.runtime.replan import PatchError
 from backend.agent.fixtures import EXAMPLES, flavors
-from backend.schema import RunRequest, RunResult
+from backend.schema import DocumentRequest, RunRequest, RunResult
 
 
 def stub_doors():
@@ -454,3 +454,48 @@ def test_a_summary_that_is_still_wrong_loses_the_offending_lines(live_mode):
 def test_a_clean_summary_costs_no_extra_turn(live_mode):
     run_id, run, events = _drive(live_mode, final=("The audit is complete.",))
     assert not [e for e in events if e.payload.get("fallback") == "narrative_repair"]
+
+
+# ---- successful runs are kept for demo replay ----
+
+def test_a_successful_live_run_is_recorded_and_replayed_offline(live_mode, monkeypatch):
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    live_events = drain(run_id)
+    run._thread.join(timeout=30)
+    saved = live.demo_dir() / req.sid
+    assert {"result.json", "events.json", "bundle.json", "plan.json", "report.md"} <= {p.name for p in saved.iterdir()}
+    assert not (saved / "assets").exists()
+
+    monkeypatch.delenv("AGENT_MODE")                                  # replay mode now
+    replay_id = api.start_run(req)
+    assert replay_id.startswith("run_demo_")
+    replayed = drain(replay_id)
+    assert [e.model_dump(mode="json") for e in replayed] == [e.model_dump(mode="json") for e in live_events]
+    result = api.get_run(replay_id)
+    assert result.run_id == replay_id and result.status == "done" and result.plan is not None
+    dreq = DocumentRequest.model_validate_json((EXAMPLES / "house" / "document_request.json").read_text())
+    dreq.run_id = replay_id
+    draft = api.draft_document(dreq)                                   # the legal door, no model
+    assert api.get_document(replay_id, draft.doc_id) == draft and draft.doc_type == dreq.doc_type
+
+
+def test_a_run_that_ends_in_error_is_not_recorded(live_mode, tmp_path, monkeypatch):
+    req = request()
+    monkeypatch.setattr(live, "SETTINGS", live.LiveSettings(
+        doors=stub_doors(), model=Scripted(messages=iter([])), subagent_model=Scripted(messages=iter([])),
+        runs_dir=tmp_path))
+    run_id = api.start_run(req)
+    assert drain(run_id)[-1].type == "error"
+    live._RUNS[run_id]._thread.join(timeout=30)
+    assert not (live.demo_dir() / req.sid).exists()
+
+
+def test_with_nothing_recorded_replay_serves_the_example(monkeypatch):
+    monkeypatch.delenv("AGENT_MODE", raising=False)
+    run_id = api.start_run(request())
+    assert run_id.startswith("run_house_") and drain(run_id)[-1].type == "done"

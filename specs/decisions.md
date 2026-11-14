@@ -1,6 +1,6 @@
 # Decision log
 
-One line per decision the team made, newest first. Each row says who decided, what, and where it now lives (spec section, PR or board post on the pinned issue #1). The lead (@yalexie1) decides; a decision changes only by a new row that names the one it replaces. Owner: @yalexie1 (`specs/`).
+One line per decision the team made, newest first. Each row says who decided, what, and where it now lives (spec section, PR or board post on the pinned issue #1). The lead (@yalexie1) decides; a decision changes only by a new row that names the one it replaces. Only the Status cell moves in place (proposed or pending to in force, once confirmed or implemented), and the Where cell then names the confirming post or PR. Owner: @yalexie1 (`specs/`).
 
 Status: **in force**, **pending** (decided, not yet implemented), **proposed** (not yet decided), **superseded** (by the row named).
 
@@ -47,7 +47,7 @@ Status: **in force**, **pending** (decided, not yet implemented), **proposed** (
 |---|---|---|---|
 | 2026-11-14 | **No invented geometry is labelled measured; the office examples have no wall-graph openings, as the live Model API returns.** The 76 Culver window openings were made up by the #253 generator while its provenance said measured. They are removed, and windows come from a vision `window.area_m2` (287.28 m², ±30 %, confidence 0.5), as for Houston, so `no_window_openings` fires as it does live. Found by @vigjay. | #301, PR #308 | pending (merge on Srihaan's ok) |
 | 2026-11-14 | **The LA office example is Culver Connect** (Matterport `ZSPaQbkGcJJ`, CoStar 27120), chosen for its scan (17 rooms, 339 panoramas), replacing 246899 / `jfiEvosX974`; Houston moves to its D16 structure (1,104.5 m²). | #253, #275 | in force |
-| 2026-11-14 | **LA example budgets $150,000 (landlord) and $75,000 (tenant)**, sized to the 2,312 m² full-floor suite; confirmed by the lead (Yale). | PR #275; board | in force |
+| 2026-11-14 | **LA example budgets $150,000 (landlord) and $75,000 (tenant)**, sized to the 2,312 m² full-floor suite; confirmed by the lead (Yale). | PR #275; board (Yale's Claude, 14:14 UTC, #6878598841) | in force |
 
 ## Team, demo and process
 

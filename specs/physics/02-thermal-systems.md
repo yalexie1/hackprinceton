@@ -804,7 +804,7 @@ Measures:
 - `WIN_SHADE` interior: replace the baseline `F_int` with the value for the proposed device, in cooling-season hours only if the device is operable.
 - `WIN_SHADE` exterior screen: `C_ext` = 0.30.
 - `WIN_FILM`: `C_ext` = 0.70 as the default, or better, replace `SHGC` by the film manufacturer's rated SHGC for the glass type when it is known. A film also lowers useful winter gain; the zone model accounts for that when the factor is applied all year.
-- `WIN_REPLACE`: new `U_w` and `SHGC` from `DEF-03`; both ENV-03 and WIN-01 change.
+- `WIN_REPLACE`: new `U_w` and `SHGC` from `DEF-03` (the SHGC by IECC climate zone, never above the present SHGC); both ENV-03 and WIN-01 change.
 
 Validity: the interior coefficients describe closed or half-open devices on ordinary glazing. The lower the SHGC of the glass, the less an interior shade adds, which the `C2` term captures.
 
@@ -1255,6 +1255,7 @@ Additional source key:
 | Key | Source |
 |---|---|
 | S17 | NREL, *ResStock Technical Reference Documentation* v3.3.0, NREL/TP-5500-91621, 2025 (OSTI 2583488), and the distribution files it documents, `project_national/housing_characteristics/*.tsv` in `https://github.com/NREL/resstock` (branch `develop`, read 2026-11-14): `Infiltration`, `Insulation Ceiling`, `Insulation Wall`, `Windows`, `Duct Leakage and Insulation`, `Location Region`. |
+| S18 | ICC, *2021 International Energy Conservation Code*: Table R402.1.2 (residential maximum assembly U-factors and fenestration requirements) and Table C402.4 (commercial building envelope fenestration maximum U-factor and SHGC). Read 2026-11-14 from the adopted text on UpCodes (Connecticut's 2021 IECC, model table unamended) and two restatements of R402.1.2 (PNNL Building America Solution Center table of 2009 to 2021 IECC fenestration requirements; an ICC residential energy inspector study guide). The ICC's own viewer refused download. |
 
 How to read these tables:
 
@@ -1338,7 +1339,19 @@ Default type by vintage, single-family homes: the 10th, 50th and 90th percentile
 
 The "best" column is low-e in every row because at least a tenth of homes of every vintage have had their windows replaced. Apartment units (buildings of five or more units) follow the same table with two differences in the source: the Houston median before 1960 is single clear metal, and the Los Angeles median for 1980–1999 is single clear non-metal. The vintage bins of the source are before 1940, 1940–59, 1960–79, 1980–99, 2000–09 and 2010s.
 
-A panorama reading of pane count and frame material replaces the default type. `WIN_REPLACE` installs "double, low-e, non-metal" by default.
+A panorama reading of pane count and frame material replaces the default type. `WIN_REPLACE` installs "double, low-e, non-metal" by default, with its SHGC chosen by the site's IECC climate zone (S18), because a consultant specifies low-SHGC glass where cooling dominates:
+
+| IECC 2021 prescriptive fenestration (S18) | Zones 0–1 | Zone 2 | Zone 3 | Zone 4 except marine |
+|---|---|---|---|---|
+| Residential, Table R402.1.2: U-factor, Btu/(h·ft²·°F) | 0.50 | 0.40 | 0.30 | 0.30 |
+| Residential, Table R402.1.2: glazed fenestration SHGC | 0.25 | 0.25 | 0.25 | 0.40 |
+| Commercial, Table C402.4: vertical fenestration U-factor, fixed / operable | 0.50 / 0.62 | 0.45 / 0.60 | 0.42 / 0.54 | 0.36 / 0.45 |
+| Commercial, Table C402.4: SHGC, projection factor below 0.2, fixed / operable | 0.23 / 0.21 | 0.25 / 0.23 | 0.25 / 0.23 | 0.36 / 0.33 |
+
+- **SHGC.** 0.25 in climate zones 0 to 3, the code value of both tables in zones 2 and 3, where every CA and TX site below 36° N lies (commercial zones 0–1 ask 0.23; neither state has them). Zone 4 and above keep the S17 0.44 of the default type. The zone is `ClimateSite.climate_zone`, read by its thermal digit ("3B", "3B-CA" and "2A" give 3, 3 and 2), as the benchmark check reads it.
+- **Never higher than now.** Each replaced window gets `min(climate SHGC, present SHGC)`: glass that already admits less sun (the DEF-11 office baselines of 0.25) keeps its SHGC, so the measure never raises cooling through solar gain.
+- **U.** 2.16 W/(m²·K) (0.38) as before: it meets C402.4 in zones 0 to 3 and R402.1.2 in zones 0 to 2. A home in zone 3 gets R402.1.2's U-0.30, 1.70 W/(m²·K). Above zone 3 the default type is kept, although R402.1.2 asks U-0.30 there too.
+- **No zone in the bundle.** A CA or TX site south of 36° N is taken as zones 0 to 3 (SHGC 0.25), anything else keeps 0.44; either way the card says the zone was missing. The 36° line is a fallback of this file, not a sourced boundary.
 
 Window area: measured openings, ±5 %. From vision when no window openings exist: ±30 %. With neither: window-to-wall ratio 0.15 / 0.18 / 0.25 of exterior wall area for homes and 0.20 / 0.30 / 0.40 for offices; these ratios are **not sourced** (section 10, tier A) and exist only so the pipeline does not stop.
 
@@ -1503,10 +1516,23 @@ Live office scans can return rooms with `area_m2` (and usually `height_m`) but n
 2. **Scanned share.** `share = min(1, A_scan / A_fp)`, with `A_scan` the sum of the floor's room `area_m2` and `A_fp` the footprint area. Wall length per edge = edge length × `share`. This assumes the suite's exterior wall is in proportion to its area, spread evenly over every orientation; a suite that owns one façade gets the right total and the wrong orientations.
 3. **Height.** The floor's mean room height (zone volume / floor area): measured `height_m`, a room without one taking the mean of the measured rooms, and with no height at all the builder's existing 2.7 m (not sourced).
 4. **Windows.** The usual order on these walls: a vision `window.area_m2` spread in proportion to wall area, else the `DEF-03` window-to-wall ratio. Window surfaces built here have no `source_edge_id`.
-5. **Roof and ground.** Unchanged: the storey from the floor label (or CoStar stories), a roof only on the top storey, a ground floor only on storey 1, its exposed perimeter the sum of these wall lengths.
+5. **Roof and ground.** Unchanged: the storey from the floor label (or CoStar stories), a roof only on the top storey, a ground floor only on storey 1, its exposed perimeter the sum of these wall lengths; a generically labelled suite floor follows DEF-13.
 6. **No footprint.** A square of `A_scan` aligned with the model axes, every side exterior, azimuths rotated by `north_offset_deg`. This is a last resort with a stronger warning.
 
 Provenance: assumption `geometry.envelope_source` (source `vintage_default`, confidence 0.2, or 0.05 for the square), with the footprint as evidence, and a warning naming the floor and the share. A conditioned zone that still has no exterior wall gets a warning. Desk placement needs room outlines and is not applicable on such a scan; no outline is invented. Not sourced (section 10, tier A).
+
+### DEF-13 Storey of a suite whose floor label says nothing
+
+Matterport names the first floor of every model "Floor 1", whatever storey it is on: the live Culver City (`ZSPaQbkGcJJ`) and Houston (`L3266YcPPvd`, 16 storeys) office scans both say "Floor 1". Read as a storey number, that puts an upper-floor suite on the ground, with ground contact and no roof. A suite in a multi-storey building is far more likely to be on a middle storey. When all of these hold:
+
+1. the property is a suite or unit inside a larger building, scanned on a single floor;
+2. that floor's label is generic: "Floor 1", "1", or none (no storey passed in by the caller);
+3. CoStar `stories` is more than 1;
+4. the scan covers less than 0.95 of the Vexcel footprint (the DEF-12 share, `A_scan / A_fp`);
+
+the storey is **unknown, assumed mid-building**: no ground floor, no roof, and the floor and ceiling face conditioned space (`adjacent_conditioned`, `b` = 0 in ENV-03, so no surface is built for them, as for any middle storey). A label with a real storey number above 1, a detached building, a single-storey building, a scan of the whole plate and a bundle without a footprint keep the label rule of DEF-12 step 5.
+
+Provenance: assumption `geometry.storey` = `unknown_mid_building` (source `vintage_default`, confidence 0.3, user-editable), with the label, the stories and the share as evidence, and a warning that asks for the storey when the suite is on the ground or top floor. The 0.95 threshold is a judgment: scanned room area leaves out walls, cores and shafts, so a whole-floor scan can fall below it. Not sourced (section 10, tier A).
 
 ## 9. Build-time test plan
 
@@ -1555,6 +1581,8 @@ Two tiers. Tier A items must not be implemented as sourced physics; where the pi
 | Mapping of ISO 13790 mass classes to US construction types | ZON-01 | the standard gives classes only | medium for all, light and heavy as the range |
 | Window-to-wall ratio defaults (0.15 / 0.18 / 0.25 homes, 0.20 / 0.30 / 0.40 offices) | DEF-03, only when there are neither measured openings nor a vision reading | not sourced | result flagged; the ask rule of the master spec should fire |
 | Exterior wall from the footprint perimeter × scanned share when the scan has no wall graph | DEF-12 | a modelling rule, no source; a suite's facade is not in proportion to its area in general | result flagged; `geometry.envelope_source` at confidence 0.2 |
+| Mid-building storey for a generically labelled suite floor, and the 0.95 share threshold | DEF-13 | a modelling rule, no source; the scan does not say the storey | result flagged; `geometry.storey` at confidence 0.3 |
+| The 36° N latitude line for a missing climate zone in CA and TX | DEF-03 `WIN_REPLACE` | a fallback, no source | the card warns that the zone was missing |
 | Office lighting power density after an LED retrofit (6.5 W/m²) and any 90.1 or Title 24 value after 2004 | DEF-10, `LGT_LED` | ASHRAE 90.1-2010 and later and Title 24 Part 6 lighting tables not opened | `LGT_LED` target is a measure parameter that the finance and measure library must source |
 | Savings fractions for lighting controls, the plug-load floor for `PLUG_MGMT`, the leakage reduction for `ENV_AIRSEAL`, the setback depth for `CTRL_TSTAT` | LGT-01, LGT-02, DEF-04, DEF-08 | no source opened | each is a measure parameter; this file gives only the physics that turns the parameter into energy |
 | Economizer high-limit temperatures and economizer requirements by climate zone (ASHRAE 90.1 section 6.5.1) | INF-06 | paywalled | `theta_limit` is a parameter; a default of 21 °C was used only in the worked example |
@@ -1627,7 +1655,7 @@ Pass 1 was the writing of each entry from the opened source. Pass 2 re-opened th
 | LGT-03 | S10 Tables 25, 48, eqs. (23), (24) | S1 §10; S8 zone internal gains | 2026-11-14 | pass | `dhw.py` and by hand |
 | DEF-01 | S17 tsv; S6 Tables 4.2.1, 4.3.1 | S10 Tables 29, 30 | 2026-11-14 | pass; R-7 values computed or interpolated (tier B) | `rs.py`; conversions by script; ENV-02 reproduces the published R-11 and R-13 walls |
 | DEF-02 | S10 Table 33, Table 5 | S13 roof colour defaults | 2026-11-14 | pass | read directly |
-| DEF-03 | S17 Table 69 and `Windows.tsv` | S11 Tables 24, 25 (offices) | 2026-11-14 | pass; first draft used modal types and was replaced by the percentile calculation | `rs2.py` |
+| DEF-03 | S17 Table 69 and `Windows.tsv`; S18 Tables R402.1.2, C402.4 (replacement glazing) | S11 Tables 24, 25 (offices); for R402.1.2, two restatements | 2026-11-14 | pass; first draft used modal types and was replaced by the percentile calculation; IECC model text read through an adopted copy | `rs2.py` |
 | DEF-04 | S17 `Infiltration.tsv` | S10 (benchmark 7 ACH50) | 2026-11-14 | pass | `rs.py` |
 | DEF-05 | S10 Tables 34, 35; S15 | S11 Tables 31, 34 | 2026-11-14 | pass; replacement rule is a judgment (tier B) | conversions by script |
 | DEF-06 | S17 `Duct Leakage and Insulation.tsv`, Table 112 | S10 (benchmark 15 % leakage) | 2026-11-14 | pass | `rs.py` |
@@ -1688,7 +1716,7 @@ Also requested: make `Systems.hvac_type` a closed list, `Literal["central_ac_fur
 6. `ClimateSite.weather_path` must supply, hourly: dry-bulb temperature, humidity ratio (or dew point and pressure), wind speed, and if available sky temperature or horizontal infrared radiation. Plane irradiance comes from physics 01 (IRR-10).
 7. A window `Surface` is built from an `Opening` with `type == "window"`. A `"doorway"` on an exterior edge becomes a `door` surface. Still open on the Data lane and immaterial here: which vertex `relative_center` is measured from.
 8. `rentable_area_m2` must not be used in physics. Envelope and loads use measured Matterport areas for the scanned unit and `building_area_m2` for whole-building scaling.
-9. `MeasureResult.formula_ids` are the entry IDs of this file (`ENV-01` … `DEF-12`).
+9. `MeasureResult.formula_ids` are the entry IDs of this file (`ENV-01` … `DEF-13`).
 
 **Measure library, section 6.2:**
 

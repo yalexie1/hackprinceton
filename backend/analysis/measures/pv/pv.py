@@ -19,7 +19,8 @@ from typing import Callable, Literal, Optional, Sequence
 
 import numpy as np
 
-from backend.schema import BaselineResult, EnergyUse, Flag, MeasureResult, Ranged, SolarDesign, Tariff
+from backend.schema import (BaselineResult, EnergyUse, FetchRecord, Flag, MeasureResult, Ranged, SolarDesign,
+                           Tariff)
 
 Regime = Literal["net_metering", "net_billing", "none"]
 
@@ -188,6 +189,28 @@ def _skip(design: Optional[SolarDesign], reason: str, flags: list[Flag]) -> Meas
                          not_applicable_reason=reason, flags=flags)
 
 
+# ---------------------------------------------------------------- roof extent (D16)
+
+EXTENT_RECORD = "property/extract:extent"
+
+
+def extent_warnings(provenance: Sequence[FetchRecord]) -> list[str]:
+    """A larger roof outline at the same property (D16), as a PV_ROOF warning.
+
+    The design roof is the structure whose footprint matches CoStar's floor plate (the
+    tower on a tower-and-podium site). Other aerial captures can outline a larger extent,
+    sometimes with panels already on it; that changes the possible system size and
+    whether solar is already there, so the result says so instead of hiding it.
+    """
+    out = []
+    for r in provenance:
+        if r.layer == "vexcel" and r.what == EXTENT_RECORD:
+            out.append("The solar design uses the building whose footprint matches CoStar's floor area per "
+                       "storey; aerial captures also outline a larger roof at this property. "
+                       + (r.detail or "").replace("**", ""))
+    return out
+
+
 # ---------------------------------------------------------------- the measure
 
 def evaluate_pv(design: SolarDesign, baseline: BaselineResult, tariff: Tariff, *,
@@ -197,7 +220,8 @@ def evaluate_pv(design: SolarDesign, baseline: BaselineResult, tariff: Tariff, *
                 existing_solar: bool = False,
                 state: Optional[str] = None,
                 electricity_price: Optional[Ranged] = None,
-                export_price: Optional[Ranged] = None) -> MeasureResult:
+                export_price: Optional[Ranged] = None,
+                provenance: Sequence[FetchRecord] = ()) -> MeasureResult:
     """``PV_ROOF`` as a ``MeasureResult`` with ``savings`` and ``solar`` filled, finance empty.
 
     design             the layout (A14); ``annual_kwh`` is the PV-09 production range.
@@ -212,6 +236,7 @@ def evaluate_pv(design: SolarDesign, baseline: BaselineResult, tariff: Tariff, *
     state              "CA" or "TX", picks the eGRID subregion (EMI-01).
     electricity_price  the ``tariff.electricity_usd_per_kwh`` assumption as a range, if any.
     export_price       an export price range, e.g. the user's Texas buy-back rate.
+    provenance         the bundle's FetchRecords; a D16 extent disagreement becomes a warning.
     """
     design_flags = [design.electrical, design.structural]
     all_flags = design_flags + [f for f in flags if f not in design_flags]
@@ -333,6 +358,7 @@ def evaluate_pv(design: SolarDesign, baseline: BaselineResult, tariff: Tariff, *
         fw = _flag_warning(fl)
         if fw:
             warnings.append(fw)
+    warnings += extent_warnings(provenance)
 
     savings = EnergyUse(
         electricity_kwh=_r(*e_pv, "kWh"),

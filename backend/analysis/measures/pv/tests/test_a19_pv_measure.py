@@ -157,6 +157,22 @@ def test_existing_solar_is_already_done():
     assert not m.applicable and m.not_applicable_reason.startswith("Already done")
 
 
+def test_a_larger_roof_outline_at_the_property_is_a_warning():
+    # D16: other captures outline the podium (2,938 m2, with panels) around the plate-matched tower.
+    from backend.schema import FetchRecord
+    rec = FetchRecord(layer="vexcel", what="property/extract:extent", status="fallback",
+                      detail="1 other capture(s) outline what looks like the same building at 2,938 to 2,938 m2 "
+                             "against the chosen 1,566 m2. **1 of them report rooftop solar where the chosen "
+                             "capture does not**")
+    other = FetchRecord(layer="vexcel", what="property/extract", status="ok")
+    m = evaluate_pv(_design(), _baseline(), _tariff(regime="net_billing"), provenance=[other, rec])
+    hits = [w for w in m.warnings if "larger roof" in w]
+    assert len(hits) == 1 and "2,938" in hits[0] and "**" not in hits[0]
+    m0 = evaluate_pv(_design(), _baseline(), _tariff(regime="net_billing"), provenance=[other])
+    assert not [w for w in m0.warnings if "larger roof" in w]
+    assert m.savings == m0.savings          # a warning only: the design roof is unchanged
+
+
 def test_empty_design_is_not_applicable():
     m = evaluate_pv(_design(e_pv=(0.0, 0.0, 0.0), panels=0), _baseline(), _tariff(regime="net_billing"))
     assert not m.applicable

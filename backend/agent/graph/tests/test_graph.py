@@ -76,3 +76,35 @@ def test_other_rules():
     b.matterport.matterpak_available = False
     keys = {e.payload["fallback"] for e in detect_fallbacks(b)}
     assert {"no_costar", "matterpak_locked", "no_window_openings"} <= keys   # office has doorways only
+
+
+# ---- the prompts ----
+
+def test_the_prompts_state_the_order_and_the_measure_ids():
+    from backend.agent.graph.graph import (AUDITOR_PROMPT, HOME_MEASURES, OFFICE_MEASURES, _JOBS)
+    order = [AUDITOR_PROMPT.index(w) for w in ("scout:", "surveyor:", "physicist:", "financier:", "report.md")]
+    assert order == sorted(order)
+    assert "build_plan is required" in AUDITOR_PROMPT and "ask_user" in AUDITOR_PROMPT and "arithmetic" in AUDITOR_PROMPT
+    assert all(m in _JOBS["physicist"] for m in HOME_MEASURES + OFFICE_MEASURES)
+    assert "build_plan is required" in _JOBS["financier"] and "never before the model exists" in _JOBS["surveyor"]
+    assert set(_JOBS) == {"scout", "surveyor", "physicist", "financier"}
+
+
+def test_the_measure_lists_are_the_engines_flows():
+    """The prompt lists must not drift from the analysis lane's catalogue (SPEC 6.2)."""
+    from backend.agent.graph.graph import HOME_MEASURES, OFFICE_MEASURES
+    from backend.analysis.measures import engine
+    home = {m for m, e in engine.CATALOGUE.items() if "home" in e.flows}
+    office = {m for m, e in engine.CATALOGUE.items() if "office" in e.flows}
+    assert set(HOME_MEASURES) == home and set(OFFICE_MEASURES) == office
+
+
+def test_the_run_prompt_names_the_task_and_what_finishes_it():
+    from pathlib import Path as P
+    from backend.agent import live
+    from backend.schema import RunRequest
+    req = RunRequest.model_validate_json((EX / "house" / "run_request.json").read_text())
+    run = live.LiveRun.__new__(live.LiveRun)
+    run.request = req
+    text = live.LiveRun._prompt(run)
+    assert req.sid in text and "build_plan has returned" in text and "report.md" in text

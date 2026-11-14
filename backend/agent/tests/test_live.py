@@ -45,18 +45,18 @@ def request(flavor="house") -> RunRequest:
     return RunRequest.model_validate_json((EXAMPLES / flavor / "run_request.json").read_text())
 
 
-def script(sid, ask=True, plan=True, bad_tool=False):
+def script(sid, ask=True, plan=True, bad_tool=False, final=("The audit is complete.",)):
     orchestrator = [call("write_todos", todos=[{"content": "audit", "status": "in_progress"}]),
                     task("scout"), task("surveyor"), task("physicist"), task("financier")]
     if ask:
         orchestrator.append(call("ask_user"))
-    orchestrator.append(AIMessage(content="The audit is complete."))
+    orchestrator.extend(AIMessage(content=text) for text in final)
     subagents = [
         call("get_property_bundle", sid=sid), AIMessage(content="ingested"),
         call("observe_interior"), call("build_building_model"), AIMessage(content="modelled"),
         call("run_baseline"), call("evaluate_measure", measure_id="LGT_LED"),
-        *([call("evaluate_measure", measure_id="NOT_A_MEASURE")] if bad_tool else []),
         AIMessage(content="evaluated"),
+        *([call("price_measure", measure_id="HVAC_ECON")] if bad_tool else []),     # a valid id, never evaluated
         call("price_measure", measure_id="LGT_LED"), call("sensitivity"),
         *([call("build_plan")] if plan else []),
         AIMessage(content="planned"),
@@ -385,8 +385,9 @@ def test_a_failing_tool_becomes_a_run_event(live_mode):
     api.answer(run_id, "q_service_amps", 100.0)
     events = drain(run_id)
     errors = [e for e in events if e.type == "error"]
-    assert any("evaluate_measure failed" in e.message and e.stage == "S6" for e in errors)
-    assert events[-1].type == "done" and any("evaluate_measure failed" in w for w in api.get_run(run_id).warnings)
+    assert any("price_measure failed" in e.message and "call evaluate_measure" in e.message and e.stage == "S7"
+               for e in errors)
+    assert events[-1].type == "done" and any("price_measure failed" in w for w in api.get_run(run_id).warnings)
 
 
 def test_the_runtime_builds_the_plan_the_agent_did_not(live_mode):
@@ -419,3 +420,37 @@ def test_a_traced_run_keeps_the_ids_that_find_its_trace(monkeypatch, tmp_path):
     assert saved["trace_id"] == str(run.trace_id) and saved["project"] == "proj" and saved["run_id"] == "run_ids"
     assert "LANGSMITH_API_KEY" not in json.dumps(saved) and "k" != saved.get("key")
     monkeypatch.setenv("LANGSMITH_API_KEY", "")
+
+
+# ---- the summary may not state a number no tool returned ----
+
+def _drive(live_mode, **script_kwargs):
+    req = request()
+    live_mode(req, **script_kwargs)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    return run_id, run, drain(run_id)
+
+
+def test_a_summary_with_an_invented_number_is_sent_back_once_and_then_passes(live_mode):
+    run_id, run, events = _drive(live_mode, final=("Savings are 98,765 dollars a year.", "Savings come from the plan."))
+    repair = [e for e in events if e.type == "fallback" and e.payload.get("fallback") == "narrative_repair"]
+    assert len(repair) == 1 and any("98,765" in p for p in repair[0].payload["problems"])
+
+    assert (run.files.root / "report.md").read_text() == "Savings come from the plan."
+    assert not any("check_narrative" in e.message for e in events if e.type == "error") and events[-1].type == "done"
+
+
+def test_a_summary_that_is_still_wrong_loses_the_offending_lines(live_mode):
+    run_id, run, events = _drive(live_mode, final=("Intro.\nSavings are 98,765 dollars a year.", "Intro.\nStill 98,765 dollars."))
+    text = (run.files.root / "report.md").read_text()
+    assert "98,765" not in text and "Intro." in text
+    assert any("check_narrative: removed 1 line" in e.message for e in events if e.type == "error")
+    assert any("removed 1 line" in w for w in api.get_run(run_id).warnings)
+
+
+def test_a_clean_summary_costs_no_extra_turn(live_mode):
+    run_id, run, events = _drive(live_mode, final=("The audit is complete.",))
+    assert not [e for e in events if e.payload.get("fallback") == "narrative_repair"]

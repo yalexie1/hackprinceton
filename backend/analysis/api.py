@@ -151,7 +151,12 @@ def price_measure(bundle: PropertyBundle, measure: MeasureResult) -> MeasureResu
         return measure
     summary = bundle.summary
     try:
-        costs = cost_fields(measure, summary)
+        # `Tariff.utility` is resolved by the data lane from the Census
+        # incorporated-place layer (D14), so the LADWP and CenterPoint registry
+        # entries no longer key on the CoStar city field - a *mailing* city, right
+        # 14/14 for Los Angeles but only 9 of 16 for Houston. An unnamed utility is
+        # unconfirmed and gets no utility-specific incentive, per the lead.
+        costs = cost_fields(measure, summary, utility=bundle.tariff.utility)
     except NoCostData as err:
         if err.code == "no_quantity":
             stub = _measure(summary.sid, measure.measure_id)
@@ -175,6 +180,10 @@ def lookup_incentives(measure_id: MeasureId, summary: PropertySummary) -> list[I
     """REAL (A24). The measure's parameters come from the stub engine's result until A16."""
     found = _measure(summary.sid, measure_id) or MeasureResult(measure_id=measure_id, title=measure_id,
                                                                applicable=True)
+    # No bundle here, so no resolved utility: this door function takes a summary by
+    # workplan 3.2. `incentives_for` falls back to the city field and warns. The
+    # load-bearing path is `price_measure`, which has the bundle and passes
+    # `Tariff.utility` through - see the note on `utility_of`.
     return incentives_for(found, summary)
 
 
@@ -240,13 +249,24 @@ def _after(base: EnergyUse, savings: list[EnergyUse]) -> EnergyUse:
 
 
 def cpace_scenario(bundle: PropertyBundle, measure: MeasureResult) -> FinancingScenario:
-    found = _measure(bundle.summary.sid, measure.measure_id)
-    for scenario in (found.finance.financing if found and found.finance else []):
-        if scenario.kind == "cpace":
-            return scenario
-    return FinancingScenario(kind="cpace", eligible=False,
-                             net_cashflow_year1_usd=Ranged(low=0, expected=0, high=0, unit="USD"),
-                             notes=["A0 stub: this example has no C-PACE scenario"])
+    """REAL (A28) for the eligibility rules; the **payment** still needs a market quote,
+    because `config.CPACE_RATE` and `CPACE_TERM_YEARS` are deliberately `None`.
+
+    `in_pace_region` comes from the data lane's Census incorporated-place lookup (D14),
+    not from the CoStar city field: Texas PACE lists the City of Houston, and of 16
+    CoStar-"Houston" properties only 9 are in it - 6 are unincorporated Harris County
+    and 1 is Nassau Bay. `None` from that lookup means "could not check", which A28
+    treats as not eligible, and the note says which it was.
+    """
+    from backend.analysis.finance.cpace import cpace_scenario as a28
+    from backend.data_layer import api as data
+
+    summary = bundle.summary
+    try:
+        in_region = data.in_pace_region(summary.sid)
+    except Exception:
+        in_region = None          # the lookup is a courtesy service, never fatal
+    return a28(measure, summary, in_pace_region=in_region)
 
 
 def sensitivity(bundle: PropertyBundle, model: BuildingModel,

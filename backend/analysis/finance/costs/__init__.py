@@ -29,14 +29,17 @@ class CostFields:
 
 
 def cost_fields(measure: MeasureResult, summary: PropertySummary, quantity: Optional[float] = None,
-                extra: Optional[dict] = None) -> CostFields:
+                extra: Optional[dict] = None, utility: Optional[str] = None) -> CostFields:
+    """`utility` is `Tariff.utility`, resolved by the data lane from the Census
+    incorporated-place layer. Without it the incentive lookup falls back to guessing
+    from the CoStar city field, which is a mailing city - see `utility_of`."""
     q = quantity if quantity is not None else quantity_of(measure)
     if q is None:
         measure_cost(measure.measure_id, 1.0, summary.segment)     # a measure with no cost source says so first
         raise NoCostData("no_quantity", f"{measure.measure_id}: the quantity to price is unknown")
     cost, source = measure_cost(measure.measure_id, q, summary.segment)
     years, status = useful_life(measure.measure_id, summary.segment)
-    incentives = incentives_for(measure, summary, q, cost, extra)
+    incentives = incentives_for(measure, summary, q, cost, extra, utility=utility)
     notes = [] if status == "verified" else [
         f"useful life of {years} years is {status} (physics 04 COST-02)"]
     return CostFields(cost, source, years, annual_om_change(measure.measure_id, q), incentives,

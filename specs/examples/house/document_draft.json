@@ -14,37 +14,43 @@
   ],
   "statutory_checks": [
     {
-      "requirement": "CA-HIC-07: heading identifying the contract type, \"Home Improvement.\"",
+      "requirement_id": "CA-HIC-07",
+      "requirement": "Heading identifying the contract type, \"Home Improvement.\"",
       "citation": "BPC 7159(d)(3)",
       "satisfied": true,
       "note": "Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
     },
     {
-      "requirement": "CA-HIC-05: contractor name, business address and licence number",
+      "requirement_id": "CA-HIC-05",
+      "requirement": "Contractor name, business address and licence number",
       "citation": "BPC 7159(d)(1)",
       "satisfied": false,
       "note": "contractor_name, contractor_business_address and contractor_license_number are blank. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
     },
     {
-      "requirement": "CA-HIC-09: heading \"Contract Price,\" followed by the amount in dollars and cents",
+      "requirement_id": "CA-HIC-09",
+      "requirement": "Heading \"Contract Price,\" followed by the amount in dollars and cents",
       "citation": "BPC 7159(d)(5); 7159.5(a)(1)",
       "satisfied": false,
       "note": "contract_price_usd is blank. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
     },
     {
-      "requirement": "CA-HIC-13: downpayment may not exceed $1,000 or 10 percent of the contract amount, whichever is less",
+      "requirement_id": "CA-HIC-13",
+      "requirement": "Downpayment may not exceed $1,000 or 10 percent of the contract amount, whichever is less",
       "citation": "BPC 7159.5(a)(3), (b)(1)",
       "satisfied": false,
       "note": "contract_price_usd and down_payment_usd are blank, so the cap cannot be checked. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
     },
     {
-      "requirement": "CA-HIC-02: contract and every change in writing and signed by the parties before the work it covers starts",
+      "requirement_id": "CA-HIC-02",
+      "requirement": "Contract and every change in writing and signed by the parties before the work it covers starts",
       "citation": "BPC 7159(d)",
       "satisfied": true,
       "note": "Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."
     },
     {
-      "requirement": "CA-CXL-01: three-business-day right to cancel a home solicitation contract",
+      "requirement_id": "CA-CXL-01",
+      "requirement": "Three-business-day right to cancel a home solicitation contract",
       "citation": "CIV 1689.6(a)(2)",
       "satisfied": false,
       "note": "Heading present; the statutory notice wording is not yet inserted. Requirement id and citation from specs/legal/california.md section 2; the satisfied value is illustrative."

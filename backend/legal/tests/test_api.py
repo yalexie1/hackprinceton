@@ -80,7 +80,9 @@ def test_nothing_is_offered_that_has_no_template_file():
 
 
 def test_a_request_with_no_template_is_refused_rather_than_faked():
-    for doc_type in ("retrofit_contract_commercial", "cpace_package", "bid_package_rfp"):
+    # Not `cpace_package`: L6 gave it templates in both states. These three have none.
+    for doc_type in ("bid_package_rfp", "solar_installation_agreement",
+                     "energy_savings_guarantee"):
         with pytest.raises(LookupError) as caught:
             api.fill_template(_request(doc_type, "CA"), _run())
         assert doc_type in str(caught.value)

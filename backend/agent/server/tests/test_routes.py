@@ -266,7 +266,11 @@ def test_a_document_from_a_recorded_run_carries_its_statutory_checklist(recorded
 def test_a_document_type_with_no_template_is_a_404_not_a_500(recorded_run):
     """The legal door raises LookupError rather than relabelling another document. The
     route had no handler for it, so it surfaced as an Internal Server Error."""
-    for doc_type in ("retrofit_contract_commercial", "cpace_package"):
+    # The set of templated documents grows: L4 added the commercial contract and L6 the
+    # C-PACE package, so this names three that still have none rather than three that
+    # happen not to today.
+    for doc_type in ("bid_package_rfp", "solar_installation_agreement",
+                     "energy_savings_guarantee"):
         body = {"run_id": recorded_run, "doc_type": doc_type, "state": "CA",
                 "measure_ids": ["ENV_ATTIC"], "fields": {}}
         r = client.post(f"/api/runs/{recorded_run}/documents", json=body)

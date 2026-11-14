@@ -40,7 +40,10 @@ def by_rule(d):
 def test_the_texas_template_is_registered_and_offered():
     assert ("retrofit_contract_residential", "TX") in REGISTRY
     assert engine.list_templates(REGISTRY, "TX", "residential") == ["retrofit_contract_residential"]
-    assert engine.list_templates(REGISTRY, "TX", "commercial") == []
+    # Not `== []`: L6 added the Texas C-PACE package, which is commercial-only. What
+    # matters for document 1T is that a *residential* contract is never offered to a
+    # commercial property, not that nothing else is.
+    assert "retrofit_contract_residential" not in engine.list_templates(REGISTRY, "TX", "commercial")
 
 
 def test_every_cited_id_exists_in_texas_md():

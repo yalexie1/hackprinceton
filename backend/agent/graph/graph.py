@@ -70,16 +70,21 @@ def subagent_specs(tools: Mapping[str, Callable], model: Any = None) -> list[dic
 
 
 def build_auditor(tools: Mapping[str, Callable], model: Any = None, subagent_model: Any = None,
-                  checkpointer: Any = None, ask_user: Optional[Callable] = None):
+                  checkpointer: Any = None, ask_user: Optional[Callable] = None,
+                  with_counsel: bool = False, approve: Optional[Callable] = None):
     from deepagents import create_deep_agent
     from langchain.agents.middleware import TodoListMiddleware   # SPEC 8 [U]: add explicitly
 
     ask = ask_user or make_ask_user()
+    specs = subagent_specs(tools, subagent_model)
+    if with_counsel:                     # G6: needs list_templates, fill_template, check_document
+        from backend.agent.graph.counsel import counsel_spec
+        specs.append(counsel_spec(tools, subagent_model, approve))
     return create_deep_agent(
         model=model if model is not None else ORCHESTRATOR_MODEL,
         tools=[as_langchain_tool("ask_user", ask)],
         system_prompt=AUDITOR_PROMPT,
         middleware=[TodoListMiddleware()],
-        subagents=subagent_specs(tools, subagent_model),
+        subagents=specs,
         checkpointer=checkpointer,
         name="auditor")

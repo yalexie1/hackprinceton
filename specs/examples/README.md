@@ -29,7 +29,7 @@ Every energy quantity (kWh used, kWh saved) is computed by the code from inputs 
 | `document_draft.json` | `DocumentDraft` | S9 Draft, Agent | returned by the two `documents` routes |
 | `plan_tenant.json`, `run_request_tenant.json` | `Plan`, `RunRequest` | as above | the same property run with `role: "tenant"`, to show measures skipped for the role |
 
-`search_results.json` (top level) is a `PropertySummary[]`, the response of `GET /api/properties/search`. It holds the three golden properties and four invented entries whose `sid` starts with `EXAMPLE`. The other models of the two office properties are not recorded on main, so none is listed.
+`search_results.json` (top level) is a `PropertySummary[]`, the response of `GET /api/properties/search`. It holds the three golden properties only (the four invented `EXAMPLE*` entries were removed on 2026-11-14 so that no invented property appears in the demo). The other models of the two office properties are not recorded on main, so none is listed.
 
 ## 2. Which values are real, which are published, which are illustrative
 

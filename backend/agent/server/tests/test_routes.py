@@ -71,3 +71,44 @@ def test_document_errors_and_validation():
     r = client.post("/api/runs", json={"bad": 1})
     assert r.status_code == 422 and "error" in r.json()
     assert client.get("/api/assets/x/y.jpg").status_code == 404
+
+
+# ---- G8: routes on the data door ----
+
+def test_search_passes_all_seven_parameters(monkeypatch):
+    from backend.data_layer import api as data
+    seen = {}
+
+    def fake(**kw):
+        seen.update(kw)
+        return []
+
+    monkeypatch.setattr(data, "search_properties", fake)
+    r = client.get("/api/properties/search", params={
+        "q": "west", "segment": "commercial", "use_type": "office", "lat": 29.7,
+        "lon": -95.4, "radius_m": 500, "limit": 3})
+    assert r.status_code == 200 and r.json() == []
+    assert seen == {"q": "west", "segment": "commercial", "use_type": "office",
+                    "lat": 29.7, "lon": -95.4, "radius_m": 500.0, "limit": 3}
+
+
+def test_search_rejects_unknown_enum():
+    r = client.get("/api/properties/search", params={"segment": "industrial"})
+    assert r.status_code == 422 and set(r.json()["error"]) == {"code", "message"}
+
+
+def test_unknown_sid_is_404():
+    r = client.get("/api/properties/does-not-exist")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "property_not_found"
+
+
+def test_asset_outside_cache_is_404(monkeypatch):
+    from backend.data_layer import api as data
+    assert client.get("/api/assets/..%2F..%2Fetc%2Fpasswd").status_code == 404
+    assert client.get("/api/assets/%2Fetc%2Fpasswd").status_code == 404
+    r = client.get("/api/assets/not/cached.jpg")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "asset_not_found"
+    monkeypatch.setattr(data, "get_asset", lambda path: b"\xff\xd8img")
+    ok = client.get("/api/assets/roof/a.jpg")
+    assert ok.status_code == 200 and ok.content == b"\xff\xd8img"
+    assert ok.headers["content-type"] == "image/jpeg"

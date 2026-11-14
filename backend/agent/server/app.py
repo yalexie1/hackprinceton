@@ -1,22 +1,20 @@
-"""FastAPI app for SPEC 10. G7 skeleton: every route answers from the G0 run door
-(which replays fixtures) and from specs/examples/search_results.json."""
+"""FastAPI app for SPEC 10. Run and document routes answer from the run door
+(backend/agent/api.py); search, property and asset routes from the data door."""
 from __future__ import annotations
 
-import json
-from pathlib import Path
+import mimetypes
 from typing import Optional, Union
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.agent import api
+from backend.data_layer import api as data
 from backend.schema import (SCHEMA_VERSION, DocumentDraft, DocumentRequest, PropertySummary,
-                            RunRequest, RunResult)
-
-_SEARCH = Path(__file__).resolve().parents[3] / "specs" / "examples" / "search_results.json"
+                            RunRequest, RunResult, Segment, UseType)
 
 _CODES = {400: "bad_request", 404: "not_found", 422: "invalid_request"}
 
@@ -34,10 +32,6 @@ class PatchBody(BaseModel):
 class ApiError(Exception):
     def __init__(self, status: int, code: str, message: str):
         self.status, self.code, self.message = status, code, message
-
-
-def _summaries() -> list[PropertySummary]:
-    return [PropertySummary.model_validate(p) for p in json.loads(_SEARCH.read_text())]
 
 
 def create_app() -> FastAPI:
@@ -70,22 +64,19 @@ def create_app() -> FastAPI:
         return {"status": "ok", "schema_version": SCHEMA_VERSION}
 
     @app.get("/api/properties/search", response_model=list[PropertySummary])
-    def search(q: str = "", segment: Optional[str] = None, use_type: Optional[str] = None,
-               lat: Optional[float] = None, lon: Optional[float] = None,
-               radius_m: Optional[float] = None, limit: int = 20):
-        needle = q.lower()
-        hits = [p for p in _summaries()
-                if (not needle or needle in f"{p.name} {p.address}".lower())
-                and (segment is None or p.segment == segment)
-                and (use_type is None or p.use_type == use_type)]
-        return hits[:max(limit, 0)]
+    def search(q: Optional[str] = None, segment: Optional[Segment] = None,
+               use_type: Optional[UseType] = None, lat: Optional[float] = None,
+               lon: Optional[float] = None, radius_m: Optional[float] = None,
+               limit: int = 20):
+        return data.search_properties(q=q, segment=segment, use_type=use_type, lat=lat,
+                                      lon=lon, radius_m=radius_m, limit=limit)
 
     @app.get("/api/properties/{sid}", response_model=PropertySummary)
     def property_by_sid(sid: str):
-        for p in _summaries():
-            if p.sid == sid:
-                return p
-        raise ApiError(404, "property_not_found", f"unknown sid: {sid}")
+        try:
+            return data.get_property_summary(sid)
+        except LookupError:
+            raise ApiError(404, "property_not_found", f"unknown sid: {sid}")
 
     @app.post("/api/runs")
     def create_run(request: RunRequest):
@@ -134,7 +125,11 @@ def create_app() -> FastAPI:
 
     @app.get("/api/assets/{path:path}")
     def get_asset(path: str):
-        # No assets exist before the Data lane's get_asset door is live.
-        raise ApiError(404, "asset_not_found", f"no asset at {path}")
+        # A path outside the cache and a missing file are both "no such asset" (404).
+        try:
+            body = data.get_asset(path)
+        except (ValueError, FileNotFoundError):
+            raise ApiError(404, "asset_not_found", f"no asset at {path}")
+        return Response(body, media_type=mimetypes.guess_type(path)[0] or "application/octet-stream")
 
     return app

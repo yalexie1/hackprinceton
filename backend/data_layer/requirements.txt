@@ -1,0 +1,5 @@
+# Data lane dependencies (backend/data_layer/).
+# Owned by the holder of package D5; other agents name new packages in their PR.
+pydantic>=2.7
+httpx>=0.27          # Matterport GraphQL, Vexcel, Open-Meteo, PVGIS, EIA, URDB
+pytest>=8

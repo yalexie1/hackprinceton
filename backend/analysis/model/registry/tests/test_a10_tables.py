@@ -56,3 +56,20 @@ def test_type_rows_cover_every_year_once():
 
 def test_placeholders_are_marked():
     assert T.HOME_LPD_PLACEHOLDER.placeholder and T.HOME_PPD_PLACEHOLDER.placeholder
+
+
+def _covering(rows, year):
+    hits = [r for r in rows
+            if (r.start is None or r.start <= year) and (r.end is None or year <= r.end)]
+    assert len(hits) == 1, (year, hits)
+    return hits[0]
+
+
+@pytest.mark.parametrize("name", ["OFFICE_LPD", "OFFICE_PPD", "OFFICE_LEAKAGE_75PA"])
+def test_a_2004_building_takes_the_older_row(name):
+    # physics 02, year boundaries: the year printed at the end of a range belongs to it,
+    # so 2004 takes the "2004 or earlier" row and the newer row starts in 2005
+    rows = getattr(T, name)
+    assert _covering(rows, 2004) is _covering(rows, 1990)
+    assert _covering(rows, 2005) is _covering(rows, 2020)
+    assert _covering(rows, 2004) is not _covering(rows, 2005) or len(rows) == 1

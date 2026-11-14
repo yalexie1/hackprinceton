@@ -232,9 +232,9 @@ SETPOINTS = {
 # ---------- DEF-10 lighting and plug power density (offices) ----------
 
 OFFICE_LPD: list[Row] = [
-    Row(None, 2003, 10.76, 19.48, 19.48, "DEF-10", "office built before 2004, lighting not yet upgraded",
+    Row(None, 2004, 10.76, 19.48, 19.48, "DEF-10", "office built in 2004 or earlier, lighting not yet upgraded",
         (1.0, 1.81, 1.81), W_FT2_TO_W_M2),
-    Row(2004, None, 6.5, 10.76, 10.76, "DEF-10", "office built 2004 or later; 6.5 is a placeholder (tier A)",
+    Row(2005, None, 6.5, 10.76, 10.76, "DEF-10", "office built 2005 or later; 6.5 is a placeholder (tier A)",
         None, W_FT2_TO_W_M2),
 ]
 OFFICE_PPD: list[Row] = [
@@ -296,8 +296,8 @@ OFFICE_WINDOW_SHGC = [
 # ---------- INF-05 office leakage and outdoor air ----------
 
 OFFICE_LEAKAGE_75PA: list[Row] = [
-    Row(None, 2003, 2.0, 7.5, 7.5, "INF-05", "built before 2004"),
-    Row(2004, None, 2.0, 2.0, 2.0, "INF-05", "built 2004 or later"),
+    Row(None, 2004, 2.0, 7.5, 7.5, "INF-05", "built in 2004 or earlier"),
+    Row(2005, None, 2.0, 2.0, 2.0, "INF-05", "built 2005 or later"),
 ]
 OFFICE_M2_PER_PERSON = 18.59          # INF-05, LGT-03 (S11 Table 4)
 OUTDOOR_AIR_M3_S_PER_PERSON = 0.00944  # INF-05, 20 cfm

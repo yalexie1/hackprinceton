@@ -1,0 +1,4 @@
+# Analysis lane dependencies. Owned by the holder of package A0 (@Sri-SriPod); other
+# packages name the libraries they need in their PR and A0's owner adds them here.
+pydantic>=2.7
+pytest>=8

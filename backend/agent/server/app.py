@@ -89,7 +89,11 @@ def create_app() -> FastAPI:
 
     @app.post("/api/runs")
     def create_run(request: RunRequest):
-        return {"run_id": api.start_run(request)}
+        from backend.agent.live import LiveDataUnavailable
+        try:
+            return {"run_id": api.start_run(request)}
+        except LiveDataUnavailable as err:        # loud and early: never a quiet fall back to the example
+            raise ApiError(503, "live_data_unavailable", str(err))
 
     @app.get("/api/runs/{run_id}/events")
     async def run_events(run_id: str):

@@ -699,15 +699,92 @@ def test_a_live_run_with_the_real_doors_uses_live_data_and_a_test_with_fake_door
     """Without DATA_LAYER_LIVE the data layer returns the example bundle, so a 'live' recording would be of the
     fixtures. Real doors turn it on; fake doors (every test) leave the environment alone."""
     monkeypatch.delenv("DATA_LAYER_LIVE", raising=False)
-    live.LiveRun("run_fake", request(), live.LiveSettings(runs_dir=tmp_path, doors=stub_doors()))
+    for key in live.LIVE_DATA_KEYS:
+        monkeypatch.setenv(key, "set-for-this-test")
+    live.use_live_data(live.LiveSettings(runs_dir=tmp_path, doors=stub_doors()))
     assert "DATA_LAYER_LIVE" not in os.environ
-    live.LiveRun("run_real", request(), live.LiveSettings(runs_dir=tmp_path))
+    live.use_live_data(live.LiveSettings(runs_dir=tmp_path))
     assert os.environ["DATA_LAYER_LIVE"] == "1"
     os.environ["DATA_LAYER_LIVE"] = "0"       # an explicit choice is kept (the conftest restores the variable)
-    live.LiveRun("run_real2", request(), live.LiveSettings(runs_dir=tmp_path))
+    live.use_live_data(live.LiveSettings(runs_dir=tmp_path))
     assert os.environ["DATA_LAYER_LIVE"] == "0"
 
 
 def test_the_environment_keys_a_live_run_needs_are_picked_up_from_dotenv():
     for key in ("ANTHROPIC_API_KEY", "EIA_API_KEY", "MATTERPORT_API_KEY", "MATTERPORT_API_TOKEN", "VEXCEL_API_KEY"):
         assert key in live._ENV_KEYS
+
+
+def test_live_data_with_a_missing_key_fails_before_the_run_not_by_falling_back_to_the_example(tmp_path):
+    env = {"DATA_LAYER_LIVE": "1", "MATTERPORT_API_KEY": "x", "VEXCEL_API_KEY": "y"}
+    with pytest.raises(live.LiveDataUnavailable) as caught:
+        live.require_live_data_keys(env)
+    assert "MATTERPORT_API_TOKEN" in str(caught.value) and "EIA_API_KEY" in str(caught.value)
+    assert "=x" not in str(caught.value) and "'x'" not in str(caught.value)    # names only, never a value
+    live.require_live_data_keys({**env, "MATTERPORT_API_TOKEN": "t", "EIA_API_KEY": "e"})      # all set: fine
+    live.require_live_data_keys({"DATA_LAYER_LIVE": "0"})                                       # example data chosen: fine
+    live.require_live_data_keys({})                                                             # not asked: fine
+
+
+def test_a_live_run_with_the_real_doors_and_a_missing_key_refuses_to_start(tmp_path, monkeypatch):
+    for key in live.LIVE_DATA_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("DATA_LAYER_LIVE", raising=False)
+    with pytest.raises(live.LiveDataUnavailable):
+        live.use_live_data(live.LiveSettings(runs_dir=tmp_path))
+    monkeypatch.setattr(live, "SETTINGS", None)
+    monkeypatch.setenv("AGENT_MODE", "live")
+    with pytest.raises(live.LiveDataUnavailable):                     # and through the public entry, before any model call
+        api.start_run(request())
+
+
+def test_the_result_says_whether_it_ran_on_live_data_or_the_example_bundle():
+    from backend.agent.runtime.runtime import data_source_of
+    example = {"provenance": [{"layer": "matterport", "what": "bundle", "status": "fallback",
+                               "detail": "replayed from specs/examples/, not live data"}]}
+    assert data_source_of(example) == "example"
+    assert data_source_of({"provenance": [{"layer": "vexcel", "status": "ok"}]}) == "live"
+    assert data_source_of({}) == "live"
+
+
+def test_a_recorded_live_run_never_contains_a_key_value(live_mode, tmp_path, monkeypatch):
+    """Keys live in the process environment only: not in the run files, the recording, the events or the result."""
+    secrets = {"EIA_API_KEY": "sentinel-eia-7f3a", "MATTERPORT_API_KEY": "sentinel-mp-key-91c2",
+               "MATTERPORT_API_TOKEN": "sentinel-mp-token-5b8d", "VEXCEL_API_KEY": "sentinel-vx-3e6f",
+               "ANTHROPIC_API_KEY": "sentinel-an-2d4a", "LANGSMITH_API_KEY": "sentinel-ls-8c1b"}
+    for k, v in secrets.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.setenv("LANGSMITH_TRACING", "false")             # a made-up key must not make the run call the network
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    events = drain(run_id)
+    run._thread.join(timeout=30)
+    text = json.dumps([e.model_dump(mode="json") for e in events]) + api.get_run(run_id).model_dump_json()
+    assert not [v for v in secrets.values() if v in text]
+    files = [p for root in (tmp_path, live.demo_dir()) for p in Path(root).rglob("*") if p.is_file()]
+    assert files, "the run and its recording should have left files to check"
+    leaked = [str(p) for p in files if any(v.encode() in p.read_bytes() for v in secrets.values())]
+    assert not leaked, f"a key value was written to: {leaked}"
+    saved = json.loads((live.demo_dir() / req.sid / "result.json").read_text())
+    assert saved["served_by"] == "live" and saved["data_source"] in ("live", "example")
+
+
+def test_a_replayed_recording_says_replay_and_keeps_where_its_data_came_from(live_mode, monkeypatch):
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    drain(run_id)
+    run._thread.join(timeout=30)
+    recorded = api.get_run(run_id)
+    monkeypatch.delenv("AGENT_MODE")
+    replayed = api.get_run(api.start_run(req))
+    assert (recorded.served_by, replayed.served_by) == ("live", "replay")
+    assert replayed.data_source == recorded.data_source
+    assert replayed.data_source == "example"          # these tests run on the example bundle, and the result says so

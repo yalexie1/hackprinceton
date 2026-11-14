@@ -71,6 +71,26 @@ class LiveSettings:
 SETTINGS: Optional[LiveSettings] = None
 
 
+class LiveDataUnavailable(RuntimeError):
+    """A live run was asked for live data but the keys the data layer needs are not in the environment."""
+
+
+#: What the data layer needs to assemble a live bundle (names only; values are never printed or stored).
+LIVE_DATA_KEYS = ("MATTERPORT_API_KEY", "MATTERPORT_API_TOKEN", "VEXCEL_API_KEY", "EIA_API_KEY")
+
+
+def require_live_data_keys(env=None) -> None:
+    """Fail loudly, before any model call, when live data is switched on and a key is missing. The data layer
+    would otherwise hand back an error per tool or the example bundle, and the run would look like a live one."""
+    env = os.environ if env is None else env
+    if env.get("DATA_LAYER_LIVE") != "1":
+        return
+    missing = [k for k in LIVE_DATA_KEYS if not env.get(k)]
+    if missing:
+        raise LiveDataUnavailable("live data is on (DATA_LAYER_LIVE=1) but these keys are not set: "
+                                  + ", ".join(missing) + ". Set them, or run with DATA_LAYER_LIVE=0 for the example data.")
+
+
 _ENV_KEYS = ("ANTHROPIC_API_KEY", "LANGSMITH_API_KEY", "LANGSMITH_PROJECT", "LANGSMITH_TRACING",
              "LANGSMITH_ENDPOINT", "LANGSMITH_WORKSPACE_ID",
              # the data layer reads these from the environment (it does not read .env itself)
@@ -162,10 +182,6 @@ def _approval_question(proposal: dict) -> Question:
 class LiveRun:
     def __init__(self, run_id: str, request: RunRequest, settings: LiveSettings):
         self.run_id, self.request = run_id, request
-        if settings.doors is None:
-            # A real live run uses live data. Without this flag the data layer hands back the example bundle
-            # (and says so only in a provenance record), so a "live" recording would be of the fixtures.
-            os.environ.setdefault("DATA_LAYER_LIVE", "1")
         self.store = RunStore(settings.runs_dir or DEFAULT_RUNS_DIR)
         self.files = self.store.files(run_id)
         self.doors = settings.doors or default_doors()
@@ -655,10 +671,20 @@ class LiveRun:
 _RUNS: dict[str, LiveRun] = {}
 
 
+def use_live_data(settings: "LiveSettings") -> None:
+    """A real live run (the real doors) uses live data. Without the flag the data layer hands back the example
+    bundle and says so only in a provenance record, so a "live" recording would be of the fixtures. With the
+    flag on and a key missing the run is refused here, before any model call. Fake doors (tests) are left alone."""
+    if settings.doors is None:
+        os.environ.setdefault("DATA_LAYER_LIVE", "1")
+        require_live_data_keys()
+
+
 def start_run(request: RunRequest) -> str:
     _load_env()
     configure_tracing()
     settings = SETTINGS or LiveSettings()
+    use_live_data(settings)
     store = RunStore(settings.runs_dir or DEFAULT_RUNS_DIR)
     run = LiveRun(store.new_run_id(), request, settings)
     _RUNS[run.run_id] = run

@@ -121,6 +121,18 @@ def _resolved(bundle: PropertyBundle) -> PropertyBundle:
 
 
 
+def _numeric(value):
+    """A number written as text ("0.64", "1920") is a number. No categorical value of any assumption
+    is purely numeric, and an agent that passes an answer through a text field would otherwise turn a
+    numeric assumption into a categorical one."""
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except ValueError:
+            return value
+    return value
+
+
 def _with_state(fn):
     """Door functions take the bundle as their first argument: give them one whose state is known."""
     @functools.wraps(fn)
@@ -161,6 +173,7 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
 def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = [],
                          flags: list[Flag] = [],
                          overrides: dict[str, float | str | bool] = {}) -> BuildingModel:
+    overrides = {k: _numeric(v) for k, v in overrides.items()}
     registry = build_registry(bundle, observed, flags, overrides)
     office = registry.building_type != "home"
     costar = bundle.costar
@@ -183,7 +196,7 @@ def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = []
 def set_assumption(model: BuildingModel, key: str, value: float | str | bool,
                    source: Source = "user") -> BuildingModel:
     """Returns a new model; a float collapses the range to that value. The input is unchanged."""
-    return set_model_assumption(model, key, value, source)
+    return set_model_assumption(model, key, _numeric(value), source)
 
 
 # ---------- climate and the simulate function ----------

@@ -590,3 +590,19 @@ def test_the_data_lanes_extent_record_reaches_the_pv_measure(monkeypatch):
     marked = bundle.model_copy(update={"provenance": [*bundle.provenance, record]})
     api.evaluate_measure(marked, model, "PV_ROOF", request.role)
     assert record in seen["provenance"]
+
+
+# ---- a number written as text ----
+
+def test_a_number_written_as_text_is_a_number():
+    bundle, request = load("house")
+    base = model_of(bundle, request)
+    as_float = api.set_assumption(base, "hvac.heating_rating", 0.64)
+    as_text = api.set_assumption(base, "hvac.heating_rating", "0.64")
+    assert as_text.model_dump_json() == as_float.model_dump_json()
+    assert api.build_plan(bundle, as_text, request).model_dump_json() == api.build_plan(bundle, as_float, request).model_dump_json()
+    rebuilt = api.build_building_model(bundle, [], [], {"roof.u_value": "0.182", "setpoint.heating": " 20.7 "})
+    same = api.build_building_model(bundle, [], [], {"roof.u_value": 0.182, "setpoint.heating": 20.7})
+    assert rebuilt.model_dump_json() == same.model_dump_json()
+    assert api.set_assumption(base, "window.type", "single_clear_non_metal").model_dump_json() == \
+        api.set_assumption(base, "window.type", "single_clear_non_metal").model_dump_json()      # categorical text stays text

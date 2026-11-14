@@ -2,7 +2,7 @@
 
 Owner: @Sri-SriPod (agent lane). Code: `backend/legal/`. Statutory research: `specs/legal/california.md` and `specs/legal/texas.md` (owner @yalexie1).
 
-Status: **draft v0.2, 2026-11-14.** Document 1 (California residential retrofit contract, Part A) and document 1T (Texas residential retrofit contract, Part B) are written in full. Documents 2 to 6 are listed with their purpose only and come next.
+Status: **draft v0.3, 2026-11-14.** Document 1 (California residential retrofit contract, Part A) and document 1T (Texas residential retrofit contract, Part B) are written in full. Documents 2 to 6 have a document structure (Part C, sections 15 to 20): purpose and routing, the clause outline with the requirement ids it answers, conditional blocks, the placeholders new to the document with their source, the statutory checks, and open items. Their clause text is written when each template package (L4 to L6) starts.
 
 > **Every generated document is a draft for attorney review, not legal advice.** Nothing in this file is legal advice either. The statute summaries below were read from unofficial mirrors of the California codes because the official site refused automated access (see the verification log). Before any document is signed, a California-licensed attorney must check it against the official text.
 
@@ -32,11 +32,11 @@ Used verbatim as `DocumentDraft.disclaimer` and printed at the top and bottom of
 |---|---|---|---|
 | 1 | `retrofit_contract_residential` | CA | **written (section 4)** |
 | 1T | `retrofit_contract_residential` | TX | **written (Part B, sections 10 to 14)** |
-| 2 | `retrofit_contract_commercial` | CA, TX | to do |
-| 3 | `solar_installation_agreement` | CA, TX | to do. In CA, residential solar is also a home improvement (B&P §7151) and needs the §7169 solar disclosure on top of everything in document 1 |
-| 4 | `bid_package_rfp` | CA, TX | to do |
-| 5 | `energy_savings_guarantee` | CA, TX | to do. Addendum to 1 or 2 |
-| 6 | `cpace_package` | CA, TX, commercial only | to do. Gated on `FinancialBreakdown.sir` |
+| 2 | `retrofit_contract_commercial` | CA, TX | **outline (section 16)** |
+| 3 | `solar_installation_agreement` | CA, TX | **outline (section 17).** In CA, residential solar is also a home improvement (B&P §7151) and needs the §7169 solar disclosure on top of everything in document 1 |
+| 4 | `bid_package_rfp` | CA, TX | **outline (section 18)** |
+| 5 | `energy_savings_guarantee` | CA, TX | **outline (section 19).** Addendum to 1 or 2 |
+| 6 | `cpace_package` | CA, TX, commercial only | **outline (section 20).** Gated on `FinancingScenario.eligible` and `program_sir` (the C-PACE scenario of the plan), not on `FinancialBreakdown.sir` |
 
 # Part A. Document 1: California residential retrofit contract
 
@@ -745,3 +745,260 @@ All of `specs/legal/texas.md` section 7 applies. In particular U-01 (no general 
 ## 14. Document 1T: verification
 
 No statute was read for Part B by this file's author. Every legal statement in Part B comes from `specs/legal/texas.md` (official text, two passes, V2 rows only; its section 8 is the log) and is cited by id. On 2026-11-14 every `TX-ALL`, `TX-RC` and `U-` id cited in sections 10 to 13 was matched by script against the ids defined in texas.md: no missing ids. The two TDLR statements and the other quoted notices are not reproduced here; they are inserted from texas.md.
+
+
+# Part C. Documents 2 to 6: document structures (outlines)
+
+Each outline is the shape the template author fills in, not the contract text. Ids are requirement ids of `specs/legal/california.md` (`CA-`) and `specs/legal/texas.md` (`TX-`): a clause that answers a requirement carries its id, and the statutory check list (the last table of each document) is the same ids as checks. Sources in the placeholder tables use the key of section 5: **user** = `DocumentRequest.fields[name]`; a dotted path = a contract type of `SPEC.md` section 9; **stat** = verbatim text from the state file; **gen** = computed by `backend/legal/`. The drafting rules of section 1.1 bind every document here: nothing invented, statutory text inserted and never paraphrased, estimates never fill a price.
+
+## 15. Structure shared by documents 2 to 6
+
+Every document in Part C has this frame, so a template is only its middle:
+
+| Part | Content | Source |
+|---|---|---|
+| Top | `disclaimer` (section 1.2) | gen |
+| Title and parties | document title; party block: `owner_names`, `owner_mailing_address`, `owner_role_text`; contractor or counterparty block with its licence or registration number (`[[BLANK]]` when not supplied; never from a data layer) | user; `RunRequest.role` |
+| Property | `property_address`, `property_city`, `PropertySummary.use_type`, state; legal description is a blank unless supplied (never derived from an address) | `PropertySummary`; user |
+| Scope | Schedule A: one row per `measure_ids` entry that is in `Plan.selected`, from `MeasureResult` (`title`, `description`, `params`, `anchors`); a requested measure outside the plan is included with a warning | `Plan`, `MeasureResult` |
+| Money | contract price, payments, retention: user (the contractor's bid). `FinancialBreakdown` estimates only in the non-binding Schedule C | user; `FinancialBreakdown` |
+| Body | the clauses of the document's own outline | sections 16 to 20 |
+| Statutory notices | `stat_` blocks, verbatim | stat |
+| Signatures | per party: name, title, date, signature line; electronic signing only when `signing_method = electronic` and CA-ESIG-01 / TX-ALL-01 to -04 are met | user |
+| Bottom | `disclaimer` again | gen |
+
+Shared placeholders reused from section 5 without change: `disclaimer`, `state_name`, `owner_names`, `owner_mailing_address`, `owner_role_text`, `property_address`, `property_city`, `contractor_name`, `contractor_business_address`, `contractor_phone`, `contractor_license_number`, `contractor_signatory_name`, `contractor_signatory_title`, `contractor_signature_date`, `buyer_signature_date`, `start_date`, `completion_date`, `schedule_a_rows`, `schedule_c_table`, `signing_method`.
+
+Routing common to all: `LAYOUT` (desk placement) is not construction and is dropped silently; `PV_ROOF` goes to document 3 and is dropped from document 2 with a warning (as in section 3). A document whose `(doc_type, state)` pair does not apply to the property (for example `cpace_package` for a house) is not generated: the draft call returns the reason.
+
+## 16. Document 2: commercial retrofit contract (`retrofit_contract_commercial`, CA and TX)
+
+**Purpose.** A construction contract between the owner of an office or other non-residential property, privately owned and with no public funds, and a contractor, for the measures of the plan.
+
+**When it applies.** `PropertySummary.segment = "commercial"`, or a residential building of five or more units in Texas (document 1T section 10 routes it here). California: mixed-use buildings split: work on any dwelling unit is a home improvement and uses document 1 (CA-COM section 3.1 of the state file). Texas: the commercial version keeps the rows listed in `texas.md` section 2.8.
+
+**Outline.**
+
+| § | Clause | California ids | Texas ids |
+|---|---|---|---|
+| 1 | Parties, property, scope (Schedule A), contract documents and order of precedence | CA-COM-02, CA-COM-11 (owner and lender spaces) | TX-RC-08, TX-RC-09 |
+| 2 | Contractor's licence, classification and workers' compensation representation | CA-LIC-01 to -04, CA-COM-01, CA-COM-02 | TX-RC-01 to -05, TX-RC-0B, TX-RC-07 |
+| 3 | Licence and insurance statements; insurance information on request | CA-LIC-04, CA-COM-03 (CSLB notice, 10-point) | TX-RC-0A, TX-RC-08, TX-RC-09 |
+| 4 | Contract price, sufficient-funds statement, change orders | CA-COM-12 | TX-RC-48, TX-RC-49 |
+| 5 | Schedule, start and completion, delay | none specific | TX-RC-47 |
+| 6 | Payment: progress payments, payment requests, prompt-pay interest, suspension right | CA-COM-04, CA-PAY-01, CA-PAY-06 | TX-RC-42, TX-RC-44, TX-RC-45, TX-RC-47 |
+| 7 | Retention and its release | CA-COM-05, CA-COM-06, CA-PAY-02 to -05, CA-PAY-07 | TX-RC-40, TX-RC-41, TX-RC-43 |
+| 8 | Flow-down to subcontractors (pay within 7 days; same retention cap) | CA-COM-07, CA-PAY-05, CA-PAY-08 | TX-RC-49, TX-RC-51 |
+| 9 | Liens, preliminary notices, waivers and releases, notice of completion | CA-COM-09, CA-LIEN-01 to -07 | TX-RC-49 |
+| 10 | Indemnity and insurance-program terms | CA-COM-08, CA-IND-01 to -03 | TX-RC-62, TX-RC-63 |
+| 11 | Design responsibility and owner-furnished documents (the analysis is owner-provided, not engineered design) | none specific | TX-RC-64 |
+| 12 | Warranty and defects; savings are not guaranteed here (see document 5) | none specific | TX-RC-64 |
+| 13 | Disputes: governing law, forum, notice | CA-ESIG-02 (consumer exclusions do not reach this) | TX-ALL-12 |
+| 14 | Electronic signature and records | CA-COM-10, CA-ESIG-01 | TX-ALL-01 to -04 |
+| 15 | Schedules: A scope, B payment schedule, C non-binding estimates, D insurance certificates, E subcontractor list | | |
+
+**Conditional blocks.** C-PACE financing (`financing_cpace = yes`): add the assessment payment mechanics and the lender-consent condition; point to document 6. Disaster remediation after a declared disaster (Texas): TX-RC-70. DTPA language only when the owner is a DTPA consumer (TX-ALL-07, TX-ALL-08, TX-ALL-10, TX-ALL-11). Omitted in both states: the home improvement rules (CA-HIC rows) and the Texas homestead, residence and home-solicitation blocks.
+
+**New placeholders.**
+
+| Placeholder | Source | Req | Rule |
+|---|---|---|---|
+| `owner_entity_type` | user | no | individual, company, nonprofit; drives the DTPA block in Texas |
+| `owner_business_assets_over_25m` | user | no | yes/no; TX-ALL-07 |
+| `contract_value_over_100k` | gen from `contract_price_usd` | yes | TX-ALL-08 |
+| `construction_lender_name`, `construction_lender_address` | user | no | CA-COM-11 space is always printed; blank if none |
+| `retention_percent` | user | no | capped at 5 in California for contracts from 2026-01-01 (CA-COM-05) |
+| `pay_when_paid` | user | no | no default; not verified (open item) |
+| `liquidated_damages_per_day` | user | no | no default; not verified (open item) |
+| `design_responsibility_text` | gen | yes | who designed what; the plan is owner-furnished (TX-RC-64) |
+| `electrical_contractor_license_no`, `hvac_contractor_license_no`, `plumbing_contractor_license_no` | user | if the trade is in scope | Texas only; trade table of section 10 |
+| `subcontractor_list` | user | no | Schedule E |
+
+**Statutory checks.** California: `CA-COM-01`, `-02`, `-03`, `-04`, `-05`, `-06`, `-07`, `-08`, `-09`, `-10`, `-11`, `-12`. Texas: `TX-RC-01` to `-05`, `-08` to `-0B`, `-40` to `-49`, `-51`, `-62` to `-64`; `TX-ALL-01` to `-05`, `-12`.
+
+**Open items.** Pay-if-paid and pay-when-paid clauses, limitation of liability, liquidated damages (CIV 1671) and the arbitration-notice rule for real property contracts were not opened in the California file (its section 3.3). The Texas trade-to-measure licence mapping (T3 of section 13).
+
+## 17. Document 3: solar installation agreement (`solar_installation_agreement`, CA and TX)
+
+**Purpose.** An agreement for the sale and installation of a rooftop solar system selected by the plan (`PV_ROOF`), residential or commercial.
+
+**When it applies.** `measure_ids` contains `PV_ROOF` (or the user asks for this document). Residential California: also a home improvement (CA-SOL-01), so every rule of document 1 applies on top; the CSLB disclosure (CA-SOL-05 to -10) is a separate attached document. Commercial California: neither the disclosure nor the home improvement article applies (CA-SOL-04). Texas: the residential solar retailer rules apply to a residential system (TX-SOL-01 to -22); the interconnection facts apply to residential and commercial (TX-SOL-30 to -37). Lease and power purchase agreement: guard only (CA-SOL section 4.7; TX-SOL-14, TX-SOL-15). The draft supports **purchase** and says so; a lease or PPA request returns a warning and a blank draft.
+
+**Outline.**
+
+| § | Clause | California ids | Texas ids |
+|---|---|---|---|
+| 1 | Parties; seller registration or licence; salesperson registration | CA-SOL-14 to -18, CA-LIC-03 | TX-SOL-01, TX-SOL-02, TX-SOL-22 |
+| 2 | System description (Schedule A): `system_kw_dc`, `panel_count`, `module_w`, `inverter_kw_ac`, array layout; equipment standards | CA-SOL-02, CA-SOL-23 | TX-SOL-30 |
+| 3 | Price and payment (the contractor's quote; plan estimates only in Schedule C); total cost including financing stated once, with the two money figures kept apart | CA-SOL-10, CA-SOL-06 | TX-SOL-14 |
+| 4 | Permits and installation duties: who applies, who holds the permit, who calls dig notice | CA-SOL-19 to -22 | TX-SOL-03, TX-SOL-04 |
+| 5 | Interconnection: application, timing, utility terms; net metering or export treatment from `Tariff.utility` and `Tariff.export_regime` | CA-SOL-11 to -13, CA-SOL-25, CA-SOL-26 | TX-SOL-31 to -36 |
+| 6 | Production estimate and its assumptions (the estimate is stated as a range with its basis, from `SolarDesign.annual_kwh`); no stated guarantee unless document 5 is attached | CA-SOL-28 to -30 | TX-SOL-16, TX-SOL-17 |
+| 7 | Warranties and limits | CA-SOL-31, CA-SOL-28 | TX-SOL-10 |
+| 8 | Financing referral and lender terms | CA-SOL-09 (PACE financing estimate replaces the disclosure) | TX-SOL-05 |
+| 9 | Right to cancel (Texas: with the cancellation date and mailing address; California residential: the home improvement notice of document 1) | CA-SOL-05 | TX-SOL-06 to -09 |
+| 10 | Consumer disclosures delivered before signing | CA-SOL-05 to -08 | TX-SOL-11 to -14 |
+| 11 | Covenants and owners' associations | CA-SOL-24 | TX-SOL-37 |
+| 12 | Insurance and records | CA-LIC-04, CA-SOL-17 | TX-SOL-19, TX-SOL-20 |
+| 13 | Tax statements: no promise of eligibility (federal credits for a home are expired; 48E for a business needs confirmation) | CA-SOL-29 | TX-SOL-16 |
+| 14 | Prevailing wage note for a commercial net-billing system in SCE territory | CA-SOL-27 | none |
+
+**Conditional blocks.** California residential: attach the CSLB Solar Energy System Disclosure Document (verbatim text, `california.md` section 4.8; boldface 16-point; same language as the sales presentation, CA-SOL-06, CA-SOL-07). California in investor-owned-utility territory (`Tariff.utility` not a municipal utility): attach the CPUC Solar Consumer Protection Guide, signed. Inside the City of Los Angeles (`Tariff.utility = LADWP`): neither the state net-metering statute nor the CPUC guide applies; the utility's own rules do. Texas residential: the TDLR Consumer Disclosure Statement (TX-SOL-11), the educational brochure delivered 24 hours before signing (TX-SOL-12), the cancellation block in bold capitals (TX-SOL-08), and a printed copy at execution (TX-SOL-13). Texas export: no statutory net metering (TX-SOL-34), so the export value is an assumption whose low end is zero and no buyback rate is stated as fact. Texas also requires the electrical contractor's name, address and licence on every proposal, invoice and contract (TX-SOL-22).
+
+**New placeholders.**
+
+| Placeholder | Source | Req | Rule |
+|---|---|---|---|
+| `system_kw_dc`, `panel_count`, `module_w`, `inverter_kw_ac` | `SolarDesign` of the `PV_ROOF` measure | yes | |
+| `annual_kwh_low`, `annual_kwh_expected`, `annual_kwh_high` | `SolarDesign.annual_kwh` | yes | printed as a range with the basis note |
+| `utility_name`, `export_regime` | `Tariff.utility`, `Tariff.export_regime` | yes | an unnamed utility is unconfirmed, not LADWP |
+| `seller_registration_number`, `salesperson_registration_number` | user | yes | TDLR (Texas) or CSLB (California); never from a data layer |
+| `electrical_contractor_name`, `electrical_contractor_license_no` | user | yes | TX-SOL-22, CA-SOL-14 to -16 |
+| `purchase_structure` | user | yes | `purchase` supported; `lease` and `ppa` produce a guard warning |
+| `total_cost_including_financing_usd`, `cash_price_usd` | user | yes for a home in CA | CA-SOL-10 |
+| `interconnection_party`, `permit_party` | user | no | who applies and who holds the permit |
+| `cancellation_last_date`, `cancellation_mailing_address` | gen from `buyer_signature_date`; user | TX residential | TX-SOL-07 |
+| `stat_ca_solar_disclosure_document` | stat | CA residential | CA-SOL section 4.8 |
+| `stat_ca_cpuc_solar_guide_receipt` | stat | CA, IOU territory | CA-SOL-05 area, section 4.3 |
+| `stat_tx_solar_cancellation` | stat | TX residential | TX-SOL-08 |
+| `stat_tx_solar_consumer_disclosure` | stat | TX residential | TX-SOL-11 |
+
+**Statutory checks.** California: `CA-SOL-05` to `-10` (residential), `CA-SOL-14` to `-18`, `-19` to `-24`, `-28` to `-31`; the document-1 checks for a residential system. Texas: `TX-SOL-01` to `-22` (residential), `TX-SOL-30` to `-37`.
+
+**Open items.** The CPUC guide wording and the SCE net billing decision were not opened (`california.md` section 8). The TDLR brochure form and the Texas dated form versions (TX-SOL-11) must be re-checked before use.
+
+## 18. Document 4: contractor bid package / request for proposals (`bid_package_rfp`, CA and TX)
+
+**Purpose.** A package an owner sends to contractors to get bids for the plan's measures: the scope, the questions every bidder must answer, the terms they must accept, and the contract form attached.
+
+**When it applies.** Any property with at least one selected or financeable measure. Home or commercial is chosen from `PropertySummary.segment`; the package says which terms apply.
+
+**Outline.**
+
+| § | Section | California ids | Texas ids |
+|---|---|---|---|
+| 1 | Invitation: owner, property, schedule for questions and bids, how bids are compared | none specific | none specific |
+| 2 | Scope of work from Schedule A (the plan's measures, owner-furnished audit and specifications, with the statement that the audit is not engineered design) | CA-BID-18 | TX-BID-11 |
+| 3 | What each bidder must state: legal name, licence number and classification, workers' compensation status, bond, insurance | CA-BID-01, -03, -04, -05, -06 | TX-BID-01 to -04, TX-BID-07 |
+| 4 | Licensing fit by trade (PV: A, B, C-10, C-46; HVAC; electrical; plumbing) | CA-BID-03 | TX-BID-01, -03, -05, -06 |
+| 5 | Pricing form: lump sum by measure, unit prices, allowances, the bidder's own quantities | CA-BID-09 (home payment terms are fixed by law) | TX-BID-10 |
+| 6 | Payment and retention terms the bid must follow | CA-BID-07, -08, -09, -13 | none specific |
+| 7 | Subcontractors, suppliers and flow-down | CA-BID-10, -14 | TX-BID-14 |
+| 8 | Insurance and bond requirements; the owner's right to require a bond | CA-BID-11, -12 | TX-BID-07, TX-BID-13 |
+| 9 | Solar scope: production and financial representations each solar bidder must state; net billing and prevailing wage notes | CA-BID-16, CA-BID-17 | TX-BID-08, TX-BID-09 |
+| 10 | Electrical code and design responsibility | none specific | TX-BID-05, TX-BID-16 |
+| 11 | Terms the owner may not require (indemnity for the owner's own negligence, enrolment in an insurance programme without disclosure) | CA-BID-15 | TX-BID-12, TX-BID-13 |
+| 12 | Conduct: truthful bids, no price gouging after a disaster | CA-BID-18 | TX-BID-10, TX-BID-15 |
+| 13 | A bid is not the contract: the form attached (document 1, 1T or 2, and document 3 for solar) | CA-BID-15 | TX-BID-11 |
+| 14 | C-PACE-financed project: independent reviewer visits, final draw held back, equipment permanently fixed | none | TX-BID-17 |
+
+**Conditional blocks.** Home versus commercial payment and bond terms (CA-BID-09 to -14); disaster work (TX-BID-15); C-PACE-financed project (TX-BID-17); solar scope in SCE territory (CA-BID-16).
+
+**New placeholders.**
+
+| Placeholder | Source | Req | Rule |
+|---|---|---|---|
+| `bid_due_date`, `question_deadline`, `site_visit_date` | user | yes | |
+| `bid_contact_name`, `bid_contact_email` | user | yes | |
+| `evaluation_criteria` | user | no | default: total price and qualifications |
+| `bond_required`, `bond_percent` | user | no | CA-BID-07, CA-BID-12 |
+| `retention_percent` | user | no | capped at 5 in California |
+| `measure_scope_rows` | `Plan.selected[]`, `Plan.financeable[]` | yes | one row per measure; financeable ones marked optional |
+| `form_of_contract_doc_type` | gen | yes | the document the bidder is asked to accept |
+| `disaster_declared` | user | no | selects TX-BID-15 |
+| `cpace_financed` | user | no | selects TX-BID-17 |
+
+**Statutory checks.** California: `CA-BID-01` to `-18` (those whose condition holds). Texas: `TX-BID-01` to `-17`.
+
+**Open items.** The bid package is advisory; most rows are conduct and disclosure duties on the bidder, not text the owner must print. A lawyer decides which to include.
+
+## 19. Document 5: energy savings guarantee addendum (`energy_savings_guarantee`, CA and TX)
+
+**Purpose.** An addendum to document 1, 1T or 2 in which the contractor promises a result (an annual saving or a production figure) and says how it is measured and what happens if it is missed.
+
+**When it applies.** The user asks for a guarantee. The generator never supplies a number: the promised figure, the baseline, the measurement method and the remedy are user-supplied. The plan's low estimate is shown as a reference, never as the guarantee.
+
+**Outline.**
+
+| § | Clause | California ids | Texas ids |
+|---|---|---|---|
+| 1 | What is promised: the measures covered, the metric, the figure, the period | CA-ESG-03, CA-ESG-07, CA-ESG-08 | TX-ESG-02, TX-ESG-03 |
+| 2 | Baseline and weather normalisation: how the "before" is fixed (utility bills, the audit baseline, the model) and how weather and use changes are adjusted | CA-ESG-08 | TX-ESG-11 |
+| 3 | Measurement and verification: method, who measures, when, access to meters and bills | CA-ESG-08 | TX-ESG-11, TX-ESG-13 |
+| 4 | Remedy if the result is missed: repair, replacement, payment, or a held-back sum | CA-ESG-02, CA-ESG-10 | TX-ESG-05 |
+| 5 | Exclusions and the owner's duties (use, maintenance, no changes) | CA-ESG-04 | TX-ESG-03, TX-ESG-04 |
+| 6 | Relationship to the main contract: part of it, same payment rules, no waiver of non-waivable rules | CA-ESG-01, CA-ESG-02, CA-ESG-09 | TX-ESG-14, TX-ESG-01 |
+| 7 | Warranty form and repair paperwork (consumer goods) | CA-ESG-04, CA-ESG-05, CA-ESG-06 | TX-ESG-04 |
+| 8 | Limits of liability and time limits | CA-ESG-09 | TX-ESG-06, TX-ESG-09 |
+| 9 | Consumer-protection notices | CA-ESG-07 | TX-ESG-07, TX-ESG-12 |
+| 10 | Solar: production guarantee terms, default remedies set out in the agreement | CA-ESG-08 | TX-ESG-11 |
+| 11 | C-PACE projects: the independent reviewer's figures are the baseline and projected savings; neither the local government nor the programme administrator is a party | none | TX-ESG-13 |
+| 12 | Signature, electronic signature | CA-ESG-11 | TX-ESG-01 |
+
+**Conditional blocks.** Residence (Texas): chapter 27 controls defect claims (TX-ESG-08, TX-ESG-09). Service-contract exemption (Texas): the guarantee is drafted as a warranty, not a service contract (TX-ESG-10). Commercial secured by a hold-back (California): CA-ESG-10. Solar: CA-ESG-08, TX-ESG-11.
+
+**New placeholders.**
+
+| Placeholder | Source | Req | Rule |
+|---|---|---|---|
+| `guaranteed_metric` | user | yes | e.g. annual kWh saved, annual dollars saved, annual kWh produced |
+| `guaranteed_figure`, `guarantee_period_years` | user | yes | never from the plan |
+| `baseline_method`, `measurement_method`, `weather_normalisation` | user | yes | the plan's baseline (`BaselineResult.annual`) may be offered as a default text, labelled an estimate |
+| `reference_low_estimate` | `Plan.total_annual_savings_usd.low` | no | shown in the review screen only |
+| `remedy_type`, `remedy_cap_usd` | user | yes | |
+| `holdback_percent` | user | no | CA-ESG-10 (commercial) |
+| `main_contract_doc_type`, `main_contract_date` | user | yes | the document this is an addendum to |
+| `third_party_reviewer_name` | user | C-PACE only | TX-ESG-13 |
+
+**Statutory checks.** California: `CA-ESG-01` to `-11`. Texas: `TX-ESG-01` to `-14`.
+
+**Open items.** Whether a savings guarantee is a warranty, insurance or a service contract under each state's rules (TX-ESG-10); pay-for-performance structures are out of scope.
+
+## 20. Document 6: C-PACE package (`cpace_package`, CA and TX, commercial only)
+
+**Purpose.** The data sheet and cover documents the owner needs to apply for property assessed clean energy financing of the plan's measures. The package never replaces the programme's own owner contract, lender contract or lien notice (TX-PACE-39; CA-PACE-05).
+
+**When it applies.** The `FinancingScenario` with `kind = "cpace"` of at least one selected or financeable measure, with `eligible = true`, for a commercial property (or, in Texas, residential with five or more units). Otherwise the call returns the reason (for a house: "C-PACE is for commercial property"). A California scenario is labelled hypothetical until a programme is confirmed (CA-PACE-15, -16), and the draft leaves agency, programme and administrator blank. A Texas property must lie in a PACE region: inside the City of Houston, determined from the incorporated place and not from CoStar's city field (TX-PACE-04).
+
+**Outline.**
+
+| § | Section | California ids | Texas ids |
+|---|---|---|---|
+| 1 | Summary: the financed measures, the amount, the rate and term (user quotes), the annual assessment, the first-year net cash flow | CA-PACE-01 | TX-PACE-03, TX-PACE-07 |
+| 2 | Eligibility screen: property type, programme region, improvements permanently fixed | CA-PACE-01, CA-PACE-02, CA-PACE-05 | TX-PACE-01, TX-PACE-02, TX-PACE-04 |
+| 3 | Sources and uses: materials, labour, permits, inspections, fees, reviewer fees (fees limited to 20 percent of the assessment in Texas) | CA-PACE-01 | TX-PACE-07, TX-PACE-38 |
+| 4 | Savings tests: Texas programme SIR (undiscounted savings over the term divided by all assessment payments plus cash), reported apart from the plan's life-cycle SIR; California 5 percent tax-burden test with its inputs shown | CA-PACE-07 | TX-PACE-30, TX-PACE-09 |
+| 5 | Term against useful life | CA-PACE-11 (programme practice for a new commercial assessment) | TX-PACE-11, TX-PACE-31 |
+| 6 | Loan to value | none specific | TX-PACE-32 |
+| 7 | Mortgage holder: written notice 30 days before the owner contract and written consent (Texas, statutory); consent or acknowledgment (California, programme practice) | none statutory | TX-PACE-08 |
+| 8 | Lien statements: an assessment lien that runs with the land, collected with property taxes, and what that means for a sale or foreclosure | CA-PACE-10 | TX-PACE-14, TX-PACE-15 |
+| 9 | Owner eligibility and underwriting facts the programme will check (ownership, taxes current, no bankruptcy) | CA-PACE-03 | TX-PACE-12, TX-PACE-33 |
+| 10 | Independent review and completion verification | none statutory | TX-PACE-09, TX-PACE-10, TX-PACE-36, TX-PACE-37 |
+| 11 | Installation contract: the owner may contract directly; payment tied to programme disbursement (document 2 and, for solar, document 3) | CA-PACE-06 | TX-PACE-16 |
+| 12 | Data sheet for the programme's documents: owner, property and legal description (blank), improvement list, assessment principal, payment schedule, lender, consents | CA-PACE-08, CA-PACE-09 | TX-PACE-13, TX-PACE-40, TX-PACE-41 |
+| 13 | Voluntary participation, no compulsion | CA-PACE-03 | TX-PACE-17 |
+| 14 | Programme administrator, region and the steps to apply | CA-PACE-04, CA-PACE-15 to -17 | TX-PACE-34 to -39, TX-PACE-42 |
+
+**Conditional blocks.** Texas: the programme-rule label on every rule that comes from the Texas PACE Authority guide (TX-PACE-30 to -46) and not from statute. California Route A (contractual assessment, CA-PACE-01 to -11) or Route B (Mello-Roos district, CA-PACE-12 to -14): chosen by the programme the user names. Measures that are not permanent improvements (desk placement, thermostat schedules, plug-load behaviour) are excluded from the financed amount (TX-PACE-03, CA-PACE-01).
+
+**New placeholders.**
+
+| Placeholder | Source | Req | Rule |
+|---|---|---|---|
+| `financed_usd`, `rate`, `term_years`, `annual_payment_usd` | `FinancingScenario` | yes | `rate` and `term_years` are user quotes; the package prints nothing for them if the scenario has none |
+| `program_sir`, `scenario_notes` | `FinancingScenario.program_sir`, `.notes` | Texas | reported apart from the plan's `FinancialBreakdown.sir` |
+| `net_cashflow_year1_low`, `_expected`, `_high` | `FinancingScenario.net_cashflow_year1_usd` | yes | |
+| `pace_region_name` | gen | Texas | "City of Houston" only when the property is inside the incorporated city; else blank and a question |
+| `programme_name`, `programme_administrator`, `programme_agency` | user | yes | blank for California Los Angeles until one is confirmed |
+| `mortgage_holder_name`, `notice_sent_date` | user | if a mortgage exists | earliest closing date = notice date + 30 days (TX-PACE-08) |
+| `legal_description`, `parcel_number` | user | yes | never derived from an address |
+| `annual_property_tax_usd`, `market_value_usd` | user | California | CA-PACE-07; without them the test is reported incomplete |
+| `lender_name`, `lender_consent_attached` | user | no | |
+
+**Statutory checks.** California: `CA-PACE-01` to `-11` (Route A), `CA-PACE-12` to `-14` (Route B), `CA-PACE-15` to `-17` (availability, reported as notes). Texas: `TX-PACE-01` to `-17` (statute), `TX-PACE-30` to `-42` (programme rules, labelled as such).
+
+**Open items.** Whether the City of Houston's region covers its extraterritorial jurisdiction, and the two passages of the Texas guide that disagree on the loan-to-value variance (TX-PACE-32); the lien-priority statement in California rests on provisions that were not opened (CA-PACE-10); rate and term have no published default and stay user quotes.
+
+## 21. Part C: verification
+
+Written 2026-11-14 from the two state files and `SPEC.md` section 9, without reading any statute. No clause text is written here. Every `CA-` and `TX-` id cited in sections 15 to 20 was matched by script against the id column of `specs/legal/california.md` and `specs/legal/texas.md` (a test, `backend/legal/tests/test_structure.py`, repeats the match and fails if an id disappears from a state file). Placeholder sources name a field of `SPEC.md` section 9 or are marked user-supplied. Statutory facts stay in the state files; where this part and a state file differ, the state file wins.

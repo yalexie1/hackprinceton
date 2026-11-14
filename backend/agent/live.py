@@ -30,7 +30,7 @@ from backend.agent.graph import build_auditor, detect_fallbacks
 from backend.agent.narrative import check_narrative, remove_unsupported
 from backend.agent.runtime.replan import PatchError, replan
 from backend.agent.runtime.runtime import DEFAULT_RUNS_DIR, RunStore, build_result, execute_run
-from backend.agent.tools import Doors, ToolContext, build_tools
+from backend.agent.tools import Doors, ToolContext, build_reader_tools, build_tools
 from backend.schema import (BuildingModel, Choice, DocumentDraft, DocumentRequest, PropertyBundle, Question,
                             RunEvent, RunRequest, RunResult)
 
@@ -187,7 +187,7 @@ class LiveRun:
         ctx = ToolContext(request=self.request, files=self.files, doors=self.doors,
                           run=lambda: build_result(self.run_id, self.request, self.files, "done"),
                           asset_dir=self.files.root / "assets")
-        raw = build_tools(ctx)
+        raw = {**build_tools(ctx), **build_reader_tools(ctx)}
         tools = self.tools = {name: self._instrument(name, fn) for name, fn in raw.items()}
         ask_user = make_ask_user(self.session, lambda k, v: tools["set_assumption"](k, v))
         self.usage_handler = UsageMetadataCallbackHandler()
@@ -406,7 +406,7 @@ class LiveRun:
         """One more turn for the auditor: the numbers no tool returned, and the instruction to rewrite."""
         message = ("report.md states numbers that no tool returned: " + "; ".join(problems[:8]) + ". Rewrite "
                    "report.md now, using only numbers copied exactly from tool results and removing any figure "
-                   "you worked out yourself. Do not call other tools.")
+                   "you worked out yourself. You may call read_run_file and check_report; call no other tool.")
         async for chunk in self.graph.astream({"messages": [("user", message)]}, self._segment_config(),
                                               stream_mode="updates"):
             self._map_update(chunk)

@@ -261,3 +261,36 @@ def build_tools(ctx: ToolContext) -> dict[str, Callable]:
         return _json(d.legal.check_document(ctx.drafts[doc_id]))
 
     return tools
+
+
+READABLE = ("plan.json", "measures.json", "baseline.json", "bundle.json")
+
+
+def build_reader_tools(ctx: ToolContext) -> dict[str, Callable]:
+    """The auditor's and the reviewer's read-only tools (not among the 19 wrappers): the numbers a
+    report may state are the ones in the run files, and `check_report` tests a draft against them."""
+    from backend.agent.narrative import check_narrative
+    files = ctx.files
+
+    def read_run_file(name: Literal["plan.json", "measures.json", "baseline.json", "bundle.json"]):
+        """Read one run file: /run/plan.json, /run/measures.json, /run/baseline.json or /run/bundle.json
+        (its summary only). Every number in report.md must be copied, digit for digit, from these."""
+        name = name.rsplit("/", 1)[-1]
+        if name not in READABLE:
+            return {"error": f"read_run_file: {name} is not readable; use one of {', '.join(READABLE)}"}
+        content = files.read_json(name)
+        if content is None:
+            return {"error": f"/run/{name} does not exist yet"}
+        if name == "bundle.json":
+            return {"summary": content.get("summary")}
+        return content
+
+    def check_report(report_md: str):
+        """Check a draft of report.md: lists each number that no tool result holds (an empty list means the
+        draft is clean). Run it on the draft before you finish, and fix every line it lists."""
+        result = ctx.run()
+        bundle = files.read_json("bundle.json")
+        bundle = PropertyBundle.model_validate(bundle) if bundle else None
+        return {"problems": check_narrative(report_md, result, bundle, result.building_model)}
+
+    return {"read_run_file": _safe(read_run_file), "check_report": _safe(check_report)}

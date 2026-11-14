@@ -108,3 +108,11 @@ def test_the_run_prompt_names_the_task_and_what_finishes_it():
     run.request = req
     text = live.LiveRun._prompt(run)
     assert req.sid in text and "build_plan has returned" in text and "report.md" in text
+
+
+def test_the_auditor_writes_the_report_from_the_run_files():
+    from backend.agent.graph.graph import AUDITOR_PROMPT, AUDITOR_TOOLS
+    tail = AUDITOR_PROMPT[AUDITOR_PROMPT.index("6. You"):]
+    for name in ("read_run_file", "check_report", "/run/plan.json", "/run/measures.json", "/run/baseline.json"):
+        assert name in tail
+    assert AUDITOR_TOOLS == ("ask_user", "read_run_file", "check_report")

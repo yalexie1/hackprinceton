@@ -137,6 +137,14 @@ Model ids also appear inside the records as `videoKey` on attachments and media;
 - `POST https://api.matterport.com/api/models/graph`, GraphQL, HTTP basic auth: key as user, token as password. [V]
 - Production only. Well under 10 req/s; keys are shared. [V]
 - Null fields are **omitted, not sent as null** — code for absent keys. [V]
+- **A response can carry `errors` and usable `data` at the same time, and treating any `errors` as fatal throws away a complete answer.** [V] 2026-11-14, found while building D2. Asking for `view(type: "matterport.model.defurnished")` on a model that has none returns:
+
+  ```json
+  {"errors": [{"path": ["model","view"], "extensions": {"code": "not.found", "httpCode": 404}}],
+   "data":   {"model": {"id": "...", "rooms": [ ...8 rooms... ], "view": null}}}
+  ```
+
+  The model is **fully populated**; only the optional field failed. So a client must fail only when `data.model` is unusable, and turn field-scoped errors into provenance. D2 records a `not.found` as `FetchRecord{layer: "matterport", status: "missing"}` — a normal outcome, since only 6,979 models have a defurnished view — and anything else as `status: "error"`.
 - Signed asset URLs expire. **Re-query for a fresh URL; never cache a URL.** Cache bytes instead. [V]
 - 266 types in the schema; introspection works. [V]
 
@@ -578,6 +586,7 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | EIA API v2 retail price | live, TX + CA, both sectors | 2026-11-14 | 200; TX com 8.96, TX res 15.91, CA com 30.02, CA res 29.75 ¢/kWh (2026-08) |
 | Measure cost data | — | — | **[P] not started, no owner** |
 | Model-id uniqueness | both CSVs, full scan | 2026-11-14 | **307 ids have >1 parent** (55 commercial, 252 residential); 387 extra rows |
+| GraphQL partial errors | live, office model | 2026-11-14 | `errors` **and** populated `data` together; absent `view` is a field-scoped `not.found` |
 | Residential field shapes | kit record + models/ | 2026-11-14 | `yearBuilt` scalar, area is `sqftMin`/`sqftMax` range, `propertyType` ambiguous |
 | Contract v0.2 extract + examples | independent check, pydantic 2.14.3 | 2026-11-14 | 538 lines, imports clean, 56 models, 27/27 examples valid (99 checks, 0 fail) |
 | Open-Meteo time convention | hourly-vs-daily reconciliation + sunrise boundary | 2026-11-14 | **`hour_end`** — ratio 1.0001; 05:00 stamp = 04:00–05:00 mean |

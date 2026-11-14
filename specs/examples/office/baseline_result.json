@@ -77,6 +77,6 @@
   "hourly_path": null,
   "warnings": [
     "The site's own weather year is not on this machine (data/cache/ZSPaQbkGcJJ/weather/typical_year_hourly.csv), so the example year typical_year_hourly.csv was used instead. Every energy figure here is for that year, not for the site's; expect them to move when the site file is present.",
-    "Gas use intensity of 1 kWh/m2 a year (0.2 kBtu/ft2) is below the 5th percentile of gas-using offices of 50,000 to 199,999 ft2 in the CBECS 'warm' climate group (CBECS2018); 80 percent of them use 10 to 95 kWh/m2. Check the model before relying on it: gas heating or water heating may be too small."
+    "Gas use intensity of 1 kWh/m2 a year (0.2 kBtu/ft2) is below the 5th percentile of gas-using offices of 50,000 to 199,999 ft2 in the CBECS 'warm' climate group (CBECS2018); 80 percent of them use 10 to 95 kWh/m2. Check the model before relying on it: this office's gas is a lower bound. The model treats the space as one zone, so the heat of the core, the lights and the equipment offsets the perimeter's heat loss; it does not model office water heating; and a suite with no roof or ground floor loses less heat than the whole buildings surveyed. Gas savings in the plan are understated, and the utility bills would calibrate it."
   ]
 }

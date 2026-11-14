@@ -3,7 +3,6 @@ import {
   BookOpen,
   ArrowLeft,
   ArrowRight,
-  Box,
   Building2,
   Check,
   CheckCircle2,
@@ -46,6 +45,7 @@ import {
   demoStages,
 } from "./lib/fixtures";
 import { auditStageLabel, download, money, number } from "./lib/format";
+import LetoMark from "./components/LetoMark";
 import Find from "./components/Find";
 import HouseViewer from "./components/HouseViewer";
 import Tour from "./components/Tour";
@@ -184,7 +184,7 @@ export default function App() {
     [],
   );
   useEffect(() => {
-    document.title = `${view === "find" ? "Your properties" : views.find((v) => v.id === view)?.label || "Building audit"} — Evergreen`;
+    document.title = `${view === "find" ? "Your properties" : views.find((v) => v.id === view)?.label || "Building audit"} — Leto`;
   }, [view]);
   useEffect(() => {
     if (demo) {
@@ -575,10 +575,10 @@ export default function App() {
           }}
         >
           <span className="brand-mark">
-            <Box size={23} strokeWidth={1.7} />
+            <LetoMark size={23} />
           </span>
           <span>
-            evergreen<span>BUILDING INTELLIGENCE</span>
+            Leto<span>BUILDING INTELLIGENCE</span>
           </span>
         </a>
         <button

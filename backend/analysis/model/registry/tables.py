@@ -307,6 +307,7 @@ HOME_OCCUPANTS = {"single_family": (0.59, 0.87), "multifamily_unit": (0.92, 0.63
 
 # Unsourced spreads (judgments of this package; candidates for backend/config.py):
 OCCUPANT_DEFAULT_SPREAD = 0.30   # +/- on a default occupant count (A_f / 18.59 or bedrooms formula)
+VACANT_CONFIDENCE = 0.6        # no sitting tenant in the CoStar kit; the kit can lag a new lease (judgment)
 TENANT_OCCUPANT_SPREAD = 0.20    # +/- on a CoStar tenant's employee count (office fixture: 16 / 20 / 24)
 TENANT_DENSITY_SPREAD = 0.30     # +/- when occupants are scaled from the building's tenant density
 TENANT_AREA_MATCH_RATIO = 1.5    # a tenancy matches the scanned suite if areas agree within this factor

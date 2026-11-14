@@ -362,7 +362,25 @@ def costar_assumptions(bundle: PropertyBundle) -> list[Assumption]:
         if t is not None:
             val, conf, ev = t
             out.append(_a("occupancy.count", "People working in the suite", val, "costar", conf, [ev]))
+        elif _vacant(bundle):
+            out.append(_a("occupancy.schedule", "Occupancy schedule", "office_vacant", "costar",
+                          T.VACANT_CONFIDENCE,
+                          [EvidenceRef(kind="costar_field", ref="CostarData.occupancy.tenancies",
+                                       note="tenancy records exist but none is current: the building is "
+                                            "modelled vacant (DEF-09 'other' row every day); savings then "
+                                            "depend on who moves in")]))
     return out
+
+
+def _vacant(bundle: PropertyBundle) -> bool:
+    """SPEC 5.1: an office with tenancy records and no sitting tenant is vacant.
+
+    D10 returns `OccupancyData(tenancies=[])` when a property has records but none is
+    current, and `occupancy=None` when it has no records at all; only the first is
+    evidence of vacancy. Ended tenancies passed with a `move_out` count the same way.
+    """
+    occ = bundle.costar.occupancy if bundle.costar else None
+    return occ is not None and not any(t.move_out is None for t in occ.tenancies)
 
 
 def _vexcel_attrs(bundle: PropertyBundle) -> dict:

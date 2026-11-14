@@ -34,7 +34,7 @@ Two flows, built to the same depth:
 | User | homeowner, landlord, tenant | building owner, investor, lender, tenant |
 | Typical measures | attic and wall insulation, air sealing, windows, cool roof, heat pump, water heater, lighting, rooftop solar | lighting power and controls, rooftop units, economizer, cool roof, plug loads, rooftop solar, desk placement |
 | No-cost measures | furniture and workspace placement for daylight, thermostat schedule | desk placement for daylight, glare and comfort, schedule setback |
-| Financing view | cash only | cash and C-PACE |
+| Financing view | cash only | cash, and C-PACE where eligible |
 | Documents | retrofit contract, solar agreement, bid package, savings guarantee | the same plus the C-PACE package |
 
 ## 2. Tracks
@@ -232,11 +232,18 @@ Every recommended and financeable measure shows all of:
 | Simple and discounted payback | |
 | NPV, SIR, IRR | discount rate, analysis period and energy price escalation stated |
 | CO2 avoided per year | |
-| Financing scenarios | cash always; C-PACE for commercial properties |
+| Financing scenarios | cash always; C-PACE where the property is eligible under its state's program (below) |
 
 The plan as a whole also shows a **value uplift** where CoStar market data exists for the property: the estimated change in property value from the plan's annual savings, capitalised at a rate taken from comparable sales, as a low/expected/high range with the number of comparables used. It is reported beside the plan totals and is never added to savings or used in the ranking. Method and limits: `physics.md`, value module.
 
-C-PACE scenario fields: financed amount, rate, term (not longer than useful life), annual assessment, first-year net cash flow, eligibility notes, and plain statements that the assessment is a lien that runs with the property and that an existing mortgage holder's consent is normally required. Statutory conditions are in `legal.md`.
+C-PACE scenario fields: financed amount, rate, term (not longer than useful life), annual assessment, first-year net cash flow, the program's own savings test where it has one, eligibility notes, and plain statements that the assessment is a lien that runs with the property and that an existing mortgage holder must consent. Statutory conditions, with citations, are in `specs/legal/texas.md` section 6 and `specs/legal/california.md`.
+
+Texas, verified 2026-11-14 (`specs/legal/texas.md` section 6):
+
+- **Who is eligible.** Commercial, industrial and nonprofit property, and residential property with five or more units. Anything under five units is excluded, so a house or fourplex is cash only. The property must also lie in a PACE region: the City of Houston is one; Harris County outside the city is not on the program administrator's list.
+- **Mortgage holder.** Consent is a statutory precondition whenever a mortgage lien exists, not a formality: written notice at least 30 days before the owner contract, and written consent.
+- **Two savings ratios, kept apart.** The plan's SIR is the discounted life-cycle ratio from `physics.md`. The Texas program applies its own test, here called the program SIR: undiscounted projected savings over the assessment term divided by total project cost including financing costs, required to be at least 1. The statute itself has no such test; it requires an independent third-party review of projected savings. The C-PACE scenario reports the program SIR separately and marks the scenario ineligible when it is below 1.
+- **Solar exports.** Texas has no statutory net metering. Surplus is sold to the customer's retail provider at an agreed value, so the model treats export value as an assumption whose low end is zero, and no document states a buyback rate as fact.
 
 Federal incentive status to confirm before use, from secondary sources read 2026-11-13 [U]: the residential credits under sections 25C and 25D ended for 2025; the section 179D commercial deduction ends for construction beginning after June 30, 2026; the section 48E credit for solar is cut off for facilities that begin construction after July 4, 2026 unless placed in service by the end of 2027. Until the finance package confirms these against primary sources, the registry marks federal incentives `unverified` and the plan is computed without them.
 
@@ -654,6 +661,8 @@ class FinancingScenario(BaseModel):
     term_years: Optional[int] = None
     annual_payment_usd: float = 0.0
     net_cashflow_year1_usd: Ranged
+    program_sir: Optional[float] = None        # the PACE program's own test: undiscounted savings over the
+                                               # term / total cost with financing costs; Texas requires >= 1
     notes: list[str] = []
 
 class FinancialBreakdown(BaseModel):

@@ -121,21 +121,43 @@ describe.skipIf(process.env.RUN_API_INTEGRATION !== "1")(
           (item) => item.run_id === example.run_id,
         );
         expect(template).toBeTruthy();
-        const draft = await api.draft({ ...template!, run_id });
-        expect(draft.doc_id).toBeTruthy();
-        expect(draft.markdown).toBeTruthy();
-        expect(Array.isArray(draft.statutory_checks)).toBe(true);
-        if (recorded) {
+        for (const doc_type of types) {
+          const draft = await api.draft({
+            ...template!,
+            run_id,
+            doc_type,
+            fields: {
+              owner_names: "Frontend Test Owner",
+              contractor_name: "Frontend Test Contractor",
+            },
+          });
+          expect(draft.doc_id).toBeTruthy();
+          expect(draft.doc_type).toBe(doc_type);
+          expect(draft.markdown).toContain("Frontend Test Owner");
+          if (doc_type !== "cpace_package")
+            expect(draft.markdown).toContain("Frontend Test Contractor");
+          if (doc_type === "cpace_package")
+            expect(draft.markdown).toContain("C-PACE APPLICATION PACKAGE");
           expect(draft.statutory_checks.length).toBeGreaterThan(0);
           expect(draft.unfilled_placeholders.length).toBeGreaterThan(0);
           expect(draft.disclaimer).toBeTruthy();
-          await expect(
-            api.draft({ ...template!, run_id, doc_type: "bid_package_rfp" }),
-          ).rejects.toMatchObject({
-            status: 404,
-            code: "template_not_available",
-          });
         }
+        await expect(
+          api.draft({ ...template!, run_id, doc_type: "bid_package_rfp" }),
+        ).rejects.toMatchObject({
+          status: 404,
+          code: "template_not_available",
+        });
+        const wrongSegment =
+          example.property.segment === "commercial"
+            ? "retrofit_contract_residential"
+            : "cpace_package";
+        await expect(
+          api.draft({ ...template!, run_id, doc_type: wrongSegment }),
+        ).rejects.toMatchObject({
+          status: 422,
+          code: "template_not_for_segment",
+        });
       }, 20000);
     }
 

@@ -50,9 +50,13 @@ function DraftText({ text }: { text: string }) {
     <div className="draft-text">
       {text.split("\n").map((line, i) => {
         const content = line
-          .split(/(\{\{[^}]+\}\})/g)
+          .split(/(\{\{[^}]+\}\}|\[\[BLANK:[^\]]+\]\])/g)
           .map((chunk, j) =>
-            chunk.startsWith("{{") ? <mark key={j}>{chunk}</mark> : chunk,
+            chunk.startsWith("{{") || chunk.startsWith("[[BLANK:") ? (
+              <mark key={j}>{chunk}</mark>
+            ) : (
+              chunk
+            ),
           );
         return line.startsWith("# ") ? (
           <h2 key={i}>{line.slice(2)}</h2>
@@ -167,7 +171,7 @@ export default function Documents({
       doc_type: docType,
       state,
       measure_ids: selectedScope,
-      fields: { owner_name: owner, contractor_name: contractor },
+      fields: { owner_names: owner, contractor_name: contractor },
     };
     try {
       const result = demo ? demoDraft(body) : await api.draft(body);

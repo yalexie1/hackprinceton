@@ -146,10 +146,10 @@ export function demoDraft(body: DocumentRequest): DocumentDraft {
     "completion_date",
     "property_legal_description",
   ];
-  const owner = body.fields.owner_name.trim() || "{{owner_name}}";
+  const owner = body.fields.owner_names.trim() || "{{owner_names}}";
   const contractor =
     body.fields.contractor_name.trim() || "{{contractor_name}}";
-  if (!body.fields.owner_name.trim()) blanks.push("owner_name");
+  if (!body.fields.owner_names.trim()) blanks.push("owner_names");
   if (!body.fields.contractor_name.trim()) blanks.push("contractor_name");
   return {
     doc_id: "illustrative-draft",

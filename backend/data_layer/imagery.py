@@ -37,6 +37,9 @@ What is verified here, live on the golden house 2026-11-14:
 - **`pixel-bbox` can start outside the image.** The first detection on the golden
   house has `x = -1`, so pixel coordinates are clamped before being transformed or
   used to index the mask.
+
+`VexcelDetection.mask_area_m2` carries the measured area as of contract 0.3.2.
+`mask_wkt` stays unset on purpose - see `MASK_WKT_NOTE`.
 """
 from __future__ import annotations
 
@@ -348,6 +351,11 @@ def _detect(
                 pixel_bbox=_as_pixel_bbox(raw.get("pixel-bbox")),
                 mask_png_path=mask_path,
                 mask_wkt=None,
+                # Added to the contract by @yalexie1 as SCHEMA_VERSION 0.3.2, which is
+                # what `mask_wkt` deliberately is not: the mask's own ground area,
+                # not its box's and not a hull's. `None` when the mask could not be
+                # decoded - never 0.0, which would read as "this roof has no surface".
+                mask_area_m2=mask_area_m2(png, frame) if (png and frame) else None,
             ))
 
     if not out:
@@ -369,10 +377,11 @@ def detect_with_areas(
 ) -> tuple[list[tuple[VexcelDetection, Optional[float]]], list[FetchRecord]]:
     """`detect`, with each detection paired to its mask's ground area in m2.
 
-    The area is not on `VexcelDetection` - the contract has nowhere to put it yet -
-    so it is returned beside each detection rather than smuggled into another field.
+    Kept after `mask_area_m2` joined the contract in 0.3.2, because the pair shape is
+    what `roof_area_m2` ranks over and callers already use it. The area now comes off
+    the detection rather than being recomputed here.
     """
-    detections, frames, masks, notes = _detect(
+    detections, _frames, _masks, notes = _detect(
         parcel_wkt,
         sid=kwargs.get("sid", ""),
         labels=kwargs.get("labels", DEFAULT_LABELS),
@@ -382,13 +391,7 @@ def detect_with_areas(
         refresh=kwargs.get("refresh", False),
         write_masks=kwargs.get("write_masks", True),
     )
-    out: list[tuple[VexcelDetection, Optional[float]]] = []
-    for index, detection in enumerate(detections):
-        frame = frames.get(detection.image_id)
-        png = masks.get(index)
-        area = mask_area_m2(png, frame) if (png and frame) else None
-        out.append((detection, area))
-    return out, notes
+    return [(d, d.mask_area_m2) for d in detections], notes
 
 
 def roof_area_m2(

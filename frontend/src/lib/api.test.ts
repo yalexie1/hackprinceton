@@ -129,6 +129,25 @@ describe("audit event transport", () => {
   });
 });
 describe("backend contract", () => {
+  it("forwards computed-analysis mode together with the requested constraints", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response('{"run_id":"computed"}'));
+    vi.stubGlobal("fetch", fetch);
+    const request = {
+      sid: "ZSPaQbkGcJJ",
+      mode: "analysis" as const,
+      budget_usd: 10000000,
+      role: "landlord" as const,
+      desks_requested: 12,
+      bills: { electricity_kwh: Array(12).fill(100), first_month: "2025-01" },
+    };
+    await expect(api.start(request)).resolves.toEqual({ run_id: "computed" });
+    const [url, options] = fetch.mock.calls[0];
+    expect(url).toBe("/api/runs");
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body)).toEqual(request);
+  });
   it("shows structured backend errors", async () => {
     vi.stubGlobal(
       "fetch",

@@ -655,7 +655,7 @@ q_ve        = Q_oa + Q_inf
 |---|---|---|
 | `N_occ` | design occupant count. From `Systems.occupants` when CoStar tenancy data gives employees; otherwise `A_f / 18.59` | persons |
 | `q_person` | outdoor air per person, 0.00944 (20 cfm) | m³/s |
-| `I_75` | envelope leakage at 75 Pa per unit above-grade envelope area: 7.5 for buildings built before 2004, 2.0 after | L/(s·m²) |
+| `I_75` | envelope leakage at 75 Pa per unit above-grade envelope area: 7.5 for buildings built in 2004 or earlier, 2.0 from 2005 | L/(s·m²) |
 | `A_env` | above-grade exterior wall plus roof area of the zone | m² |
 
 The design occupant count sets ventilation; the hourly occupancy schedule (`DEF-09`) does not modulate it (no demand-controlled ventilation assumed).
@@ -1264,6 +1264,8 @@ How to read these tables:
 - A stronger source in the assumption registry (user, measured, vision) replaces the default.
 - U-values from US tables are whole-assembly values with the ASHRAE films, used as published (ENV-01).
 
+**Year boundaries in every DEF table and in INF-05.** A building built in 2004 takes the older row: "1980–2004", "2004 or earlier" and "before 2004" in older text all include 2004, and "after 2004" means 2005 on. The same applies to any boundary year: the year printed at the end of a range belongs to that range.
+
 ### DEF-01 Home opaque envelope by vintage
 
 Wood-frame wall, U in W/(m²·K) (Btu/(h·ft²·°F) in brackets). Cavity insulation by vintage from S17 `Insulation Wall` (wood frame; Texas and California agree except where noted) and S10 Table 29; assembly U from S6 Table 4.3.1 column A (2x4 at 16 in.: none 0.356, R-11 0.110, R-13 0.102, R-15 0.095; 2x6 R-19 0.074). R-7 is not in that table and is computed with ENV-02 on the same layers (0.138; the same calculation returns 0.1098 for R-11 and 0.1015 for R-13, against the published 0.110 and 0.102).
@@ -1369,7 +1371,7 @@ Homes, central air conditioner or heat pump, by year the **equipment** was insta
 | 2015–2022 | 14 (Texas and California) | 8.2 | S15 10 CFR 430.32(c)(1) to (3) |
 | 2023 and later | 14.3 SEER2 (= 15.05 SEER) | 7.5 HSPF2 (= 8.8 HSPF) | S15 10 CFR 430.32(c)(5), (6) |
 
-The equipment year is rarely the building year. Rule: if the building is 2006 or newer, use the building year. If older and nothing is observed, carry SEER 10 / 13 / 14 as worst / expected / best (the unit has probably been replaced at least once). That rule is a judgment (section 10, tier B); the vision reading of the outdoor unit's age band replaces it.
+The equipment year is rarely the building year. Rule: if the building is 2006 or newer, use the building year. If older and nothing is observed, carry SEER 10 / 13 / 14 as worst / expected / best (the unit has probably been replaced at least once), and for a heat pump HSPF 7.1 / 7.7 / 8.2, the same rows of the table. That rule is a judgment (section 10, tier B); the vision reading of the outdoor unit's age band replaces it.
 
 Room air conditioner: EER 6.5 before 1981, 7.5 for 1981–1991, 9.75 after 1991 for units under 5.9 kW (S10 Table 34).
 
@@ -1391,6 +1393,7 @@ Offices (packaged unit with gas furnace, single zone, constant volume: S11 Table
 |---|---|---|---|
 | before 1980 (equipment since replaced) | SEER 11.06 under 19 kW; EER 9.63 for 19 to 40 kW | combustion efficiency 0.80 | S11 Tables 31 and 34 |
 | 1980–2004 | as above (the 90.1-1989 values were not opened) | 0.80 | S11 |
+| 2005–2022 | as above: no value for this period was opened, so the 1980–2004 row is carried (judgment, section 10, tier B) | 0.80 | S11 |
 | new or replaced from 2023 | IEER 14.8 (19 to 40 kW, electric or no heat); 14.6 with other heat | 0.80 | S15 10 CFR 431.97 Table 1 |
 
 Carry the office cooling rating as −10 % / expected / +15 %.
@@ -1461,8 +1464,8 @@ Interior lighting monthly multipliers, January to December: 1.19 1.11 1.02 0.93 
 
 | Building | Lighting W/m² low / expected / high | Plug W/m² low / expected / high | Source |
 |---|---|---|---|
-| office built before 2004, lighting not yet upgraded | 10.76 / 19.48 / 19.48 | 8.61 / 10.76 / 10.76 | S11 Table A-2 (19.48 W/m² = 1.81 W/ft², ASHRAE 90.1-1989; 10.76 W/m² = 1.0 W/ft², 90.1-2004) |
-| office built 2004 or later | 6.5 / 10.76 / 10.76 | 8.61 / 10.76 / 10.76 | S11 Table A-2 |
+| office built in 2004 or earlier, lighting not yet upgraded | 10.76 / 19.48 / 19.48 | 8.61 / 10.76 / 10.76 | S11 Table A-2 (19.48 W/m² = 1.81 W/ft², ASHRAE 90.1-1989; 10.76 W/m² = 1.0 W/ft², 90.1-2004) |
+| office built 2005 or later | 6.5 / 10.76 / 10.76 | 8.61 / 10.76 / 10.76 | S11 Table A-2 |
 | office after `LGT_LED` | measure parameter | unchanged | not sourced: see below |
 | home | by LGT-01 | by LGT-02 | S10 |
 
@@ -1478,6 +1481,7 @@ From S11 Tables 17 to 25, small office. U in W/(m²·K) (Btu/(h·ft²·°F) in b
 | roof | 1980–2004 | 0.375 (0.066) | 0.568 (0.100) |
 | roof | after 2004, insulation above deck / attic | 0.358 (0.063) / 0.193 (0.034) | 0.358 / 0.193 |
 | wall, steel frame | before 1980 | 1.306 (0.230) | 1.306 (0.230) |
+| wall, mass | before 1980 | not in the source; the 1980–2004 values are carried as the bound (judgment) | as left |
 | wall, mass | 1980–2004 | 1.931 (0.340) | 5.678 (1.000) |
 | wall, mass | after 2004 | 3.293 (0.580) | 0.857 (0.151) |
 | wall, steel frame | 1980–2004 | 0.852 (0.150) | 1.249 (0.220) |

@@ -217,6 +217,8 @@ s = ( sin(theta_z) sin(A),  sin(theta_z) cos(A),  cos(theta_z) )        (east, n
 
 **Pending [P], Data lane.** The weather file must state which hour each row covers (hour ending, hour beginning, or an instantaneous value at the half hour). The Data lane confirms this for Open-Meteo's radiation variables from its documentation, normalises every weather file so that row k covers the hour from k-1 to k local standard time, and records the original convention in `ClimateSite.weather_source`. Until that is confirmed, a half-hour timing error is the largest unquantified risk in this file.
 
+**Resolved.** The Data lane confirmed `hour_end` for Open-Meteo on 2026-11-14 (`ClimateSite.weather_time_convention`; physics.md section 3). For the sunrise and sunset hours, the sun counts as up when the apparent zenith is below 90 degrees, the same horizon as the night rule in section 0.1.
+
 **Tool function.** `interval_midpoints(hour_ending_times, lat_deg, lon_deg) -> times` (shifts by 30 minutes and handles the sunrise and sunset hours).
 
 ## 2. Irradiance (IRR)
@@ -480,7 +482,9 @@ n = 1.526,  K = 4 1/m,  L = 0.002 m
 **Primary source.** PVW5 section 8 (correction applied to the direct beam; n = 1.526; eq. 4 and 6 give the Fresnel bracket). PVW5 drops the absorption factor because it is below 0.1 %.
 **Second source.** SAM15 eq. 9.13 to 9.15: the same expression with the absorption factor and n = 1.526, L = 0.002 m, K = 4 1/m. PVLIB `iam.physical` (same defaults). The original is De Soto, Klein and Beckman, Solar Energy 80, 78-88, 2006, doi:10.1016/j.solener.2005.06.010 (not opened).
 
-**Worked example.** theta = 15.8675: IAM = 0.999890. theta = 60: IAM = 0.946003 (0.947628 without the absorption factor). theta = 80: 0.6357 (without absorption). pvlib: 0.999890 at K = 0, 0.946003 with defaults, 0.947628 at K = 0 (differences 0). Running example: Etr = 670.332 * 0.999890 + 221.881 + 4.825 = 896.96 W/m2.
+**Worked example.** theta = 15.8675: IAM = 0.999758 with the defaults above (K = 4); 0.999890 without the absorption factor (K = 0). theta = 60: IAM = 0.946003 (0.947628 without the absorption factor). theta = 80: 0.6357 (without absorption). pvlib: 0.999758 with defaults, 0.999890 at K = 0, 0.946003 with defaults, 0.947628 at K = 0 (differences 0). Running example, **computed at K = 0**: Etr = 670.332 * 0.999890 + 221.881 + 4.825 = 896.96 W/m2. With the default K = 4 it is 670.332 * 0.999758 + 221.881 + 4.825 = 896.88 W/m2.
+
+**Note (2026-11-14, found while building A4).** The running-example numbers that follow from this entry (Etr 896.96, the PV-03 input 896.963 and the SHD-03 transmitted value 611.88) were computed at K = 0. The implementation keeps K = 4, as this entry and the PV-06 ModelChain reference do; tests that reproduce those printed numbers pass K = 0 explicitly.
 
 **Tool function.** `incidence_angle_modifier(incidence_deg, n=1.526, k_per_m=4.0, thickness_m=0.002) -> dimensionless`; `transmitted_irradiance(poa_beam, poa_sky_diffuse, poa_ground, incidence_deg) -> W/m2`.
 
@@ -617,6 +621,8 @@ Yield   = E_year1 / (Pdc0 / 1000)                                         [kWh p
 Largest hourly AC difference: below 0.0001 W. Yield 1893 kWh/kW for this cloudless input.
 
 Two details that had to match before the two columns agreed, and that the implementation must copy: the day of year in IRR-01 is the UTC day, and the refraction temperature in SOL-01 is the one given to both.
+
+How the synthetic year was built (recorded 2026-11-14, when A4 reproduced the table): calendar year 2026; timestamps at the hour midpoints in fixed UTC-8; refraction temperature 20 degC; the Haurwitz clear-sky model and the IRR-02 Erbs split both run on the apparent zenith. Any other choice changes the totals in the fourth significant figure.
 
 **Tool function.** `pv_annual_energy(weather, site, plane_or_panel, array_config) -> {annual_kwh, monthly_kwh[12], hourly_ac_w[8760], yield_kwh_per_kw}`.
 

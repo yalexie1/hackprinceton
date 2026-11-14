@@ -14,7 +14,8 @@ import {
   Wind,
 } from "lucide-react";
 import { useId, useState } from "react";
-import type { MeasureResult, Ranged, RunResult } from "../lib/types";
+import type { Assumption, MeasureResult, Ranged, RunResult } from "../lib/types";
+import { SourceDrawer } from "./SourceDrawer";
 import { money, number, ranged } from "../lib/format";
 const reasonLabels: Record<string, string> = {
   not_cost_effective: "Not cost-effective",
@@ -66,12 +67,15 @@ export function MeasureCard({
   measure,
   rank,
   onFocus,
+  assumptions = [],
 }: {
   measure: MeasureResult;
   rank?: number;
   onFocus: (id: string) => void;
+  assumptions?: Assumption[];
 }) {
   const [open, setOpen] = useState(false);
+  const [sources, setSources] = useState(false);
   const f = measure.finance;
   return (
     <article className={`measure-card ${open ? "expanded" : ""}`}>
@@ -119,6 +123,18 @@ export function MeasureCard({
       {open && (
         <div className="measure-details">
           <p>{measure.description}</p>
+          {/* One click to the provenance, and nothing added to the page until asked:
+              a source for every estimate, with the main pages kept clean. */}
+          <button className="source-link" onClick={() => setSources(true)}>
+            <Info size={14} /> How this was calculated
+          </button>
+          {sources && (
+            <SourceDrawer
+              measure={measure}
+              assumptions={assumptions}
+              onClose={() => setSources(false)}
+            />
+          )}
           {f && (
             <>
               <div className="detail-grid">
@@ -539,6 +555,7 @@ export default function PlanView({
                 measure={item.measure}
                 rank={item.rank}
                 onFocus={onFocus}
+                assumptions={run.building_model?.assumptions ?? []}
               />
             ))}
           {tab === "financeable" && (
@@ -548,7 +565,12 @@ export default function PlanView({
                 mean a loan or C-PACE programme is available.
               </p>
               {plan.financeable.map((m) => (
-                <MeasureCard key={m.measure_id} measure={m} onFocus={onFocus} />
+                <MeasureCard
+                  key={m.measure_id}
+                  measure={m}
+                  onFocus={onFocus}
+                  assumptions={run.building_model?.assumptions ?? []}
+                />
               ))}
             </>
           )}

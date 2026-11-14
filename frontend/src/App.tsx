@@ -1171,6 +1171,32 @@ export default function App() {
               </div>
               <div className="result-grid">
                 <div className="result-main">
+                  {/* The audit's own account of the building, in the main column: it
+                      explains the numbers beside it, so it reads before them rather than
+                      beside them in a sidebar. */}
+                  <section className="insight-card insight-main">
+                    <Sparkles size={19} />
+                    <span className="eyebrow">
+                      {demo ? "SAVED EXAMPLE REPORT" : "THE AUDIT’S TAKE"}
+                    </span>
+                    {demo && (
+                      <p className="fineprint">
+                        This is a saved example report. Answering replay
+                        questions does not recalculate its numbers.
+                      </p>
+                    )}
+                    <AuditNarrative
+                      text={run.narrative_md}
+                      warnings={run.warnings}
+                    />
+                    <button
+                      className="text-button"
+                      onClick={() => setView("assumptions")}
+                    >
+                      See the assumptions
+                      <ArrowRight size={14} />
+                    </button>
+                  </section>
                   {view === "plan" && (
                     <>
                       <Calibration run={run} />
@@ -1282,29 +1308,6 @@ export default function App() {
                       <CheckCircle2 size={14} />
                       Operations first. Solar last.
                     </p>
-                  </section>
-                  <section className="insight-card">
-                    <Sparkles size={19} />
-                    <span className="eyebrow">
-                      {demo ? "SAVED EXAMPLE REPORT" : "THE AUDIT’S TAKE"}
-                    </span>
-                    {demo && (
-                      <p className="fineprint">
-                        This is a saved example report. Answering replay
-                        questions does not recalculate its numbers.
-                      </p>
-                    )}
-                    <AuditNarrative
-                      text={run.narrative_md}
-                      warnings={run.warnings}
-                    />
-                    <button
-                      className="text-button"
-                      onClick={() => setView("assumptions")}
-                    >
-                      See the assumptions
-                      <ArrowRight size={14} />
-                    </button>
                   </section>
                   {run.baseline && (
                     <section className="baseline-card">

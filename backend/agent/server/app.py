@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.agent import api
+from backend.agent.roof import RoofView
 from backend.agent.runtime.replan import PatchError
 from backend.data_layer import api as data
 from backend.schema import (SCHEMA_VERSION, DocumentDraft, DocumentRequest, PropertySummary,
@@ -143,6 +144,14 @@ def create_app() -> FastAPI:
             return api.get_document(run_id, doc_id)
         except KeyError:
             raise ApiError(404, "document_not_found", f"unknown doc_id: {doc_id}")
+
+    @app.get("/api/runs/{run_id}/roof", response_model=RoofView)
+    def get_roof(run_id: str):
+        run_of(run_id)
+        try:
+            return api.get_roof(run_id)
+        except KeyError as err:
+            raise ApiError(404, "roof_not_available", str(err).strip("'\""))
 
     @app.get("/api/assets/{path:path}")
     def get_asset(path: str):

@@ -165,6 +165,22 @@ def draft_document(request: DocumentRequest) -> DocumentDraft:
     return draft
 
 
+def get_roof(run_id: str):
+    """The roof view of a run (agent/roof): its bundle and result, drawn on the aerial image."""
+    from backend.agent.roof import roof_view
+    from backend.data_layer import api as data
+    from backend.schema import PropertyBundle
+    live_run = _live(run_id)
+    if live_run is not None:
+        raw = live_run.files.read_json("bundle.json")
+    else:
+        run = _get(run_id)
+        raw = run["bundle"] if run.get("flavor") is None else _load(run["flavor"], "property_bundle.json")
+    if raw is None:
+        raise KeyError(f"run {run_id} has no property bundle yet")
+    return roof_view(PropertyBundle.model_validate(raw), get_run(run_id), data.get_asset)
+
+
 def get_document(run_id: str, doc_id: str) -> DocumentDraft:
     live_run = _live(run_id)
     if live_run is not None:

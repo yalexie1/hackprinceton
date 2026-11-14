@@ -232,9 +232,56 @@ Consequence for the solar pipeline: **per-plane tilt cannot come from Vexcel hei
 
 `include=footprint-wkt` also exists. Query filters such as `roof-solar=true` and `roof-material=metal` work, which is how P2 portfolio screening would run. [V] filters from the tutorial, [P] not yet exercised
 
-### 4.4 Imagery and detection — D8, not yet verified
+### 4.4 Imagery and SAM 3 detection — verified, and it changes the solar pipeline
 
-`POST /ortho/extract` and `POST /oriented/extract` return image bytes, 1,024-tile cap per extract. `GET /oriented/query` lists raw images with camera positions. `POST /elements/detect` runs **SAM 3 server-side** (`"model": "sam3"`, `detection-threshold`) on ortho and oblique images, returning map-coordinate boxes and pixel masks — so roof segmentation needs no GPU and sponsor imagery never leaves the API. Specific labels beat vague ones; several seconds per request. `POST /embedding/extract` does semantic search over pre-computed tile embeddings. [V] from the tutorial; [P] none of these exercised live yet — that is D8.
+[V] 2026-11-14, run live on the golden house parcel. The request contract is **not** what §6.3 of `SPEC.md` assumes; the shape below comes from the sponsor's own `vexcel_quickstart.py`.
+
+`POST /elements/detect` takes an **area plus a list of extract requests**, not image ids:
+
+```json
+{"wkt": "<parcel POLYGON>", "srid": 4326, "buffer-meter": 0,
+ "images": [
+   {"endpoint": "ortho/extract",
+    "request": {"layer": "...", "srid": 4326, "wkt": "<parcel>", "crop": "bounding_box"}},
+   {"endpoint": "oriented/extract",
+    "request": {"layer": "urban", "srid": 4326, "wkt": "<parcel>",
+                "product-type": "oblique-north", "rotation": "natural", "crop": "bbox"}}],
+ "model-input": {
+   "elements": [{"label": "roof", "model": "sam3", "detection-threshold": 0.3}],
+   "include": ["bbox", "confidence", "pixel-mask", "pixel-bbox"]}}
+```
+
+Gotchas, each verified: [V]
+
+- Each `images[]` entry needs its own **`endpoint`** key. Passing image-name strings fails with `Parameter 'endpoint' is mandatory for this service`, and that message is misleading — the missing key is *inside* `images[]`, not at the top level. `endpoint` is also not accepted as a query parameter.
+- **`pixel-bbox` is required whenever `pixel-mask` is requested.**
+- `buffer-meter: 0` restricts detection to the parcel itself, excluding neighbours.
+- The parcel geometry from `property/extract` can be a **`MultiPolygon`** — the golden house is. Take the largest ring; a bare `POINT` makes `elements/detect` return 404.
+- Oblique directions must come from `oriented/collections` with `product-type=oblique` and `include=product-type,collection,last-capture-date`, filtered to the **newest** `last-capture-date`. All four directions exist on the golden house (newest collection `2025-12-10T21:03:34`).
+- Response: `images[]` echoes each request with an `image-id` (`ortho-1`, `oriented-1`) and `metadata`. **The label is on `features[i].properties.label`, not on the detection** — each detection carries only `imageId`, `bbox` (a map-coordinate POLYGON), `pixel-bbox` (`[x, y, w, h]`), `pixel-mask` (base64 PNG, white where the object is, cropped to the box) and `confidence`.
+
+**Label quality on roofs — the measured result:** [V] golden house, ortho, threshold 0.3
+
+| Label | detections | confidences |
+|---|---|---|
+| `roof` | **13** | 0.309 – 0.695 |
+| `roof surface` | 2 | 0.474, 0.358 |
+| **`roof plane`** | **0** | — |
+| `roof facet` | 0 | — |
+| `chimney` | **0** | — (precomputed says `chimney.count` = **1**) |
+| `skylight` | 2 | 0.368, 0.373 (precomputed says `skylight.count` = **0**) |
+| `solar panel` | 0 | — (consistent with `solar.value` False) |
+| `tree` | 12 | — |
+| `roof vent` | 1 | — (precomputed says `roof-vent.count` = 5) |
+
+Four conclusions the analysis lane needs:
+
+1. **`"roof plane"` — the exact label `SPEC.md` §6.3 specifies — returns nothing.** Use `"roof"`. `"roof facet"` also returns nothing.
+2. **Threshold 0.5 (the quickstart default) is too high for roofs.** Real confidences run 0.31–0.70, so 0.5 discards most detections. Use ~0.3 and carry the confidence through.
+3. **For roof *obstructions*, the precomputed `roof-objects` counts beat SAM 3.** SAM 3 missed the chimney that precomputed reports, invented 2 skylights that precomputed says do not exist, and found 1 of 5 roof vents. `SPEC.md` §16 lists "SAM 3 label quality on roofs" as a risk with precomputed roof attributes as the fallback — **the risk is real and the fallback should be the primary.**
+4. **13 `roof` detections on one small house means SAM 3 returns roof fragments, not clean planes.** Per-plane tilt and azimuth from these masks is not a short path; combined with the unusable roof height (§4.3), the honest P0 position is roof pitch from `shape.value` plus the `physics.md` pitch table, with SAM 3 masks used for *usable-area* estimation rather than plane geometry.
+
+`POST /ortho/extract` and `POST /oriented/extract` return image bytes, 1,024-tile cap per extract. `POST /embedding/extract` does semantic search over pre-computed tile embeddings. [V] from the tutorial, [P] not exercised
 
 ### 4.5 Golden lots
 
@@ -280,7 +327,8 @@ One writer per path. Dependencies name **contract types only**, never another pa
 ### 6.2 Running agents in parallel
 
 - **Three source agents at most**, one per working key set (unlabelled, `_B`, `_C`). Set `_D` is invalid. This cap is a rate-limit constraint, not a style preference — the keys are shared across every team.
-- Each agent on its own `<issue#>-<slug>` branch from fresh `main` (AGENTS.md §3.2), or a git worktree when two need the same dependency tree.
+- Each agent on its own `<issue#>-<slug>` branch, or a git worktree when two need the same dependency tree.
+- **Which base to branch from.** `main` now carries the hardened `.gitignore` (PR #7) and `spec-draft` is a descendant of it (PR #8), so branching from `main` per AGENTS.md §3.2 is safe again for **new** `backend/` and `data/` work. But files that currently exist only on `spec-draft` — this document and `.claude/agents/data-*.md` — must be edited on a branch based on **`spec-draft`**: branching from `main` would turn an edit into an add of an already-divergent file and manufacture a conflict. Check with `git ls-tree -r --name-only origin/main | grep <path>` before picking a base.
 - Launch with `/data-wp <ID>`; check lane state with `/data-status`. Subagent definitions live in `.claude/agents/data-*.md` and carry the verified facts for their source inline, so an agent starts from evidence rather than from the stale spec.
 - **Fixtures ship with the package**, not after it. D5 and the other three lanes must never wait on live keys.
 - `backend/schema.py` belongs to @yalexie1. This lane imports it and never edits it.
@@ -340,7 +388,8 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Vexcel `include=calculated` | live, both lots | 2026-11-14 | disjoint 2-key set, no `primary-structure`; fast not slow |
 | Vexcel `include=precomputed,calculated` | live, house lot | 2026-11-14 | **works** — 92 keys, both sets, join problem solved |
 | `roof-characteristics.height` semantics | arithmetic on both lots | 2026-11-14 | = roof − ground elevation; office 3.94 m plausible, house 0.36 m implausible and unstable |
-| `elements/detect` SAM 3 | — | — | **[P] not run (D8)** |
+| `elements/detect` SAM 3 | live, golden house, ortho + oblique | 2026-11-14 | **works**; `roof` 13 hits @0.3, but `roof plane` 0, chimney missed, skylight false-positive |
+| `elements/detect` request shape | sponsor `vexcel_quickstart.py` + live | 2026-11-14 | `images[]` entries need own `endpoint`; `pixel-bbox` required with `pixel-mask` |
 | Office lot in Vexcel | live `property/extract` | 2026-11-14 | 1 structure; gable/metal; `building-type.class`=`commercial`; `ac-unit.count`=0 |
 | Office georeference | live query | 2026-11-14 | lat 29.8161169, lon -95.5153827, rotation ≈88.3°, source `processing` |
 | Matterport enums | GraphQL introspection | 2026-11-14 | `OpeningType` includes `window`; `EdgeType` only `invisible`/`wall` |

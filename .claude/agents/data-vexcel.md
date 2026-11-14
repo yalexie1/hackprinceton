@@ -15,7 +15,30 @@ You write **only**:
 
 You may **read** anything. You may not edit any other path. `backend/schema.py`, everything under `specs/`, and other lanes' folders belong to other owners. Need a change outside your two paths? Post `HANDOFF-REQUEST:` on the board and wait.
 
-Image bytes and `elements/detect` (SAM 3) belong to **D8 / `data-imagery`**, not to you. You own attributes and geometry.
+Image bytes and `elements/detect` (SAM 3) are **D8**, which is also yours but a separate package from D3. You own attributes and geometry first; do not start D8 until D3's acceptance test passes.
+
+### D8: the verified `elements/detect` contract
+
+`POST /elements/detect` takes an **area plus a list of extract requests**, not image ids:
+
+```json
+{"wkt": "<parcel POLYGON>", "srid": 4326, "buffer-meter": 0,
+ "images": [{"endpoint": "ortho/extract",
+             "request": {"layer": "...", "srid": 4326, "wkt": "<parcel>", "crop": "bounding_box"}}],
+ "model-input": {"elements": [{"label": "roof", "model": "sam3", "detection-threshold": 0.3}],
+                 "include": ["bbox", "confidence", "pixel-mask", "pixel-bbox"]}}
+```
+
+- Each `images[]` entry needs its own `endpoint`. Passing image-name strings fails with `Parameter 'endpoint' is mandatory for this service` — a misleading message, since the missing key is *inside* `images[]`. It is not a query parameter either.
+- `pixel-bbox` is **required** whenever `pixel-mask` is requested.
+- The parcel geometry can be a `MultiPolygon` (the golden house is) — take the largest ring. A bare `POINT` makes the call 404.
+- The label is on `features[i].properties.label`, **not** on the detection. Each detection has `imageId`, `bbox` (map-coordinate POLYGON), `pixel-bbox` `[x,y,w,h]`, `pixel-mask` (base64 PNG) and `confidence`.
+- Oblique directions come from `oriented/collections` with `product-type=oblique`, filtered to the newest `last-capture-date`.
+
+**Label quality, measured on the golden house at threshold 0.3:** `roof` → 13 hits (conf 0.309–0.695); `roof surface` → 2; **`roof plane` → 0**; `roof facet` → 0; `chimney` → 0 *although precomputed reports 1*; `skylight` → 2 *although precomputed reports 0*; `solar panel` → 0; `roof vent` → 1 of 5.
+
+So: **use `"roof"`, not `"roof plane"`** (the label `SPEC.md` §6.3 names returns nothing). **Use threshold ~0.3**, not the quickstart's 0.5, which discards most real detections. And **take roof obstructions from the precomputed `roof-objects` counts, not from SAM 3** — it missed a real chimney and invented two skylights.
+
 
 Stage only your own paths. Never `git add -A`.
 

@@ -57,6 +57,11 @@ NO_COST_WARNING = "no verified cost source; get a quote"   # physics 04 COST-01,
 # Assumption keys that record what is already fitted (written by vision or the user). Not yet in
 # any fixture: proposed here for A7.
 KEY_FILM = "window.film"
+# What A7 (vision) writes: one categorical reading for the windows it saw. Its values that
+# mean a shading device is already fitted, and the one that means film is.
+KEY_VISION_SHADING = "window.shading"
+VISION_SHADES = {"interior_blinds", "curtains", "exterior_shade", "overhang"}
+VISION_FILM = "tinted_film"
 KEY_EXT_SHADING = "window.exterior_shading"
 KEY_INT_SHADING = "window.interior_shading"
 _NONE = {"", "none", "no", "unknown", "false"}
@@ -86,6 +91,14 @@ def _fitted(model: BuildingModel, key: str) -> Optional[str]:
     if isinstance(v, str):
         return None if v.strip().lower() in _NONE else v.replace("_", " ")
     return None
+
+
+def _vision_shading(model: BuildingModel) -> Optional[str]:
+    """A7's reading of the windows' shading, lower case, or None."""
+    a = assumption(model, KEY_VISION_SHADING)
+    if a is None or not isinstance(a.value, str):
+        return None
+    return a.value.strip().lower()
 
 
 def _windows(model: BuildingModel) -> list[Surface]:
@@ -201,6 +214,8 @@ def film_check(bundle: PropertyBundle, model: BuildingModel) -> Optional[tuple[s
     done = _fitted(model, KEY_FILM)
     if done:
         return ("already_done", f"solar control film is already fitted ({done}).")
+    if _vision_shading(model) == VISION_FILM:
+        return ("already_done", "tinted film is already on the windows (seen in the panoramas).")
     return None
 
 
@@ -242,6 +257,9 @@ def shade_check(bundle: PropertyBundle, model: BuildingModel) -> Optional[tuple[
         done = _fitted(model, key)
         if done:
             return ("already_done", f"{done} fitted on the windows.")
+    seen = _vision_shading(model)
+    if seen in VISION_SHADES:
+        return ("already_done", f"{seen.replace('_', ' ')} fitted on the windows (seen in the panoramas).")
     if not _sun_side(model):
         return ("feasibility", "No window faces east, south or west, where shading pays.")
     return None

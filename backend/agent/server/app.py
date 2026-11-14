@@ -16,7 +16,7 @@ from backend.data_layer import api as data
 from backend.schema import (SCHEMA_VERSION, DocumentDraft, DocumentRequest, PropertySummary,
                             RunRequest, RunResult, Segment, UseType)
 
-_CODES = {400: "bad_request", 404: "not_found", 422: "invalid_request"}
+_CODES = {400: "bad_request", 404: "not_found", 409: "conflict", 422: "invalid_request"}
 
 
 class AnswerBody(BaseModel):
@@ -98,7 +98,16 @@ def create_app() -> FastAPI:
 
     @app.post("/api/runs/{run_id}/answers")
     def post_answer(run_id: str, body: AnswerBody):
-        run_of(run_id)
+        run = run_of(run_id)
+        if run.status != "waiting_for_user":
+            raise ApiError(409, "run_not_waiting", f"run {run_id} is {run.status}, not waiting")
+        question = next((q for q in run.questions if q.id == body.question_id), None)
+        if question is None:
+            raise ApiError(404, "question_not_found", f"unknown question_id: {body.question_id}")
+        if body.value not in [c.value for c in question.choices]:   # None = "I don't know"
+            raise ApiError(422, "invalid_answer", f"{body.value!r} is not a choice of {question.id}")
+        # The run door resumes the paused graph with Command(resume={"value": value}); the
+        # server never builds that itself (a bare None resume breaks langgraph).
         api.answer(run_id, body.question_id, body.value)
         return {"ok": True}
 

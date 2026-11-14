@@ -1076,7 +1076,7 @@
     {
       "measure_id": "WIN_REPLACE",
       "reason": "not_cost_effective",
-      "detail": "SIR 0.22 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
+      "detail": "SIR 0.29 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
     },
     {
       "measure_id": "CTRL_TSTAT",

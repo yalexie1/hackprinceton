@@ -1964,7 +1964,7 @@
       "title": "Window replacement",
       "applicable": true,
       "not_applicable_reason": null,
-      "description": "Replace 10 windows, 123.5 m2 on the south-east, north-east, south-west and north-west walls, with double low-e units: U from 6.93 to 2.16 W/m2K.",
+      "description": "Replace 10 windows, 123.5 m2 on the south-east, north-east, south-west and north-west walls, with double low-SHGC low-e units: U from 6.93 to 2.16 W/m2K, SHGC 0.25.",
       "params": {
         "glazing_area_m2": 123.5,
         "window_surface_ids": [
@@ -1981,37 +1981,38 @@
         ],
         "window_type_after": "double_lowe_non_metal",
         "u_after_w_m2k": 2.16,
-        "shgc_after": 0.44
+        "shgc_after": 0.25,
+        "climate_zone": "2A"
       },
       "savings": {
         "electricity_kwh": {
-          "low": -1188.81,
-          "expected": -1188.81,
-          "high": -293.64,
+          "low": -751.55,
+          "expected": 3238.62,
+          "high": 3238.62,
           "unit": "kWh"
         },
         "gas_kwh": {
-          "low": -6399.62,
-          "expected": 3829.29,
-          "high": 3829.29,
+          "low": -5764.93,
+          "expected": 3476.2,
+          "high": 3476.2,
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": -25.89,
-          "expected": 31.36,
-          "high": 31.36,
+          "low": 303.16,
+          "expected": 417.07,
+          "high": 417.07,
           "unit": "USD"
         },
         "co2_kg": {
-          "low": -17.54,
-          "expected": 296.78,
-          "high": 296.78,
+          "low": -1075.44,
+          "expected": 1712.13,
+          "high": 1712.13,
           "unit": "kg"
         },
         "co2_nonbaseload_kg": {
-          "low": -81.69,
-          "expected": 21.3,
-          "high": 55.57,
+          "low": -1192.74,
+          "expected": 2462.6,
+          "high": 2462.6,
           "unit": "kg"
         }
       },
@@ -2031,25 +2032,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": -25.89,
-          "expected": 31.36,
-          "high": 31.36,
+          "low": 303.16,
+          "expected": 417.07,
+          "high": 417.07,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 25,
-        "simple_payback_years": null,
+        "simple_payback_years": {
+          "low": 164.05,
+          "expected": 185.07,
+          "high": 257.72,
+          "unit": "years"
+        },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -85408.61,
-          "expected": -76567.31,
-          "high": -67798.81,
+          "low": -78519.73,
+          "expected": -69503.6,
+          "high": -60735.1,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -76780.75,
-        "sir": 0.008,
+        "npv_sensitivity_usd": -72091.82,
+        "sir": 0.1,
         "irr": null,
-        "airr": -0.1507,
+        "airr": -0.0608,
         "discount_rate": 0.03,
         "electricity_escalation": 0.0021,
         "gas_escalation": 0.0109,
@@ -2063,9 +2069,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": -25.89,
-              "expected": 31.36,
-              "high": 31.36,
+              "low": 303.16,
+              "expected": 417.07,
+              "high": 417.07,
               "unit": "USD"
             },
             "program_sir": null,
@@ -2081,16 +2087,16 @@
             "term_years": 20,
             "annual_payment_usd": 7005.26,
             "net_cashflow_year1_usd": {
-              "low": -7031.15,
-              "expected": -6973.9,
-              "high": -6973.9,
+              "low": -6702.1,
+              "expected": -6588.19,
+              "high": -6588.19,
               "unit": "USD"
             },
-            "program_sir": 0.004,
+            "program_sir": 0.06,
             "notes": [
               "Term of 20 years does not exceed the useful life of 25 years.",
-              "Program SIR 0.00: undiscounted savings over the 20-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
-              "Savings-to-debt-service ratio 0.00.",
+              "Program SIR 0.06: undiscounted savings over the 20-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
+              "Savings-to-debt-service ratio 0.06.",
               "Rate and term are market inputs, not defaults from a publication.",
               "The assessment is a first and prior lien with the priority of an ad valorem tax lien and runs with the land (Loc. Gov't Code section 399.014).",
               "Texas: written notice to any mortgage holder at least 30 days before the owner contract, and the holder's written consent, are statutory preconditions (Loc. Gov't Code section 399.010).",
@@ -2174,7 +2180,7 @@
         {
           "kind": "default_table",
           "ref": "DEF-03",
-          "note": "double lowe non metal: U 2.16, SHGC 0.44 (S17 Table 69)"
+          "note": "double lowe non metal: U 2.16, SHGC 0.25; IECC climate zone 2A: IECC 2021 prescriptive SHGC 0.25 in zones 0-3 (Tables R402.1.2 and C402.4)"
         }
       ],
       "formula_ids": [
@@ -2205,7 +2211,7 @@
       "value_uplift": null,
       "warnings": [
         "Some window areas were read from panoramas, not measured (plus or minus 30 percent, physics 02 DEF-03).",
-        "New windows are the DEF-03 default, double low-e with a non-metal frame (U 2.16, SHGC 0.44); the rating of the product actually quoted replaces it.",
+        "New windows are double low-SHGC low-e units with a non-metal frame (U 2.16, SHGC 0.25; IECC climate zone 2A: IECC 2021 prescriptive SHGC 0.25 in zones 0-3 (Tables R402.1.2 and C402.4)); the rating of the product actually quoted replaces it.",
         "useful life of 25 years is unverified (physics 04 COST-02)"
       ]
     },
@@ -6450,7 +6456,7 @@
       {
         "measure_id": "WIN_REPLACE",
         "reason": "not_cost_effective",
-        "detail": "SIR 0.05 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
+        "detail": "SIR 0.13 is below the break-even of 1: over its life it costs more than it saves, so it is not recommended or offered for financing."
       },
       {
         "measure_id": "PLUG_MGMT",

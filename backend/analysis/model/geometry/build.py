@@ -21,6 +21,10 @@ Rules, in the order they apply:
   plate, or, with no footprint either, from a square of the scanned area (physics 02 DEF-12,
   SPEC 5.1). Such a model is never left without exterior walls silently.
 - A roof surface on the top storey, a ground floor with its exposed perimeter on storey 1.
+  A suite (``part_of_larger_building``) scanned on one floor with a generic label ("Floor 1",
+  "1" or none), in a building of more than one storey (CoStar) that the scan covers less than
+  ``MID_BUILDING_MAX_SHARE`` of the footprint of, is on an unknown storey and is modelled
+  mid-building: no ground floor and no roof (physics 02 DEF-13).
 - ``north_offset_deg`` and ``north_source`` from ``north.resolve_north``.
 
 Envelope properties (U-values, SHGC, ...) are not this package's job: they arrive as
@@ -50,6 +54,10 @@ MEASURED_WINDOW_REL = 0.05           # physics 02 DEF-03: measured openings +/- 
 DEFAULT_EMITTANCE = 0.9              # physics 02 ENV-05 default
 # physics 02 DEF-03 window-to-wall ratios (low, expected, high), NOT sourced (section 10, tier A)
 DEFAULT_WWR = {"home": (0.15, 0.18, 0.25), "office": (0.20, 0.30, 0.40)}
+# physics 02 DEF-13: below this scanned share of the footprint, a generically labelled suite
+# floor in a multi-storey building is taken as mid-building. Not sourced (section 10, tier A).
+MID_BUILDING_MAX_SHARE = 0.95
+_GENERIC_FLOOR_LABEL = re.compile(r"^\s*(?:(?:floor|level|storey|story)\s*)?0*1?\s*$", re.IGNORECASE)
 
 # Placeholders when the registry has not passed a value. Wide on purpose; replaced through the
 # door by the registry's assumptions (physics 02 DEF tables). Keys follow physics 02 section 12.
@@ -111,6 +119,12 @@ class _Props:
         self.placeholders.add(key)
         lo, ex, hi, unit = PLACEHOLDER_PROPERTIES[key]
         return Ranged(low=lo, expected=ex, high=hi, unit=unit)
+
+
+def _generic_label(label: Optional[str]) -> bool:
+    """True for a floor label that says nothing about the storey: "Floor 1", "1", or none.
+    Matterport names the first floor of every model "Floor 1", whatever storey it is on."""
+    return bool(_GENERIC_FLOOR_LABEL.match(label or ""))
 
 
 def _floor_level(floor: Floor, index: int, floor_levels: Optional[dict[str, int]]) -> int:
@@ -224,6 +238,19 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
     single = len([f for f in matterport.floors if rooms_by_floor[f.id]]) == 1
     use_key = "office" if use == "office" else "home"
 
+    ring_cache: list = []                         # the footprint ring, read at most once
+
+    def footprint() -> Optional[list[tuple[float, float]]]:
+        if not ring_cache:
+            ring_cache.append(_footprint_ring(vexcel, warnings))
+        return ring_cache[0]
+
+    # physics 02 DEF-13: a generically labelled suite floor in a multi-storey building
+    mid_floors, storey_assumption = _unknown_storey(
+        matterport, rooms_by_floor, footprint, part_of_larger_building=part_of_larger_building,
+        single=single, building_stories=building_stories, floor_levels=floor_levels,
+        warnings=warnings)
+
     zones: list[Zone] = []
     walls: list[_Wall] = []
     zone_of_floor: dict[str, str] = {}
@@ -272,8 +299,10 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
                 surface_id=f"surf_wall_{fl.id}_{e.id}" if clash else f"surf_wall_{e.id}"))
 
     new_assumptions: list[Assumption] = [north.assumption]
+    if storey_assumption is not None:
+        new_assumptions.append(storey_assumption)
     if no_graph:
-        fp_walls, fp_assumption = _footprint_envelope(no_graph, vexcel, psi, single, warnings)
+        fp_walls, fp_assumption = _footprint_envelope(no_graph, footprint(), psi, single, warnings)
         walls += fp_walls
         new_assumptions.append(fp_assumption)
 
@@ -398,10 +427,11 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
             emittance=DEFAULT_EMITTANCE if ext else None))
         surfaces.extend(w.children)
 
-    # roof on the top storey, ground floor on storey 1
+    # roof on the top storey, ground floor on storey 1; neither on a DEF-13 mid-building floor,
+    # whose floor and ceiling face conditioned neighbours (b = 0, ENV-03: no surface is built)
     for fl in matterport.floors:
         zid = zone_of_floor.get(fl.id)
-        if zid is None:
+        if zid is None or fl.id in mid_floors:
             continue
         zone = next(z for z in zones if z.id == zid)
         suffix = "" if single else f"_{fl.id}"
@@ -478,7 +508,54 @@ def _footprint_ring(vexcel: Optional[VexcelData], warnings: list[str]
     return [(float(x), float(y)) for x, y in orient(poly, sign=1.0).exterior.coords]
 
 
-def _footprint_envelope(no_graph: list[tuple[Floor, Zone]], vexcel: Optional[VexcelData],
+def _unknown_storey(matterport: MatterportData, rooms_by_floor: dict[str, list[Room]], footprint,
+                    *, part_of_larger_building: bool, single: bool,
+                    building_stories: Optional[int], floor_levels: Optional[dict[str, int]],
+                    warnings: list[str]) -> tuple[set[str], Optional[Assumption]]:
+    """Floors taken as mid-building, and the ``geometry.storey`` assumption (physics 02 DEF-13).
+
+    Applies to a suite scanned on one floor whose label is generic ("Floor 1", "1" or none),
+    with no storey passed in ``floor_levels``, in a building of more than one storey (CoStar),
+    when the scan covers less than ``MID_BUILDING_MAX_SHARE`` of the Vexcel footprint (the
+    DEF-12 share). Such a suite is more likely on a middle storey than on the ground or top one.
+    Without a footprint the share is unknown and the label is read as before.
+    """
+    if not (part_of_larger_building and single and building_stories and building_stories > 1):
+        return set(), None
+    fl = next(f for f in matterport.floors if rooms_by_floor[f.id])
+    if (floor_levels and fl.id in floor_levels) or not _generic_label(fl.label):
+        return set(), None
+    ring = footprint()
+    if ring is None:
+        return set(), None
+    from shapely.geometry import Polygon
+    fp_area = float(Polygon(ring).area)
+    scanned = sum(room_area(r) for r in rooms_by_floor[fl.id])
+    share = min(1.0, scanned / fp_area)
+    if share >= MID_BUILDING_MAX_SHARE:
+        return set(), None
+    label = f"'{fl.label}'" if fl.label else "no label"
+    warnings.append(
+        f"floor {fl.id} has {label}, which does not say which storey the suite is on; the "
+        f"building has {building_stories} storeys and the scan covers {share:.0%} of its footprint, "
+        f"so the suite is assumed to be on a middle storey: no ground floor and no roof, its floor "
+        f"and ceiling against conditioned space (physics 02 DEF-13). Set the storey if the suite is "
+        f"on the ground or top floor")
+    return {fl.id}, Assumption(
+        key="geometry.storey", label="Storey of the scanned suite: unknown, assumed mid-building",
+        value="unknown_mid_building", source="vintage_default", confidence=0.3,
+        evidence=[
+            EvidenceRef(kind="matterport_field", ref="floors.label",
+                        note=f"floor {fl.id}: {label}, the scan's own floor name, not a storey"),
+            EvidenceRef(kind="costar_field", ref="stories", note=f"{building_stories} storeys"),
+            EvidenceRef(kind="vexcel_attr", ref="footprint.wkt",
+                        note=f"scanned share {share:.3f} ({scanned:.1f} of {fp_area:.1f} m2), below "
+                             f"{MID_BUILDING_MAX_SHARE}"),
+            EvidenceRef(kind="default_table", ref="DEF-13", note="physics 02 DEF-13, not sourced")])
+
+
+def _footprint_envelope(no_graph: list[tuple[Floor, Zone]],
+                        ring: Optional[list[tuple[float, float]]],
                         psi: float, single: bool, warnings: list[str]
                         ) -> tuple[list[_Wall], Assumption]:
     """Exterior walls of floors without a usable wall graph (physics 02 DEF-12, SPEC 5.1).
@@ -490,7 +567,6 @@ def _footprint_envelope(no_graph: list[tuple[Floor, Zone]], vexcel: Optional[Vex
     square of the scanned area aligned with the model axes is the last resort (azimuths rotated
     by the north offset). Height is the zone's mean room height (volume / area).
     """
-    ring = _footprint_ring(vexcel, warnings)
     fp_area = None
     if ring is not None:
         from shapely.geometry import Polygon

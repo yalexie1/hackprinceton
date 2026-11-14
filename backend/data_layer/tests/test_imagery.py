@@ -234,6 +234,33 @@ def test_mask_wkt_is_left_unset_on_purpose():
     assert "silently wrong" in imagery.MASK_WKT_NOTE
 
 
+def test_mask_area_is_populated_on_the_contract_field():
+    """`mask_area_m2` joined the contract as 0.3.2 for exactly this number. An empty
+    field would make the addition pointless."""
+    frame = imagery.ImageFrame("ortho-1", HOUSE_META)
+    response = _response([_detection(0.5, (0, 0, 10, 10), 40)])
+    found, _ = imagery.detect("POLYGON ((0 0, 1 0, 1 1, 0 0))", post=_poster(response))
+    assert found[0].mask_area_m2 == pytest.approx(40 * frame.pixel_area_m2())
+
+
+def test_an_undecodable_mask_leaves_the_area_none_not_zero():
+    """0.0 would read as "this roof has no surface" - a wrong answer rather than a
+    missing one."""
+    bad = _detection(0.5, (0, 0, 4, 4), 8)
+    bad["pixel-mask"] = "!!!"
+    found, _ = imagery.detect("POLYGON ((0 0, 1 0, 1 1, 0 0))", post=_poster(_response([bad])))
+    assert found[0].mask_area_m2 is None
+
+
+def test_mask_area_is_the_mask_not_its_box():
+    """The field's own comment: "not of its box or hull"."""
+    frame = imagery.ImageFrame("ortho-1", HOUSE_META)
+    response = _response([_detection(0.5, (0, 0, 100, 100), 4300)])
+    found, _ = imagery.detect("POLYGON ((0 0, 1 0, 1 1, 0 0))", post=_poster(response))
+    box_area = 100 * 100 * frame.pixel_area_m2()
+    assert found[0].mask_area_m2 < box_area * 0.5
+
+
 def test_every_detection_validates_against_the_contract():
     response = _response([_detection(0.31, (0, 0, 4, 4), 5),
                           _detection(0.69, (5, 5, 6, 6), 9)])

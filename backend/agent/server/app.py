@@ -119,9 +119,11 @@ def create_app() -> FastAPI:
 
     @app.post("/api/runs/{run_id}/documents", response_model=DocumentDraft)
     def create_document(run_id: str, request: DocumentRequest):
-        run_of(run_id)
+        run = run_of(run_id)
         if request.run_id != run_id:
             raise ApiError(400, "run_id_mismatch", "body run_id differs from the path")
+        if run.status != "done":
+            raise ApiError(409, "run_not_done", f"run {run_id} is {run.status}; documents need a finished run")
         return api.draft_document(request)
 
     @app.get("/api/runs/{run_id}/documents/{doc_id}", response_model=DocumentDraft)

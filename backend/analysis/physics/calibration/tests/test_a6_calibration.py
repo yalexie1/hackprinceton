@@ -241,3 +241,20 @@ def test_bad_bills_are_rejected(house):
         house.calibrate(UtilityBills(electricity_kwh=[100.0] * 11))
     with pytest.raises(ValueError):
         house.calibrate(UtilityBills(electricity_kwh=[100.0] * 11 + [-5.0]))
+
+
+def test_the_contract_summary_and_the_calibrated_model(house):
+    """Contract 0.3.5: the door returns the model carrying `calibration`, NMBE simulated minus billed."""
+    truth = {"plug.ppd": 6.5, "setpoint.heating": 21.0, "hvac.cooling_rating": 11.0}
+    res = house.calibrate(house.bills_from(truth), keys=list(truth))
+    m = res.calibrated_model()
+    c = m.calibration
+    assert c.calibrated and set(c.moved) <= set(truth) and c.moved
+    assert {f.fuel for f in c.fits} == {"electricity", "gas"} and all(f.passed for f in c.fits)
+    for f in c.fits:
+        assert f.nmbe_before == pytest.approx(-res.before[f.fuel].nmbe, abs=1e-4)
+        assert abs(f.nmbe_after) < 0.01
+    assert c.warnings and c.warnings[0].startswith("Calibrated to the bills")
+    bad = house.calibrate(house.bills_from({}, elec_extra=350.0)).calibrated_model()
+    assert not bad.calibration.calibrated and bad.calibration.moved == []
+    assert not [f for f in bad.calibration.fits if f.fuel == "electricity" and f.passed]

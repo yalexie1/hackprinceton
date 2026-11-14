@@ -45,6 +45,25 @@ def extract_numbers(text: str) -> list[tuple[str, float, int, bool]]:
     return out
 
 
+_TEXT_KEYS = {"warnings", "detail", "not_applicable_reason", "note"}
+
+
+def _text_numbers(node, in_text: bool = False) -> Iterator[float]:
+    """Numbers written inside the result's own explanatory text (a warning, a skip reason): a report that quotes
+    a warning verbatim quotes those numbers too, and they are the result's, not the writer's."""
+    if isinstance(node, str):
+        if in_text:
+            for m in _NUMBER.finditer(node):
+                whole, frac = m.group(1), m.group(2) or ""
+                yield float(whole.replace(",", "") + frac)
+    elif isinstance(node, dict):
+        for k, v in node.items():
+            yield from _text_numbers(v, in_text or k in _TEXT_KEYS)
+    elif isinstance(node, list):
+        for v in node:
+            yield from _text_numbers(v, in_text)
+
+
 def _address_numbers(*addresses: Optional[str]) -> Iterator[float]:
     for text in addresses:
         for m in re.finditer(r"\d+", text or ""):
@@ -60,7 +79,9 @@ def check_narrative(narrative_md: str, result: RunResult,
         sources.append(bundle.model_dump(mode="json"))
     if model is not None:
         sources.append(model.model_dump(mode="json"))
-    pool = sorted({v for src in sources for v in _walk(src)}
+    values = {v for src in sources for v in _walk(src)}
+    pool = sorted(values | {abs(v) for v in values}        # a loss is written without its sign: "-$496", "a loss of 496"
+                  | {v for src in sources for v in _text_numbers(src)}
                   | set(_address_numbers(result.property.address,
                                          bundle.summary.address if bundle else None)))
     problems = []

@@ -1,6 +1,6 @@
 # Example payloads for the shared contract
 
-One house and two offices, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.7). Lanes build and test against these files until the real doors are live.
+One house and two offices, written as JSON for every type in the contract (`specs/SPEC.md` section 9, `SCHEMA_VERSION` 0.3.8). Lanes build and test against these files until the real doors are live.
 
 **The inputs are hand-made examples, not a capture of sponsor data; the analysis files are the output of the real code on `main`.** No API response and no CoStar kit record is copied here. Each folder's `property_bundle.json`, the vision observations behind its model and its run requests are written by hand. `building_model.json`, `baseline_result.json`, `measures.json`, both plans, `run_result.json` and `run_events.json` are what `backend/analysis/api.py` and the agent's fallback and narrative code return on those inputs, run on the committed NOAA 2024 weather year (`weather/README.md`) with no site weather file on the machine, plus the few conventions of section 2.3 (#330). Three kinds of value appear, and section 2 separates them:
 

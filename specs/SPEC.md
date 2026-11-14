@@ -1,6 +1,6 @@
 # Master spec
 
-Status: draft v0.3.7, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.8, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
@@ -13,6 +13,8 @@ v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so
 v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
 
 v0.3.4 adds `"not_cost_effective"` to `SkippedItem.reason`: the plan follows consultant practice (section 6.5), and a measure whose SIR is below 1 is never recommended or offered for financing.
+
+v0.3.8 adds `RunRequest.mode` (`agent` or `analysis`) and the `served_by` value `analysis`: an analysis run assembles live data and runs the analysis door on the request's own budget and role in about ten seconds, with a templated report checked like any other and no agent narration (Yale's decision, 2026-11-14).
 
 v0.3.7 adds `RunResult.data_source` (`live` or `example`: the property data the analysis ran on) and `RunResult.served_by` (`live` or `replay`), both optional, so a client never infers a run's provenance from warning text. A live run that assembled its bundle from `specs/examples/` reports `example`.
 
@@ -387,7 +389,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.7"
+SCHEMA_VERSION = "0.3.8"
 
 # ---------- primitives ----------
 
@@ -968,6 +970,7 @@ class RunRequest(BaseModel):
     bills: Optional[UtilityBills] = None
     overrides: dict[str, Union[float, str, bool]] = {}   # assumption key -> value
     desks_requested: Optional[int] = None
+    mode: Optional[Literal["agent", "analysis"]] = None   # "analysis": live data and the analysis door on this request, no agent narration (about 10 s); None: the server default (AGENT_MODE)
 
 class Choice(BaseModel):
     label: str
@@ -1002,7 +1005,7 @@ class RunResult(BaseModel):
     warnings: list[str] = []
     data_source: Optional[Literal["live", "example"]] = None   # what the analysis ran on: live sponsor data, or the
                                                 # committed example bundle; a replayed recording keeps the value it was recorded with
-    served_by: Optional[Literal["live", "replay"]] = None      # how this result reached the client
+    served_by: Optional[Literal["live", "replay", "analysis"]] = None   # how this result reached the client; "analysis" = computed now, no agent
 
 DocType = Literal["retrofit_contract_residential", "retrofit_contract_commercial",
                   "solar_installation_agreement", "bid_package_rfp",

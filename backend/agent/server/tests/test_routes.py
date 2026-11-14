@@ -362,3 +362,60 @@ def test_a_cpace_request_in_fallback_mode_returns_a_cpace_body_with_the_typed_pa
     commercial = _draft("office", "retrofit_contract_commercial", "CA").json()
     assert draft["markdown"] != commercial["markdown"]                      # a different document
     assert draft["statutory_checks"] and all(c["requirement_id"].startswith("CA-") for c in draft["statutory_checks"])
+
+
+# ---------- a budget change on a recorded run re-plans for real ----------
+
+def _full_recording(skip=()):
+    """A recording as a live run leaves it: the result, events and every run file."""
+    r = _body("house", "run_result.json")
+    demo = Path(os.environ["AGENT_DEMO_DIR"]) / r["property"]["sid"]
+    demo.mkdir(parents=True, exist_ok=True)
+    files = {"result.json": r, "events.json": _body("house", "run_events.json"),
+             "bundle.json": _body("house", "property_bundle.json"), "model.json": r["building_model"],
+             "baseline.json": r["baseline"], "measures.json": r["measures"], "plan.json": r["plan"]}
+    for name, content in files.items():
+        if name not in skip:
+            (demo / name).write_text(json.dumps(content))
+    if "report.md" not in skip:
+        (demo / "report.md").write_text(r["narrative_md"])
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    assert run_id.startswith("run_demo_")
+    return run_id, demo
+
+
+def test_doubling_the_budget_of_a_recorded_house_moves_solar_into_the_plan():
+    from backend.agent.api import RECORDED_REPLAN_WARNING
+    run_id, demo = _full_recording()
+    before = client.get(f"/api/runs/{run_id}").json()
+    assert "PV_ROOF" not in [i["measure"]["measure_id"] for i in before["plan"]["selected"]]
+    assert "PV_ROOF" in [m["measure_id"] for m in before["plan"]["financeable"]]
+    r = client.patch(f"/api/runs/{run_id}", json={"budget_usd": before["plan"]["budget_usd"] * 4})
+    assert r.status_code == 200
+    after = client.get(f"/api/runs/{run_id}").json()
+    assert after["request"]["budget_usd"] == before["plan"]["budget_usd"] * 4
+    assert "PV_ROOF" in [i["measure"]["measure_id"] for i in after["plan"]["selected"]]     # a real re-plan, not a replay
+    assert RECORDED_REPLAN_WARNING in after["warnings"] and after["served_by"] == "replay"
+    assert after["data_source"] == before["data_source"]
+    assert after["narrative_md"] == before["narrative_md"]                                     # kept, and flagged as the recorded one
+    assert json.loads((demo / "plan.json").read_text()) == before["plan"]                       # the recording itself is untouched
+
+
+def test_the_replanned_recording_streams_the_rerun_events():
+    run_id, _ = _full_recording()
+    n = len(client.get(f"/api/runs/{run_id}").json().get("questions", []))
+    client.patch(f"/api/runs/{run_id}", json={"budget_usd": 40000})
+    with client.stream("GET", f"/api/runs/{run_id}/events") as s:
+        lines = [json.loads(l[6:]) for l in s.iter_lines() if l.startswith("data: ")]
+    names = [e["payload"].get("name") for e in lines if e["type"] == "tool_call"]
+    assert "set_budget" in names and names.count("build_plan") >= 1 and lines[-1]["type"] == "done"
+
+
+def test_a_recording_that_lacks_a_run_file_falls_back_to_the_replayed_shape():
+    run_id, _ = _full_recording(skip=("model.json",))
+    before = client.get(f"/api/runs/{run_id}").json()
+    assert client.patch(f"/api/runs/{run_id}", json={"budget_usd": 40000}).status_code == 200
+    after = client.get(f"/api/runs/{run_id}").json()
+    assert after["plan"]["budget_usd"] == 40000 and after["request"]["budget_usd"] == 40000
+    assert [i["measure"]["measure_id"] for i in after["plan"]["selected"]] == \
+        [i["measure"]["measure_id"] for i in before["plan"]["selected"]]

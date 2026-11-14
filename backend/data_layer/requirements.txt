@@ -2,5 +2,6 @@
 # Owned by the holder of package D5; other agents name new packages in their PR.
 pydantic>=2.7
 httpx>=0.27          # Matterport GraphQL, Vexcel, Open-Meteo, PVGIS, EIA, URDB
+numpy                # #295: TMYx EPW parsing and the irradiance timing check
 Pillow>=10           # D8 decodes the base64 PNG pixel masks to count mask area
 pytest>=8

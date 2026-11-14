@@ -46,7 +46,7 @@ def test_the_model_is_built_from_the_real_modules(flavor):
 
 
 def test_vision_observations_reach_the_model():
-    bundle, request = load("office")
+    bundle, request = load("office_houston")
     model = model_of(bundle, request)
     assert any(a.source == "vision" for a in model.assumptions)
     assert any(s.kind == "window" and s.source_opening_id is None for s in model.surfaces)   # no openings in an office scan
@@ -132,17 +132,34 @@ def test_every_measure_in_the_plan_lists_formula_ids_and_is_accounted_for(flavor
     assert plan.selected[0].remaining_budget_usd <= plan.budget_usd
 
 
-def test_the_house_plan_keeps_the_examples_solar_design_on_the_real_physics():
+def test_the_house_plan_follows_the_consultant_rule_on_the_real_physics():
+    from backend.analysis.finance.plan import STEP_OF
     bundle, request = load("house")
     plan = api.build_plan(bundle, model_of(bundle, request), request)
-    ids = [i.measure.measure_id for i in plan.selected]
-    paid = [i for i in ids if i != "LAYOUT"]                                    # the zero-cost desk layout comes first
-    assert paid[:2] == ["PV_ROOF", "LGT_LED"]                                   # the example's picks, in its order
-    pv = next(i.measure for i in plan.selected if i.measure.measure_id == "PV_ROOF")
-    assert pv.solar.system_kw_dc == 2.15 and pv.solar.panel_count == 5          # sized to the budget, as in the example
-    assert pv.savings.cost_usd.expected == pytest.approx(942.08, rel=0.2)
+    steps = [STEP_OF.get(i.measure.measure_id, 2) for i in plan.selected]
+    assert steps == sorted(steps) and plan.selected                              # operations, then load, then equipment, then solar
     assert plan.selected[-1].cumulative_upfront_usd <= plan.budget_usd
-    assert {"ENV_ATTIC", "HVAC_HP"} <= {m.measure_id for m in plan.financeable}   # the example's financeable pair
+    for i in plan.selected:                                                      # every pick breaks even
+        f = i.measure.finance
+        assert f.net_upfront_usd.expected <= 0 or f.sir is None or f.sir >= 1.0, i.measure.measure_id
+    for m in plan.financeable:                                                   # and so does everything offered for financing
+        assert m.finance.sir is None or m.finance.sir >= 1.0, m.measure_id
+    skipped = {s.measure_id: s for s in plan.skipped}
+    for s in skipped.values():
+        if s.reason == "not_cost_effective":
+            assert s.measure_id not in {m.measure_id for m in plan.financeable} and "SIR" in s.detail
+    ids = {i.measure.measure_id for i in plan.selected}
+    assert "PV_ROOF" in ids | {m.measure_id for m in plan.financeable} | set(skipped)     # solar is accounted for, last
+
+
+def test_with_a_large_budget_solar_is_sized_last_to_the_best_npv_and_the_rest_comes_first():
+    bundle, request = load("house")
+    big = request.model_copy(update={"budget_usd": 60_000.0})
+    plan = api.build_plan(bundle, model_of(bundle, request), big)
+    ids = [i.measure.measure_id for i in plan.selected]
+    assert ids[-1] == "PV_ROOF"                                                  # generation comes last
+    pv = plan.selected[-1].measure
+    assert pv.solar.system_kw_dc >= 2.0 and pv.finance.sir >= 1.0
 
 
 def test_a_tenant_never_gets_an_owner_only_measure():
@@ -181,7 +198,8 @@ def test_without_market_data_the_plan_has_no_uplift():
 
 
 def test_a_home_carries_its_uplift_on_owned_rooftop_solar_only():
-    bundle, plan = plan_of("house")
+    bundle, request = load("house")
+    plan = api.build_plan(bundle, model_of(bundle, request), request.model_copy(update={"budget_usd": 60_000.0}))
     assert plan.value_uplift is None
     pv = next(i.measure for i in plan.selected if i.measure.measure_id == "PV_ROOF")
     assert pv.value_uplift.method == "VAL-03" and pv.value_uplift.value_usd.low == 0.0
@@ -324,7 +342,7 @@ def test_sensitivity_is_the_real_rule_once_the_core_plugins_are_registered(monke
     bundle, request = load("house")
     model = model_of(bundle, request)
     calls = []
-    monkeypatch.setattr(api, "_ask_questions", lambda m, plan_fn: calls.append(m) or [])
+    monkeypatch.setattr(api, "_ask_questions", lambda m, plan_fn, **kw: calls.append(m) or [])
     assert api.sensitivity(bundle, model, request) == [] and len(calls) == 1          # envelope, lighting, heat pump: all registered
     registry = api.engine.REGISTRY
     saved = registry.plugins.pop("HVAC_HP")                                           # as if a core package were missing
@@ -370,7 +388,7 @@ def test_baseline_after_is_a_simulation_of_the_changed_building():
     model = model_of(bundle, request)
     plan = api.build_plan(bundle, model, request)
     before = api.run_baseline(bundle, model).annual
-    assert plan.baseline_after.electricity_kwh.expected < before.electricity_kwh.expected
+    assert plan.baseline_after.electricity_kwh.expected <= round(before.electricity_kwh.expected, 2)   # plan figures are rounded to 2 dp; LAYOUT + PV change no load (#308)
 
 
 # ---- A29 part 4: desks (A23 on A5), roof masks (A12), shading (A15), flags (A8) ----
@@ -590,3 +608,146 @@ def test_the_data_lanes_extent_record_reaches_the_pv_measure(monkeypatch):
     marked = bundle.model_copy(update={"provenance": [*bundle.provenance, record]})
     api.evaluate_measure(marked, model, "PV_ROOF", request.role)
     assert record in seen["provenance"]
+
+
+# ---- a number written as text ----
+
+def test_a_number_written_as_text_is_a_number():
+    bundle, request = load("house")
+    base = model_of(bundle, request)
+    as_float = api.set_assumption(base, "hvac.heating_rating", 0.64)
+    as_text = api.set_assumption(base, "hvac.heating_rating", "0.64")
+    assert as_text.model_dump_json() == as_float.model_dump_json()
+    assert api.build_plan(bundle, as_text, request).model_dump_json() == api.build_plan(bundle, as_float, request).model_dump_json()
+    rebuilt = api.build_building_model(bundle, [], [], {"roof.u_value": "0.182", "setpoint.heating": " 20.7 "})
+    same = api.build_building_model(bundle, [], [], {"roof.u_value": 0.182, "setpoint.heating": 20.7})
+    assert rebuilt.model_dump_json() == same.model_dump_json()
+    assert api.set_assumption(base, "window.type", "single_clear_non_metal").model_dump_json() == \
+        api.set_assumption(base, "window.type", "single_clear_non_metal").model_dump_json()      # categorical text stays text
+
+
+# ---- a property with no example folder ----
+
+def test_the_whole_door_works_for_a_property_that_has_no_example():
+    bundle, request = load("office_houston")
+    real = bundle.model_copy(update={"summary": bundle.summary.model_copy(update={"sid": "NO_EXAMPLE_SID"})})
+    assert not api._has_example("NO_EXAMPLE_SID") and api._measures("NO_EXAMPLE_SID") == []
+    observed, flags = api.observe_interior(real)
+    assert observed == [] and flags == []
+    model = api.build_building_model(real, observed, flags, request.overrides)
+    assert api.run_baseline(real, model).annual.electricity_kwh.expected > 0
+    tiny = request.model_copy(update={"budget_usd": 2_000.0})                   # a small plan keeps the test quick
+    plan = api.build_plan(real, model, tiny)
+    assert plan.selected and all(i.measure.finance is not None for i in plan.selected)
+    assert api.lookup_incentives("LGT_LED", real.summary) is not None
+    priced = api.price_measure(real, api.evaluate_measure(real, model, "LGT_LED", request.role))
+    assert priced.finance is not None and api.cpace_scenario(real, priced) is not None
+
+
+def test_a_missing_example_does_not_change_a_property_that_has_one():
+    bundle, request = load("house")
+    assert api._has_example(bundle.summary.sid) and api._measures(bundle.summary.sid)
+
+
+# ---- sensitivity runs the plans side by side (A27) without changing a result ----
+
+def _fake_plan(model):
+    from backend.schema import Plan
+    from types import SimpleNamespace
+    total = sum(a.value.expected * (i + 1) for i, a in enumerate(model.assumptions) if hasattr(a.value, "expected"))
+    return SimpleNamespace(total_annual_savings_usd=SimpleNamespace(expected=total),
+                           selected=[SimpleNamespace(measure=SimpleNamespace(measure_id=f"M{int(total) % 3}"))])
+
+
+def test_the_parallel_runner_gives_the_loop_s_results_in_the_loop_s_order():
+    from backend.analysis.finance.sensitivity import with_value
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    models = [model] + [with_value(model, a.key, a.value.low)
+                        for a in model.assumptions if hasattr(a.value, "low") and a.value.low < a.value.high][:6]
+    serial = [_fake_plan(m) for m in models]
+    parallel = api._run_all(_fake_plan, models)
+    assert [(p.total_annual_savings_usd.expected, p.selected[0].measure.measure_id) for p in parallel] == \
+           [(p.total_annual_savings_usd.expected, p.selected[0].measure.measure_id) for p in serial]
+
+
+def test_the_runner_falls_back_to_the_loop_when_the_pool_cannot_start(monkeypatch):
+    import concurrent.futures as cf
+    def broken(*a, **k):
+        raise OSError("no processes")
+    monkeypatch.setattr(cf, "ProcessPoolExecutor", broken)
+    assert api._run_all(lambda m: m * 2, [1, 2, 3, 4, 5]) == [2, 4, 6, 8, 10]
+    assert api._FORK == {}
+
+
+def test_one_worker_means_no_pool(monkeypatch):
+    monkeypatch.setenv("ANALYSIS_WORKERS", "1")
+    assert api._run_all(lambda m: m + 1, list(range(8))) == list(range(1, 9))
+
+
+def test_sensitivity_asks_the_same_questions_whether_or_not_it_runs_in_parallel(monkeypatch):
+    from backend.analysis.finance import sensitivity as S
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    plan = api._responsive_plan(bundle, model, request)
+    keep = {"window.u_value", "tariff.electricity_usd_per_kwh", "infiltration.ach50", "lighting.lpd"}
+    asked = [a.key for a in model.assumptions if a.key not in keep]       # a small set keeps the test quick
+    loop = S.rank_assumptions(model, plan, asked)
+    side_by_side = S.rank_assumptions(model, plan, asked, run_all=api._run_all)
+    assert loop[0] == side_by_side[0]
+    assert [(r.key, r.y_low_run, r.y_high_run, r.changes) for r in loop[1]] == \
+           [(r.key, r.y_low_run, r.y_high_run, r.changes) for r in side_by_side[1]]
+    assert [q.model_dump() for q in S.sensitivity(model, plan, asked=asked)] == \
+           [q.model_dump() for q in S.sensitivity(model, plan, asked=asked, run_all=api._run_all)]
+
+
+# ---- A6: the door calibrates to bills and the result says so ----
+
+def _bills_from(bundle, model, **truth):
+    import numpy as np
+    from backend.schema import UtilityBills
+    for k, v in truth.items():
+        model = api.set_assumption(model, k, v, "user")
+    token = api._FAST.set(True)
+    try:
+        r = api._simulate_baseline(bundle, model)
+    finally:
+        api._FAST.reset(token)
+    return UtilityBills(electricity_kwh=[float(x) for x in np.asarray(r.monthly_electricity_kwh)],
+                        gas_kwh=[float(x) for x in r.monthly_gas_kwh])
+
+
+def test_without_calibration_the_baseline_says_so():
+    bundle, request = load("house")
+    base = api.run_baseline(bundle, model_of(bundle, request))
+    assert base.calibrated_to_bills is False and base.calibration is None
+
+
+def test_calibrate_model_returns_the_model_every_later_step_uses_and_the_baseline_reports_it():
+    bundle, request = load("house")
+    model = api.build_building_model(bundle, *api.observe_interior(bundle), {"occupancy.count": 3})
+    bills = _bills_from(bundle, model, **{"infiltration.ach50": 6.0})
+    calibrated = api.calibrate_model(bundle, model, bills)
+    assert calibrated.calibration is not None and calibrated.calibration.fits
+    base = api.run_baseline(bundle, calibrated, bills)
+    assert base.calibration == calibrated.calibration
+    assert base.calibrated_to_bills is calibrated.calibration.calibrated
+    assert model.calibration is None                                   # the input model is unchanged
+
+
+def test_sensitivity_keeps_what_the_bills_calibrated(monkeypatch):
+    """A variant model is rebuilt from overrides; an assumption with `bills.` evidence stays fixed in it."""
+    from backend.schema import EvidenceRef
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    key = "infiltration.ach50"
+    marked = model.model_copy(update={"assumptions": [
+        a.model_copy(update={"source": "heuristic" if a.source == "user" else a.source,
+                             "evidence": [*a.evidence, EvidenceRef(kind="user", ref="bills.gas_kwh")]})
+        if a.key == key else a for a in model.assumptions]})
+    seen = {}
+    monkeypatch.setattr(api, "build_building_model",
+                        lambda b, vision, flags, overrides: seen.update(overrides=dict(overrides)) or model)
+    monkeypatch.setattr(api, "_plan_fast", lambda b, m, r: None)
+    api._responsive_plan(bundle, marked, request)(marked)
+    assert key in seen["overrides"]

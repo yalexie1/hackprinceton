@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.3",
+  "schema_version": "0.3.6",
   "summary": {
     "sid": "L3266YcPPvd",
     "name": "2100 West Loop S Fwy - Full Floor Suite 500",
@@ -653,22 +653,24 @@
     "defurnished_view_id": null
   },
   "vexcel": {
-    "collection": "illustrative-collection-id",
-    "parcel_wkt": "POLYGON((-95.4568395 29.7448696, -95.4561227 29.7452302, -95.4564331 29.7456987, -95.4571499 29.7453380, -95.4568395 29.7448696))",
+    "collection": "us-tx-houston-2023",
+    "parcel_wkt": "POLYGON((-95.4567499 29.7449154, -95.4560323 29.7452751, -95.4564466 29.7458982, -95.4571642 29.7455384, -95.4567499 29.7449154))",
     "attributes": {
-      "structure.count": 1.0
+      "structure.count": 1.0,
+      "parcel-source": "Real",
+      "metadata.collection": "us-tx-houston-2023",
+      "metadata.ortho-date-estimate": "2023-01-14"
     },
     "structures": [
       {
         "primary": true,
-        "footprint_wkt": "POLYGON((-95.4568016 29.7449927, -95.4562640 29.7452632, -95.4564709 29.7455755, -95.4570085 29.7453050, -95.4568016 29.7449927))",
-        "footprint_area_m2": 2400.0,
+        "footprint_wkt": "POLYGON((-95.4567036 29.7451875, -95.4563628 29.7453583, -95.4565133 29.7455847, -95.4568542 29.7454138, -95.4567036 29.7451875))",
+        "footprint_area_m2": 1104.5,
         "attributes": {
-          "primary-structure": true,
+          "footprint.area": 1104.5,
           "roof-characteristics.shape.value": "flat",
-          "roof-characteristics.material.class": "membrane",
-          "roof-characteristics.condition.precise-value": 2.88,
-          "roof-objects.ac-unit.count": 2.0
+          "roof-objects.ac-unit.count": 4.0,
+          "roof-objects.solar.value": false
         }
       }
     ],
@@ -682,136 +684,91 @@
         "label": "roof",
         "confidence": 0.437,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4570085 29.7449927, -95.4570085 29.7455755, -95.4562640 29.7455755, -95.4562640 29.7449927, -95.4570085 29.7449927))",
+        "bbox_wkt": "POLYGON((-95.4568542 29.7451875, -95.4568542 29.7455847, -95.4563628 29.7455847, -95.4563628 29.7451875, -95.4568542 29.7451875))",
         "pixel_bbox": [
           333,
           333,
-          958,
-          864
+          633,
+          589
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det01.png",
         "mask_wkt": null,
-        "mask_area_m2": 2296.4
+        "mask_area_m2": 1064.0
       },
       {
         "label": "roof",
-        "confidence": 0.668,
+        "confidence": 0.672,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4567107 29.7452375, -95.4567107 29.7454473, -95.4564725 29.7454473, -95.4564725 29.7452375, -95.4567107 29.7452375))",
+        "bbox_wkt": "POLYGON((-95.4566675 29.7453305, -95.4566675 29.7454417, -95.4565299 29.7454417, -95.4565299 29.7453305, -95.4566675 29.7453305))",
         "pixel_bbox": [
-          717,
-          523,
-          307,
-          311
+          574,
+          545,
+          177,
+          165
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det02.png",
         "mask_wkt": null,
-        "mask_area_m2": 423.9
+        "mask_area_m2": 138.0
       },
       {
         "label": "roof",
-        "confidence": 0.552,
+        "confidence": 0.548,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4569936 29.7450218, -95.4569936 29.7453132, -95.4566363 29.7453132, -95.4566363 29.7450218, -95.4569936 29.7450218))",
+        "bbox_wkt": "POLYGON((-95.4568345 29.7452113, -95.4568345 29.7454020, -95.4565987 29.7454020, -95.4565987 29.7452113, -95.4568345 29.7452113))",
         "pixel_bbox": [
-          353,
-          722,
-          460,
-          432
+          359,
+          604,
+          304,
+          283
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det03.png",
         "mask_wkt": null,
-        "mask_area_m2": 648.4
+        "mask_area_m2": 275.2
       },
       {
         "label": "roof",
-        "confidence": 0.498,
+        "confidence": 0.493,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4566511 29.7450102, -95.4566511 29.7452550, -95.4562789 29.7452550, -95.4562789 29.7450102, -95.4566511 29.7450102))",
+        "bbox_wkt": "POLYGON((-95.4566183 29.7453702, -95.4566183 29.7455609, -95.4563825 29.7455609, -95.4563825 29.7453702, -95.4566183 29.7453702))",
         "pixel_bbox": [
-          793,
-          809,
-          479,
-          363
+          637,
+          369,
+          304,
+          283
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det04.png",
         "mask_wkt": null,
-        "mask_area_m2": 606.5
+        "mask_area_m2": 294.5
       },
       {
         "label": "roof",
-        "confidence": 0.405,
+        "confidence": 0.381,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4569713 29.7453132, -95.4569713 29.7455580, -95.4566735 29.7455580, -95.4566735 29.7453132, -95.4569713 29.7453132))",
+        "bbox_wkt": "POLYGON((-95.4568247 29.7454060, -95.4568247 29.7455648, -95.4566380 29.7455648, -95.4566380 29.7454060, -95.4568247 29.7454060))",
         "pixel_bbox": [
-          381,
-          359,
-          383,
-          363
+          371,
+          363,
+          240,
+          236
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det05.png",
         "mask_wkt": null,
-        "mask_area_m2": 399.1
+        "mask_area_m2": 165.6
       },
       {
         "label": "roof",
-        "confidence": 0.352,
-        "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4570383 29.7451675, -95.4570383 29.7453424, -95.4568596 29.7453424, -95.4568596 29.7451675, -95.4570383 29.7451675))",
-        "pixel_bbox": [
-          295,
-          679,
-          230,
-          259
-        ],
-        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det06.png",
-        "mask_wkt": null,
-        "mask_area_m2": 234.8
-      },
-      {
-        "label": "roof",
-        "confidence": 0.371,
+        "confidence": 0.362,
         "image_id": "oriented-1",
-        "bbox_wkt": "POLYGON((-95.4567256 29.7452258, -95.4567256 29.7454939, -95.4564427 29.7454939, -95.4564427 29.7452258, -95.4567256 29.7452258))",
+        "bbox_wkt": "POLYGON((-95.4568542 29.7451676, -95.4568542 29.7456006, -95.4563628 29.7456006, -95.4563628 29.7451676, -95.4568542 29.7451676))",
         "pixel_bbox": [
-          498,
-          325,
-          260,
-          284
+          238,
+          221,
+          452,
+          458
         ],
         "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/oriented-1_det01.png",
         "mask_wkt": null,
-        "mask_area_m2": 602.5
-      },
-      {
-        "label": "ac unit",
-        "confidence": 0.41,
-        "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4566914 29.7452616, -95.4566914 29.7452907, -95.4566542 29.7452907, -95.4566542 29.7452616, -95.4566914 29.7452616))",
-        "pixel_bbox": [
-          742,
-          756,
-          48,
-          43
-        ],
-        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det07.png",
-        "mask_wkt": null,
-        "mask_area_m2": 9.4
-      },
-      {
-        "label": "ac unit",
-        "confidence": 0.36,
-        "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-95.4565212 29.7453472, -95.4565212 29.7453764, -95.4564839 29.7453764, -95.4564839 29.7453472, -95.4565212 29.7453472))",
-        "pixel_bbox": [
-          961,
-          629,
-          48,
-          43
-        ],
-        "mask_png_path": "data/cache/L3266YcPPvd/vexcel/masks/ortho-1_det08.png",
-        "mask_wkt": null,
-        "mask_area_m2": 9.0
+        "mask_area_m2": 1082.7
       }
     ]
   },
@@ -950,13 +907,19 @@
       "layer": "vexcel",
       "what": "property/extract (include=precomputed,calculated), ortho",
       "status": "ok",
-      "detail": "flat membrane, two AC units; the footprint outlines a podium or garage, not the tower; roof-characteristics.height is unusable"
+      "detail": "us-tx-houston-2023, imagery 2023-01-14: the structure that encloses the CoStar address point, 1,104.5 m2 against a CoStar floor plate of 943.8 m2 (15,100.5 m2 over 16 storeys); flat roof, 4 AC units, no solar; this capture reports no roof condition and no material; roof-characteristics.height is unusable"
+    },
+    {
+      "layer": "vexcel",
+      "what": "property/extract:extent",
+      "status": "fallback",
+      "detail": "4 other capture(s) outline what looks like the same building at 3,700 to 4,320 m2 against the chosen 1,104 m2 (up to 3.9x, largest from us-tx-houston-2024); the floor plate chose the smaller, which on a tower is the tower rather than the podium it stands on"
     },
     {
       "layer": "vexcel",
       "what": "elements/detect (SAM 3, label 'roof', threshold 0.3)",
       "status": "ok",
-      "detail": "roof fragments, not planes: 6 roof masks on ortho-1, nested in the largest one's box; the largest single mask, 2,296.4 m2, is within 5 % of the 2,400 m2 podium footprint, and the most confident detection (0.668) is the tower roof, a different structure from the footprint. Masks are never summed; mask_wkt is left unset and mask_area_m2 carries each mask's area (data-integration 4.4a)"
+      "detail": "roof fragments, not planes: 5 roof masks on ortho-1, nested in the largest one's box; the largest single mask, 1,064.0 m2, is 0.96 of the 1,104.5 m2 footprint, and the most confident detection is a rooftop plant screen. Masks are never summed; mask_wkt is left unset and mask_area_m2 carries each mask's area (data-integration 4.4a)"
     },
     {
       "layer": "vexcel",

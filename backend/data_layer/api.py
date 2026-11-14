@@ -63,8 +63,9 @@ _CACHE: Optional[Path] = None
 def _cache_dir() -> Path:
     return _CACHE if _CACHE is not None else cache.cache_root()
 
-#: The calendar year fetched for the hourly weather file. One real year, not a TMY -
-#: see D9. Pinned so a bundle is reproducible.
+#: The calendar year of the Open-Meteo **fallback** weather file. The primary source is
+#: a TMYx typical year (#295); this year is used only when no station qualifies or the
+#: TMYx file fails to verify. Pinned so a bundle is reproducible.
 WEATHER_YEAR = 2024
 
 
@@ -290,7 +291,9 @@ _STRIPPED = "costar.raw"
 #:
 #: 1 - pre-D16: Vexcel's `primary-structure` flag from an arbitrary capture.
 #: 2 - D16: the structure enclosing the CoStar address point, floor plate deciding.
-BUNDLE_RULE_VERSION = 2
+#: 3 - #295: the weather is a TMYx station typical year, Open-Meteo only the fallback.
+#:     A bundle written before names the Open-Meteo 2024 file and its time zone.
+BUNDLE_RULE_VERSION = 3
 
 
 def _write_bundle_cache(path: Path, bundle: PropertyBundle) -> Path:

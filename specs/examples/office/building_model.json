@@ -1,11 +1,11 @@
 {
-  "schema_version": "0.3.3",
-  "sid": "jfiEvosX974",
+  "schema_version": "0.3.6",
+  "sid": "ZSPaQbkGcJJ",
   "bedrooms": null,
   "north_offset_deg": {
-    "low": 40.57,
-    "expected": 41.57,
-    "high": 42.57,
+    "low": 23.999999,
+    "expected": 24.999999,
+    "high": 25.999999,
     "unit": "deg"
   },
   "north_source": "georeference",
@@ -20,11 +20,20 @@
         "room_05",
         "room_06",
         "room_07",
-        "room_08"
+        "room_08",
+        "room_09",
+        "room_10",
+        "room_11",
+        "room_12",
+        "room_13",
+        "room_14",
+        "room_15",
+        "room_16",
+        "room_17"
       ],
       "use": "office",
-      "floor_area_m2": 383.42,
-      "volume_m3": 1141.94,
+      "floor_area_m2": 2312.0,
+      "volume_m3": 8022.4,
       "conditioned": true,
       "mass_class": "medium"
     }
@@ -35,8 +44,8 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 28.8,
-      "azimuth_deg": 221.6,
+      "area_m2": 15.6934,
+      "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
         "low": 1.249,
@@ -63,19 +72,19 @@
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 32.1,
-      "azimuth_deg": 221.6,
+      "area_m2": 11.1066,
+      "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
-        "low": 6.93,
-        "expected": 6.93,
-        "high": 6.93,
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
         "unit": "W/m2K"
       },
       "shgc": {
-        "low": 0.44,
-        "expected": 0.44,
-        "high": 0.44,
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
         "unit": "-"
       },
       "visible_transmittance": {
@@ -92,134 +101,12 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_wall_e02",
-      "zone_id": "zone_suite",
-      "kind": "wall",
-      "boundary": "exterior",
-      "area_m2": 10.65,
-      "azimuth_deg": 221.6,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 1.249,
-        "expected": 1.249,
-        "high": 5.678,
-        "unit": "W/m2K"
-      },
-      "shgc": null,
-      "visible_transmittance": null,
-      "parent_surface_id": null,
-      "source_edge_id": "e02",
-      "source_opening_id": null,
-      "solar_absorptance": {
-        "low": 0.3,
-        "expected": 0.6,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "emittance": 0.9,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e02_vision",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 10.7,
-      "azimuth_deg": 221.6,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 6.93,
-        "expected": 6.93,
-        "high": 6.93,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.44,
-        "expected": 0.44,
-        "high": 0.44,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e02",
-      "source_edge_id": "e02",
-      "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_wall_e03",
-      "zone_id": "zone_suite",
-      "kind": "wall",
-      "boundary": "exterior",
-      "area_m2": 9.1,
-      "azimuth_deg": 131.6,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 1.249,
-        "expected": 1.249,
-        "high": 5.678,
-        "unit": "W/m2K"
-      },
-      "shgc": null,
-      "visible_transmittance": null,
-      "parent_surface_id": null,
-      "source_edge_id": "e03",
-      "source_opening_id": null,
-      "solar_absorptance": {
-        "low": 0.3,
-        "expected": 0.6,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "emittance": 0.9,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e03_vision",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 9.2,
-      "azimuth_deg": 131.6,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 6.93,
-        "expected": 6.93,
-        "high": 6.93,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.44,
-        "expected": 0.44,
-        "high": 0.44,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e03",
-      "source_edge_id": "e03",
-      "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
       "id": "surf_wall_e04",
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 5.7,
-      "azimuth_deg": 131.6,
+      "area_m2": 11.77,
+      "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
         "low": 1.249,
@@ -246,19 +133,19 @@
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 6.1,
-      "azimuth_deg": 131.6,
+      "area_m2": 8.33,
+      "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
-        "low": 6.93,
-        "expected": 6.93,
-        "high": 6.93,
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
         "unit": "W/m2K"
       },
       "shgc": {
-        "low": 0.44,
-        "expected": 0.44,
-        "high": 0.44,
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
         "unit": "-"
       },
       "visible_transmittance": {
@@ -279,8 +166,8 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 6.74,
-      "azimuth_deg": 131.6,
+      "area_m2": 15.6934,
+      "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
         "low": 1.249,
@@ -307,19 +194,19 @@
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 6.1,
-      "azimuth_deg": 131.6,
+      "area_m2": 11.1066,
+      "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
-        "low": 6.93,
-        "expected": 6.93,
-        "high": 6.93,
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
         "unit": "W/m2K"
       },
       "shgc": {
-        "low": 0.44,
-        "expected": 0.44,
-        "high": 0.44,
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
         "unit": "-"
       },
       "visible_transmittance": {
@@ -336,63 +223,17 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_wall_e06",
-      "zone_id": "zone_suite",
-      "kind": "wall",
-      "boundary": "adjacent_conditioned",
-      "area_m2": 22.47,
-      "azimuth_deg": 41.6,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 1.5,
-        "expected": 2.0,
-        "high": 2.5,
-        "unit": "W/m2K"
-      },
-      "shgc": null,
-      "visible_transmittance": null,
-      "parent_surface_id": null,
-      "source_edge_id": "e06",
-      "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_wall_e07",
-      "zone_id": "zone_suite",
-      "kind": "wall",
-      "boundary": "adjacent_conditioned",
-      "area_m2": 26.28,
-      "azimuth_deg": 41.6,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 1.5,
-        "expected": 2.0,
-        "high": 2.5,
-        "unit": "W/m2K"
-      },
-      "shgc": null,
-      "visible_transmittance": null,
-      "parent_surface_id": null,
-      "source_edge_id": "e07",
-      "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
       "id": "surf_wall_e08",
       "zone_id": "zone_suite",
       "kind": "wall",
-      "boundary": "adjacent_conditioned",
-      "area_m2": 18.6,
-      "azimuth_deg": 41.6,
+      "boundary": "exterior",
+      "area_m2": 15.6934,
+      "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
-        "low": 1.5,
-        "expected": 2.0,
-        "high": 2.5,
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
         "unit": "W/m2K"
       },
       "shgc": null,
@@ -400,51 +241,43 @@
       "parent_surface_id": null,
       "source_edge_id": "e08",
       "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_wall_e09",
+      "id": "surf_win_e08_vision",
       "zone_id": "zone_suite",
-      "kind": "wall",
-      "boundary": "adjacent_conditioned",
-      "area_m2": 18.0,
-      "azimuth_deg": 41.6,
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 11.1066,
+      "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
-        "low": 1.5,
-        "expected": 2.0,
-        "high": 2.5,
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
         "unit": "W/m2K"
       },
-      "shgc": null,
-      "visible_transmittance": null,
-      "parent_surface_id": null,
-      "source_edge_id": "e09",
-      "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_wall_e10",
-      "zone_id": "zone_suite",
-      "kind": "wall",
-      "boundary": "adjacent_conditioned",
-      "area_m2": 13.5,
-      "azimuth_deg": 311.6,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 1.5,
-        "expected": 2.0,
-        "high": 2.5,
-        "unit": "W/m2K"
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
       },
-      "shgc": null,
-      "visible_transmittance": null,
-      "parent_surface_id": null,
-      "source_edge_id": "e10",
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e08",
+      "source_edge_id": "e08",
       "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
@@ -454,14 +287,14 @@
       "id": "surf_wall_e11",
       "zone_id": "zone_suite",
       "kind": "wall",
-      "boundary": "adjacent_conditioned",
-      "area_m2": 10.43,
-      "azimuth_deg": 311.6,
+      "boundary": "exterior",
+      "area_m2": 12.502,
+      "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
-        "low": 1.5,
-        "expected": 2.0,
-        "high": 2.5,
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
         "unit": "W/m2K"
       },
       "shgc": null,
@@ -469,17 +302,421 @@
       "parent_surface_id": null,
       "source_edge_id": "e11",
       "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e11_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 8.848,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e11",
+      "source_edge_id": "e11",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_wall_e12",
+      "id": "surf_wall_e14",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 12.502,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e14",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e14_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 8.848,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e14",
+      "source_edge_id": "e14",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e17",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 15.6934,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e17",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e17_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 11.1066,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e17",
+      "source_edge_id": "e17",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e20",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 15.6934,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e20",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e20_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 11.1066,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e20",
+      "source_edge_id": "e20",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e23",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 15.6934,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e23",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e23_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 11.1066,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e23",
+      "source_edge_id": "e23",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e24",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 11.77,
+      "azimuth_deg": 115.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e24",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e24_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 8.33,
+      "azimuth_deg": 115.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e24",
+      "source_edge_id": "e24",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e28",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 59.0259,
+      "azimuth_deg": 295.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e28",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e28_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 41.7741,
+      "azimuth_deg": 295.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e28",
+      "source_edge_id": "e28",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e30",
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "adjacent_conditioned",
-      "area_m2": 17.4,
-      "azimuth_deg": 311.6,
+      "area_m2": 43.2,
+      "azimuth_deg": 115.0,
       "tilt_deg": 90.0,
       "u_value": {
         "low": 1.5,
@@ -490,24 +727,459 @@
       "shgc": null,
       "visible_transmittance": null,
       "parent_surface_id": null,
-      "source_edge_id": "e12",
+      "source_edge_id": "e30",
       "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_floor",
+      "id": "surf_wall_e34",
       "zone_id": "zone_suite",
-      "kind": "floor",
-      "boundary": "ground",
-      "area_m2": 383.42,
-      "azimuth_deg": null,
-      "tilt_deg": 180.0,
+      "kind": "wall",
+      "boundary": "adjacent_conditioned",
+      "area_m2": 44.8,
+      "azimuth_deg": 25.0,
+      "tilt_deg": 90.0,
       "u_value": {
-        "low": 0.138,
-        "expected": 0.235,
-        "high": 0.302,
+        "low": 1.5,
+        "expected": 2.0,
+        "high": 2.5,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e34",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e35",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "adjacent_conditioned",
+      "area_m2": 44.8,
+      "azimuth_deg": 205.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.5,
+        "expected": 2.0,
+        "high": 2.5,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e35",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e40",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "adjacent_conditioned",
+      "area_m2": 43.2,
+      "azimuth_deg": 295.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.5,
+        "expected": 2.0,
+        "high": 2.5,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e40",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e41",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 59.0259,
+      "azimuth_deg": 115.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e41",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e41_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 41.7741,
+      "azimuth_deg": 115.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e41",
+      "source_edge_id": "e41",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e44",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 31.3868,
+      "azimuth_deg": 25.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e44",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e44_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 22.2132,
+      "azimuth_deg": 25.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e44",
+      "source_edge_id": "e44",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e45",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 11.77,
+      "azimuth_deg": 295.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e45",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e45_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 8.33,
+      "azimuth_deg": 295.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e45",
+      "source_edge_id": "e45",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e47",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 58.8502,
+      "azimuth_deg": 25.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e47",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e47_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 41.6498,
+      "azimuth_deg": 25.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e47",
+      "source_edge_id": "e47",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e48",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 11.77,
+      "azimuth_deg": 115.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e48",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e48_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 8.33,
+      "azimuth_deg": 115.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e48",
+      "source_edge_id": "e48",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_wall_e49",
+      "zone_id": "zone_suite",
+      "kind": "wall",
+      "boundary": "exterior",
+      "area_m2": 31.3868,
+      "azimuth_deg": 25.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
+      },
+      "shgc": null,
+      "visible_transmittance": null,
+      "parent_surface_id": null,
+      "source_edge_id": "e49",
+      "source_opening_id": null,
+      "solar_absorptance": {
+        "low": 0.3,
+        "expected": 0.6,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_win_e49_vision",
+      "zone_id": "zone_suite",
+      "kind": "window",
+      "boundary": "exterior",
+      "area_m2": 22.2132,
+      "azimuth_deg": 25.0,
+      "tilt_deg": 90.0,
+      "u_value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "shgc": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "visible_transmittance": {
+        "low": 0.4,
+        "expected": 0.68,
+        "high": 0.8,
+        "unit": "-"
+      },
+      "parent_surface_id": "surf_wall_e49",
+      "source_edge_id": "e49",
+      "source_opening_id": null,
+      "solar_absorptance": null,
+      "emittance": null,
+      "exposed_perimeter_m": null
+    },
+    {
+      "id": "surf_roof",
+      "zone_id": "zone_suite",
+      "kind": "roof",
+      "boundary": "exterior",
+      "area_m2": 2312.0,
+      "azimuth_deg": null,
+      "tilt_deg": 0.0,
+      "u_value": {
+        "low": 0.568,
+        "expected": 0.568,
+        "high": 0.568,
         "unit": "W/m2K"
       },
       "shgc": null,
@@ -515,18 +1187,23 @@
       "parent_surface_id": null,
       "source_edge_id": null,
       "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": 42.0
+      "solar_absorptance": {
+        "low": 0.4,
+        "expected": 0.65,
+        "high": 0.9,
+        "unit": "-"
+      },
+      "emittance": 0.9,
+      "exposed_perimeter_m": null
     }
   ],
   "systems": {
-    "hvac_type": "unknown",
+    "hvac_type": "rooftop_unit",
     "heating_fuel": "gas",
     "cooling_cop": {
-      "low": 2.917,
-      "expected": 3.241,
-      "high": 3.728,
+      "low": 2.9172,
+      "expected": 3.2414,
+      "high": 3.7276,
       "unit": "W/W"
     },
     "heating_efficiency": {
@@ -544,9 +1221,9 @@
       "unit": "-"
     },
     "lighting_w_per_m2": {
-      "low": 10.76,
-      "expected": 19.48,
-      "high": 19.48,
+      "low": 6.5,
+      "expected": 10.76,
+      "high": 10.76,
       "unit": "W/m2"
     },
     "plug_w_per_m2": {
@@ -563,9 +1240,9 @@
     },
     "occupancy_schedule": "office",
     "occupants": {
-      "low": 16.0,
-      "expected": 20.0,
-      "high": 24.0,
+      "low": 156.8,
+      "expected": 196.0,
+      "high": 235.2,
       "unit": "people"
     },
     "infiltration_ach50": null,
@@ -587,13 +1264,13 @@
     "compressor_type": "unknown",
     "cooling_capacity_w": null,
     "heating_cop_47f": null,
-    "hvac_install_year": null,
+    "hvac_install_year": 2010,
     "distribution_efficiency": null,
     "duct_location": "unknown",
     "outdoor_air_m3_s": {
-      "low": 0.151,
-      "expected": 0.1888,
-      "high": 0.2266,
+      "low": 1.4802,
+      "expected": 1.8502,
+      "high": 2.2203,
       "unit": "m3/s"
     },
     "has_economizer": null,
@@ -612,13 +1289,13 @@
     },
     "heating_setback_c": 15.6,
     "cooling_setup_c": 26.7,
-    "dhw_location": "conditioned"
+    "dhw_location": "unknown"
   },
   "roof_planes": [
     {
       "id": "plane_roof",
-      "polygon_wkt": "POLYGON((-118.4433127 34.0366749, -118.4428909 34.0363639, -118.4425856 34.0366502, -118.4430073 34.0369613, -118.4433127 34.0366749))",
-      "area_m2": 2207.4,
+      "polygon_wkt": "POLYGON ((-118.3889035 34.0307448, -118.3882928 34.0305088, -118.3881032 34.0308456, -118.3887140 34.0310816, -118.3889035 34.0307448))",
+      "area_m2": 2567.06,
       "tilt_deg": {
         "low": 0.0,
         "expected": 1.2,
@@ -626,80 +1303,43 @@
         "unit": "deg"
       },
       "azimuth_deg": 180.0,
-      "usable_area_m2": 1934.3,
+      "usable_area_m2": 2243.93,
       "obstructions": [],
       "obstruction_counts": {
-        "ac-unit": 0,
-        "skylight": 0
+        "ac-unit": 3,
+        "skylight": 0,
+        "chimney": 0,
+        "roof-vent": 3
       },
       "ridge_confirmed": false,
-      "eave_length_m": null,
-      "slope_length_m": null,
+      "eave_length_m": 62.103,
+      "slope_length_m": 41.335,
       "geometry_source": "vexcel_parametric"
     }
   ],
   "assumptions": [
     {
       "key": "lighting.lamp_type",
-      "label": "Lamp type in the ceiling troffers",
-      "value": "fluorescent",
+      "label": "lighting.lamp_type",
+      "value": "led",
       "source": "user",
       "confidence": 1.0,
       "evidence": [
         {
           "kind": "user",
-          "ref": "run_request.overrides.lighting.lamp_type"
+          "ref": "overrides.lighting.lamp_type",
+          "note": null
         }
       ],
       "user_editable": true
     },
     {
-      "key": "geometry.ceiling_height_m",
-      "label": "Ceiling height",
-      "value": {
-        "low": 2.9,
-        "expected": 2.98,
-        "high": 3.21,
-        "unit": "m"
-      },
-      "source": "measured",
-      "confidence": 0.95,
-      "evidence": [
-        {
-          "kind": "matterport_field",
-          "ref": "rooms.dimensions.height",
-          "note": "measured room heights run 2.90 to 3.21 m"
-        }
-      ],
-      "user_editable": false
-    },
-    {
-      "key": "geometry.room_area_m2",
-      "label": "Room floor areas",
-      "value": {
-        "low": 383.42,
-        "expected": 383.42,
-        "high": 383.42,
-        "unit": "m2"
-      },
-      "source": "measured",
-      "confidence": 0.9,
-      "evidence": [
-        {
-          "kind": "matterport_field",
-          "ref": "rooms.dimensions.areaFloor",
-          "note": "areaFloor is trusted; width and depth contradict it on room_01 (157.82 m2 against 1.46 m x 1.34 m) and room_08 has no depth"
-        }
-      ],
-      "user_editable": false
-    },
-    {
       "key": "geometry.north_offset_deg",
       "label": "Azimuth of model +y, clockwise from true north",
       "value": {
-        "low": 40.57,
-        "expected": 41.57,
-        "high": 42.57,
+        "low": 23.999999,
+        "expected": 24.999999,
+        "high": 25.999999,
         "unit": "deg"
       },
       "source": "measured",
@@ -708,18 +1348,98 @@
         {
           "kind": "matterport_field",
           "ref": "geocoordinates.rotation",
-          "note": "physics 01 ROOF-02; negative z, so the model turns the other way from the house; which way the quaternion rotates is still to be confirmed against the Vexcel footprint"
+          "note": "source 'processing'; physics 01 ROOF-02, psi 25.00; Vexcel footprint registration gives 25.00 (Delta 0.00 degrees); the footprint supports the ROOF-02 reading (model -> ENU); the inverse reading 335.00 is off by 40.0 degrees"
+        },
+        {
+          "kind": "vexcel_attr",
+          "ref": "footprint.wkt",
+          "note": "orientation of the primary structure's footprint"
         }
       ],
       "user_editable": false
     },
     {
+      "key": "geometry.ceiling_height_m",
+      "label": "Ceiling height",
+      "value": {
+        "low": 3.05,
+        "expected": 3.3559,
+        "high": 3.6,
+        "unit": "m"
+      },
+      "source": "measured",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "kind": "matterport_field",
+          "ref": "rooms.dimensions.height",
+          "note": null
+        }
+      ],
+      "user_editable": false
+    },
+    {
+      "key": "geometry.demising_edges",
+      "label": "Outline walls taken as walls to conditioned neighbours",
+      "value": "e30 e34 e35 e40",
+      "source": "measured",
+      "confidence": 0.6,
+      "evidence": [
+        {
+          "kind": "matterport_field",
+          "ref": "floors.edges.thickness",
+          "note": "thinner than the unit's exterior walls; the scan does not say which walls face outdoors"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "occupancy.count",
+      "label": "People working in the suite",
+      "value": {
+        "low": 156.8,
+        "expected": 196.0,
+        "high": 235.2,
+        "unit": "people"
+      },
+      "source": "costar",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "kind": "costar_field",
+          "ref": "CostarData.occupancy.tenancies",
+          "note": "employee count of the current tenant whose area (2355 m2) matches the scanned 2312.0 m2, floor 4"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "ventilation.outdoor_air_m3_s",
+      "label": "Design outdoor air flow",
+      "value": {
+        "low": 1.4802,
+        "expected": 1.8502,
+        "high": 2.2203,
+        "unit": "m3/s"
+      },
+      "source": "costar",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "INF-05",
+          "note": "occupants (costar) x 0.00944 m3/s per person"
+        }
+      ],
+      "user_editable": true
+    },
+    {
       "key": "building.year_built",
       "label": "Year built",
       "value": {
-        "low": 1989.0,
-        "expected": 1989.0,
-        "high": 1989.0,
+        "low": 1986.0,
+        "expected": 1986.0,
+        "high": 1986.0,
         "unit": "year"
       },
       "source": "costar",
@@ -729,6 +1449,11 @@
           "kind": "costar_field",
           "ref": "CostarData.year_built",
           "note": "from the ConstructionComplete event; normalised field; kit field names are in the kit's models/ folder"
+        },
+        {
+          "kind": "costar_field",
+          "ref": "CostarData.year_built_event",
+          "note": "ConstructionComplete"
         }
       ],
       "user_editable": true
@@ -737,9 +1462,9 @@
       "key": "building.stories",
       "label": "Storeys above grade",
       "value": {
-        "low": 17.0,
-        "expected": 17.0,
-        "high": 17.0,
+        "low": 4.0,
+        "expected": 4.0,
+        "high": 4.0,
         "unit": "storeys"
       },
       "source": "costar",
@@ -748,27 +1473,77 @@
         {
           "kind": "costar_field",
           "ref": "CostarData.stories",
-          "note": "used for building height; Vexcel roof height is not (data-integration.md 4.3)"
+          "note": null
         }
       ],
       "user_editable": true
     },
     {
-      "key": "occupancy.count",
-      "label": "People working in the suite",
+      "key": "building.gross_area_m2",
+      "label": "Gross building area",
       "value": {
-        "low": 16.0,
-        "expected": 20.0,
-        "high": 24.0,
-        "unit": "people"
+        "low": 10600.9,
+        "expected": 10600.9,
+        "high": 10600.9,
+        "unit": "m2"
       },
       "source": "costar",
-      "confidence": 0.8,
+      "confidence": 0.9,
       "evidence": [
         {
           "kind": "costar_field",
-          "ref": "CostarData.occupancy.tenancies",
-          "note": "employee count of the suite's current tenant"
+          "ref": "CostarData.building_area_m2",
+          "note": "gross building area, used for the envelope and whole-building scaling; the rentable area is never used"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "building.floor_plate_m2",
+      "label": "Floor plate (gross area / storeys)",
+      "value": {
+        "low": 2650.225,
+        "expected": 2650.225,
+        "high": 2650.225,
+        "unit": "m2"
+      },
+      "source": "costar",
+      "confidence": 0.6,
+      "evidence": [
+        {
+          "kind": "costar_field",
+          "ref": "CostarData.building_area_m2",
+          "note": "gross building area / 4 storeys"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "building.class",
+      "label": "Building class",
+      "value": "A",
+      "source": "costar",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "costar_field",
+          "ref": "CostarData.building_class",
+          "note": null
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "hvac.system_type",
+      "label": "HVAC system type",
+      "value": "rooftop_unit",
+      "source": "vexcel",
+      "confidence": 0.7,
+      "evidence": [
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.ac-unit.count",
+          "note": "3 as returned"
         }
       ],
       "user_editable": true
@@ -782,7 +1557,8 @@
       "evidence": [
         {
           "kind": "vexcel_attr",
-          "ref": "roof-characteristics.shape.value"
+          "ref": "roof-characteristics.shape.value",
+          "note": null
         }
       ],
       "user_editable": true
@@ -792,11 +1568,122 @@
       "label": "Solar panels already on the roof",
       "value": false,
       "source": "vexcel",
-      "confidence": 0.9,
+      "confidence": 0.85,
       "evidence": [
         {
           "kind": "vexcel_attr",
-          "ref": "roof-objects.solar.value"
+          "ref": "roof-objects.solar.value",
+          "note": null
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "window.u_value",
+      "label": "Window U-value",
+      "value": {
+        "low": 4.32,
+        "expected": 4.32,
+        "high": 4.32,
+        "unit": "W/m2K"
+      },
+      "source": "vision",
+      "confidence": 0.7,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF-03",
+          "note": "properties of double_clear_metal read as vision; high is double_clear_metal"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "window.shgc",
+      "label": "Window solar heat gain coefficient",
+      "value": {
+        "low": 0.67,
+        "expected": 0.67,
+        "high": 0.67,
+        "unit": "-"
+      },
+      "source": "vision",
+      "confidence": 0.7,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF-03",
+          "note": "properties of double_clear_metal read as vision; high is double_clear_metal"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "lighting.lpd",
+      "label": "Lighting power density",
+      "value": {
+        "low": 6.5,
+        "expected": 10.76,
+        "high": 10.76,
+        "unit": "W/m2"
+      },
+      "source": "vision",
+      "confidence": 0.85,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": null
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_02",
+          "note": null
+        },
+        {
+          "kind": "default_table",
+          "ref": "DEF-10",
+          "note": "LED fixtures: the 2005-or-later row"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "window.count",
+      "label": "Window count read from the panoramas",
+      "value": {
+        "low": 53.2,
+        "expected": 76.0,
+        "high": 98.8,
+        "unit": "count"
+      },
+      "source": "vision",
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_02",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_05",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_06",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "matterport_field",
+          "ref": "floors.edges.openings",
+          "note": "the scan has no window openings, so windows come from vision: plus or minus 30 percent (physics 02 DEF-03); panoramas of one room within 6 m of each other count once"
         }
       ],
       "user_editable": true
@@ -805,9 +1692,9 @@
       "key": "window.area_m2",
       "label": "Window area read from the panoramas",
       "value": {
-        "low": 44.94,
-        "expected": 64.2,
-        "high": 83.46,
+        "low": 201.1,
+        "expected": 287.28,
+        "high": 373.46,
         "unit": "m2"
       },
       "source": "vision",
@@ -816,54 +1703,139 @@
         {
           "kind": "pano",
           "ref": "pano_01",
-          "note": "ribbon glazing along the south-west wall"
+          "note": "perimeter windows in view"
         },
         {
           "kind": "pano",
           "ref": "pano_02",
-          "note": "corner glazing on both exterior walls"
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_05",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_06",
+          "note": "perimeter windows in view"
         },
         {
           "kind": "matterport_field",
           "ref": "floors.edges.openings",
-          "note": "the scan has no openings, so windows come from vision: plus or minus 30 percent (physics 02 DEF-03). Window-to-wall ratio 0.51; the DEF-03 office default of 0.20 / 0.30 / 0.40 applies only where vision finds no window (SPEC.md section 5.1)"
+          "note": "the scan has no window openings, so windows come from vision: plus or minus 30 percent (physics 02 DEF-03); panoramas of one room within 6 m of each other count once"
         }
       ],
       "user_editable": true
     },
     {
-      "key": "hvac.system_type",
-      "label": "HVAC system type",
-      "value": "unknown",
+      "key": "window.type",
+      "label": "Window type",
+      "value": "double_clear_metal",
       "source": "vision",
-      "confidence": 0.3,
+      "confidence": 0.7,
       "evidence": [
         {
           "kind": "pano",
           "ref": "pano_01",
-          "note": "ceiling slot diffusers"
+          "note": "dual-pane units in anodised aluminium frames, no visible low-e tint"
         },
         {
           "kind": "pano",
-          "ref": "pano_03",
-          "note": "wall thermostat"
-        },
-        {
-          "kind": "vexcel_attr",
-          "ref": "roof-objects.ac-unit.count",
-          "note": "0 as returned: a detection limit on a 17-storey tower, not proof of absence"
+          "ref": "pano_02",
+          "note": null
         },
         {
           "kind": "default_table",
-          "ref": "HVAC-00",
-          "note": "office default used for the efficiency class"
+          "ref": "DEF-03",
+          "note": "U and SHGC of the type read by vision (double_clear_metal)"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "window.shading",
+      "label": "Window shading",
+      "value": "interior_blinds",
+      "source": "vision",
+      "confidence": 0.6,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": null
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_02",
+          "note": null
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "hvac.thermostat_type",
+      "label": "Thermostat type",
+      "value": "programmable",
+      "source": "vision",
+      "confidence": 0.7,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_03",
+          "note": null
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "hvac.install_year",
+      "label": "Year the HVAC equipment was installed",
+      "value": {
+        "low": 2006.0,
+        "expected": 2010.0,
+        "high": 2014.0,
+        "unit": "year"
+      },
+      "source": "vision",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_03",
+          "note": null
+        },
+        {
+          "kind": "default_table",
+          "ref": "DEF-05",
+          "note": "equipment age band 2006_2014 read by vision"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "lighting.fixture_type",
+      "label": "Lighting fixture type",
+      "value": "led",
+      "source": "vision",
+      "confidence": 0.85,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "14 fixtures in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_02",
+          "note": "16 fixtures in view"
         }
       ],
       "user_editable": true
     },
     {
       "key": "tariff.electricity_usd_per_kwh",
-      "label": "Electricity price",
+      "label": "Electricity price (marginal, with riders and taxes)",
       "value": {
         "low": 0.2696,
         "expected": 0.3002,
@@ -875,103 +1847,203 @@
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "data-integration 5.1c",
-          "note": "EIA California commercial average for August 2026, 30.02 cents; the range is symmetric, half-width 3.06 cents, the gap to the year-to-date average 26.96 cents in the same EIA tables (physics 04 TAR-06 check values)"
+          "ref": "TAR-06",
+          "note": "CA office market range 0.2696 / 0.3002 / 0.3308 USD/kWh applied relative to the tariff's 0.3002 (Electricity: EIA state average retail price, CA COM, 2026-08 (0.3002 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas: EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content), 0.054489 USD/kWh, a state average and not the SoCalGas schedule (data-integration 5.1e). Demand charges are not modelled (TAR-02).)"
         }
       ],
       "user_editable": true
     },
     {
-      "key": "glazing.visible_transmittance",
-      "label": "Visible transmittance of the glazing",
+      "key": "roof.tilt_deg",
+      "label": "Roof pitch by roof shape class (ROOF-03); one lidar study, gable and hip share a range [U]",
       "value": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
+        "low": 0.0,
+        "expected": 1.2,
+        "high": 9.5,
+        "unit": "deg"
       },
       "source": "published_default",
       "confidence": 0.5,
       "evidence": [
         {
+          "kind": "vexcel_attr",
+          "ref": "roof-characteristics.shape.value",
+          "note": "shape class 'flat'"
+        },
+        {
           "kind": "default_table",
-          "ref": "physics 03 section 0.4",
-          "note": "0.68 is the BRE standard value; the bounds are a design range"
+          "ref": "ROOF-03",
+          "note": null
         }
       ],
       "user_editable": true
     },
     {
-      "key": "lighting.manual_switch_fraction",
-      "label": "Share of the daylight saving reached by people switching lights off",
+      "key": "roof.obstruction_allowance_m2",
+      "label": "Area allowance per counted roof object, engineering judgment (ROOF-04) [U]",
       "value": {
-        "low": 0.0,
-        "expected": 0.5,
-        "high": 1.0,
+        "low": 13.2,
+        "expected": 29.43,
+        "high": 40.5,
+        "unit": "m2"
+      },
+      "source": "published_default",
+      "confidence": 0.3,
+      "evidence": [
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.ac-unit.count",
+          "note": "3"
+        },
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.chimney.count",
+          "note": "0"
+        },
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.roof-vent.count",
+          "note": "3"
+        },
+        {
+          "kind": "vexcel_attr",
+          "ref": "roof-objects.skylight.count",
+          "note": "0"
+        },
+        {
+          "kind": "default_table",
+          "ref": "ROOF-04",
+          "note": null
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "roof.fire_setbacks",
+      "label": "Fire-code setbacks for commercial: IFC 1205.3.1 perimeter, 1205.3.2 interior pathways; status V-repro (ROOF-06); the authority having jurisdiction decides",
+      "value": "ridge 0.0000 m, pathway 1.2192 m, perimeter 1.2192 m",
+      "source": "published_default",
+      "confidence": 0.6,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "ROOF-06",
+          "note": null
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "roof.usable_area_m2",
+      "label": "Usable roof area after setbacks and obstruction allowances (ROOF-04, area method)",
+      "value": {
+        "low": 2232.85,
+        "expected": 2243.93,
+        "high": 2260.15,
+        "unit": "m2"
+      },
+      "source": "published_default",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "ROOF-04",
+          "note": null
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "roof.absorptance",
+      "label": "Roof solar absorptance",
+      "value": {
+        "low": 0.4,
+        "expected": 0.65,
+        "high": 0.9,
         "unit": "-"
       },
       "source": "vintage_default",
-      "confidence": 0.0,
-      "evidence": [
-        {
-          "kind": "default_table",
-          "ref": "LCT-02",
-          "note": "placeholder with no published source; not a vintage lookup, the contract has no source value for a project judgement"
-        }
-      ],
-      "user_editable": true
-    },
-    {
-      "key": "lighting.control_type",
-      "label": "Daylight control of the electric lighting",
-      "value": "none",
-      "source": "vintage_default",
       "confidence": 0.5,
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "physics 03 section 0.4",
-          "note": "default: none"
+          "ref": "DEF-02",
+          "note": "low-slope membrane, metal or unknown commercial roof; roof material unknown: unknown commercial roof"
         }
       ],
       "user_editable": true
     },
     {
-      "key": "lighting.lpd",
-      "label": "Lighting power density",
+      "key": "wall.u_value",
+      "label": "Exterior wall U-value",
       "value": {
-        "low": 10.76,
-        "expected": 19.48,
-        "high": 19.48,
-        "unit": "W/m2"
+        "low": 1.249,
+        "expected": 1.249,
+        "high": 5.678,
+        "unit": "W/m2K"
       },
       "source": "vintage_default",
-      "confidence": 0.5,
+      "confidence": 0.4,
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "DEF-10",
-          "note": "office built before 2004, lighting not yet upgraded"
+          "ref": "DEF-11",
+          "note": "office wall, S11 type expected, the other type as the bound, 1980 to 2004; climate zone 3B; year 1986 (costar)"
         }
       ],
       "user_editable": true
     },
     {
-      "key": "plug.ppd",
-      "label": "Plug power density",
+      "key": "roof.u_value",
+      "label": "Roof U-value",
       "value": {
-        "low": 8.61,
-        "expected": 10.76,
-        "high": 10.76,
-        "unit": "W/m2"
+        "low": 0.568,
+        "expected": 0.568,
+        "high": 0.568,
+        "unit": "W/m2K"
       },
       "source": "vintage_default",
-      "confidence": 0.5,
+      "confidence": 0.4,
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "DEF-10",
-          "note": "the source's two tables disagree; both are carried"
+          "ref": "DEF-11",
+          "note": "office roof, S11 type expected, the other type as the bound, 1980 to 2004; climate zone 3B; year 1986 (costar)"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "infiltration.leakage_75pa",
+      "label": "Envelope leakage at 75 Pa",
+      "value": {
+        "low": 2.0,
+        "expected": 7.5,
+        "high": 7.5,
+        "unit": "L/s.m2 at 75 Pa"
+      },
+      "source": "vintage_default",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "INF-05",
+          "note": "built in 2004 or earlier; year 1986 (costar)"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "hvac.heating_fuel",
+      "label": "Heating fuel",
+      "value": "gas",
+      "source": "vintage_default",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "HVAC-00",
+          "note": "office default: gas furnace"
         }
       ],
       "user_editable": true
@@ -997,61 +2069,131 @@
       "user_editable": true
     },
     {
-      "key": "wall.u_value",
-      "label": "Exterior wall U-value",
+      "key": "hvac.heating_efficiency",
+      "label": "Heating efficiency",
       "value": {
-        "low": 1.249,
-        "expected": 1.249,
-        "high": 5.678,
-        "unit": "W/m2K"
+        "low": 0.8,
+        "expected": 0.8,
+        "high": 0.8,
+        "unit": "-"
       },
       "source": "vintage_default",
       "confidence": 0.4,
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "DEF-11",
-          "note": "Los Angeles 1980 to 2004: steel frame expected, the mass wall 'no requirement' value as the high bound"
+          "ref": "DEF-05",
+          "note": "office gas furnace, combustion efficiency 0.80"
         }
       ],
       "user_editable": true
     },
     {
-      "key": "window.u_value",
-      "label": "Window U-value and SHGC",
-      "value": {
-        "low": 6.93,
-        "expected": 6.93,
-        "high": 6.93,
-        "unit": "W/m2K"
-      },
+      "key": "dhw.type",
+      "label": "Water heater type",
+      "value": "storage",
       "source": "vintage_default",
       "confidence": 0.4,
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "DEF-11",
-          "note": "Los Angeles 1980 to 2004: U 6.93, SHGC 0.44"
+          "ref": "DEF-07",
+          "note": "office: hot water is a minor end use and is not modelled (DHW-02)"
         }
       ],
       "user_editable": true
     },
     {
-      "key": "infiltration.leakage_75pa",
-      "label": "Envelope leakage at 75 Pa",
+      "key": "dhw.fuel",
+      "label": "Water heater fuel",
+      "value": "electricity",
+      "source": "vintage_default",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF-07",
+          "note": "office: electric storage assumed; not modelled (DHW-02)"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "dhw.uef",
+      "label": "Water heater efficiency",
       "value": {
-        "low": 2.0,
-        "expected": 7.5,
-        "high": 7.5,
-        "unit": "L/s.m2 at 75 Pa"
+        "low": 0.87,
+        "expected": 0.92,
+        "high": 0.93,
+        "unit": "-"
       },
       "source": "vintage_default",
       "confidence": 0.4,
       "evidence": [
         {
           "kind": "default_table",
-          "ref": "INF-05",
-          "note": "built before 2004"
+          "ref": "DEF-07",
+          "note": "unknown electric storage heater"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "setpoint.heating",
+      "label": "Heating setpoint (occupied)",
+      "value": {
+        "low": 20.0,
+        "expected": 21.0,
+        "high": 22.0,
+        "unit": "C"
+      },
+      "source": "vintage_default",
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF-08",
+          "note": "office, occupied hours"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "setpoint.cooling",
+      "label": "Cooling setpoint (occupied)",
+      "value": {
+        "low": 23.0,
+        "expected": 24.0,
+        "high": 25.0,
+        "unit": "C"
+      },
+      "source": "vintage_default",
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF-08",
+          "note": "office, occupied hours"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "plug.ppd",
+      "label": "Plug power density",
+      "value": {
+        "low": 8.61,
+        "expected": 10.76,
+        "high": 10.76,
+        "unit": "W/m2"
+      },
+      "source": "vintage_default",
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "DEF-10",
+          "note": "the source's two tables disagree; both are carried"
         }
       ],
       "user_editable": true
@@ -1061,52 +2203,47 @@
     {
       "key": "electrical.service",
       "status": "likely_ok",
-      "message": "Class A tower with a building electrical room; a 2 kW to 7 kW array is far below the building service.",
+      "message": "Class A building renovated in 2024 with a main electrical room off the core; the switchgear was not seen, so the interconnection of a large array still needs an engineer.",
+      "added_cost_usd": null,
       "evidence": [
-        {
-          "kind": "pano",
-          "ref": "pano_03"
-        }
-      ]
-    },
-    {
-      "key": "hvac.system_type",
-      "status": "unknown",
-      "message": "Ceiling slot diffusers and a wall thermostat show a ducted system, and a 17-storey tower of 1989 is most likely served by a central plant, but nothing seen confirms the type. Vexcel counts no rooftop AC unit, which on a tower is a detection limit. The baseline uses the office default efficiency; HVAC_RTU and HVAC_ECON are not evaluated (physics 02 HVAC-00).",
-      "evidence": [
-        {
-          "kind": "pano",
-          "ref": "pano_01",
-          "note": "ceiling slot diffusers"
-        },
         {
           "kind": "pano",
           "ref": "pano_03",
-          "note": "wall thermostat"
-        },
-        {
-          "kind": "vexcel_attr",
-          "ref": "roof-objects.ac-unit.count",
-          "note": "0 as returned: a detection limit on a 17-storey tower, not proof of absence"
+          "note": null
         }
       ]
     },
     {
       "key": "roof.structure",
       "status": "unknown",
-      "message": "Flat membrane roof: ballast or attachment load for racking cannot be read from imagery, and the Vexcel footprint is probably the podium, not the tower roof.",
+      "message": "Flat roof, material not reported, condition 3.08: ballast or attachment load for racking cannot be read from imagery, and a mid-life roof may need recovering before an array goes on.",
+      "added_cost_usd": null,
       "evidence": [
         {
           "kind": "vexcel_attr",
-          "ref": "roof-characteristics.material.class",
-          "note": "membrane"
-        },
+          "ref": "roof-characteristics.condition.precise-value",
+          "note": "3.08"
+        }
+      ]
+    },
+    {
+      "key": "hvac.rtu_service",
+      "status": "likely_ok",
+      "message": "Vexcel counts three rooftop AC units and the suite has ceiling diffusers and a wall thermostat, so a packaged rooftop system is confirmed. Which floors the three units serve is not shown.",
+      "added_cost_usd": null,
+      "evidence": [
         {
           "kind": "vexcel_attr",
-          "ref": "footprint.area",
-          "note": "2,207.43 m2 against a CoStar floor plate of about 1,313 m2"
+          "ref": "roof-objects.ac-unit.count",
+          "note": "3 as returned"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "ceiling supply diffusers"
         }
       ]
     }
-  ]
+  ],
+  "calibration": null
 }

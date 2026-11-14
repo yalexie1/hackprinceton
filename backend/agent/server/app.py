@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.agent import api
+from backend.agent.roof import RoofView
 from backend.agent.runtime.replan import PatchError
 from backend.data_layer import api as data
 from backend.schema import (SCHEMA_VERSION, DocumentDraft, DocumentRequest, PropertySummary,
@@ -109,7 +110,10 @@ def create_app() -> FastAPI:
             raise ApiError(422, "invalid_answer", f"{body.value!r} is not a choice of {question.id}")
         # The run door resumes the paused graph with Command(resume={"value": value}); the
         # server never builds that itself (a bare None resume breaks langgraph).
-        api.answer(run_id, body.question_id, body.value)
+        try:
+            api.answer(run_id, body.question_id, body.value)
+        except LookupError as err:          # the run closed, or the question was already answered, meanwhile
+            raise ApiError(409, "run_not_waiting", str(err))
         return {"ok": True}
 
     @app.patch("/api/runs/{run_id}")
@@ -128,7 +132,13 @@ def create_app() -> FastAPI:
             raise ApiError(400, "run_id_mismatch", "body run_id differs from the path")
         if run.status != "done":
             raise ApiError(409, "run_not_done", f"run {run_id} is {run.status}; documents need a finished run")
-        return api.draft_document(request)
+        try:
+            return api.draft_document(request)
+        except LookupError as err:
+            # No template for this document type and state. A 404 and not a 500: the
+            # legal door refuses rather than relabelling another document, and
+            # `list_templates` is how a client learns what it may ask for.
+            raise ApiError(404, "template_not_available", str(err))
 
     @app.get("/api/runs/{run_id}/documents/{doc_id}", response_model=DocumentDraft)
     def get_document(run_id: str, doc_id: str):
@@ -137,6 +147,14 @@ def create_app() -> FastAPI:
             return api.get_document(run_id, doc_id)
         except KeyError:
             raise ApiError(404, "document_not_found", f"unknown doc_id: {doc_id}")
+
+    @app.get("/api/runs/{run_id}/roof", response_model=RoofView)
+    def get_roof(run_id: str):
+        run_of(run_id)
+        try:
+            return api.get_roof(run_id)
+        except KeyError as err:
+            raise ApiError(404, "roof_not_available", str(err).strip("'\""))
 
     @app.get("/api/assets/{path:path}")
     def get_asset(path: str):

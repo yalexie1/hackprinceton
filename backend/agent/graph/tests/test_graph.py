@@ -28,12 +28,12 @@ def scripted(*messages):
 
 def test_each_subagent_gets_only_its_tools():
     specs = {s["name"]: s for s in subagent_specs(fake_tools())}
-    assert set(specs) == {"scout", "surveyor", "physicist", "financier"}
+    assert set(specs) == {"scout", "surveyor", "physicist", "financier", "reviewer"}
     for name, names in SUBAGENT_TOOLS.items():
         assert [t.name for t in specs[name]["tools"]] == list(names)
     # no tool is shared between subagents, so none can reach another's tools
     flat = [n for names in SUBAGENT_TOOLS.values() for n in names]
-    assert len(flat) == len(set(flat)) == 16
+    assert len(flat) == len(set(flat)) == 19
 
 
 def test_todo_list_changes_during_a_scripted_run():
@@ -74,8 +74,11 @@ def test_other_rules():
     b = _bundle("office")
     b.costar = None
     b.matterport.matterpak_available = False
+    for f in b.matterport.floors:                       # the rule, whatever the example holds
+        for e in f.edges:
+            e.openings = [o for o in e.openings if o.type != "window"]
     keys = {e.payload["fallback"] for e in detect_fallbacks(b)}
-    assert {"no_costar", "matterpak_locked", "no_window_openings"} <= keys   # office has doorways only
+    assert {"no_costar", "matterpak_locked", "no_window_openings"} <= keys   # no window left in the wall graph
 
 
 # ---- the prompts ----
@@ -87,7 +90,7 @@ def test_the_prompts_state_the_order_and_the_measure_ids():
     assert "build_plan is required" in AUDITOR_PROMPT and "ask_user" in AUDITOR_PROMPT and "arithmetic" in AUDITOR_PROMPT
     assert all(m in _JOBS["physicist"] for m in HOME_MEASURES + OFFICE_MEASURES)
     assert "build_plan is required" in _JOBS["financier"] and "never before the model exists" in _JOBS["surveyor"]
-    assert set(_JOBS) == {"scout", "surveyor", "physicist", "financier"}
+    assert set(_JOBS) == {"scout", "surveyor", "physicist", "financier", "reviewer"}
 
 
 def test_the_measure_lists_are_the_engines_flows():
@@ -108,3 +111,27 @@ def test_the_run_prompt_names_the_task_and_what_finishes_it():
     run.request = req
     text = live.LiveRun._prompt(run)
     assert req.sid in text and "build_plan has returned" in text and "report.md" in text
+
+
+def test_the_auditor_writes_the_report_from_the_run_files():
+    from backend.agent.graph.graph import AUDITOR_PROMPT, AUDITOR_TOOLS
+    tail = AUDITOR_PROMPT[AUDITOR_PROMPT.index("6. You"):]
+    for name in ("read_run_file", "check_report", "/run/plan.json", "/run/measures.json", "/run/baseline.json"):
+        assert name in tail
+    assert AUDITOR_TOOLS == ("ask_user", "read_run_file", "check_report")
+
+
+def test_the_reviewer_runs_last_reads_the_files_and_cannot_write():
+    from backend.agent.graph.graph import AUDITOR_PROMPT, _JOBS
+    assert SUBAGENT_TOOLS["reviewer"] == ("read_run_file", "check_report")
+    assert AUDITOR_PROMPT.index("7. reviewer") > AUDITOR_PROMPT.index("6. You")
+    job = _JOBS["reviewer"]
+    for needle in ("/run/plan.json", "read_file", "check_report", "Never do arithmetic", "never edit report.md", "OK"):
+        assert needle in job, needle
+    tail = AUDITOR_PROMPT[AUDITOR_PROMPT.index("7. reviewer"):]
+    assert "apply each one to report.md yourself" in tail and "no more reviews" in tail
+
+
+def test_the_reviewer_gets_only_the_read_tools():
+    specs = {s["name"]: s for s in subagent_specs(fake_tools())}
+    assert [t.name for t in specs["reviewer"]["tools"]] == ["read_run_file", "check_report"]

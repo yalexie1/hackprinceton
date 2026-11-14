@@ -16,11 +16,31 @@ import pytest
 from backend.data_layer import api, index
 from backend.schema import PropertySummary
 
-GOLDEN = {
-    "zvKHR9DHNjJ": ("residential", "single_family", "Los Angeles", "CA"),
-    "jfiEvosX974": ("commercial", "office", "Los Angeles", "CA"),
-    "L3266YcPPvd": ("commercial", "office", "Houston", "TX"),
+#: Index facts per property, **keyed by sid and not by role**, so a golden-set swap
+#: does not invalidate the table. @yalexie1 moved the LA golden office from
+#: `jfiEvosX974` (PropertyId 246899) to `ZSPaQbkGcJJ` (Culver Connect, 27120) in #253;
+#: both stay here, and each test uses whichever is golden today. Hard-coding the golden
+#: sid is what broke these tests on `main`.
+KNOWN = {
+    "zvKHR9DHNjJ": ("residential", "single_family", "Los Angeles", "CA", None),
+    "ZSPaQbkGcJJ": ("commercial", "office", "Los Angeles", "CA", "27120"),
+    "jfiEvosX974": ("commercial", "office", "Los Angeles", "CA", "246899"),
+    "L3266YcPPvd": ("commercial", "office", "Houston", "TX", "234088"),
 }
+
+
+def golden_sids() -> list[str]:
+    """The sids of the example folders, discovered the way the lane's own code does."""
+    return [api._load(folder, "property_summary.json")["sid"] for folder in api._folders()]
+
+
+def golden_office() -> str:
+    """The commercial golden property in California - the LA office, whichever it is."""
+    return next(sid for sid in golden_sids()
+                if KNOWN.get(sid, (None,))[0] == "commercial" and KNOWN[sid][3] == "CA")
+
+
+GOLDEN = {sid: KNOWN[sid][:4] for sid in golden_sids() if sid in KNOWN}
 
 needs_kit = pytest.mark.skipif(not index.kit_available(), reason="no CoStar kit mirror")
 
@@ -105,11 +125,16 @@ def test_ranking_is_total_and_nearest_first():
 
 
 def test_scans_for_property_lists_the_siblings_with_the_asked_one_first():
-    scans = api.scans_for_property("jfiEvosX974")
-    assert scans[0].sid == "jfiEvosX974"
+    """One building, several scans. The sibling sids differ per property, so this asserts
+    the rule rather than the names: the asked-for scan leads, nothing is listed twice,
+    there is at least one sibling, and every scan belongs to the same CoStar property."""
+    sid = golden_office()
+    scans = api.scans_for_property(sid)
+    assert scans[0].sid == sid
     assert len(scans) == len({s.sid for s in scans}), "a scan is listed twice"
-    assert {s.sid for s in scans} >= {"jfiEvosX974", "BkjvwqdchVY", "2cLAWCVj1tA"}
-    assert all(s.costar_property_id == "246899" for s in scans)
+    assert len(scans) > 1, f"{sid} should have sibling scans of the same building"
+    expected_pid = KNOWN[sid][4]
+    assert all(s.costar_property_id == expected_pid for s in scans)
 
 
 # ---------- needs the mirror ----------
@@ -134,7 +159,18 @@ def test_the_golden_properties_are_in_the_kit_index():
 
 @needs_kit
 def test_the_la_office_resolves_to_the_property_id_the_team_picked():
-    assert index.by_sid()["jfiEvosX974"].costar_property_id == "246899"
+    sid = golden_office()
+    assert index.by_sid()[sid].costar_property_id == KNOWN[sid][4]
+
+
+@needs_kit
+def test_a_property_that_stopped_being_golden_is_still_in_the_index():
+    """Dropping a property from `specs/examples/` must not drop it from the kit index -
+    the index is every scanned model, not the demo set. `jfiEvosX974` stopped being the
+    LA golden office in #253 and is still a real office in the kit."""
+    row = index.by_sid()["jfiEvosX974"]
+    assert row.costar_property_id == "246899"
+    assert (row.segment, row.use_type) == ("commercial", "office")
 
 
 @needs_kit

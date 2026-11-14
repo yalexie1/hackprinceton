@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.3",
+  "schema_version": "0.3.6",
   "sid": "L3266YcPPvd",
   "bedrooms": null,
   "north_offset_deg": {
@@ -804,9 +804,9 @@
   },
   "roof_planes": [
     {
-      "id": "plane_tower_roof",
-      "polygon_wkt": "POLYGON((-95.4567000 29.7452000, -95.4563774 29.7453623, -95.4565131 29.7455670, -95.4568356 29.7454047, -95.4567000 29.7452000))",
-      "area_m2": 943.8,
+      "id": "plane_roof",
+      "polygon_wkt": "POLYGON ((-95.4567036 29.7451875, -95.4563628 29.7453583, -95.4565133 29.7455847, -95.4568542 29.7454138, -95.4567036 29.7451875))",
+      "area_m2": 1104.74,
       "tilt_deg": {
         "low": 0.0,
         "expected": 1.2,
@@ -814,14 +814,14 @@
         "unit": "deg"
       },
       "azimuth_deg": 180.0,
-      "usable_area_m2": 780.0,
+      "usable_area_m2": 911.15,
       "obstructions": [],
       "obstruction_counts": {
-        "ac-unit": 2
+        "ac-unit": 4
       },
       "ridge_confirmed": false,
-      "eave_length_m": null,
-      "slope_length_m": null,
+      "eave_length_m": 38.004,
+      "slope_length_m": 29.073,
       "geometry_source": "vexcel_parametric"
     }
   ],
@@ -900,26 +900,6 @@
       "user_editable": true
     },
     {
-      "key": "roof.tower_area_m2",
-      "label": "Tower roof area",
-      "value": {
-        "low": 943.8,
-        "expected": 943.8,
-        "high": 943.8,
-        "unit": "m2"
-      },
-      "source": "costar",
-      "confidence": 0.6,
-      "evidence": [
-        {
-          "kind": "costar_field",
-          "ref": "CostarData.building_area_m2",
-          "note": "gross building area / 16 storeys; the Vexcel footprint outlines a podium or garage, 1.7 to 4.6 times the floor plate"
-        }
-      ],
-      "user_editable": true
-    },
-    {
       "key": "occupancy.count",
       "label": "People working in the suite",
       "value": {
@@ -963,7 +943,7 @@
         {
           "kind": "vexcel_attr",
           "ref": "roof-objects.ac-unit.count",
-          "note": "2 as returned"
+          "note": "4 as returned"
         },
         {
           "kind": "pano",
@@ -998,7 +978,7 @@
         {
           "kind": "ortho",
           "ref": "ortho-1",
-          "note": "two unit outlines of similar size"
+          "note": "four unit outlines of similar size"
         }
       ],
       "user_editable": true
@@ -1244,24 +1224,24 @@
     {
       "key": "roof.structure",
       "status": "unknown",
-      "message": "Flat membrane roof in condition 2.88: ballast or attachment load for racking cannot be read from imagery, and the membrane may need replacing before an array goes on.",
+      "message": "Flat roof: the chosen capture reports no roof condition and no material, so neither the membrane's remaining life nor the ballast or attachment load for racking can be read from imagery.",
       "evidence": [
         {
           "kind": "vexcel_attr",
-          "ref": "roof-characteristics.condition.precise-value",
-          "note": "2.88"
+          "ref": "roof-characteristics.shape.value",
+          "note": "flat; us-tx-houston-2023 reports no condition and no material"
         }
       ]
     },
     {
       "key": "hvac.rtu_service",
       "status": "likely_ok",
-      "message": "Vexcel counts two rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the two units serve is not shown.",
+      "message": "Vexcel counts four rooftop AC units and the suite has ceiling diffusers and wall thermostats, so a packaged rooftop system is confirmed. Which floors the four units serve is not shown.",
       "evidence": [
         {
           "kind": "vexcel_attr",
           "ref": "roof-objects.ac-unit.count",
-          "note": "2 as returned"
+          "note": "4 as returned"
         },
         {
           "kind": "pano",

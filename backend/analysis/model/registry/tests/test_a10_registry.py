@@ -105,6 +105,10 @@ def test_vintage_defaults_match_the_model_fixture(name):
             continue
         got = mine[fx.key]
         assert got.source == "vintage_default", fx.key
+        if not isinstance(fx.value, Ranged):        # categorical defaults (heating fuel, DHW type)
+            assert got.value == fx.value, fx.key
+            checked += 1
+            continue
         for f in ("low", "expected", "high"):
             assert getattr(got.value, f) == pytest.approx(getattr(fx.value, f), abs=1e-3), (fx.key, f)
         assert got.value.unit == fx.value.unit, fx.key
@@ -141,7 +145,7 @@ def test_year_from_a_non_completion_event_widens_to_adjacent_rows():
 def test_year_built_from_costar_with_the_event_as_evidence():
     yb = by_key(costar_assumptions(bundle("office")))["building.year_built"]
     assert yb.source == "costar"
-    assert (yb.value.low, yb.value.expected, yb.value.high) == (1989, 1989, 1989)
+    assert (yb.value.low, yb.value.expected, yb.value.high) == (1986, 1986, 1986)   # Culver Connect
     refs = {e.ref: e for e in yb.evidence}
     assert refs["CostarData.year_built"].kind == "costar_field"
     assert "ConstructionComplete" in refs["CostarData.year_built"].note
@@ -153,9 +157,9 @@ def test_envelope_area_uses_gross_building_area_never_rentable():
     c = b.costar.model_copy(update={"rentable_area_m2": 12345.6})
     out = build_assumptions(b.model_copy(update={"costar": c}))
     m = by_key(out)
-    assert m["building.gross_area_m2"].value.expected == pytest.approx(24147.6)
+    assert m["building.gross_area_m2"].value.expected == pytest.approx(10600.9)
     assert m["building.gross_area_m2"].source == "costar"
-    assert m["building.floor_plate_m2"].value.expected == pytest.approx(24147.6 / 17, rel=1e-4)
+    assert m["building.floor_plate_m2"].value.expected == pytest.approx(10600.9 / 4, rel=1e-4)
     for x in out:
         if isinstance(x.value, Ranged):
             assert 12345.6 not in (x.value.low, x.value.expected, x.value.high), x.key
@@ -165,7 +169,7 @@ def test_envelope_area_uses_gross_building_area_never_rentable():
 
 # ---------------------------------------------------------------- office occupancy
 
-@pytest.mark.parametrize("name,expected", [("office", 20.0), ("office_houston", 48.0)])
+@pytest.mark.parametrize("name,expected", [("office", 196.0), ("office_houston", 48.0)])
 def test_office_tenancies_give_occupants_and_a_costar_assumption(name, expected):
     r = build_registry(bundle(name))
     occ = by_key(r.assumptions)["occupancy.count"]
@@ -255,12 +259,19 @@ def test_a_cue_sets_the_flag_and_is_kept():
 
 
 def test_office_without_a_confirmed_unit_raises_the_hvac_flag():
-    r = build_registry(bundle("office"))
+    # both golden offices now have Vexcel-counted rooftop units (D16), so take the count away
+    b = bundle("office")
+    s0 = b.vexcel.structures[0]
+    attrs = {k: v for k, v in s0.attributes.items() if k != "roof-objects.ac-unit.count"}
+    vex = b.vexcel.model_copy(update={"structures": [s0.model_copy(update={"attributes": attrs})]
+                                      + list(b.vexcel.structures[1:])})
+    r = build_registry(b.model_copy(update={"vexcel": vex}))
     assert r.systems.hvac_type == "unknown"
     assert {f.key: f.status for f in r.flags}["hvac.system_type"] == "unknown"
-    h = build_registry(bundle("office_houston"))   # Vexcel counts two rooftop units
-    assert h.systems.hvac_type == "rooftop_unit"
-    assert "hvac.system_type" not in {f.key for f in h.flags}
+    for name in ("office", "office_houston"):        # Vexcel counts three and four rooftop units
+        h = build_registry(bundle(name))
+        assert h.systems.hvac_type == "rooftop_unit"
+        assert "hvac.system_type" not in {f.key for f in h.flags}
 
 
 # ---------------------------------------------------------------- Systems
@@ -385,3 +396,29 @@ def test_a_missing_gas_price_is_unknown_not_no_gas():
     assert without["hvac.heating_fuel"].value == "gas"
     assert without["dhw.fuel"].value == with_price["dhw.fuel"].value == "gas"
     assert without["dhw.fuel"].confidence < with_price["dhw.fuel"].confidence
+
+
+# ---------------------------------------------------------------- electricity price range (TAR-06)
+
+@pytest.mark.parametrize("name", FIXTURES)
+def test_the_price_range_matches_the_example_and_is_a_published_default(name):
+    a = by_key(build_registry(bundle(name)).assumptions)["tariff.electricity_usd_per_kwh"]
+    fx = by_key(model(name).assumptions)["tariff.electricity_usd_per_kwh"]
+    assert (a.value.low, a.value.expected, a.value.high) == (fx.value.low, fx.value.expected, fx.value.high)
+    assert a.source == "published_default" and a.evidence[0].ref == "TAR-06"
+
+
+def test_the_price_range_scales_with_a_real_tariff_and_needs_a_state():
+    b = bundle("house")
+    dear = b.model_copy(update={"tariff": b.tariff.model_copy(update={"electricity_usd_per_kwh": 0.40})})
+    v = by_key(build_registry(dear).assumptions)["tariff.electricity_usd_per_kwh"].value
+    assert v.expected == 0.40 and v.low == pytest.approx(0.40 * 0.2692 / 0.2975, abs=1e-4)
+    assert v.high == pytest.approx(0.40 * 0.3258 / 0.2975, abs=1e-4)
+    nostate = b.model_copy(update={"summary": b.summary.model_copy(update={"state": None})})
+    assert "tariff.electricity_usd_per_kwh" not in by_key(build_registry(nostate).assumptions)
+
+
+def test_a_user_price_replaces_the_range():
+    r = build_registry(bundle("house"), overrides={"tariff.electricity_usd_per_kwh": 0.31})
+    a = by_key(r.assumptions)["tariff.electricity_usd_per_kwh"]
+    assert a.source == "user" and a.value.expected == pytest.approx(0.31)

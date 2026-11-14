@@ -8,9 +8,9 @@
   {
     "type": "stage_done",
     "stage": "S1",
-    "message": "Found Executive Tower - Suite 140",
+    "message": "Found Culver Connect",
     "payload": {
-      "sid": "jfiEvosX974"
+      "sid": "ZSPaQbkGcJJ"
     }
   },
   {
@@ -56,7 +56,7 @@
       "agent": "scout",
       "tool": "get_property_bundle",
       "args": {
-        "sid": "jfiEvosX974"
+        "sid": "ZSPaQbkGcJJ"
       }
     }
   },
@@ -78,6 +78,16 @@
       "layer": "tariff",
       "from": "gas utility tariff",
       "to": "EIA state average (CA COM, 2025)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "Aerial captures disagree on the roof extent; using the structure that matches the floor plate",
+    "payload": {
+      "layer": "vexcel",
+      "from": "4,568 m2 outline (us-ca-losangeles-2023)",
+      "to": "2,566.5 m2 structure (us-ca-losangeles-2025)"
     }
   },
   {
@@ -140,28 +150,28 @@
     "message": "One question before the model is final",
     "payload": {
       "question": {
-        "id": "q_hvac_system",
-        "assumption_key": "hvac.system_type",
-        "prompt": "What heats and cools this suite?",
+        "id": "q_rtu_age",
+        "assumption_key": "hvac.install_year",
+        "prompt": "When were the rooftop units installed or last replaced?",
         "choices": [
           {
-            "label": "The building's central plant (chillers, air handlers)",
-            "value": "central_plant"
+            "label": "Before 2006",
+            "value": 2000.0
           },
           {
-            "label": "A packaged unit on the roof",
-            "value": "rooftop_unit"
+            "label": "2006 to 2014",
+            "value": 2010.0
           },
           {
-            "label": "A split system serving the suite",
-            "value": "central_ac_furnace"
+            "label": "In the 2024 renovation",
+            "value": 2024.0
           },
           {
             "label": "I don't know",
             "value": null
           }
         ],
-        "impact_note": "No rooftop unit is visible from the air, which proves little on a tower. The answer decides whether unit replacement and an economizer are evaluated at all, and who could do them."
+        "impact_note": "The panoramas suggest units from 2006 to 2014. Their age sets the efficiency the replacement is measured against, and newer units would make replacing them poor value."
       }
     }
   },
@@ -187,9 +197,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 13603.5,
-        "expected": 16587.18,
-        "high": 20280.28,
+        "low": 72481.14,
+        "expected": 92471.32,
+        "high": 107283.35,
         "unit": "USD"
       }
     }
@@ -214,32 +224,31 @@
       "agent": "physicist",
       "tool": "score_desk_positions",
       "args": {
-        "room_id": "room_01",
-        "desks_requested": 4
+        "desks_requested": 12
       }
     }
   },
   {
     "type": "partial_result",
     "stage": "S6",
-    "message": "Finding: fluorescent troffers",
+    "message": "Finding: three rooftop units",
     "payload": {
       "kind": "finding",
-      "measure_id": "LGT_LED",
+      "measure_id": "HVAC_RTU",
       "anchor": {
-        "room_id": "room_01",
+        "room_id": "room_09",
         "pano_id": "pano_01",
-        "x": 5.0,
-        "y": 3.0,
-        "z": 2.9,
-        "label": "Fluorescent troffers"
+        "x": 8.0,
+        "y": 20.0,
+        "z": 3.6,
+        "label": "Supply diffuser"
       }
     }
   },
   {
     "type": "stage_done",
     "stage": "S6",
-    "message": "12 measures evaluated",
+    "message": "14 measures evaluated",
     "payload": {
       "artifact": "/run/measures.json"
     }
@@ -258,7 +267,7 @@
       "agent": "financier",
       "tool": "cpace_scenario",
       "args": {
-        "measure_id": "ENV_AIRSEAL"
+        "measure_id": "LGT_CTRL"
       }
     }
   },

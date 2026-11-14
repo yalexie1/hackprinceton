@@ -39,6 +39,7 @@ from backend.analysis import layout
 from backend.analysis.measures import engine
 from backend.analysis.measures.pv import evaluate_pv
 from backend.analysis.physics.climate import ClimateHours, Weather, load_climate, plane_irradiance, read_site_weather, read_weather
+from backend.analysis.physics.climate.weather import resolve_weather_path
 from backend.analysis.physics.daylight import (lighting_power_fraction, occupied_mask_from_stamps,
                                                prepare_room, score_point, sun_arrays)
 from backend.analysis.physics.pv import energy_range, pv_hourly_yield
@@ -46,6 +47,7 @@ from backend.analysis.physics.systems import (HourlyLoads, SystemsBaseline, cale
                                               egrid_subregion, internal_gains_hourly, systems_baseline)
 from backend.analysis.physics.zone import zone_loads
 from backend.analysis.solar.layout import Module, layout_pv
+from backend.analysis.model.benchmark.checks import check_baseline, check_pv
 from backend.analysis.model.geometry import build_geometry
 from backend.analysis.model.registry import (build_registry, merge_assumptions, scanned_floor_area_m2,
                                              set_model_assumption)
@@ -77,7 +79,18 @@ def _folder(sid: str) -> Path:
     raise LookupError(f"no example for sid {sid}")
 
 
+def _has_example(sid: str) -> bool:
+    try:
+        _folder(sid)
+        return True
+    except LookupError:
+        return False
+
+
 def _measures(sid: str) -> list[MeasureResult]:
+    """The example's evaluated measures; none for a property that has no example (a real one)."""
+    if not _has_example(sid):
+        return []
     return [MeasureResult.model_validate(m) for m in _load(_folder(sid), "measures.json")]
 
 
@@ -121,6 +134,18 @@ def _resolved(bundle: PropertyBundle) -> PropertyBundle:
 
 
 
+def _numeric(value):
+    """A number written as text ("0.64", "1920") is a number. No categorical value of any assumption
+    is purely numeric, and an agent that passes an answer through a text field would otherwise turn a
+    numeric assumption into a categorical one."""
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except ValueError:
+            return value
+    return value
+
+
 def _with_state(fn):
     """Door functions take the bundle as their first argument: give them one whose state is known."""
     @functools.wraps(fn)
@@ -151,6 +176,8 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
     """REAL (A7) when `set_vision` has been called; otherwise the example's observations."""
     if _VISION["ask_model"] is not None and _VISION["get_bytes"] is not None:
         return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"], room_fallback=True)
+    if not _has_example(bundle.summary.sid):      # a real property: no observations, vintage defaults carry on
+        return [], []
     m = BuildingModel.model_validate(_load(_folder(bundle.summary.sid), "building_model.json"))
     return list(m.assumptions), list(m.flags)
 
@@ -161,6 +188,7 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
 def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = [],
                          flags: list[Flag] = [],
                          overrides: dict[str, float | str | bool] = {}) -> BuildingModel:
+    overrides = {k: _numeric(v) for k, v in overrides.items()}
     registry = build_registry(bundle, observed, flags, overrides)
     office = registry.building_type != "home"
     costar = bundle.costar
@@ -183,7 +211,7 @@ def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = []
 def set_assumption(model: BuildingModel, key: str, value: float | str | bool,
                    source: Source = "user") -> BuildingModel:
     """Returns a new model; a float collapses the range to that value. The input is unchanged."""
-    return set_model_assumption(model, key, value, source)
+    return set_model_assumption(model, key, _numeric(value), source)
 
 
 # ---------- climate and the simulate function ----------
@@ -220,6 +248,16 @@ def _climate(bundle: PropertyBundle) -> tuple[ClimateHours, Weather, tuple[str, 
             notes = (f"weather: the site file is not cached, so the example year {sample.name} was used",)
         _CLIMATE_CACHE[key] = (load_climate(site, weather=weather), weather, notes)
     return _CLIMATE_CACHE[key]
+
+
+def _weather_csv(bundle: PropertyBundle) -> Optional[str]:
+    """The weather file the model was actually run on, for a check that reads it again (A31).
+    Mirrors `_climate`: the site's cached file, or the example year of the state when it is absent.
+    None when neither is on disk, which the check reads as "no weather file"."""
+    for path in (resolve_weather_path(bundle.climate), _WEATHER_SAMPLES / _SAMPLE_FILE[bundle.summary.state]):
+        if path.is_file():
+            return str(path)
+    return None
 
 
 def _floor_area(model: BuildingModel) -> float:
@@ -331,9 +369,45 @@ def _simulate_baseline(bundle: PropertyBundle, model: BuildingModel) -> Baseline
 # ---------- S5 Baseline ----------   REAL: A3 -> A2 -> A3, A1 climate
 
 @_with_state
+def calibrate_model(bundle: PropertyBundle, model: BuildingModel, bills: UtilityBills) -> BuildingModel:
+    """REAL (A6, physics 04 MV-06): move the uncertain inputs inside their ranges until the simulated
+    months match the twelve monthly bills (ASHRAE Guideline 14), and return the model to use for every later
+    step, carrying `calibration`. Not calibrated (MV-04 fails) leaves the assumptions as they were."""
+    from backend.analysis.physics.calibration import calibrate_to_bills
+    hours, _, _ = _climate(bundle)
+    token = _FAST.set(True)
+    try:
+        return calibrate_to_bills(bundle, model, bills, _simulate_baseline, set_assumption,
+                                  hours.temp_c).calibrated_model()
+    finally:
+        _FAST.reset(token)
+
+
+@_with_state
 def run_baseline(bundle: PropertyBundle, model: BuildingModel,
                  bills: UtilityBills | None = None) -> BaselineResult:
-    return _simulate_baseline(bundle, model)          # bill calibration is A6 (P2)
+    """REAL. A model that was calibrated to bills (`calibrate_model`) says so in the result."""
+    result = _simulate_baseline(bundle, model)
+    if model.calibration is not None:
+        result = result.model_copy(update={"calibrated_to_bills": model.calibration.calibrated,
+                                           "calibration": model.calibration})
+    return _benchmarked(bundle, model, result)
+
+
+def _benchmarked(bundle: PropertyBundle, model: BuildingModel, result: BaselineResult) -> BaselineResult:
+    """A31 (physics 02 BEN-01 to BEN-03): the baseline's energy use intensity against the homes of
+    RECS 2020 or the offices of CBECS 2018, in the closest cut with enough surveyed buildings.
+    A consultant's first sanity check on a model, and like PV-10 it may only add a warning.
+
+    One building in five really does sit outside the 10th-to-90th band, so a warning asks for a
+    look at the end uses it names; it is never evidence on its own that the model is wrong.
+    """
+    warnings, _ = check_baseline(result, _floor_area(model), bundle.summary.use_type,
+                                 bundle.climate.climate_zone,
+                                 building_area_m2=bundle.costar.building_area_m2 if bundle.costar else None)
+    if not warnings:
+        return result
+    return result.model_copy(update={"warnings": [*result.warnings, *warnings]})
 
 
 # ---------- S6 Measures ----------
@@ -379,6 +453,7 @@ _SIM_FORMULAS = ("ZON-01", "ZON-04", "ENV-03", "INF-01", "HVAC-01", "LGT-03", "T
 
 _FAST: contextvars.ContextVar[bool] = contextvars.ContextVar("fast_simulation", default=False)
 _PV_BUDGET: contextvars.ContextVar[Optional[float]] = contextvars.ContextVar("pv_budget", default=None)
+_PV_FRACTION: contextvars.ContextVar[float] = contextvars.ContextVar("pv_fraction", default=1.0)
 _NO_WIND_M_S = 1.0     # the weather file has no wind column: a light breeze is assumed for the cell temperature
 
 
@@ -472,6 +547,11 @@ def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: Building
     """The PV_ROOF card for the A16 engine: the design (A14) and its value (A19). The budget is what
     the plan has left; evaluated alone there is none, and the roof or the consumption stops the fill."""
     design = _design(bundle, model, before, _PV_BUDGET.get())
+    fraction = _PV_FRACTION.get()
+    if fraction < 1.0 and design.panels:
+        # a smaller array: the first panels of the fill order (best yield first), by capping the cost at k panels
+        k = max(1, round(len(design.panels) * fraction))
+        design = _design(bundle, model, before, _pv_installed_cost(bundle, k * (design.module_w or Module().watts)))
     existing = (build_parametric_roof(bundle.vexcel, model.north_offset_deg.expected,
                                       state=bundle.summary.state).existing_solar if bundle.vexcel else False)
     hourly = None
@@ -483,8 +563,23 @@ def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: Building
         parts = [_plane_hourly(bundle, planes[pid].tilt_deg.expected, planes[pid].azimuth_deg) * k
                  for pid, k in kw.items() if pid in planes]
         hourly = sum(parts) if parts else None
-    return evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly, existing_solar=bool(existing),
-                       state=bundle.summary.state, provenance=bundle.provenance)
+    card = evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly,
+                       existing_solar=bool(existing), state=bundle.summary.state,
+                       provenance=bundle.provenance)
+    return _cross_checked_pv(bundle, model, card)
+
+
+def _cross_checked_pv(bundle: PropertyBundle, model: BuildingModel, card: MeasureResult) -> MeasureResult:
+    """A31 (physics 01 PV-10): the design's specific yield against PVGIS moved to this orientation.
+    A check, never a change - the only thing it may do to the card is add a warning. A card with no
+    panels is not cross-checked, because there is no yield to disagree about."""
+    if card.solar is None or not card.solar.panels:
+        return card
+    warnings, _ = check_pv(card.solar, model.roof_planes, bundle.climate,
+                           params=card.params, weather_csv=_weather_csv(bundle))
+    if not warnings:
+        return card
+    return card.model_copy(update={"warnings": [*card.warnings, *warnings]})
 
 
 _LIGHT_CONTROLS = ("continuous", "continuous_off", "stepped", "auto_on_off")
@@ -642,19 +737,23 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
            if engine.flow_of(summary) in entry.flows
            and (m in engine.REGISTRY.plugins or _measure(summary.sid, m) is not None)]
 
-    def evaluate(measure_id, state):
+    def evaluate(measure_id, state, size=None):
+        """`size` is for solar only (SPEC 6.5 step 4): ("fraction", f) is that share of the design the roof and
+        the load allow; ("budget", usd) is the largest design that costs no more; None is the whole design."""
         full = wanted is not None and (measure_id, state.applied) in wanted
-        budget_left = max(0.0, request.budget_usd - state.spent)
         # the result depends on the building, the role and desks asked for, whether ranges are wanted,
-        # and (for solar only) the budget still left: a round that changed nothing reuses the last one
+        # and (for solar only) its size: a round that changed nothing reuses the last one
         key = (bundle.summary.sid, bundle.climate.weather_path, measure_id, state.key, request.role,
-               request.desks_requested, full, round(budget_left, 2) if measure_id == "PV_ROOF" else None)
+               request.desks_requested, full, (size[0], round(size[1], 2)) if size else None)
         if key in _EVAL_CACHE:
             return _EVAL_CACHE[key]
-        tokens = (_PV_BUDGET.set(budget_left), _FAST.set(not full))
+        budget = round(size[1], 2) if size and size[0] == "budget" else None
+        fraction = size[1] if size and size[0] == "fraction" else 1.0
+        tokens = (_PV_BUDGET.set(budget), _FAST.set(not full), _PV_FRACTION.set(fraction))
         try:
             found = evaluate_measure(bundle, state.model, measure_id, request.role, request.desks_requested)
         finally:
+            _PV_FRACTION.reset(tokens[2])
             _FAST.reset(tokens[1])
             _PV_BUDGET.reset(tokens[0])
         priced = price_measure(bundle, found)
@@ -678,7 +777,8 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
             _FAST.reset(token)
 
     return select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy,
-                       price_group=_price_group(bundle, model))
+                       price_group=_price_group(bundle, model),
+                       min_pv_kw=2.0 if engine.flow_of(summary) == "home" else 10.0)
 
 
 @_with_state
@@ -781,8 +881,10 @@ def _responsive_plan(bundle: PropertyBundle, base: BuildingModel, request: RunRe
     the model is rebuilt with the moved value as an override (a number collapses its range, SPEC 5.1)."""
     vision = [a for a in base.assumptions if a.source == "vision"]
     by_key = {a.key: a.value for a in base.assumptions}
+    def kept(a: Assumption) -> bool:        # the user's answers, and what the bills calibrated (MV-06)
+        return a.source == "user" or any(e.ref.startswith("bills.") for e in a.evidence)
     user = {a.key: (a.value.expected if isinstance(a.value, Ranged) else a.value)
-            for a in base.assumptions if a.source == "user"}
+            for a in base.assumptions if kept(a)}
 
     def plan(moved: BuildingModel) -> Plan:
         overrides = dict(user)
@@ -793,6 +895,34 @@ def _responsive_plan(bundle: PropertyBundle, base: BuildingModel, request: RunRe
     return plan
 
 
+_FORK: dict = {}
+
+
+def _fork_job(i: int):
+    return _FORK["plan"](_FORK["models"][i])
+
+
+def _run_all(plan_fn: Callable, models: list) -> list:
+    """The plans of `models`, in the same order as a plain loop would give them. The runs do not depend
+    on one another and are pure Python, so they are spread over worker processes forked from this one
+    (they inherit the bundle and the caches; ANALYSIS_WORKERS=1 turns it off). Any failure falls back
+    to the loop, so the answer is the same either way."""
+    import concurrent.futures as cf
+    import multiprocessing
+    import os
+    workers = min(int(os.environ.get("ANALYSIS_WORKERS") or (os.cpu_count() or 1)), 8, len(models))
+    if workers < 2 or len(models) < 4:
+        return [plan_fn(m) for m in models]
+    try:
+        _FORK.update(plan=plan_fn, models=models)
+        with cf.ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("fork")) as pool:
+            return list(pool.map(_fork_job, range(len(models)), timeout=300))
+    except Exception:
+        return [plan_fn(m) for m in models]
+    finally:
+        _FORK.clear()
+
+
 @_with_state
 def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> list[Question]:
     """REAL (A27) once the envelope, lighting and heating-and-cooling plug-ins are registered, so
@@ -800,7 +930,9 @@ def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunReques
     rule demonstrable."""
     core = ("ENV_ATTIC", "LGT_LED", "HVAC_HP" if engine.flow_of(bundle.summary) == "home" else "HVAC_RTU")
     if all(m in engine.REGISTRY.plugins for m in core):
-        return _ask_questions(model, _responsive_plan(bundle, model, request))
+        return _ask_questions(model, _responsive_plan(bundle, model, request), run_all=_run_all)
+    if not _has_example(bundle.summary.sid):
+        return []
     return [Question.model_validate(q)
             for q in _load(_folder(bundle.summary.sid), "run_result.json")["questions"]]
 

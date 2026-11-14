@@ -700,6 +700,74 @@ The ridge direction is worth 22 % of the range here, the pitch 3 % and one year'
 
 **Tool function.** `pv_energy_range(weather, site, design, building_model) -> Ranged(kWh)`.
 
+### PV-10 Cross-check of the yield against PVGIS [V method, J tolerance]
+
+Added 2026-11-14 (issue #285). Code: `backend/analysis/model/benchmark/pv.py`, `checks.py`. A check, not a model: it never changes `SolarDesign`; when the design's specific yield and PVGIS disagree by more than the tolerance it adds a warning to `MeasureResult.warnings`.
+
+**What PVGIS was asked.** `backend/data_layer/external.py` `fetch_pvgis` (read 2026-11-14) calls `https://re.jrc.ec.europa.eu/api/v5_3/PVcalc` with `peakpower=1`, `loss=14`, `angle=20`, `aspect=0` (PVGIS: 0 = south, so contract azimuth 180), `mountingplace=building`, and stores `E_y` as `ClimateSite.pvgis_annual_kwh_per_kw` and `SD_y / E_y` as `pvgis_sd_fraction`. PVGIS's `loss` covers "losses in cables, power inverters, dirt ... on the modules" (PVGIS user manual section 4.1, key PVGIS-UM below); temperature, reflection (AOI) and spectral losses are computed separately. `building` is the building-integrated thermal model, "no air movement behind the modules" (same section).
+
+```
+Y_mod    = E_design / P_dc                                          modelled specific yield, kWh/kW
+Y_mod,u  = Y_mod / (1 - s)                                          shading taken out (PVGIS has no near shading)
+R_t      = sum_p P_p * H_poa(beta_p, gamma_p) / ( P_dc * H_poa(20, 180) )      transposition ratio
+R_L      = (1 - L_ns / 100) * eta_inv / (1 - 0.14)                  loss ratio
+Y_exp    = Y_PVGIS * R_t * R_L
+d        = Y_mod,u / Y_exp - 1
+tol      = sqrt( (1.96 * sigma_w)^2 + 0.05^2 )   [+ 0.06 without a weather file]
+warn when |d| > tol
+```
+
+| Symbol | Meaning | Value or source |
+|---|---|---|
+| `E_design`, `P_dc` | `SolarDesign.annual_kwh.expected`, `system_kw_dc` | design |
+| `s` | energy-weighted shading loss of the design | read from the design, below |
+| `P_p`, `beta_p`, `gamma_p` | kW, tilt and azimuth of the modules on plane `p` | `PanelPlacement.plane_id` to `RoofPlane.tilt_deg.expected`, `azimuth_deg`; a plane below 9.5 degrees is flat and its modules sit on the LAY-02 rack, 15 degrees facing the plane's azimuth (or `params.rack_tilt_deg`, `rack_azimuth_deg` when the design names them) |
+| `H_poa` | annual plane-of-array irradiation, Hay and Davies (IRR-07), Spencer sun (SOL-02 to SOL-05), albedo 0.2 | the site's weather file when given; else a clear-sky year (Haurwitz GHI, Erbs split IRR-02) |
+| `L_ns` | PV-04 losses without the shading row | 11.4182 % |
+| `eta_inv` | PV-05 nominal inverter efficiency, because PVGIS's 14 % already includes the inverter | 0.96 |
+| `sigma_w` | `ClimateSite.pvgis_sd_fraction`; 0.04 when absent [J] | PVGIS `SD_y / E_y` |
+
+**Reading the shading out of a design.** Shading enters a design two ways (PV-04): inside `losses_percent` (the 3 % default, 14.0757 % total) or, for ray-cast panels, as `PanelPlacement.shading_loss_fraction` with `losses_percent` 11.4182. Whatever lies above 11.4182 is read as shading, `s = 1 - (1 - L/100) / (1 - 0.114182)`; otherwise `s = 1 - sum(E_i) / sum(E_i / (1 - s_i))` over the panels. A design that does not record `losses_percent` (the A14/A15 path in `api.design_pv` today) is read as the A4 chain's default, 14.0757 %, which is what `pv_hourly_yield` applies when it is given no losses.
+
+**Why a transposition ratio and not a second PVGIS call.** The check must run offline and only one PVGIS orientation is stored. A ratio of irradiation moves PVGIS to the design's orientation; it ignores the small change of reflection and temperature loss with tilt (about 1 % between 20 degrees and flat), which sits inside the model term of the tolerance.
+
+**Tolerance [J].** Two independent terms in quadrature, so that a model that agrees with PVGIS fails about one time in twenty from weather alone:
+
+1. *One year against a multi-year mean.* The weather file is one real calendar year (Open-Meteo archive, 2024 in the examples); PVGIS's `E_y` is the 2005 to 2023 mean of PVGIS-ERA5. One year's yield scatters about the mean with standard deviation `sigma_w`, so 1.96 `sigma_w` is the two-sided 95 % range.
+2. *Model difference, 5 %.* PVGIS's building-integrated thermal model against this project's close-roof-mount Sandia row (PV-02), PVGIS's own reflection and spectral models, a constant 0.96 inverter against the PV-05 curve. Measured: a live PVGIS call for the golden house gives 1,754.23 kWh/kWp free-standing and 1,677.42 building-integrated, 4.4 % apart; this project's rack sits between those two, so 5 % covers the mounting choice and leaves a little for the rest.
+3. *Without a weather file*, add 6 %: over tilts 0 to 45 degrees and eight azimuths, the clear-sky ratio `R_t` differs from the weather-file ratio by up to 5.8 % (Los Angeles, 45 degrees facing east: the morning marine layer that a clear sky cannot know about) and by up to 2.6 % in Houston.
+
+With `sigma_w` = 0.02301 (golden house) `tol` = 6.73 %; with 0.039 (Houston example) 9.13 %. This replaces the assumed +/-10 % band of section 7 and section 8.
+
+**Sources.** PVGIS-UM: European Commission Joint Research Centre, "PVGIS user manual", `https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/getting-started-pvgis/pvgis-user-manual_en`, read 2026-11-14 (sections 3 and 4.1: databases, system loss, mounting position, year-to-year variability). PVGIS-API: live calls on 2026-11-14 to the `v5_3/PVcalc` endpoint with the `fetch_pvgis` parameters (results below). `fetch_pvgis` code read in the repository. IRR-07, IRR-02, SOL-02 to SOL-05, PV-04, PV-05, LAY-02 of this file.
+
+**Implementation check [V].** The numpy Hay and Davies chain against `pvlib.irradiance.get_total_irradiance(model="haydavies")` with pvlib's SPA sun position, on both example weather years, five orientations: annual irradiation within 0.2 % (largest 0.19 %, Houston, 20 degrees facing 356.4).
+
+**Worked example (golden house, `specs/examples/house/measures.json` `PV_ROOF`).** 5 modules of 430 W, 2.15 kW, all on `plane_south` (tilt 20, azimuth 176.4), `annual_kwh` 3,768.3, `losses_percent` 11.42, ray-cast shading 0.02, 0.02, 0.03, 0.03, 0.05 on panels of 761.4, 761.4, 753.7, 753.7, 738.1 kWh. Unshaded sum 3,884.85 kWh, so `s` = 0.0300, `Y_mod` = 1,752.7 and `Y_mod,u` = 1,806.9 kWh/kW. Weather file `specs/examples/weather/typical_year_hourly.csv`: `H_poa(20, 176.4)` = 2,146.9 and `H_poa(20, 180)` = 2,151.8 kWh/m2, `R_t` = 0.9977. `R_L` = 0.885818 x 0.96 / 0.86 = 0.98882 (with `L_ns` = 11.42 as recorded). `Y_exp` = 1,754.23 x 0.9977 x 0.98882 = 1,730.6 kWh/kW. `d` = 1,806.9 / 1,730.6 - 1 = +4.41 %. `tol` = sqrt((1.96 x 0.02301)^2 + 0.05^2) = 6.73 %. Within; no warning.
+
+| Golden example (`measures.json` PV_ROOF, fixture PVGIS) | `Y_mod` | `Y_mod,u` | Planes as seen | `R_t` | `Y_exp` | `d` | `tol` |
+|---|---|---|---|---|---|---|---|
+| House, 1,754.23 / 0.02301 | 1,752.7 | 1,806.9 | 20 / 176.4 | 0.9977 | 1,730.6 | +4.4 % | 6.7 % |
+| LA office, 1,690.0 / 0.023 | 1,553.7 | 1,601.9 | flat, rack 15 / 180 | 0.9831 | 1,642.8 | -2.5 % | 6.7 % |
+| Houston office, 1,330.0 / 0.039 | 1,330.0 | 1,371.2 | flat, rack 15 / 180 | 0.9873 | 1,298.5 | +5.6 % | 9.1 % |
+
+All three are within tolerance. The two office PVGIS figures are invented (`specs/examples/README.md` section 2.3).
+
+**Live PVGIS on 2026-11-14 (PVGIS-API, PVGIS-ERA5 2005 to 2023, 1 kWp, loss 14, tilt 20, south).**
+
+| Site (lat, lon) | `mountingplace` | `E_y` kWh/kWp | `SD_y` | `SD_y / E_y` | `H(i)_y` kWh/m2 |
+|---|---|---|---|---|---|
+| Golden house (34.0934917, -118.3171) | building | 1,677.42 | 37.73 | 0.02249 | 2,296.19 |
+| Golden house | free | 1,754.23 | 40.36 | 0.02301 | |
+| LA office (34.03075, -118.3889) | building | 1,676.75 | 37.70 | 0.02248 | 2,295.19 |
+| Houston office (29.7452, -95.4567) | building | 1,355.34 | 54.23 | 0.04001 | 1,838.76 |
+
+The golden house's stored 1,754.23 and 0.02301 are the **free-standing** figures (`specs/examples/README.md` records 7,016.92 kWh for 4 kWp, which is 1,754.23 per kWp), while `fetch_pvgis` asks for `building`, which returns 1,677.42 (4.4 % lower). Whichever the Data lane intends, `ClimateSite` should record the mounting, or the fixture should be refreshed; until then the 5 % model term absorbs the difference [P, Data lane].
+
+**Tests** (`backend/analysis/model/benchmark/tests/test_a31_pv.py`): the worked example (`Y_exp` to 0.3 kWh/kW, `d` to 5e-4); the three golden rows; the Hay and Davies chain against pvlib (1 %); the clear-sky allowance over the full orientation grid (6 %); the tolerance formula; a design 25 % above and 25 % below gives one warning each; missing PVGIS, design, coordinates or planes, and an unreadable weather file, degrade to `not_checked` or to the clear-sky path with a warning, never an error.
+
+**Tool functions.** `cross_check_pv(annual_kwh, system_kw_dc, planes, pvgis_kwh_per_kw, pvgis_sd_fraction, lat, lon, *, losses_percent, shading_fraction, weather, timezone) -> PvCrossCheck`; `check_pv(solar, roof_planes, climate, *, params, weather_csv) -> (warnings, PvCrossCheck)`.
+
 ## 4. Shading from 3D geometry (SHD)
 
 Runs only where an exterior mesh exists (the 232 models with an aerial splat) or for row-to-row shading on flat roofs, where the rows themselves are the geometry. On the parametric roof of the P0 path there is nothing to cast rays against: the 3 % default of PV-04 stays and `shading_loss_fraction` is reported as 0.03 with a warning.
@@ -898,9 +966,9 @@ Lookup used on the parametric path to fill `RoofPlane.tilt_deg` (a `Ranged`, deg
 
 Pitch conversion: `tilt = atan(rise / 12)`. 2:12 = 9.46, 4:12 = 18.43, 6:12 = 26.57, 8:12 = 33.69, 12:12 = 45.00 degrees (computed, and 6:12 checked against the ROOF-01 example).
 
-**Golden lots.** House (gable, shingle, footprint 190.4 m2, small): 15.8 / 28.4 / 41.1; the shingle minimum of 9.46 does not bind. Both golden offices have flat membrane roofs: the Los Angeles office (PropertyId 246899, 17 storeys) and the Houston office (PropertyId 234088, 16 storeys). On a flat roof, tilt is a racking choice, not a roof property: use the flat-roof row and LAY-02 for row spacing. (The first golden office, a gabled metal warehouse, was dropped on 2026-11-14.)
+**Golden lots.** House (gable, shingle, footprint 190.4 m2, small): 15.8 / 28.4 / 41.1; the shingle minimum of 9.46 does not bind. Both golden offices have flat roofs: the Los Angeles office, Culver Connect (PropertyId 27120, 4 storeys, material not reported), and the Houston office (PropertyId 234088, 16 storeys). On a flat roof, tilt is a racking choice, not a roof property: use the flat-roof row and LAY-02 for row spacing. (The first golden office, a gabled metal warehouse, was dropped on 2026-11-14.)
 
-**Footprints of towers and of different flights.** Two facts verified by the Data lane, 2026-11-14. (1) On both golden towers the Vexcel footprint outlines a podium or garage, not the tower: 1.7 and 4.6 times the CoStar typical floor plate. So for a building of more than three storeys, the roof area available for PV is taken as gross building area divided by storeys, not the footprint, and the footprint is used only as an upper bound. (2) A footprint depends on the layer set it was fetched with: on the LA office, `layer=urban` gave one structure of 2,207 m2, and the full layer list gave two structures, the primary 2,474 m2, from a different flight. The Data lane pins `layer=urban` and records the flight in `VexcelData.collection`; any area used here names that collection. Vexcel's calculated roof height is not used at all: its sign varies and it differs between identical calls.
+**Footprints of towers and of different flights.** Two facts verified by the Data lane, 2026-11-14. (1) On both golden towers the Vexcel footprint outlines a podium or garage, not the tower: 1.7 and 4.6 times the CoStar typical floor plate. So for a building of more than three storeys, the roof area available for PV is taken as gross building area divided by storeys, not the footprint, and the footprint is used only as an upper bound. (2) A footprint depends on the layer set it was fetched with: on the earlier LA office (PropertyId 246899), `layer=urban` gave one structure of 2,207 m2, and the full layer list gave two structures, the primary 2,474 m2, from a different flight. The Data lane pins `layer=urban` and records the flight in `VexcelData.collection`; any area used here names that collection. Vexcel's calculated roof height is not used at all: its sign varies and it differs between identical calls.
 
 **How the range reaches the yield.** PV-09, with a worked example on the golden house.
 
@@ -1115,7 +1183,7 @@ Reference implementation for unit tests: pvlib 0.16.x, pinned as a development d
 | IRR | Closure of the weather file | GHI against DNI cos(theta_z) + DHI | report only |
 | PV | PV-01 to PV-05 at the running example, plus the clipping and low-load cases | values in the entries; pvlib `iam.physical`, `temperature.sapm_cell`, `pvsystem.pvwatts_dc`, `pvsystem.pvwatts_losses`, `inverter.pvwatts` | 1e-6 relative |
 | PV | PV-06 full year | `pvlib.modelchain.ModelChain` with the settings listed in PV-06 | 1e-4 relative on annual AC energy, 0.01 W per hour |
-| PV | PV-06 annual sanity band, secondary | PVGIS (PVGIS-ERA5) annual yield for the same site, tilt, azimuth, size and loss setting; reported live for the golden house: 7,017 kWh per year for 4 kW at 20 degrees facing south. PVGIS's loss setting for that call must be matched before comparing. | +/-10 % (an assumed band for a 30 km reanalysis product; to be tuned by the Data lane) [P] |
+| PV | PV-06 annual sanity band, secondary | PVGIS (PVGIS-ERA5) annual yield moved to the design's orientation and loss accounting, as PV-10 | PV-10 tolerance, sqrt((1.96 sigma_w)^2 + 0.05^2), 6.7 % for the golden house (replaces the assumed +/-10 %) [J] |
 | PV | PV-07 | closed-form sum against year-by-year sum | 1e-9 relative |
 | PV | PV-09 | low <= expected <= high; twelve yields of the golden-house table | 1e-4 relative against ModelChain |
 | SHD | SHD-01 | analytic wall case: thresholds 21.8014 and 19.1066 deg, blocked 0.05 deg below, clear 0.05 deg above | exact |
@@ -1145,7 +1213,7 @@ Reference implementation for unit tests: pvlib 0.16.x, pinned as a development d
 | Module rating and size (430 W, 1.722 m by 1.134 m) | PV-08, LAY-01 | Typical values, not from a cited data sheet. | Replace with the quoted product. |
 | Solar constant 1366.1 W/m2 as the ASTM E490 value | IRR-01 | The standard was not opened; the number is pvlib's default. | None needed for accuracy (0.07 % against 1367). |
 | Circumsolar diffuse shaded with the beam | SHD-03 | A design choice argued from the Perez model's geometry; no source opened that prescribes it. | Accept as stated, or switch to the SAM rule printed in the entry. |
-| +/-10 % PVGIS sanity band; PVGIS figures themselves | section 7, PV-09 | Band is assumed. PVGIS values are quoted from the Data lane's live call, not opened here. | Data lane. |
+| PVGIS mounting of the stored figure; the PV-10 model term (5 %) | section 7, PV-09, PV-10 | The +/-10 % band is replaced by the PV-10 tolerance. Live PVGIS calls were made for PV-10 on 2026-11-14: the golden house's stored figure is the free-standing one while `fetch_pvgis` asks for building-integrated (4.4 % apart). | Data lane: record the mounting in `ClimateSite` or refresh the fixture. |
 | Open-Meteo time-stamp convention | SOL-07 | Not checked. | Data lane, before any yield is quoted. |
 | Faiman (2008) cell temperature model; Fuentes (1987) model used by PVWatts itself; Kasten and Young (1989) air mass; Michalsky (1988) sun position | not used | Primary sources not opened. They are not part of this spec. | Do not add without opening them. |
 | Electrical loss from partial shading on string inverters | PV-06 | Not modelled, no formula adopted. | Flag only. |

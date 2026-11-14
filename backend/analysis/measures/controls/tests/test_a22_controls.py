@@ -21,7 +21,10 @@ OFFICES = ("office", "office_houston")
 MIDS = ("LGT_CTRL", "PLUG_MGMT", "CTRL_TSTAT")
 ROLES = ("owner_occupier", "landlord", "tenant")
 # formula ids that come from the simulation or from finance, not from the measure card
-NOT_OURS = {"EMI-01", "ECO-07", "ECO-12b", "ECO-13", "INC-40"}
+NOT_OURS = {"EMI-01", "ECO-07", "ECO-12b", "ECO-13", "INC-40",
+            # the LA office fixture is real output: the simulation's and A24/A25's formula ids
+            "ZON-01", "ZON-04", "ENV-03", "INF-01", "HVAC-01", "LGT-03", "TAR-01", "UNC-02",
+            "COST-01", "COST-02", "ECO-05", "ECO-06", "ECO-09", "ECO-10", "ECO-11"}
 
 
 @pytest.fixture(autouse=True)
@@ -188,20 +191,22 @@ def test_cards_match_fixture(name, mid, registry):
     got = {(a.room_id, a.pano_id, a.label) for a in r.anchors}
     assert {(a["room_id"], a["pano_id"], a["label"]) for a in fx["anchors"]} <= got
     for w in fx["warnings"]:
+        if w.startswith("useful life of"):        # added by pricing (A24), not by the card
+            continue
         assert any(x.startswith(w.split(".")[0]) for x in r.warnings), w
     assert any("unsourced" in w for w in r.warnings)
 
 
-@pytest.mark.parametrize("name,n", (("office", 2), ("office_houston", 4)))
+@pytest.mark.parametrize("name,n", (("office", 10), ("office_houston", 4)))
 def test_thermostat_count_matches_fixture_cost(name, n, registry):
-    """Finance prices `thermostats`; the fixtures' cost_source says x 2 and x 4."""
+    """Finance prices `thermostats`; the fixtures' cost_source says x 10 and x 4."""
     r = run(name, "CTRL_TSTAT", "tenant", registry)
     assert r.params["thermostats"] == n
     assert f"x {n}" in fixture_card(name, "CTRL_TSTAT")["finance"]["cost_source"]
     assert r.savings.electricity_kwh.expected == 0   # setback equals DEF-08: fixture no_savings
 
 
-@pytest.mark.parametrize("name,fixtures", (("office", 48), ("office_houston", 112)))
+@pytest.mark.parametrize("name,fixtures", (("office", 289), ("office_houston", 112)))
 def test_lighting_control_card(name, fixtures, registry):
     r = run(name, "LGT_CTRL", "tenant", registry)
     assert r.params["fixtures"] == fixtures      # finance's quantity key; luminaire counts of LGT_LED

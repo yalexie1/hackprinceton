@@ -276,3 +276,16 @@ def test_houston_fixture_export_value_is_zero_range():
     assert m.params["export_regime"] == "none"
     assert m.params["export_value_usd"]["low"] == 0.0
     assert m.params["egrid_subregion"] == "ERCT"
+
+
+def test_the_design_carries_the_system_parameters_the_yield_used():
+    # Finance reads degradation_rate (ECO-07); empty, the array was priced as never degrading.
+    m = evaluate_pv(_design(), _baseline(), _tariff(regime="net_billing"))
+    s = m.solar
+    assert s.degradation_rate == pytest.approx(0.005)
+    assert s.dc_ac_ratio == pytest.approx(1.2)
+    assert s.inverter_kw_ac == pytest.approx(s.system_kw_dc / 1.2, abs=1e-3)
+    assert s.losses_percent == pytest.approx(14.0757, abs=1e-3)
+    quoted = _design().model_copy(update={"degradation_rate": 0.0025, "dc_ac_ratio": 1.1})
+    q = evaluate_pv(quoted, _baseline(), _tariff(regime="net_billing")).solar
+    assert q.degradation_rate == 0.0025 and q.dc_ac_ratio == 1.1     # a quoted product is kept

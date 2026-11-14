@@ -499,3 +499,156 @@ def test_with_nothing_recorded_replay_serves_the_example(monkeypatch):
     monkeypatch.delenv("AGENT_MODE", raising=False)
     run_id = api.start_run(request())
     assert run_id.startswith("run_house_") and drain(run_id)[-1].type == "done"
+
+
+# ---------- a degraded door is reported, not swallowed (#274) ----------
+
+def test_a_missing_analysis_dependency_is_recorded_rather_than_swallowed(monkeypatch):
+    """`default_doors` falls back to `analysis_stub` on ImportError. The analysis door is
+    on main, so that now means a broken environment - a missing numpy or shapely - and
+    it replaces every analysis figure with the example's. Silently, before this: someone
+    would have been left debugging why live numbers matched the fixtures."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def without_analysis(name, *args, **kwargs):
+        # `from backend.analysis import api` calls __import__ with the *package* name
+        # and the attribute in fromlist, not with "backend.analysis.api". Matching the
+        # dotted name silently never fires, and the test then passes against the real
+        # door while claiming to have broken it.
+        fromlist = args[2] if len(args) > 2 else kwargs.get("fromlist") or ()
+        if name == "backend.analysis" and "api" in fromlist:
+            raise ImportError("no module named 'shapely'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", without_analysis)
+    doors = live.default_doors()
+
+    assert doors.analysis.__name__.endswith("analysis_stub")
+    assert doors.degraded and "shapely" in doors.degraded
+    assert "replays the example" in doors.degraded
+
+
+def test_a_healthy_environment_records_no_degradation():
+    doors = live.default_doors()
+    assert doors.analysis.__name__ == "backend.analysis.api"
+    assert doors.degraded is None
+
+
+def test_a_degraded_door_becomes_a_run_warning(tmp_path):
+    """It has to reach `RunResult.warnings`, because that is what the frontend shows."""
+    from backend.agent.tools import Doors
+
+    settings = live.LiveSettings(runs_dir=tmp_path,
+                                 doors=Doors(data=object(), analysis=object(),
+                                             legal=object(), degraded="analysis is a stub"))
+    run = live.LiveRun("run_degraded", request(), settings)
+    assert "analysis is a stub" in run._warnings
+
+
+# ---- answering inside the publish/check window (the flake Yale handed over) ----
+
+def test_an_answer_that_lands_in_the_window_still_resumes_the_run(live_mode, monkeypatch):
+    """A client that answers the moment it sees the question event must not end the run.
+
+    `_main` publishes the question event, writes `usage.json`, and *then* reads
+    `self.pending` to decide whether to wait for an answer. But `answer()` sets
+    `self.pending = None`. So a client that answers inside that window makes `_main` read
+    "no question was asked", return, and close the run - with `question` as the last
+    event and the answer sitting unconsumed in `_inbox`.
+
+    `self.pending` was doing two jobs: "a question is open", which `answer()` clears, and
+    "this segment paused", which is a fact about the segment that `answer()` must not be
+    able to change.
+
+    The window is a few statements wide and `_write_usage` puts a **disk write** in the
+    middle of it, which is why this surfaced only in multi-lane runs: under I/O
+    contention the write takes long enough for a fast client to get in. Observed three
+    times across three different tests of this file, each of which answers as soon as it
+    sees the event.
+
+    Here the window is hit deterministically by answering from inside `_write_usage`.
+    """
+    real_write_usage = live.LiveRun._write_usage
+    answered: list[str] = []
+
+    def answer_inside_the_window(self):
+        real_write_usage(self)
+        if self.pending is not None and not answered:      # the client is this quick
+            answered.append(self.pending[1].id)
+            self.answer(self.pending[1].id, 100.0)
+
+    monkeypatch.setattr(live.LiveRun, "_write_usage", answer_inside_the_window)
+
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    events = drain(run_id)
+
+    assert answered == ["q_service_amps"], "the test did not actually hit the window"
+    assert events[-1].type == "done", (
+        f"the run ended on {events[-1].type!r}: the answer was dropped and the run closed "
+        f"instead of resuming")
+    assert api.get_run(run_id).status == "done"
+
+
+def test_an_answer_to_a_closed_run_is_an_error_not_a_silent_queue(live_mode):
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    pending = run.pending
+    run.closed = True                       # the run ended while the client still held the question
+    assert pending is not None
+    with pytest.raises(LookupError, match="closed"):
+        api.answer(run_id, pending[1].id, None)
+    assert run._inbox.empty()               # nothing was queued for a reader that is gone
+    run.closed = False                      # let the run finish, so its worker thread is not left waiting
+    api.answer(run_id, pending[1].id, None)
+    assert drain(run_id)[-1].type == "done"
+
+
+# ---------- the data lane's provenance reaches the run (issue #319) ----------
+
+def test_a_bundle_fallback_becomes_a_run_event_and_a_warning(tmp_path):
+    """A live run used to say nothing when the tariff was a state average or an oblique 429ed:
+    the records were in the bundle and nothing read them. They must reach both the stream (so the
+    stage log shows them as they happen) and `RunResult.warnings` (so the frontend shows them)."""
+    from backend.schema import FetchRecord, PropertyBundle
+
+    run = live.LiveRun("run_prov", request(), live.LiveSettings(runs_dir=tmp_path))
+    bundle = PropertyBundle.model_validate_json(
+        (EXAMPLES / "house" / "property_bundle.json").read_text()).model_copy(update={"provenance": [
+            FetchRecord(layer="tariff", what="electricity price", status="fallback",
+                        detail="EIA state average, not a looked-up tariff"),
+            FetchRecord(layer="costar", what="listing", status="missing"),
+        ]})
+    run.files.write("bundle.json", bundle.model_dump(mode="json"))
+
+    emitted: list = []
+    run._emit = emitted.append          # `_emit` hands chunks to a loop that only exists mid-run
+    tool = run._instrument("get_property_bundle", lambda sid: {"sid": sid})
+    tool(sid=bundle.summary.sid)
+
+    reported = [e for e in emitted if getattr(e, "type", None) == "fallback"
+                and e.payload.get("status") == "fallback"]
+    assert len(reported) == 1 and "EIA state average" in reported[0].message
+    assert reported[0].payload["layer"] == "tariff" and reported[0].stage == "ingest"
+    assert any("EIA state average" in w for w in run._warnings)
+    assert not any(getattr(e, "payload", {}).get("what") == "listing" for e in emitted), \
+        "a missing record is not a degraded run"
+
+
+def test_the_same_bundle_read_twice_does_not_warn_twice(tmp_path):
+    """`get_property_bundle` is called again by later subagents and its result is memoised; the
+    warning must not be repeated once per call."""
+    run = live.LiveRun("run_prov2", request(), live.LiveSettings(runs_dir=tmp_path))
+    raw = json.loads((EXAMPLES / "office" / "property_bundle.json").read_text())
+    run.files.write("bundle.json", raw)
+    tool = run._instrument("get_property_bundle", lambda sid: {"sid": sid})
+    tool(sid=raw["summary"]["sid"])
+    once = list(run._warnings)
+    tool(sid=raw["summary"]["sid"])
+    assert run._warnings == once and once, "warnings are deduplicated, and there were some"

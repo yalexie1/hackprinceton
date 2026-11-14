@@ -148,6 +148,13 @@ def draft_document(request: DocumentRequest) -> DocumentDraft:
         from backend.legal import api as legal
         from backend.schema import PropertyBundle
         draft = legal.fill_template(request, run["result"], PropertyBundle.model_validate(run["bundle"]))
+        if not draft.statutory_checks:
+            # `engine.fill_template` always returns an empty checklist - running the
+            # predicates is the caller's job, and `LiveRun.draft` already does it. This
+            # path did not, so a document drafted from a recording came back with no
+            # statutory checklist at all - which is the one thing SPEC 15 step 7 shows,
+            # and the demo serves recordings.
+            draft = draft.model_copy(update={"statutory_checks": legal.check_document(draft)})
         run["docs"][draft.doc_id] = draft
         return draft
     draft = DocumentDraft.model_validate(_load(run["flavor"], "document_draft.json"))
@@ -156,6 +163,22 @@ def draft_document(request: DocumentRequest) -> DocumentDraft:
     draft.doc_id = f"doc_{request.run_id}_{len(run['docs']) + 1}"
     run["docs"][draft.doc_id] = draft
     return draft
+
+
+def get_roof(run_id: str):
+    """The roof view of a run (agent/roof): its bundle and result, drawn on the aerial image."""
+    from backend.agent.roof import roof_view
+    from backend.data_layer import api as data
+    from backend.schema import PropertyBundle
+    live_run = _live(run_id)
+    if live_run is not None:
+        raw = live_run.files.read_json("bundle.json")
+    else:
+        run = _get(run_id)
+        raw = run["bundle"] if run.get("flavor") is None else _load(run["flavor"], "property_bundle.json")
+    if raw is None:
+        raise KeyError(f"run {run_id} has no property bundle yet")
+    return roof_view(PropertyBundle.model_validate(raw), get_run(run_id), data.get_asset)
 
 
 def get_document(run_id: str, doc_id: str) -> DocumentDraft:

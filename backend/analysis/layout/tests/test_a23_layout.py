@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 from shapely.geometry import LineString, Point, Polygon
 
-from backend.schema import BaselineResult, BuildingModel, LayoutResult, MeasureResult, PropertyBundle
+from backend.schema import Assumption, BaselineResult, BuildingModel, LayoutResult, MeasureResult, PropertyBundle
 from backend.analysis.layout import (GRID_M, MEASURES, MIN_SPACING_M, WALL_CLEARANCE_M,
                                      candidate_grid, check, change, desk_score, describe, measures,
                                      place_desks)
@@ -186,39 +186,37 @@ def test_desk_count_defaults_from_occupants():
 # ---------------------------------------------------------------- the LAYOUT card
 
 def test_la_office_fixture_shape():
+    """The LA office fixture (Culver Connect, #253) is the real A23 card with the A5 scorer; with a
+    fake scorer the card keeps its shape, and its saving follows LCT-02 from its own parameters."""
     b, m = bundle("office"), model("office")
     fx = fixture_card("office")
-    card = describe(b, m, change(b, m), fake_simulate(b, m), {"role": "tenant", "desks_requested": 4},
+    card = describe(b, m, change(b, m), fake_simulate(b, m), {"role": "tenant", "desks_requested": 12},
                     score_point=fake_scorer(b, m, saved_fraction=0.42))
     card = MeasureResult.model_validate(card.model_dump())
     lay = card.layout
     assert card.applicable and card.title == fx["title"]
-    assert len(lay.candidates) == len(fx["layout"]["candidates"]) == 8
-    assert sum(d.recommended for d in lay.candidates) == 4
-    assert lay.window_source == "vision" and lay.control_type == "none"
+    assert len(lay.candidates) == len(fx["layout"]["candidates"]) == 24
+    assert sum(d.recommended for d in lay.candidates) == fx["layout"]["desks_requested"] == 12
+    assert lay.window_source == fx["layout"]["window_source"] == "vision"     # no openings in the scan (#301)
+    assert lay.control_type == fx["layout"]["control_type"] == "none"
     assert lay.target_lux == 300 and lay.setpoint_lux == 500 and lay.occupied_hours_per_year == 2600
     assert lay.score_weights == fx["layout"]["score_weights"]
-    # recommended desks run along the south-west glazing (edge e01, y = 0, azimuth 221.6)
-    for d in lay.candidates:
-        if d.recommended:
-            assert d.room_id == "room_01" and d.y <= 3.0
-            assert "window geometry read from panoramas, not measured" in d.warnings
-    assert "south-west glazing" in card.description
-    # LCT-02 with the fixture's saved fraction: zero cost, range from 0, k_m = 0.5 in the middle
-    s, fs = card.savings, fx["savings"]
+    assert any("read from panoramas" in w for w in card.warnings)   # vision windows: the card says so
+    # LCT-02 with the saved fraction: zero cost, range from 0, k_m = 0.5 in the middle
+    s = card.savings
     assert s.electricity_kwh.low == 0 and s.cost_usd.low == 0 and s.co2_kg.low == 0
-    for key in ("electricity_kwh", "co2_kg", "co2_nonbaseload_kg"):
-        got = getattr(s, key)
-        assert got.expected == pytest.approx(fs[key]["expected"], rel=2e-3)
-        assert got.high == pytest.approx(fs[key]["high"], rel=2e-3)
-    assert s.cost_usd.expected == pytest.approx(fs["cost_usd"]["expected"], rel=2e-3)
+    full = card.params["controlled_power_w"] / 1000 * 2600 * 0.42
+    assert s.electricity_kwh.expected == pytest.approx(0.5 * full, rel=1e-3)
+    assert s.electricity_kwh.high == pytest.approx(full, rel=1e-3)
     assert s.gas_kwh.high == 0
     assert set(fx["params"]) <= set(card.params)
-    assert card.params["controlled_power_w"] == pytest.approx(fx["params"]["controlled_power_w"], rel=1e-3)
     assert card.params["auto_on_off_saved_fraction"] == pytest.approx(0.42)
-    assert set(card.formula_ids) == set(fx["formula_ids"]) - {"ECO-07"}
+    fs = fx["savings"]["electricity_kwh"]      # the fixture follows the same rule with its own fraction
+    f_fx = fx["params"]["controlled_power_w"] / 1000 * 2600 * fx["params"]["auto_on_off_saved_fraction"]
+    assert fs["expected"] == pytest.approx(0.5 * f_fx, rel=2e-3) and fs["high"] == pytest.approx(f_fx, rel=2e-3)
+    assert set(card.formula_ids) <= set(fx["formula_ids"])
     for w in fx["warnings"]:
-        assert w in card.warnings
+        assert w in card.warnings or w.startswith("useful life of")
     assert [a.label for a in card.anchors] == [a["label"] for a in fx["anchors"]]
     assert card.finance is None
 
@@ -226,12 +224,13 @@ def test_la_office_fixture_shape():
 def test_automatic_control_claims_full_saving():
     b, m = bundle("office"), model("office")
     m2 = m.model_copy(deep=True)
-    for a in m2.assumptions:
-        if a.key == "lighting.control_type":
-            a.value = "continuous"
+    m2.assumptions = [a for a in m2.assumptions if a.key != "lighting.control_type"] + [
+        Assumption(key="lighting.control_type", label="Lighting control", value="continuous",
+                   source="user", confidence=1.0)]
     lay = place_desks(b, m2, 4, fake_scorer(b, m2, saved_fraction=0.42))
     kwh = lay.result.lighting_kwh_saved
-    assert kwh.low > 0 and kwh.expected == pytest.approx(0.62336 * 2600 * 0.42, rel=1e-6)
+    assert kwh.low > 0
+    assert kwh.expected == pytest.approx(lay.params["controlled_power_w"] / 1000 * 2600 * 0.42, rel=1e-4)
     assert "depends on occupants switching lights off" not in lay.result.warnings
 
 

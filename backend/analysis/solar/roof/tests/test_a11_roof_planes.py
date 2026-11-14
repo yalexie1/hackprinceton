@@ -208,7 +208,8 @@ def test_solar_attribute_true_is_reported():
 
 def test_solar_attribute_false_and_absent():
     assert build_parametric_roof(_vexcel("house"), 0.0).existing_solar is False
-    assert build_parametric_roof(_vexcel("office_houston"), 0.0).existing_solar is None
+    assert build_parametric_roof(_vexcel("office_houston"), 0.0).existing_solar is False   # D16 structure
+    assert build_parametric_roof(_synthetic("flat"), 0.0).existing_solar is None
 
 
 def test_solar_panel_count_or_area_implies_existing_solar():

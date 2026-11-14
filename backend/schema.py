@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.3"
+SCHEMA_VERSION = "0.3.6"
 
 # ---------- primitives ----------
 
@@ -350,6 +350,22 @@ class RoofPlane(BaseModel):
     slope_length_m: Optional[float] = None
     geometry_source: Literal["splat", "vexcel_parametric", "assumed"]
 
+class FuelFit(BaseModel):
+    """Fit of the model to one fuel's twelve monthly bills (physics 04 MV-03, MV-04)."""
+    fuel: Literal["electricity", "gas"]
+    nmbe_before: float                         # fraction, simulated minus billed, before calibration
+    cv_rmse_before: float                      # fraction
+    nmbe_after: float
+    cv_rmse_after: float
+    passed: bool                               # MV-04: |NMBE| <= 0.05 and CV(RMSE) <= 0.15 (monthly)
+
+class CalibrationSummary(BaseModel):
+    """What calibrating to the bills did (physics 04 MV-06). Present only when bills were given."""
+    calibrated: bool                           # MV-04 passed for every billed fuel
+    fits: list[FuelFit]
+    moved: list[str] = []                      # assumption keys changed, each within its stated range
+    warnings: list[str] = []                   # e.g. months that disagree, likely unmodelled loads, no billing dates
+
 class BuildingModel(BaseModel):
     schema_version: str = SCHEMA_VERSION
     sid: str
@@ -366,6 +382,7 @@ class BuildingModel(BaseModel):
     roof_planes: list[RoofPlane] = []
     assumptions: list[Assumption]
     flags: list[Flag] = []
+    calibration: Optional[CalibrationSummary] = None   # set by calibrate_model; the assumptions are already calibrated
 
 class EnergyUse(BaseModel):
     electricity_kwh: Ranged
@@ -384,10 +401,12 @@ class BaselineResult(BaseModel):
     peak_cooling_w: float
     peak_heating_w: float
     calibrated_to_bills: bool = False
+    calibration: Optional[CalibrationSummary] = None   # copied from the model; None when no bills were given
     heating_need_kwh: Optional[float] = None   # thermal need before system efficiency
     cooling_need_kwh: Optional[float] = None
     latent_cooling_kwh: float = 0.0
     hourly_path: Optional[str] = None          # cached hourly zone outputs, read by the desk-placement physics
+    warnings: list[str] = []                   # sanity checks on the result, e.g. the BEN-03 benchmark band (A31)
 
 MeasureId = Literal[
     "ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE",
@@ -520,7 +539,8 @@ class PlanItem(BaseModel):
 
 class SkippedItem(BaseModel):
     measure_id: MeasureId
-    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done", "no_cost_data"]
+    reason: Literal["over_budget", "role", "feasibility", "no_savings", "not_cost_effective",
+                    "already_done", "no_cost_data"]
     detail: str
 
 class ValueUplift(BaseModel):
@@ -554,6 +574,7 @@ Role = Literal["owner_occupier", "landlord", "tenant"]
 class UtilityBills(BaseModel):
     electricity_kwh: list[float]               # 12 monthly values
     gas_kwh: Optional[list[float]] = None
+    first_month: Optional[str] = None          # "YYYY-MM" of the first bill; None = January, calendar months
 
 class RunRequest(BaseModel):
     sid: str

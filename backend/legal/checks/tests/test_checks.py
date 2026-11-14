@@ -102,7 +102,23 @@ def test_example_fixture_draft_is_checked_not_satisfied():
     assert len(checks) == 50 and not all(c.satisfied for c in checks)   # the fixture has blanks and stubs
 
 
-def test_other_documents_return_nothing_yet():
+def test_a_document_with_no_predicates_returns_nothing_yet():
+    """`[]` means **not checked**, not "nothing wrong". The set of documents that have
+    predicates grows: document 1T since L5, document 2 since L4, so this names one that
+    still has none rather than one that happens not to today."""
     d = draft()
-    d.state = "TX"
+    d.doc_type = "bid_package_rfp"                       # L7 has no predicates for it
     assert check_document(d) == []
+
+    d.doc_type = "energy_savings_guarantee"
+    assert check_document(d) == []
+
+
+def test_the_commercial_contract_has_its_own_predicates():
+    """Guard on the dispatch: document 2's 24 `CA-COM-*` checks must not leak into
+    document 1's list, and document 1's 30 `CA-R-*` checks must not answer for it."""
+    d = draft()
+    d.doc_type = "retrofit_contract_commercial"
+    ids = {c.requirement_id for c in check_document(d)}
+    assert ids and all(not i.startswith("CA-HIC-") for i in ids)
+    assert "CA-COM-01" in ids

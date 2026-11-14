@@ -19,11 +19,12 @@ SUBAGENT_TOOLS: dict[str, tuple[str, ...]] = {
     "scout": ("search_properties", "get_property_bundle", "get_asset"),
     "surveyor": ("observe_interior", "detect_roof_elements", "build_building_model",
                  "set_assumption"),
-    "physicist": ("run_baseline", "evaluate_measure", "design_pv", "score_desk_positions"),
+    "physicist": ("calibrate_model", "run_baseline", "evaluate_measure", "design_pv", "score_desk_positions"),
     "financier": ("price_measure", "lookup_incentives", "build_plan", "cpace_scenario",
                   "sensitivity"),
+    "reviewer": ("read_run_file", "check_report"),     # read-only (tools.build_reader_tools)
 }
-AUDITOR_TOOLS = ("ask_user",)
+AUDITOR_TOOLS = ("ask_user", "read_run_file", "check_report")   # the last two are read-only (tools.build_reader_tools)
 
 # SPEC 6.2: the measures of each property type. A subagent is told which ids exist so that it does not
 # have to probe the tool for them; the tool schemas also list every allowed id.
@@ -37,37 +38,65 @@ _MEASURES_TEXT = (f"Homes (single family, multifamily unit): {', '.join(HOME_MEA
 
 _JOBS = {
     "scout": ("Fetch the property. Call get_property_bundle once with the sid you are given, then stop and "
-              "report the summary and anything missing or substituted. Do nothing else."),
+              "report in three lines at most what is missing or substituted, and give the path /run/bundle.json "
+              "where the tool saved the data. Do not repeat the data. Do nothing else."),
     "surveyor": ("Build the building model. Call observe_interior once, detect_roof_elements once (label "
-                 "\"roof\"), then build_building_model once, then report the model. Call set_assumption only "
-                 "to apply an answer the user gave, with a key from the model, and never before the model exists."),
-    "physicist": ("Simulate and evaluate. Call run_baseline once. Then call evaluate_measure exactly once for each "
+                 "\"roof\"), then build_building_model once, then reply with a short summary (property type, number of zones, the assumptions you "
+                 "had to make) and the path /run/model.json where the model was saved; do not repeat the model. "
+                 "Call set_assumption only to apply an answer the user gave, with a key from the model, and never before the model exists."),
+    "physicist": ("Simulate and evaluate. If the task says utility bills were given, call calibrate_model once first "
+                  "(it saves the calibrated model that every later step uses); then call run_baseline once. Then call evaluate_measure exactly once for each "
                   "measure id of the property's type, taken from this list and no other. " + _MEASURES_TEXT +
                   " Decide the type from the bundle summary (use_type; an office or commercial property is an "
                   "office, everything else a home). A measure that does not apply is reported as it is; never "
-                  "repeat a measure and never try ids to see which exist. Never do arithmetic."),
+                  "repeat a measure and never try ids to see which exist. Never do arithmetic. The tools save "
+                  "their results; finish with a short summary (which measures apply and which do not) and the "
+                  "paths /run/baseline.json and /run/measures.json, not the numbers."),
     "financier": ("Price and plan. Call price_measure once for each measure that applies (evaluate_measure said "
                   "so), then sensitivity once, then build_plan once: build_plan is required, a run without a "
                   "plan has failed. If you are asked to apply an answer, call set_assumption with it and then "
                   "build_plan once more. Use cpace_scenario only for an office and only for a priced measure. "
-                  "Never do arithmetic."),
+                  "Never do arithmetic. Finish with a short summary (how many measures are selected, whether "
+                  "sensitivity returned questions, and how many) and the path /run/plan.json, not the numbers."),
 }
+
+_JOBS["reviewer"] = (
+    "Review report.md before the run ends, in your own context. Read /run/plan.json, /run/measures.json and "
+    "/run/baseline.json with read_run_file and read report.md with read_file. Run check_report on the full text of "
+    "report.md. Then compare the report with the files: every selected measure, cost, saving and total it states "
+    "must be the file's value, and the report must not call a skipped or financeable measure selected, or the "
+    "reverse. Never do arithmetic and never edit report.md yourself. Reply with exactly \"OK\" if there is nothing "
+    "to fix; otherwise a numbered list of fixes, each naming the sentence and the value from the file that "
+    "replaces it, or saying to delete it.")
 
 AUDITOR_PROMPT = """You are the auditor, orchestrator of an energy retrofit audit of one property.
 Keep a todo list with write_todos and update it as each step starts and finishes.
-Delegate with the task tool, one subagent at a time, in this order, giving each the property's sid:
-  1. scout: fetches the property data (once).
-  2. surveyor: reads the interior and builds the building model (once).
-  3. physicist: simulates the baseline and evaluates each measure of the property's type (once each).
-  4. financier: prices the measures, runs sensitivity, and builds the plan (build_plan is required).
+Delegate with the task tool, one subagent at a time, in this order, giving each the property's sid. The
+subagents leave their data in files and answer with a short summary and the file path; read a file only when
+you need it (read_run_file):
+  1. scout: fetches the property data (once) and saves /run/bundle.json.
+  2. surveyor: reads the interior and builds the building model (once); saves /run/model.json.
+  3. physicist: simulates the baseline and evaluates each measure of the property's type (once each); saves
+     /run/baseline.json and /run/measures.json.
+  4. financier: prices the measures, runs sensitivity, and builds the plan (build_plan is required); saves
+     /run/plan.json.
   5. You: if sensitivity returned questions, ask the user with ask_user, one at a time (at most three);
      then have the financier apply each answer with set_assumption and call build_plan once more.
      If it returned none, ask nothing.
-  6. You: write report.md last: a short plain summary of the property, the baseline, the selected measures
-     with cost and saving, what is financeable, and what was skipped and why.
-You never do arithmetic. Every number in report.md is copied from a tool result with the same digits; do not
-write a total, a percentage, a sum or any figure no tool returned. Decide fallbacks when a layer is missing
-and say which you chose. The run is complete only when build_plan has returned and report.md is written."""
+  6. You: write report.md last, only from the run files. Read /run/plan.json, /run/measures.json and
+     /run/baseline.json with read_run_file, then write a short plain summary of the property, the baseline,
+     the selected measures with cost and saving, what is financeable, and what was skipped and why. Say the order
+     the plan follows (operations, then load reduction, then equipment, then solar last), and when solar is
+     skipped, shrunk or only financeable say why (not cost-effective, or no budget left). Say whether the model
+     was calibrated to the bills (baseline.json: calibrated_to_bills; copy the fit figures from its calibration)
+     or that the savings are uncalibrated estimates when it was not. Copy each
+     figure from those files with the same digits and units. Then run check_report on the draft; if it lists
+     a number, replace it with the value from the file or delete the sentence, and check again.
+  7. reviewer: last. It reads plan.json and report.md in its own context, runs check_report and compares the
+     report with the files. If it answers OK, finish. If it lists fixes, apply each one to report.md yourself
+     (one rewrite, no more reviews) and finish.
+You never do arithmetic. Do not write a total, a percentage, a sum, a ratio or any figure the files do not
+hold. Decide fallbacks when a layer is missing and say which you chose. The run is complete only when build_plan has returned and report.md is written."""
 
 
 def as_langchain_tool(name: str, fn: Callable) -> StructuredTool:
@@ -112,7 +141,7 @@ def build_auditor(tools: Mapping[str, Callable], model: Any = None, subagent_mod
         specs.append(counsel_spec(tools, subagent_model, approve))
     return create_deep_agent(
         model=model if model is not None else ORCHESTRATOR_MODEL,
-        tools=[as_langchain_tool("ask_user", ask)],
+        tools=[as_langchain_tool("ask_user", ask)] + [as_langchain_tool(n, tools[n]) for n in AUDITOR_TOOLS[1:] if n in tools],
         system_prompt=AUDITOR_PROMPT,
         middleware=[TodoListMiddleware()],
         subagents=specs,

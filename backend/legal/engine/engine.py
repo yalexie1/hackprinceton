@@ -141,7 +141,11 @@ def fill_template(request: DocumentRequest, run: RunResult,
     if (template.doc_type, template.state) != (request.doc_type, request.state):
         raise ValueError("template does not match the request's doc_type and state")
     ctx = Context(request, run, bundle)
-    binds = {**DEFAULT_BINDINGS, **(bindings or {})}
+    state_binds: dict = {}
+    if template.state == "TX":
+        from backend.legal.engine import texas
+        state_binds = texas.BINDINGS
+    binds = {**DEFAULT_BINDINGS, **state_binds, **(bindings or {})}
     statutory = statutory or {}
     needs = needs or {}
     unfilled: list[str] = []
@@ -149,19 +153,25 @@ def fill_template(request: DocumentRequest, run: RunResult,
     def resolve(match: re.Match) -> str:
         name = match.group(1)
         value = ctx.field(name)
+        derived = False
         if value is None and name in binds:
-            value = binds[name](ctx)
+            value, derived = binds[name](ctx), True
         if value is None and name.startswith("stat_"):
             value = statutory.get(name)
         if value is not None:
-            return str(value)
+            # a derived block may name placeholders of its own ({{owner_spouse_name}}); fill them too
+            return _PLACEHOLDER.sub(resolve, str(value)) if derived else str(value)
         if name in template.optional:
             return ""
         if name not in unfilled:
             unfilled.append(name)
         return _blank(name, needs)
 
-    markdown = _PLACEHOLDER.sub(resolve, template.body)
+    body = template.body
+    if template.state == "TX":
+        from backend.legal.engine import texas
+        body = texas.apply_conditions(body, texas.regimes(ctx))
+    markdown = _PLACEHOLDER.sub(resolve, body)
     notice = DISCLAIMER.format(state_name=STATE_NAMES[template.state])
     if "{{disclaimer}}" not in template.body:        # the notice is always present, top and bottom
         markdown = f"> {notice}\n\n{markdown.rstrip()}\n\n> {notice}\n"

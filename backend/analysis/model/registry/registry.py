@@ -723,6 +723,26 @@ def derived_assumptions(merged: Mapping[str, Assumption], btype: BuildingType) -
 
 # ---------------------------------------------------------------- the registry
 
+def price_assumptions(bundle: PropertyBundle) -> list[Assumption]:
+    """`tariff.electricity_usd_per_kwh` as a range (physics 04 TAR-06, UNC-02 `price_level`).
+
+    The tariff carries one price; savings need its uncertainty. The relative spread of the
+    state and sector table is applied to the tariff's own price. No state: no range (the
+    price is then carried as a point and the plan says nothing about its uncertainty).
+    """
+    state = bundle.summary.state
+    price = bundle.tariff.electricity_usd_per_kwh
+    row = T.PRICE_RANGE_USD_PER_KWH.get((state, building_type(bundle))) if state else None
+    if row is None or not price or price <= 0:
+        return []
+    lo, ex, hi = row
+    val = _ranged(price * lo / ex, price, price * hi / ex, "USD/kWh")
+    note = (f"{state} {building_type(bundle)} market range {lo:g} / {ex:g} / {hi:g} USD/kWh applied "
+            f"relative to the tariff's {price:g} ({bundle.tariff.source})")
+    return [_a("tariff.electricity_usd_per_kwh", "Electricity price (marginal, with riders and taxes)", val,
+               "published_default", T.PRICE_RANGE_CONFIDENCE, [_table_ev("TAR-06", note)])]
+
+
 def build_assumptions(bundle: PropertyBundle, observed: Iterable[Assumption] = (),
                       overrides: Mapping[str, OverrideValue] | None = None) -> list[Assumption]:
     """Every assumption for the model, merged by source strength (SPEC 5.1)."""
@@ -730,7 +750,7 @@ def build_assumptions(bundle: PropertyBundle, observed: Iterable[Assumption] = (
     base = list(costar_assumptions(bundle)) + list(vexcel_assumptions(bundle)) + list(observed)
     pre = _by_key(base)
     facts = merge_assumptions(base, override_assumptions(overrides, pre))
-    defaults = vintage_defaults(bundle, facts)
+    defaults = vintage_defaults(bundle, facts) + price_assumptions(bundle)
     # Overrides are re-made against the merged set so a number override keeps the key's unit.
     merged_wo = _by_key(defaults + facts)
     users = override_assumptions(overrides, merged_wo)

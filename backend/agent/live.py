@@ -26,11 +26,11 @@ from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Optional
 
 from backend.agent.ask import AskSession, make_ask_user
-from backend.agent.graph import build_auditor, detect_fallbacks
+from backend.agent.graph import build_auditor, detect_fallbacks, provenance_fallbacks, provenance_warnings
 from backend.agent.narrative import check_narrative, remove_unsupported
 from backend.agent.runtime.replan import PatchError, replan
 from backend.agent.runtime.runtime import DEFAULT_RUNS_DIR, RunStore, build_result, execute_run
-from backend.agent.tools import Doors, ToolContext, build_tools
+from backend.agent.tools import Doors, ToolContext, build_reader_tools, build_tools
 from backend.schema import (BuildingModel, Choice, DocumentDraft, DocumentRequest, PropertyBundle, Question,
                             RunEvent, RunRequest, RunResult)
 
@@ -117,11 +117,19 @@ def configure_tracing(env=None) -> bool:
 def default_doors() -> Doors:
     from backend.data_layer import api as data
     from backend.legal import api as legal
+    degraded = None
     try:
         from backend.analysis import api as analysis
-    except ImportError:                      # the Analysis lane's door is not on main yet
+    except ImportError as exc:
+        # The analysis door **is** on main, so an ImportError here means a broken
+        # environment - a missing numpy or shapely - not a missing lane. Falling back is
+        # still better than refusing to run, but it replaces every analysis figure with
+        # the example's, so it is recorded and surfaces as a run warning rather than
+        # leaving someone to wonder why the numbers look like the fixtures.
         from backend.agent import analysis_stub as analysis
-    return Doors(data=data, analysis=analysis, legal=legal)
+        degraded = (f"the analysis door could not be imported ({exc}), so this run "
+                    f"replays the example's analysis instead of computing it")
+    return Doors(data=data, analysis=analysis, legal=legal, degraded=degraded)
 
 
 class FeedingSession(AskSession):
@@ -167,7 +175,9 @@ class LiveRun:
         # the model may issue parallel tool calls: one tool at a time per run.
         self._tool_lock = threading.RLock()
         self._update_lock = threading.Lock()
-        self._warnings: list[str] = []
+        # A degraded door is a property of the environment, not of the run, so it is
+        # seeded here rather than waiting for an `error` event that never comes.
+        self._warnings: list[str] = [self.doors.degraded] if self.doors.degraded else []
         self._memo: dict[str, Any] = {}      # (tool, args, run state) -> result
         self.memo_hits = 0
         self._stage: Optional[str] = None
@@ -187,7 +197,7 @@ class LiveRun:
         ctx = ToolContext(request=self.request, files=self.files, doors=self.doors,
                           run=lambda: build_result(self.run_id, self.request, self.files, "done"),
                           asset_dir=self.files.root / "assets")
-        raw = build_tools(ctx)
+        raw = {**build_tools(ctx), **build_reader_tools(ctx)}
         tools = self.tools = {name: self._instrument(name, fn) for name, fn in raw.items()}
         ask_user = make_ask_user(self.session, lambda k, v: tools["set_assumption"](k, v))
         self.usage_handler = UsageMetadataCallbackHandler()
@@ -258,8 +268,12 @@ class LiveRun:
             if name == "get_property_bundle" and isinstance(out, dict) and "error" not in out:
                 bundle = self.files.read_json("bundle.json")
                 if bundle:
-                    for ev in detect_fallbacks(PropertyBundle.model_validate(bundle)):
+                    parsed = PropertyBundle.model_validate(bundle)
+                    for ev in [*detect_fallbacks(parsed), *provenance_fallbacks(parsed)]:
                         self._emit(ev)
+                    for line in provenance_warnings(parsed):      # and into RunResult.warnings
+                        if line not in self._warnings:
+                            self._warnings.append(line)
             if name == "sensitivity" and isinstance(out, list):
                 self.session.feed([Question.model_validate(q) for q in out])
             return out
@@ -271,7 +285,8 @@ class LiveRun:
         r = self.request
         return (f"Audit the property with sid {r.sid}. Budget: ${r.budget_usd:,.0f}. Role: {r.role}. "
                 f"Desks requested: {r.desks_requested}. Overrides already given by the user: "
-                f"{json.dumps(r.overrides)}. Follow the order in your instructions: scout, surveyor, "
+                f"{json.dumps(r.overrides)}. Utility bills: {'given (12 monthly values)' if r.bills else 'not given'}. "
+                "Follow the order in your instructions: scout, surveyor, "
                 "physicist, financier, then the questions if sensitivity returned any, then report.md. "
                 "Finish only when build_plan has returned a plan and report.md is written.")
 
@@ -345,15 +360,17 @@ class LiveRun:
         for node, body in update.items():
             if node == "__interrupt__":
                 payload = body[0].value if body else {}
+                extra: dict = {}
                 if "question" in payload:
                     q = Question.model_validate(payload["question"])
                     self.pending = ("question", q)
                 elif "approval" in payload:
                     q = _approval_question(payload["approval"])
                     self.pending = ("approval", q)
+                    extra = {"kind": "approval", "approval": payload["approval"]}
                 else:
                     continue
-                out.append({"question": q.model_dump(mode="json"), "stage": self._stage})
+                out.append({"question": q.model_dump(mode="json"), "stage": self._stage, **extra})
             elif isinstance(body, dict):
                 if body.get("todos"):
                     out.append({"todos": body["todos"]})
@@ -406,7 +423,7 @@ class LiveRun:
         """One more turn for the auditor: the numbers no tool returned, and the instruction to rewrite."""
         message = ("report.md states numbers that no tool returned: " + "; ".join(problems[:8]) + ". Rewrite "
                    "report.md now, using only numbers copied exactly from tool results and removing any figure "
-                   "you worked out yourself. Do not call other tools.")
+                   "you worked out yourself. You may call read_run_file and check_report; call no other tool.")
         async for chunk in self.graph.astream({"messages": [("user", message)]}, self._segment_config(),
                                               stream_mode="updates"):
             self._map_update(chunk)
@@ -492,12 +509,20 @@ class LiveRun:
                     self.events.append(last)
                 last = ev
             self._keep_asked_questions()
+            # **Snapshot before the question becomes visible.** Whether this segment
+            # paused is a fact about the segment; `self.pending` is also "a question is
+            # open", and `answer()` clears it. Reading it *after* publishing the question
+            # let a client that answered immediately make this branch say "no question
+            # was asked": the run returned, closed with `question` as its last event, and
+            # left the answer unconsumed in `_inbox`. `_write_usage` puts a disk write
+            # inside that window, which is why it only showed up under multi-lane I/O.
+            paused = self.pending is not None
             self.active = False
             if last is not None:
                 self.events.append(last)
             self.events.extend(deferred)
             self._write_usage()
-            if self.pending is None:
+            if not paused:
                 return
             graph_input = await loop.run_in_executor(None, self._inbox.get)
             self.active = True
@@ -542,6 +567,8 @@ class LiveRun:
 
     def answer(self, question_id: str, value) -> None:
         from langgraph.types import Command
+        if self.closed:                     # nothing reads the inbox of a finished run: say so, do not queue
+            raise LookupError(f"run {self.run_id} is closed; it cannot take an answer")
         if self.pending is None or self.pending[1].id != question_id:
             raise LookupError(f"no open question {question_id}")
         kind, _ = self.pending

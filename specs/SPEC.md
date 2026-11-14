@@ -1,6 +1,6 @@
 # Master spec
 
-Status: draft v0.3.3, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.6, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
@@ -11,6 +11,12 @@ v0.3.1 adds `CostarData.parent_ids`: one Matterport scan can be attached to seve
 v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so the area of a detection is the area of its own mask, never a sum of masks, a bounding box or a hull. `mask_wkt` stays `None` until a true polygon is derived from the mask.
 
 v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
+
+v0.3.4 adds `"not_cost_effective"` to `SkippedItem.reason`: the plan follows consultant practice (section 6.5), and a measure whose SIR is below 1 is never recommended or offered for financing.
+
+v0.3.6 adds `BaselineResult.warnings` (default empty), where the A31 benchmark checks (physics 02 BEN-01 to BEN-03) report a baseline outside the published range for its type and climate. Warnings, never silent changes.
+
+v0.3.5 adds bill calibration to the contract (A6, physics 04 MV-06): `FuelFit` and `CalibrationSummary`, `BuildingModel.calibration` and `BaselineResult.calibration`, and `UtilityBills.first_month`. The analysis door gains `calibrate_model`, which returns the calibrated model, so the measures and the plan run on it.
 
 Companion files:
 
@@ -216,32 +222,58 @@ The home flow uses the same engine for a home-office desk or reading spot.
 
 ### 6.5 Budget algorithm
 
-Exactly as the team specified: rank by annual dollar savings; if the top measure does not fit, go to the next.
+The plan follows what an energy consultant would recommend: fix operations first, then cut the loads, then right-size the equipment against the smaller loads, and only then generate. Within each step the most cost-effective measure goes first, and a measure that costs more over its life than it saves is never recommended. Decided by the lead on 2026-11-14 (`decisions.md`); it replaces "rank by annual dollar savings; solar sized to the budget left", which let solar take 90 % of the house budget.
+
+**Loading order.** Every measure belongs to one step, applied in this order:
+
+| Step | Measures | Why this order |
+|---|---|---|
+| 1 Operations | `LAYOUT`, `CTRL_TSTAT`, `LGT_CTRL`, `PLUG_MGMT`, `HVAC_ECON` | little or no cost, and they change the hours the loads run |
+| 2 Load reduction | `ENV_AIRSEAL`, `ENV_ATTIC`, `ENV_WALL`, `WIN_REPLACE`, `WIN_FILM`, `WIN_SHADE`, `ROOF_COOL`, `LGT_LED`, `HVAC_DUCT` | shrink the heating, cooling and lighting loads before equipment is sized |
+| 3 Equipment | `HVAC_HP`, `HVAC_RTU`, `DHW_HPWH` | sized and evaluated against the loads left after steps 1 and 2 |
+| 4 Generation | `PV_ROOF` | sized against the electricity left after steps 1 to 3 |
+
+**Cost-effectiveness.** For each measure, at expected values (physics 04):
+- `SIR` is the discounted savings-to-investment ratio (ECO-09, `FinancialBreakdown.sir`). A measure is recommended only if `SIR >= 1`. Below 1 it is skipped with reason `not_cost_effective`, and its SIR is quoted in the detail.
+- The ranking key is the profitability index, `PI = NPV / net_upfront_usd`. A measure with `net_upfront_usd <= 0` comes first in its step, ordered by NPV.
 
 ```
 state     = baseline building
 remaining = budget
 plan      = []
-pool      = applicable measures
 
-repeat:
-    for m in pool: evaluate m against state      # savings depend on what is already chosen
-    order pool by annual_savings_usd.expected, highest first
-    pick the first m with net_upfront_usd.expected <= remaining and annual_savings_usd.expected > 0
-    if none: stop
-    plan.append(m); remaining -= m.net_upfront_usd.expected
-    state = state with m applied; pool.remove(m)
+for step in (1 Operations, 2 Load reduction, 3 Equipment):
+    pool = applicable measures of this step
+    repeat:
+        for m in pool: evaluate m against state         # interactions with what is already chosen
+        eligible = [m in pool with SIR(m) >= 1]
+        pick the eligible m with the highest PI and net_upfront_usd.expected <= remaining
+        if none: break
+        plan.append(m); remaining -= m.net_upfront_usd.expected
+        state = state with m applied; pool.remove(m)
 
-financeable = every measure left in pool with positive savings, evaluated against the final state
+# step 4, solar, last
+size PV_ROOF against state: the largest system the roof allows, capped at the state's annual
+    electricity, then the candidate sizes 100 %, 75 % and 50 % of that; keep the one with the highest NPV
+if its SIR >= 1:
+    if net_upfront_usd.expected <= remaining: select it
+    else: shrink it to the largest size that fits remaining; select the shrunk system only if it is at
+          least the minimum practical size (2 kW DC for a home, 10 kW DC otherwise [J]) and its SIR >= 1;
+          otherwise PV_ROOF is financeable at the economic size
+
+financeable = every measure not selected with SIR >= 1, evaluated against the final state,
+              ordered by step and then by PI
 ```
 
 Rules:
 
-- Zero-cost measures are always evaluated first, since they always fit.
 - A measure whose `net_upfront_usd.high` exceeds `remaining` is still picked on its expected cost, and carries the warning "may exceed budget".
-- Each skipped measure records why: over budget, role, feasibility, no positive savings, already done, or no cost data.
+- Each skipped measure records why: over budget, role, feasibility, no positive savings, not cost-effective, already done, or no cost data.
 - A measure with no verified cost source is never priced from a guess. It is skipped with reason `no_cost_data` and the detail "no verified cost; needs a quote", unless the user enters a quote. Today that is `WIN_FILM`, `WIN_SHADE` and `PLUG_MGMT` (`specs/physics/04-economics-emissions-mv.md`, COST-01).
-- Payback, NPV and SIR are shown but do not change the order.
+- The order within a step is by PI, not by annual savings: a measure that saves fewer dollars a year but returns more per dollar invested goes first. Payback is shown but never ranks.
+- Over-budget measures that are cost-effective are the financeable list, the input to the C-PACE and loan views. A measure that is not cost-effective is never offered for financing.
+- The narrative states the loading order and why solar comes last when it is skipped or shrunk.
+- When the bills calibrate the model (A6), every SIR and NPV above uses the calibrated baseline; when they do not, the plan says its savings are uncalibrated estimates.
 
 ### 6.6 Financial breakdown
 
@@ -321,7 +353,7 @@ Built with LangChain `deepagents` on the Anthropic API.
 | `auditor` (orchestrator) | plans the audit, delegates, decides fallbacks, writes the narrative | `task`, filesystem, todo list, `ask_user` |
 | `scout` | finds and ingests the property | `search_properties`, `get_property_bundle`, `get_asset` |
 | `surveyor` | reads imagery, builds the building model | `observe_interior`, `detect_roof_elements`, `build_building_model`, `set_assumption` |
-| `physicist` | runs simulations and measures | `run_baseline`, `evaluate_measure`, `design_pv`, `score_desk_positions` |
+| `physicist` | runs simulations and measures | `calibrate_model`, `run_baseline`, `evaluate_measure`, `design_pv`, `score_desk_positions` |
 | `financier` | prices and plans | `price_measure`, `lookup_incentives`, `build_plan`, `cpace_scenario`, `sensitivity` |
 | `counsel` | drafts documents | `list_templates`, `fill_template`, `check_document` |
 
@@ -352,7 +384,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.3"
+SCHEMA_VERSION = "0.3.6"
 
 # ---------- primitives ----------
 
@@ -700,6 +732,22 @@ class RoofPlane(BaseModel):
     slope_length_m: Optional[float] = None
     geometry_source: Literal["splat", "vexcel_parametric", "assumed"]
 
+class FuelFit(BaseModel):
+    """Fit of the model to one fuel's twelve monthly bills (physics 04 MV-03, MV-04)."""
+    fuel: Literal["electricity", "gas"]
+    nmbe_before: float                         # fraction, simulated minus billed, before calibration
+    cv_rmse_before: float                      # fraction
+    nmbe_after: float
+    cv_rmse_after: float
+    passed: bool                               # MV-04: |NMBE| <= 0.05 and CV(RMSE) <= 0.15 (monthly)
+
+class CalibrationSummary(BaseModel):
+    """What calibrating to the bills did (physics 04 MV-06). Present only when bills were given."""
+    calibrated: bool                           # MV-04 passed for every billed fuel
+    fits: list[FuelFit]
+    moved: list[str] = []                      # assumption keys changed, each within its stated range
+    warnings: list[str] = []                   # e.g. months that disagree, likely unmodelled loads, no billing dates
+
 class BuildingModel(BaseModel):
     schema_version: str = SCHEMA_VERSION
     sid: str
@@ -716,6 +764,7 @@ class BuildingModel(BaseModel):
     roof_planes: list[RoofPlane] = []
     assumptions: list[Assumption]
     flags: list[Flag] = []
+    calibration: Optional[CalibrationSummary] = None   # set by calibrate_model; the assumptions are already calibrated
 
 class EnergyUse(BaseModel):
     electricity_kwh: Ranged
@@ -734,10 +783,12 @@ class BaselineResult(BaseModel):
     peak_cooling_w: float
     peak_heating_w: float
     calibrated_to_bills: bool = False
+    calibration: Optional[CalibrationSummary] = None   # copied from the model; None when no bills were given
     heating_need_kwh: Optional[float] = None   # thermal need before system efficiency
     cooling_need_kwh: Optional[float] = None
     latent_cooling_kwh: float = 0.0
     hourly_path: Optional[str] = None          # cached hourly zone outputs, read by the desk-placement physics
+    warnings: list[str] = []                   # sanity checks on the result, e.g. the BEN-03 benchmark band (A31)
 
 MeasureId = Literal[
     "ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE",
@@ -870,7 +921,8 @@ class PlanItem(BaseModel):
 
 class SkippedItem(BaseModel):
     measure_id: MeasureId
-    reason: Literal["over_budget", "role", "feasibility", "no_savings", "already_done", "no_cost_data"]
+    reason: Literal["over_budget", "role", "feasibility", "no_savings", "not_cost_effective",
+                    "already_done", "no_cost_data"]
     detail: str
 
 class ValueUplift(BaseModel):
@@ -904,6 +956,7 @@ Role = Literal["owner_occupier", "landlord", "tenant"]
 class UtilityBills(BaseModel):
     electricity_kwh: list[float]               # 12 monthly values
     gas_kwh: Optional[list[float]] = None
+    first_month: Optional[str] = None          # "YYYY-MM" of the first bill; None = January, calendar months
 
 class RunRequest(BaseModel):
     sid: str
@@ -1061,7 +1114,7 @@ Environment variables, in a git-ignored `.env` (names only; never commit values)
 |---|---|---|
 | Georeference missing or wrong on a model (north alignment itself is no longer a risk: the Model API returns the rotation). Both golden models report source `processing`, meaning derived by Matterport, not set by a person | Data + Analysis | cross-check against the Vexcel footprint; if they disagree or the field is absent, register to the footprint and widen `north_offset_deg` |
 | Commercial scans carry almost no window openings (none in 12 sampled offices) | Data + Analysis | decided: vision from panoramas, then a window-to-wall ratio default; office daylight and desk placement carry the wider range |
-| The first golden office (PropertyId 354635) was an industrial warehouse in CoStar | resolved | replaced by two offices: 246899 in Los Angeles and 234088 in Houston (`data-integration.md` 2.6); `specs/examples/office/` and `office_houston/` |
+| The first golden office (PropertyId 354635) was an industrial warehouse in CoStar | resolved | replaced by two offices: 234088 in Houston and, in Los Angeles, 246899, itself replaced by Culver Connect (PropertyId 27120, model `ZSPaQbkGcJJ`) once D16 showed its bundle modelled the wrong building (`data-integration.md` 2.6, 4.5a; #253); `specs/examples/office/` and `office_houston/` |
 | MatterPak locked for most models | Data | wall graph and room heights are enough for the thermal model |
 | CoStar kit download link expires 2026-11-15 03:30 UTC | Data | the verified mirror the Data lane holds (git-ignored); get the zip from @vigjay, do not re-download |
 | The kit's `index.md` mentions a separate zip for connecting to Matterport models, which nobody has | team, via `/ask-costar` | the starter CSVs already give the join |

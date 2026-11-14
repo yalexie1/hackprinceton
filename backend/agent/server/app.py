@@ -139,6 +139,12 @@ def create_app() -> FastAPI:
             raise ApiError(400, "run_id_mismatch", "body run_id differs from the path")
         if run.status != "done":
             raise ApiError(409, "run_not_done", f"run {run_id} is {run.status}; documents need a finished run")
+        from backend.legal import api as legal
+        if (request.doc_type in legal.list_templates(request.state, None)
+                and request.doc_type not in legal.list_templates(request.state, run.property.segment)):
+            # a legal document for the wrong kind of building must not be draftable, whatever the UI offers
+            raise ApiError(422, "template_not_for_segment",
+                           f"{request.doc_type} is not for a {run.property.segment} property")
         try:
             return api.draft_document(request)
         except LookupError as err:

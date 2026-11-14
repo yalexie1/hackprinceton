@@ -63,6 +63,7 @@ def start_run(request: RunRequest) -> str:
         run_id = f"run_demo_{next(_counter)}"
         result, events, bundle = recorded
         result["run_id"] = run_id
+        result["served_by"] = "replay"           # the recording keeps the data_source it was made with
         _runs[run_id] = {"flavor": None, "bundle": bundle, "result": RunResult.model_validate(result),
                          "events": [RunEvent.model_validate(e) for e in events], "answers": {}, "docs": {}}
         return run_id
@@ -71,6 +72,7 @@ def start_run(request: RunRequest) -> str:
     result = _load(flavor, "run_result.json")
     result["run_id"] = run_id
     result["request"] = request.model_dump(mode="json")
+    result["data_source"], result["served_by"] = "example", "replay"
     _runs[run_id] = {
         "flavor": flavor,
         "result": RunResult.model_validate(result),

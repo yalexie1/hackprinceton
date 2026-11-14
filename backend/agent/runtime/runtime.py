@@ -89,6 +89,17 @@ def map_chunk(chunk) -> list[RunEvent]:
     return []
 
 
+EXAMPLE_RECORD = "replayed from specs/examples/"
+
+
+def data_source_of(bundle: dict) -> str:
+    """'example' when the data layer handed back the example bundle (its provenance says so), else 'live'."""
+    for record in bundle.get("provenance") or []:
+        if record.get("status") == "fallback" and EXAMPLE_RECORD in (record.get("detail") or ""):
+            return "example"
+    return "live"
+
+
 def build_result(run_id: str, request: RunRequest, files: RunFiles, status: str,
                  questions: Optional[list[Question]] = None,
                  warnings: Optional[list[str]] = None) -> RunResult:
@@ -103,6 +114,7 @@ def build_result(run_id: str, request: RunRequest, files: RunFiles, status: str,
     report = files.path("report.md")
     return RunResult(
         run_id=run_id, status=status, request=request, property=summary,
+        data_source=data_source_of(bundle), served_by="live",
         building_model=BuildingModel.model_validate(model) if model else None,
         baseline=BaselineResult.model_validate(baseline) if baseline else None,
         measures=[MeasureResult.model_validate(m) for m in measures],

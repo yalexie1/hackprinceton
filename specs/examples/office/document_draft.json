@@ -13,31 +13,36 @@
   ],
   "statutory_checks": [
     {
-      "requirement": "TX-PACE-11: assessment period does not exceed the useful life of the qualified project",
+      "requirement_id": "TX-PACE-11",
+      "requirement": "Assessment period does not exceed the useful life of the qualified project",
       "citation": "Loc. Gov't Code section 399.009(a)(8)",
       "satisfied": true,
       "note": "Term 15 years, useful life 18 years. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     },
     {
-      "requirement": "TX-PACE-15: the lien runs with the land",
+      "requirement_id": "TX-PACE-15",
+      "requirement": "The lien runs with the land",
       "citation": "Loc. Gov't Code section 399.014(b)-(e)",
       "satisfied": true,
       "note": "Stated in section 4 of the draft. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     },
     {
-      "requirement": "TX-PACE-08: mortgage holder notice and written consent",
+      "requirement_id": "TX-PACE-08",
+      "requirement": "Mortgage holder notice and written consent",
       "citation": "Loc. Gov't Code section 399.010",
       "satisfied": false,
       "note": "mortgage_holder_name and mortgage_holder_consent_date are blank. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     },
     {
-      "requirement": "TX-PACE-09: independent review of baseline conditions and projected savings",
+      "requirement_id": "TX-PACE-09",
+      "requirement": "Independent review of baseline conditions and projected savings",
       "citation": "Loc. Gov't Code section 399.011(a), (a-1), (c)",
       "satisfied": false,
       "note": "third_party_reviewer_name is blank. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     },
     {
-      "requirement": "TX-PACE-30: SIR of at least 1 over the life of the assessment, validated by the reviewer",
+      "requirement_id": "TX-PACE-30",
+      "requirement": "SIR of at least 1 over the life of the assessment, validated by the reviewer",
       "citation": "Texas PACE Authority Program Guide v4.3, Steps 2, 7, 8",
       "satisfied": false,
       "note": "The draft shows the discounted life-cycle SIR, not the programme's simple-sum SIR over the assessment term; the reviewer has not validated it. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."

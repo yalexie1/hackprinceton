@@ -3006,3 +3006,4 @@ input[type="checkbox"] {
 @media (max-width: 760px) {
   .sidebar:not(.is-open) { visibility: hidden; }
 }
+.search-box input { border: 0; border-radius: 0; }

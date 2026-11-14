@@ -16,9 +16,17 @@ Written 2026-11-13 about 11:10 PM ET. The first computer's Claude account hit it
    gh auth status && tools/board whoami
    ```
 
-3. Recreate `.env` by hand in the repo root. It is git-ignored and was never created on the first computer. Names: `MATTERPORT_API_KEY`, `MATTERPORT_API_TOKEN`, `MATTERPORT_SDK_KEY`, `VEXCEL_API_KEY`, `COSTAR_ZIP_PASSWORD`, `COSTAR_KIT_URL` (or `COSTAR_KIT_ZIP`), `ANTHROPIC_API_KEY`. Values come from `/costar-keys` in the track Discord. Never paste them into chat.
+3. Get `.env` onto this computer. It is **not** in git and must never be: this repo is public. Either copy the `.env` file from the first computer directly (AirDrop, USB, password manager), or run `/costar-keys` in the track Discord again and fill in a copy of `.env.example`. See "Keys" below.
 4. Open Claude Code in the repo and paste the prompt in section 2.
 5. When all files in section 3 are done, post on the board and delete this file.
+
+### Keys
+
+- The team has four key sets, one per teammate. In `.env` the unsuffixed names are the default set (A); the others use the suffixes `_B`, `_C`, `_D`.
+- Checked 2026-11-13 with one read-only request each: sets A, B and C work for both Matterport (14,944 models visible) and Vexcel. Set D was transcribed from a screenshot and is rejected (HTTP 403); its owner needs to re-copy it as text.
+- The CoStar kit is one zip of about 52 MB, the same for everyone. Its download link is signed and expires about 24 hours after issue: the links in `.env` stop working around 10:30 PM ET on 2026-11-14. Download the zip once and set `COSTAR_KIT_ZIP`. A fresh link comes from `/costar-keys`.
+- `ANTHROPIC_API_KEY` has not been provided yet.
+- To add to `data-integration.md`: a plan for spreading bulk harvesting across the key sets, since each set has its own rate limit (one key set per harvest worker; interactive runs always use the default set).
 
 ## 2. Prompt to paste
 

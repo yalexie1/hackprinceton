@@ -2,3 +2,4 @@
 # packages name the libraries they need in their PR and A0's owner adds them here.
 pydantic>=2.7
 pytest>=8
+shapely>=2.0   # A11 roof planes (PR #130)

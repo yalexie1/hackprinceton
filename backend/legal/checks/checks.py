@@ -198,6 +198,9 @@ PREDICATES: dict[str, Callable[[_Draft], Result]] = {
 
 def check_document(draft: DocumentDraft) -> list[StatutoryCheck]:
     """Checks for retrofit_contract_residential / CA. Other documents return [] until L7."""
+    if (draft.doc_type, draft.state) == ("retrofit_contract_residential", "TX"):
+        from backend.legal.checks import texas
+        return texas.check_document(draft)
     if (draft.doc_type, draft.state) != ("retrofit_contract_residential", "CA"):
         return []
     d = _Draft(draft)

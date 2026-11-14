@@ -344,3 +344,21 @@ def test_the_right_template_for_each_segment_still_drafts():
 def test_a_type_with_no_template_at_all_is_still_a_404_not_a_segment_error():
     r = _draft("house", "bid_package_rfp", "CA")
     assert r.status_code == 404 and r.json()["error"]["code"] == "template_not_available"
+
+
+def test_a_cpace_request_in_fallback_mode_returns_a_cpace_body_with_the_typed_parties():
+    """The replay path (an example run, no recording) drafts through the real legal engine: the body is the
+    C-PACE package, not the example's commercial contract under a new label, and what the user typed is in it."""
+    run_id = client.post("/api/runs", json=_body("office", "run_request.json")).json()["run_id"]
+    assert run_id.startswith("run_office_")                                 # an example run, not a recording
+    body = {"run_id": run_id, "doc_type": "cpace_package", "state": "CA", "measure_ids": ["PV_ROOF"],
+            "fields": {"owner_names": "Culver Connect Holdings LLC", "lender_name": "First Harbor Bank"}}
+    r = client.post(f"/api/runs/{run_id}/documents", json=body)
+    assert r.status_code == 200
+    draft = r.json()
+    assert draft["doc_type"] == "cpace_package" and "Culver Connect Holdings LLC" in draft["markdown"]
+    assert "First Harbor Bank" in draft["markdown"] or "lender_name" not in draft["unfilled_placeholders"]
+    assert "owner_names" not in draft["unfilled_placeholders"]             # the typed parties were used, not blanked
+    commercial = _draft("office", "retrofit_contract_commercial", "CA").json()
+    assert draft["markdown"] != commercial["markdown"]                      # a different document
+    assert draft["statutory_checks"] and all(c["requirement_id"].startswith("CA-") for c in draft["statutory_checks"])

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from backend.agent import api
 from backend.agent.roof import roof_view
-from backend.agent.roof.roof import Bounds, fit_bounds, png_size
+from backend.agent.roof.roof import Bounds, fit_bounds, image_size, png_size
 from backend.agent.server.app import create_app
 from backend.schema import PropertyBundle, RunResult, VexcelDetection
 
@@ -118,3 +118,28 @@ def test_the_route_also_serves_a_recorded_run(monkeypatch, tmp_path):
     assert run_id.startswith("run_demo_")
     body = client.get(f"/api/runs/{run_id}/roof").json()
     assert body["planes"] and body["ortho"]["path"] == bundle().vexcel.ortho_path
+
+
+def jpeg(w=W, h=H, comment=b"made by a camera"):
+    """A minimal JPEG up to its first frame header: SOI, an APP0, a comment, SOF0."""
+    app0 = b"\xff\xe0" + struct.pack(">H", 16) + b"JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+    com = b"\xff\xfe" + struct.pack(">H", len(comment) + 2) + comment
+    sof = b"\xff\xc0" + struct.pack(">H", 17) + b"\x08" + struct.pack(">HH", h, w) + b"\x03" + b"\x01\x22\x00\x02\x11\x01\x03\x11\x01"
+    return b"\xff\xd8" + app0 + com + sof + b"\xff\xd9"
+
+
+def test_image_size_reads_a_jpeg_frame_header():
+    assert image_size(jpeg(640, 480)) == (640, 480)
+    assert image_size(jpeg(1000, 800, comment=b"x" * 300)) == (1000, 800)       # skips segments of any length
+
+
+def test_image_size_still_reads_png_and_refuses_junk_and_truncated_jpegs():
+    assert image_size(png(32, 16)) == (32, 16) and png_size(png(32, 16)) == (32, 16)
+    data = jpeg()
+    assert image_size(data[:20]) is None and image_size(b"\xff\xd8\xff\xd9") is None and image_size(b"\xff\xd8garbage") is None
+
+
+def test_a_jpeg_ortho_gets_the_exact_fit_not_the_parcel_box():
+    v = roof_view(bundle(detections=[detection(100, 50, 300, 200)]), result(), lambda path: jpeg())
+    assert v.ortho.bounds_source == "detection_fit" and (v.ortho.width_px, v.ortho.height_px) == (W, H)
+    assert v.ortho.image_available

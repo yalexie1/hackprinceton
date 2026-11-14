@@ -10,7 +10,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and two office examples from `specs/examples/`. Invented UI stress fixtures are retained for development checks but are not offered in the property picker. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
+Open http://localhost:5173. The app starts in **Demo** with the shared golden house and two office examples from `specs/examples/`. Invented UI stress fixtures are retained for development checks but are not offered in the property picker. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
 
 ## Readable interface
 

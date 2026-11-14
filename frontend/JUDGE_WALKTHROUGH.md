@@ -1,6 +1,6 @@
 # Judge walkthrough · 2 minutes 40 seconds
 
-Open http://127.0.0.1:5173 and connect to the replay API. Confirm the Culver recording is installed and labelled **Live property data · Saved replay** before presenting. An example-input fallback is labelled as such; it has no roof photo. Replaying never runs a fresh analysis.
+Open http://localhost:5173 and connect to the replay API. Confirm the Culver recording is installed and labelled **Live property data · Saved replay** before presenting. An example-input fallback is labelled as such; it has no roof photo. Replaying never runs a fresh analysis.
 
 1. **0–15 seconds:** property list and problem. Choose Culver Connect. Explain that the app connects building scans, aerial evidence and energy analysis to a practical improvement plan.
 2. **15–55 seconds:** run one saved Culver audit with its recorded inputs. Explain the disclosed geometry fallbacks: the scan has no wall outlines, so the model uses footprint walls; roof extent uses plate matching. Saved browser demos advance quickly, with a “Show next question or result” control.

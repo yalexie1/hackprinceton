@@ -95,10 +95,31 @@ def test_the_stored_path_is_the_shape_get_asset_can_serve(fake_imagery):
     assert filled.ortho_path.startswith("data/cache/")
 
 
-def test_the_bundle_rule_version_was_bumped():
-    """The bundle cache is keyed on this. Without a bump, every bundle cached before the imagery
-    step would be replayed without the paths and the roof view would stay broken."""
-    assert api.BUNDLE_RULE_VERSION >= 4
+#: What `_assemble` currently produces. **Pinned, not a floor.** The previous version of this
+#: test asserted `>= 4`, which passed happily when #360 changed assembly without bumping the
+#: version - so a warm cache kept serving bundles with no climate zone and @Sri-SriPod's first
+#: three re-recordings were all wrong. A floor can never catch a missing bump; an equality
+#: forces whoever changes assembly to come here and decide.
+EXPECTED_BUNDLE_RULE = 5
+
+
+def test_the_bundle_rule_version_matches_what_assembly_produces():
+    """The bundle cache is keyed on this, so a bundle written by older code is replayed as valid
+    unless the number changes. If you changed what `_assemble` returns, bump both."""
+    assert api.BUNDLE_RULE_VERSION == EXPECTED_BUNDLE_RULE, (
+        "assembly changed without bumping BUNDLE_RULE_VERSION, or the version was bumped "
+        "without updating this test - a warm cache will serve the old answer either way"
+    )
+
+
+def test_every_rule_version_is_documented():
+    """The comment above the constant is how the next person knows what a cached bundle at
+    version N is missing. A bump with no entry leaves that unanswerable."""
+    import inspect
+    source = inspect.getsource(api)
+    head = source[: source.index("BUNDLE_RULE_VERSION =")]
+    for version in range(1, EXPECTED_BUNDLE_RULE + 1):
+        assert f"#: {version} - " in head, f"rule version {version} is not documented"
 
 
 def test_the_assembly_actually_calls_the_imagery_step(monkeypatch, fake_imagery):

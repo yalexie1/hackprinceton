@@ -296,7 +296,17 @@ _STRIPPED = "costar.raw"
 #: 2 - D16: the structure enclosing the CoStar address point, floor plate deciding.
 #: 3 - #295: the weather is a TMYx station typical year, Open-Meteo only the fallback.
 #:     A bundle written before names the Open-Meteo 2024 file and its time zone.
-BUNDLE_RULE_VERSION = 4
+#: 4 - #333: the aerial ortho is fetched and `ortho_path` points at the cached file.
+#:     A bundle written before carries no path, so the roof view has no image.
+#: 5 - #360: `climate_zone` is measured from the site's own weather year. A bundle
+#:     written before carries `None`, and the A31 benchmark then reports
+#:     `not_checked: no climate zone` - the one sanity check on the model, off.
+#:     **#360 changed assembly and did not bump this, which is the bug this entry
+#:     fixes.** @Sri-SriPod found it: his first three re-recordings all carried
+#:     `climate_zone: None` because his cached bundles were still rule 4 and were
+#:     replayed as valid. Changing what `_assemble` produces means bumping this in
+#:     the same commit; nothing else makes a warm cache serve the new answer.
+BUNDLE_RULE_VERSION = 5
 
 
 def _write_bundle_cache(path: Path, bundle: PropertyBundle) -> Path:

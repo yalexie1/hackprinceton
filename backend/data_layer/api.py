@@ -345,6 +345,17 @@ def _assemble(sid: str) -> PropertyBundle:
         provenance.append(FetchRecord(layer="costar", what="kit", status="missing",
                                       detail=str(exc)[:200]))
 
+    # D10: the five datasets the spec never used. `Plan.value_uplift` (A30) needs a cap
+    # rate and at least ten comparables or it returns None, and office plug loads and
+    # schedules were being inferred while real tenancy data sat in the kit.
+    if costar is not None and costar.property_id:
+        from backend.data_layer import costar_extra as d10
+
+        market, mnotes = d10.market_data(costar.property_id)
+        occupancy, onotes = d10.occupancy_data(costar.property_id)
+        costar = costar.model_copy(update={"market": market, "occupancy": occupancy})
+        provenance += mnotes + onotes
+
     row = {}
     try:
         row = d1.index_by_model().get(sid) or {}

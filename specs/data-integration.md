@@ -179,6 +179,81 @@ there and search behaves exactly as it did before D7. Verified by running the la
 suite both ways: 115 passed / 15 skipped with the mirror, 100 passed / 30 skipped
 without, no failures either way.
 
+### 2.4b D10: the five datasets the spec never used
+
+`backend/data_layer/costar_extra.py`, 2026-11-14. [V] `CostarData.occupancy` and
+`.market` were always `None`, so `Plan.value_uplift` (A30, VAL-01) **never fired on
+live data** — `plan_value_uplift` returns `None` without a cap rate and at least ten
+comparables — and office plug loads and schedules were inferred from vintage defaults
+while real tenancy data sat in the kit.
+
+| dataset | records | joined by | gives |
+|---|---|---|---|
+| `commercial-sale-comp` | 6,120 | `entities[].propertyId` (5,753 of 6,120) | cap rates |
+| `location-occupancy` | 74,093 | `propertyId` | who is in the building, since when, how much space |
+| `company-detail` | 49,575 | `tenantLocationId` → `id` (224 of 225) | employees, industry |
+| `apartment-listing` | 1,747 | `propertyId` | multifamily asking rent |
+
+Full passes measured at **0.86 / 0.13 / 0.34 / 0.58 / 0.04 s**, so in-memory indexes
+are enough and nothing here needs the D4 disk cache.
+
+**Cap rates are stored in percent**, median 6.5 and range 0.75–23.58, while the
+contract documents `cap_rate` as a fraction per year. A hundredfold error, with
+nothing to catch it.
+
+**The comp window decides whether A30 can run at all.** Comps with a cap rate, by
+market:
+
+| market | all | since 2015 | since 2020 |
+|---|---|---|---|
+| Los Angeles office | 45 | **12** | **1** |
+| Houston office | 86 | **27** | 9 |
+| Los Angeles multifamily | 1,098 | 379 | 182 |
+| Houston multifamily | 530 | 152 | 65 |
+
+A 2020 window silently turns value uplift off for **both** golden offices, and no
+window is loose enough to reach ten without reaching back toward 1983. **2015 is a
+judgement, not a fact**, so `comp_count` travels on the result for the reader to
+weigh. One observation per property, most recent first, so a building that trades
+often cannot dominate: Houston goes 27 → 25, Los Angeles stays at 12.
+
+**`sale_price_usd_per_m2` is deliberately not supplied.** `soldForPrice` covers
+**whatever was sold** — often one condominium unit or a partial interest — while the
+only area the kit gives is the whole building's. Measured on the Los Angeles office
+market: **86 priced sales over 29 distinct properties, one contributing 43, spanning
+6 to 40,025 USD/m²**. A 6,600-fold spread is not a market, and deduplicating still
+leaves Houston spanning 73 to 81,685. `value.py:60` would multiply it straight into
+the property value and cap the uplift with it, so a wrong figure produces a
+confidently wrong valuation. **The cap rate is unaffected**: a yield is intrinsic to
+the transaction whatever slice sold.
+
+**"Still in place" means no `toDate`** — not `expirationReason == 0`, whose zero value
+is "Unknown" in an enum that explains why a tenancy *ended*. No record in either
+golden office has a `toDate` in the future, so the kit marks a sitting tenant by
+leaving the field out. Historic tenancies are dropped rather than returned with a
+`move_out`, because `employees_total` and `occupied_area_m2` describe the building
+*now*; summing everyone who was ever there would count every floor several times.
+
+**What the golden offices now carry, and the sanity checks that justify trusting it:**
+
+| | cap rate (p25/median/p75) | comps | sitting tenants | employees | occupied |
+|---|---|---|---|---|---|
+| LA office `246899` | 4.30 / **5.30** / 6.00 % | 12 | 37 | 413 | 19,665 m², **81 % of RBA** |
+| Houston office `234088` | 6.75 / **7.90** / 9.16 % | 25 | 34 | 215 | 10,756 m², **71 % of RBA** |
+
+Houston's cap rate above Los Angeles's is the right structure for a riskier market
+with cheaper assets, and 81 % and 71 % occupancy are plausible for a let office tower.
+Neither would survive a units error or a mixed-up market filter.
+
+**A second Houston-versus-Los Angeles contrast, from the cap rate rather than the
+price.** The same 12,000 USD/yr saving capitalises to **100,000 USD of value in Los
+Angeles against 65,500 in Houston**, because a lower cap rate prices income higher.
+That is independent of the 3.35x electricity price gap of 5.2 and pushes the same way:
+the Los Angeles office is the stronger retrofit case on both axes.
+
+The house carries neither, correctly: it is a residential listing with no
+`PropertyId`, and commercial sale comps and tenancy records do not describe it.
+
 ### 2.5 Field rules that are easy to get wrong
 
 [V] from `models/commercial-property.md` and `schemas/enums.json`
@@ -832,7 +907,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D7 | P1 | Index + office selection — **done**, see 2.4a | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
 | D8 | P1 | Imagery + SAM 3 — **done**, see 4.4a | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique, roof area |
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
-| D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
+| D10 | P2 | The five unused datasets — **done**, see 2.4b | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
 | D12 | P1 | Splat + drone photos (track site) | `data-matterport` | `backend/data_layer/tracksite.py` | `splat_path`, `drone_photo_paths` |
 | D13 | P2 | Portfolio screening by Vexcel filters | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
 | D14 | P1 | Incorporated place, utility and PACE region — **done**, see 5.1d | `data-costar` | `backend/data_layer/places.py` | `Tariff.utility`, `in_pace_region` |
@@ -1007,6 +1082,13 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Gas prices, all four | live, EIA annual 2025 | 2026-11-14 | CA 22.01/16.56, TX 19.42/10.98 $/MCF → 0.0724/0.0545/0.0639/0.0361 USD/kWh |
 | Gas route latency | same four calls | 2026-11-14 | **1 s, 14 s, 41 s, 66 s** plus 504s; heat-content series 504'd — hence the committed table |
 | Cold live bundle after D15 | all three golden | 2026-11-14 | **0.4–0.6 s** with gas present (44–76 s if the live gas route is waited on) |
+| Sale comps joined (D10) | `entities[].propertyId` | 2026-11-14 | 5,753 of 6,120 join; **1,891 (30.9 %) carry a cap rate**, stored in **percent** |
+| Comp depth by window | 4 markets x 3 windows | 2026-11-14 | since 2015: LA office **12**, Houston office **27**; since 2020: **1** and 9 — 2020 breaks A30 |
+| `sale_price_usd_per_m2` rejected | 86 LA office priced sales | 2026-11-14 | 29 distinct properties, one with 43; **6 to 40,025 USD/m²** — not supplied |
+| Sitting tenants | both golden offices | 2026-11-14 | 37 and 34 (of 590 and 371 on record); **81 % and 71 % of RBA** occupied |
+| `company-detail` join | Houston office tenants | 2026-11-14 | **224 of 225** matched; 413 and 215 employees total |
+| Cap rate sanity | both golden offices | 2026-11-14 | LA **5.30 %** vs Houston **7.90 %** — the right market structure |
+| A30 value uplift fires | both golden offices, live | 2026-11-14 | `None` before; **100,000 USD (LA) vs 65,500 (Houston)** on the same 12,000 USD/yr saving |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; resolved by the lead's EIA decision, 5.1c |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |

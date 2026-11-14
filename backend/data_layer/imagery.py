@@ -497,6 +497,34 @@ def fetch_ortho(parcel_wkt: str, *, sid: str = "", post: Optional[Poster] = None
     )
 
 
+#: The oblique directions the service names. Used only to look in the cache without a network
+#: call; a live fetch still asks the coverage service, because not every direction exists
+#: everywhere and guessing wastes a request per miss.
+OBLIQUE_DIRECTIONS = ("oblique-north", "oblique-south", "oblique-east", "oblique-west")
+
+
+def _oblique_request(parcel_wkt: str, direction: str) -> dict:
+    """The request body of an oblique crop. One definition, so the cache lookup below and the
+    fetch below that can never disagree about the key."""
+    return {"layer": vexcel.OBLIQUE_LAYER, "srid": 4326, "wkt": parcel_wkt,
+            "product-type": direction, "rotation": "natural", "crop": "bbox"}
+
+
+def cached_oblique(parcel_wkt: str, direction: str, *, sid: str = "") -> Optional[str]:
+    """The cached crop for this direction, or None. **Never touches the network.**
+
+    A property preview must be able to show what is already on disk without paying an extract
+    call, so `get_obliques(..., live=False)` means cached-only and has to resolve paths itself.
+    """
+    identifier = f"{sid or _short(parcel_wkt)}-{direction}"
+    request = _oblique_request(parcel_wkt, direction)
+    for suffix in _SUFFIX_CANDIDATES:
+        hit = cache.path_for("vexcel-image", identifier, request, suffix=suffix)
+        if hit.is_file():
+            return cache.relative(hit)
+    return None
+
+
 def fetch_oblique(parcel_wkt: str, direction: str, *, sid: str = "",
                   post: Optional[Poster] = None, refresh: bool = False
                   ) -> tuple[Optional[str], list[FetchRecord]]:
@@ -504,8 +532,7 @@ def fetch_oblique(parcel_wkt: str, direction: str, *, sid: str = "",
     the `urban` layer and not every direction exists everywhere."""
     return _fetch_image(
         "oriented/extract",
-        {"layer": vexcel.OBLIQUE_LAYER, "srid": 4326, "wkt": parcel_wkt,
-         "product-type": direction, "rotation": "natural", "crop": "bbox"},
+        _oblique_request(parcel_wkt, direction),
         sid=sid, identifier=f"{sid or _short(parcel_wkt)}-{direction}",
         post=post, refresh=refresh,
     )

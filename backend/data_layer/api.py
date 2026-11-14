@@ -807,10 +807,14 @@ def get_obliques(sid: str, *, directions: Optional[list[str]] = None,
     the endpoint most prone to 429, and no *run* needs them. A property preview asks for them
     once, the cache answers afterwards, and a demo run never pays for them at all.
 
-    `directions` defaults to whatever the coverage service says exists here: obliques live only
-    in the `urban` layer and not every direction exists everywhere, so asking beats guessing.
-    A direction that 403s, 404s or 429s is left out of the mapping and recorded - a path that
-    points at nothing would make `/api/assets` 404 for something the response promised.
+    **`live=False` is cached-only**: it looks on disk and makes no request, so a discovery page
+    can show what is already there without fetching imagery per card.
+
+    When live, `directions` defaults to whatever the coverage service says exists here: obliques
+    live only in the `urban` layer and not every direction exists everywhere, so asking beats
+    guessing. A direction that 403s, 404s or 429s is left out of the mapping and recorded - a
+    path that points at nothing would make `/api/assets` 404 for something the response
+    promised, and one rate-limited direction must not cost the caller the three that worked.
 
     The bundle is not modified and `BUNDLE_RULE_VERSION` does not move: this adds no field to a
     cached bundle, so a warm cache stays valid.
@@ -821,13 +825,42 @@ def get_obliques(sid: str, *, directions: Optional[list[str]] = None,
     from backend.data_layer import imagery as d8
     from backend.data_layer import vexcel as d3
 
-    bundle = get_property_bundle(sid, live=live)
-    parcel = bundle.vexcel.parcel_wkt if bundle.vexcel else None
+    # The cache key is built from the parcel polygon, so a lookup only finds crops cut for the
+    # *same* parcel. Offline `get_property_bundle` returns the fixture by design, and the office
+    # fixtures carry approximated parcels - so looking there found nothing even with all four
+    # directions on disk. Cached-only therefore reads the cached live bundle first, and says
+    # which parcel it used.
+    parcel, source = None, "fixture"
+    if not live:
+        cached = _bundle_cache_path(sid)
+        if cached.is_file():
+            replayed = _read_bundle_cache(sid, cached)
+            if replayed is not None and replayed.vexcel and replayed.vexcel.parcel_wkt:
+                parcel, source = replayed.vexcel.parcel_wkt, "cached live bundle"
+    if parcel is None:
+        bundle = get_property_bundle(sid, live=live)
+        parcel = bundle.vexcel.parcel_wkt if bundle.vexcel else None
     if not parcel:
         return {}, [FetchRecord(layer="vexcel", what="oriented/extract", status="missing",
                                 detail="no parcel polygon for this property, so no crop can be cut")]
 
     notes: list[FetchRecord] = []
+
+    # `live=False` means cached-only, the same as everywhere else in this lane: look on disk and
+    # make no request at all. @vinayak-sinha caught the first version asking the coverage service
+    # and POSTing regardless, which would have made a discovery page fetch imagery per card.
+    if not live:
+        paths = {d: p for d in (directions or d8.OBLIQUE_DIRECTIONS)
+                 if (p := d8.cached_oblique(parcel, d, sid=sid))}
+        notes.append(FetchRecord(
+            layer="vexcel", what="oriented/extract",
+            status="ok" if paths else "missing",
+            detail=(f"{len(paths)} cached oblique(s) for the parcel from the {source}, no "
+                    f"request made: {', '.join(sorted(paths))}" if paths else
+                    f"no oblique is cached for the parcel from the {source}, and live is off so "
+                    f"none was fetched")))
+        return paths, notes
+
     wanted = directions
     if wanted is None:
         try:
@@ -842,7 +875,15 @@ def get_obliques(sid: str, *, directions: Optional[list[str]] = None,
 
     paths: dict[str, str] = {}
     for direction in wanted:
-        path, records = d8.fetch_oblique(parcel, direction, sid=sid)
+        # `_default_post_bytes` returns None for 403 and 404 but **raises** for 429, which the
+        # first version's docstring promised to degrade from and did not. One slow direction
+        # must not cost the caller the three that worked.
+        try:
+            path, records = d8.fetch_oblique(parcel, direction, sid=sid)
+        except Exception as exc:
+            notes.append(FetchRecord(layer="vexcel", what=f"oriented/extract:{direction}",
+                                     status="error", detail=str(exc)[:200]))
+            continue
         notes += records
         if path:
             paths[direction] = path

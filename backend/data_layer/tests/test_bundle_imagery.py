@@ -29,8 +29,9 @@ def _bundle_with(vex: VexcelData):
     return PropertyBundle.model_validate(raw).model_copy(update={"vexcel": vex})
 
 
-def parcel(**kw) -> VexcelData:
-    return VexcelData(collection="us-ca-losangeles-2025", parcel_wkt=WKT, **kw)
+def parcel(parcel_wkt_override: str | None = None, **kw) -> VexcelData:
+    return VexcelData(collection="us-ca-losangeles-2025",
+                      parcel_wkt=parcel_wkt_override or WKT, **kw)
 
 
 @pytest.fixture
@@ -232,3 +233,103 @@ def test_asking_for_named_directions_skips_the_coverage_call(monkeypatch):
 def test_the_bundle_rule_version_does_not_move_for_an_on_demand_fetch():
     """This adds no field to a cached bundle, so a warm cache stays valid."""
     assert api.BUNDLE_RULE_VERSION == EXPECTED_BUNDLE_RULE
+
+
+def test_cached_only_makes_no_request_at_all(monkeypatch):
+    """@vinayak-sinha caught this: the first version asked the coverage service and POSTed even
+    with live=False, so a discovery page would have fetched imagery per card. `live=False` means
+    cached-only everywhere else in this lane and must mean it here."""
+    monkeypatch.setattr(api, "get_property_bundle",
+                        lambda sid, live=None: _bundle_with(parcel()))
+
+    def refuse(*a, **k):
+        raise AssertionError("cached-only must not touch the network")
+    monkeypatch.setattr(vexcel, "oblique_directions", refuse)
+    monkeypatch.setattr(imagery, "fetch_oblique", refuse)
+    monkeypatch.setattr(imagery, "cached_oblique",
+                        lambda wkt, d, sid="": f"data/cache/vexcel-image/sid-{d}/x.jpg"
+                        if d == "oblique-north" else None)
+
+    paths, notes = api.get_obliques("sid", live=False)
+    assert paths == {"oblique-north": "data/cache/vexcel-image/sid-oblique-north/x.jpg"}
+    assert notes[0].status == "ok" and "no request made" in (notes[0].detail or "")
+
+
+def test_cached_only_with_nothing_cached_says_so(monkeypatch):
+    monkeypatch.setattr(api, "get_property_bundle",
+                        lambda sid, live=None: _bundle_with(parcel()))
+    monkeypatch.setattr(imagery, "cached_oblique", lambda wkt, d, sid="": None)
+    paths, notes = api.get_obliques("sid", live=False)
+    assert paths == {} and notes[0].status == "missing"
+    assert "live is off" in (notes[0].detail or "")
+
+
+def test_a_rate_limited_direction_does_not_lose_the_others(monkeypatch):
+    """`_default_post_bytes` returns None for 403 and 404 but **raises** for 429, which the first
+    version's docstring promised to degrade from and did not. One slow direction must not cost
+    the caller the three that worked."""
+    monkeypatch.setattr(api, "get_property_bundle",
+                        lambda sid, live=None: _bundle_with(parcel()))
+    monkeypatch.setattr(vexcel, "oblique_directions",
+                        lambda wkt, **k: ["north", "south", "east"])
+
+    def flaky(wkt, direction, **k):
+        if direction == "south":
+            raise RuntimeError("Client error '429 Too Many Requests'")
+        return f"data/cache/vexcel-image/sid-{direction}/x.jpg", []
+    monkeypatch.setattr(imagery, "fetch_oblique", flaky)
+
+    paths, notes = api.get_obliques("sid", live=True)
+    assert sorted(paths) == ["east", "north"], "the two that worked survive"
+    failed = [n for n in notes if n.status == "error"]
+    assert len(failed) == 1 and "429" in (failed[0].detail or "")
+    assert "south" in failed[0].what
+
+
+def test_the_cache_lookup_and_the_fetch_cannot_disagree_about_the_key():
+    """`cached_oblique` resolves the path a later `fetch_oblique` would write. If the two built
+    the request differently, a cached file would never be found and every preview would re-fetch."""
+    from backend.data_layer import cache
+    wkt = "POLYGON ((0 0, 1 0, 1 1, 0 0))"
+    request = imagery._oblique_request(wkt, "oblique-north")
+    expected = cache.path_for("vexcel-image", "sid-oblique-north", request, suffix=".jpg")
+    assert imagery.cached_oblique(wkt, "oblique-north", sid="sid") is None, "nothing cached yet"
+    cache.write_bytes("vexcel-image", "sid-oblique-north", b"\xff\xd8\xff\xe0data", request,
+                      suffix=".jpg")
+    try:
+        assert imagery.cached_oblique(wkt, "oblique-north", sid="sid") == cache.relative(expected)
+    finally:
+        expected.unlink(missing_ok=True)
+
+
+def test_cached_only_uses_the_cached_live_parcel_not_the_fixture(monkeypatch, tmp_path):
+    """The cache key is built from the parcel polygon, so a lookup only finds crops cut for the
+    same parcel. Offline `get_property_bundle` returns the fixture by design, and the office
+    fixtures carry approximated parcels - so the first version found nothing for either office
+    even with all four directions on disk. Cached-only reads the cached live bundle first.
+    """
+    import json
+    live_parcel = "POLYGON ((-118.4 34.0, -118.3 34.0, -118.3 34.1, -118.4 34.0))"
+    folder = tmp_path / "sid"
+    folder.mkdir()
+    (folder / "bundle.json").write_text(json.dumps({
+        "rule": api.BUNDLE_RULE_VERSION, "stripped": [],
+        "bundle": _bundle_with(parcel(parcel_wkt_override=live_parcel)).model_dump(mode="json"),
+    }))
+    monkeypatch.setattr(api, "_cache_dir", lambda: tmp_path)
+
+    def fixture_only(sid, live=None):
+        raise AssertionError("the fixture must not be consulted when a live bundle is cached")
+    monkeypatch.setattr(api, "get_property_bundle", fixture_only)
+
+    asked: list[str] = []
+
+    def lookup(wkt, direction, sid=""):
+        asked.append(wkt)
+        return f"data/cache/vexcel-image/sid-{direction}/x.jpg"
+    monkeypatch.setattr(imagery, "cached_oblique", lookup)
+
+    paths, notes = api.get_obliques("sid", live=False)
+    assert len(paths) == 4
+    assert asked and all(wkt == live_parcel for wkt in asked), "the live parcel, not the fixture's"
+    assert "cached live bundle" in (notes[0].detail or "")

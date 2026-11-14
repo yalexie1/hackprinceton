@@ -363,7 +363,8 @@ One writer per path. Dependencies name **contract types only**, never another pa
 
 - **Three source agents at most**, one per working key set (unlabelled, `_B`, `_C`). Set `_D` is invalid. This cap is a rate-limit constraint, not a style preference — the keys are shared across every team.
 - Each agent on its own `<issue#>-<slug>` branch, or a git worktree when two need the same dependency tree.
-- **Which base to branch from.** `main` now carries the hardened `.gitignore` (PR #7) and `spec-draft` is a descendant of it (PR #8), so branching from `main` per AGENTS.md §3.2 is safe again for **new** `backend/` and `data/` work. But files that currently exist only on `spec-draft` — this document and `.claude/agents/data-*.md` — must be edited on a branch based on **`spec-draft`**: branching from `main` would turn an edit into an add of an already-divergent file and manufacture a conflict. Check with `git ls-tree -r --name-only origin/main | grep <path>` before picking a base.
+- **Branch from fresh `main` and open PRs against `main`** (AGENTS.md §3.2). `spec-draft` is **retired** as of PR #19 — do not commit to it or target it. `Closes #N` works again now that `main` is the merge target, so issues auto-close.
+- **`backend/schema.py` does not exist yet.** The v0.2 contract currently lives only as the block between `<!-- contract:start -->` and `<!-- contract:end -->` in `SPEC.md` §9, and `backend/schema.py` belongs to @yalexie1 (contract lane). Every package D1–D5 imports it, so **extracting it is the gate on all Data-lane implementation.** Independently verified 2026-11-14: the block extracts to 538 lines, imports clean under pydantic 2.14.3, defines 56 models, and all 27 payloads in `specs/examples/` validate against it (99 `model_validate` calls, 0 failures). So the extraction is mechanical and low-risk — it just needs doing by its owner.
 - Launch with `/data-wp <ID>`; check lane state with `/data-status`. Subagent definitions live in `.claude/agents/data-*.md` and carry the verified facts for their source inline, so an agent starts from evidence rather than from the stale spec.
 - **Fixtures ship with the package**, not after it. D5 and the other three lanes must never wait on live keys.
 - `backend/schema.py` belongs to @yalexie1. This lane imports it and never edits it.
@@ -436,3 +437,4 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |
 | EPA eGRID factors | page only | 2026-11-14 | eGRID2023 current; **values not opened, unverified** |
 | Measure cost data | — | — | **[P] not started** |
+| Contract v0.2 extract + examples | independent check, pydantic 2.14.3 | 2026-11-14 | 538 lines, imports clean, 56 models, 27/27 examples valid (99 checks, 0 fail) |

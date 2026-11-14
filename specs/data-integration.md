@@ -726,6 +726,65 @@ Also closed: the live-versus-fixture mismatch. `specs/examples/README.md:593` ch
 `"LADWP" in tariff["utility"]`, which passed on the fixtures and would have failed on
 live data. All three golden properties now pass it **live**.
 
+### 5.1e D15: the gas price, and the unit that would have been wrong by 10x
+
+`physics/04:1060` assigned this to the data lane as open — *"Houston gas price
+default: no source opened; [P] Data lane (the gas utility's tariff or EIA state gas
+prices)"*. [V] 2026-11-14.
+
+**Why it mattered.** `Tariff.gas_usd_per_kwh` was never set, so on every live bundle
+it was `None`, and three places in the analysis lane branch on that:
+
+| Reader | With the price missing |
+|---|---|
+| `registry.py:182` | **Fixed by @yalexie1 in #201** — a missing price is now "unknown", and the home keeps its gas-furnace default at a lower confidence. D15 raises that confidence from 0.25 to 0.4 |
+| `physics/systems/baseline.py:149` | assumes **electric** heating |
+| `physics/systems/baseline.py:216` | assumes an **electric** water heater |
+| `physics/systems/baseline.py:252` | prices gas energy at **0.00 USD/kWh** |
+
+So A3's baseline still reads a 1920s Los Angeles house as all-electric. Supplying the
+number removes the question.
+
+**The unit trap, which is the real finding.** EIA prices gas in **dollars per thousand
+cubic feet**, not per therm. Applying TAR-04's `usd_per_therm / 29.3071` to a `$/MCF`
+figure overstates the price by a factor of about **10.37**, and nothing downstream
+would error — it would just quietly make gas look as expensive as electricity. A
+volume becomes energy through the heat content of gas delivered to consumers, about
+1,037 Btu/cf, hence **1.037 MMBtu per MCF** and 303.915 kWh per MCF.
+
+That factor carries about **±0.5 %** (heat content runs roughly 1,030–1,040 Btu/cf),
+which is far inside the uncertainty already present in using a state average rather
+than the building's own tariff. The reader can reconstruct the number: `Tariff.source`
+carries the raw `$/MCF` figure, the period and the conversion factor.
+
+`_eia_gas_usd_per_kwh` **refuses any series whose units are not per-MCF** rather than
+converting it. The same lesson as D9: there, an offline fixture used a float where the
+API sends a string, and the suite stayed green against a shape that cannot occur.
+
+**Measured prices** (EIA annual, 2025; **annual** not monthly, because gas swings hard
+with the heating season in a way the electricity price does not):
+
+| | $/MCF | USD/therm | USD/kWh |
+|---|---|---|---|
+| CA residential | 22.01 | 2.1225 | **0.072422** |
+| CA commercial | 16.56 | 1.5969 | **0.054489** |
+| TX residential | 19.42 | 1.8727 | **0.063900** |
+| TX commercial | 10.98 | 1.0588 | **0.036129** |
+
+California dearer than Texas and commercial below residential, the same shape as the
+electricity prices — a weak but real sanity check.
+
+**Why the four values are committed.** The live route is slow and erratic: measured
+1 s, 14 s, 41 s and 66 s on the four combinations, with 504s in between, and the
+heat-content series 504'd outright. Waiting on it took a cold bundle from 2.5 s to
+**44–76 s**, which is not a demo path. These are public EIA figures, not sponsor data,
+and they change once a year, so the table is committed with its series ids and a test
+that notices if it drifts. `EIA_GAS_REFRESH=1` still fetches live first, so the table
+can be refreshed rather than rotting. Either route is labelled `fallback` — it is a
+state average either way — and the record says which one answered.
+
+After the table, a cold live bundle is **0.4–0.6 s** with the gas price present.
+
 ### 5.2 What is blocked, and the caveats
 
 - **`developer.nrel.gov` and `nsrdb.nrel.gov` both fail DNS resolution from this environment** (`curl: (6) Could not resolve host`). So **PVWatts v8 and NSRDB PSM3 are unusable here**, although `api.openei.org` — also NREL-operated — resolves fine. `handoff-plan.md` names PVWatts as a reference implementation for the test plan; use **pvlib locally** instead, with PVGIS as an independent cross-check. [V]
@@ -777,6 +836,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D12 | P1 | Splat + drone photos (track site) | `data-matterport` | `backend/data_layer/tracksite.py` | `splat_path`, `drone_photo_paths` |
 | D13 | P2 | Portfolio screening by Vexcel filters | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
 | D14 | P1 | Incorporated place, utility and PACE region — **done**, see 5.1d | `data-costar` | `backend/data_layer/places.py` | `Tariff.utility`, `in_pace_region` |
+| D15 | P1 | Gas price on the tariff — **done**, see 5.1e | `data-costar` | `backend/data_layer/external.py` | `Tariff.gas_usd_per_kwh` |
 | D11 | — | this file | lane owner | `specs/data-integration.md` | — |
 
 **Critical path:** D0 (kit mirror) → D1 / D2 / D3 in parallel → D5 → D6. D4 can be stubbed from the contract and hardened later. D7–D10 come strictly after the walking skeleton.
@@ -943,6 +1003,10 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Golden properties placed | live, all three | 2026-11-14 | both LA → `Los Angeles city` → **LADWP**; Houston → `Houston city` → **`in_pace_region` True** |
 | A28 region blocker cleared | live, all 7 priced Houston measures | 2026-11-14 | blocker gone for every one; eligibility then fails **SIR ≥ 1** (0.74, 0.25, 0.17) |
 | Golden tariff check on live data | `README.md:593` rule | 2026-11-14 | **passes live** for all three, where it previously only passed on fixtures |
+| EIA gas route discovered (D15) | `facet/process`, `facet/duoarea` | 2026-11-14 | `PRS` residential, `PCS` commercial; `SCA`/`STX`; **units `$/MCF`, not per therm** |
+| Gas prices, all four | live, EIA annual 2025 | 2026-11-14 | CA 22.01/16.56, TX 19.42/10.98 $/MCF → 0.0724/0.0545/0.0639/0.0361 USD/kWh |
+| Gas route latency | same four calls | 2026-11-14 | **1 s, 14 s, 41 s, 66 s** plus 504s; heat-content series 504'd — hence the committed table |
+| Cold live bundle after D15 | all three golden | 2026-11-14 | **0.4–0.6 s** with gas present (44–76 s if the live gas route is waited on) |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; resolved by the lead's EIA decision, 5.1c |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |

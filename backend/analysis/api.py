@@ -20,6 +20,7 @@ or adding `office_houston/` needs no change here.
 from __future__ import annotations
 
 import contextvars
+import functools
 import hashlib
 import importlib
 import json
@@ -89,6 +90,49 @@ def _not_in_fixture(measure_id: str) -> MeasureResult:
                          not_applicable_reason="A0 stub: this example has no data for the measure")
 
 
+# ---------- a property's state, when the record does not say ----------
+
+_STATE_WORDS = {"CA": ("california",), "TX": ("texas",)}
+_TIMEZONE_STATE = {"America/Los_Angeles": "CA", "America/Chicago": "TX"}
+
+
+def _state_from(address: Optional[str], timezone: Optional[str] = None) -> Optional[str]:
+    """CA or TX from the property address (a two-letter abbreviation or the full name), else from
+    the site's timezone; None when neither says."""
+    text = f" {address or ''} ".replace(",", " ").replace(".", " ")
+    words = text.upper().split()
+    for state, names in _STATE_WORDS.items():
+        if state in words or any(n.upper() in text.upper() for n in names):
+            return state
+    return _TIMEZONE_STATE.get(timezone or "")
+
+
+def _resolved(bundle: PropertyBundle) -> PropertyBundle:
+    """The bundle with `summary.state` filled in when the property record left it empty (a live
+    bundle assembled without the CoStar kit has none). Everything state-dependent (escalation, the
+    grid mix, the solar rules) then has an answer; a state that cannot be found stays empty and
+    pricing carries on without the state-specific figures."""
+    if bundle.summary.state in ("CA", "TX"):
+        return bundle
+    state = _state_from(bundle.summary.address, bundle.climate.timezone)
+    if state is None:
+        return bundle
+    return bundle.model_copy(update={"summary": bundle.summary.model_copy(update={"state": state})})
+
+
+
+def _with_state(fn):
+    """Door functions take the bundle as their first argument: give them one whose state is known."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        if args:
+            args = (_resolved(args[0]), *args[1:])
+        elif "bundle" in kwargs:
+            kwargs = {**kwargs, "bundle": _resolved(kwargs["bundle"])}
+        return fn(*args, **kwargs)
+    return wrapper
+
+
 # ---------- S3 See ----------
 
 _VISION: dict = {"ask_model": None, "get_bytes": None}
@@ -102,6 +146,7 @@ def set_vision(ask_model: Optional[Callable] = None, get_bytes: Optional[Callabl
     _VISION["ask_model"], _VISION["get_bytes"] = ask_model, get_bytes
 
 
+@_with_state
 def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Flag]]:
     """REAL (A7) when `set_vision` has been called; otherwise the example's observations."""
     if _VISION["ask_model"] is not None and _VISION["get_bytes"] is not None:
@@ -112,6 +157,7 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
 
 # ---------- S4 Model ----------   REAL: A10 registry, A9 geometry, A11 roof
 
+@_with_state
 def build_building_model(bundle: PropertyBundle, observed: list[Assumption] = [],
                          flags: list[Flag] = [],
                          overrides: dict[str, float | str | bool] = {}) -> BuildingModel:
@@ -245,6 +291,7 @@ def _simulate_baseline(bundle: PropertyBundle, model: BuildingModel) -> Baseline
 
 # ---------- S5 Baseline ----------   REAL: A3 -> A2 -> A3, A1 climate
 
+@_with_state
 def run_baseline(bundle: PropertyBundle, model: BuildingModel,
                  bills: UtilityBills | None = None) -> BaselineResult:
     return _simulate_baseline(bundle, model)          # bill calibration is A6 (P2)
@@ -270,6 +317,7 @@ def _register_plugins() -> None:
                                                         "PV-06", "PV-09", "LAY-03", "ROOF-04"))
 
 
+@_with_state
 def evaluate_measure(bundle: PropertyBundle, model: BuildingModel, measure_id: MeasureId,
                      role: Role, desks_requested: int | None = None) -> MeasureResult:
     """REAL (A16 engine) for every registered measure. One with no plug-in yet replays the
@@ -372,6 +420,7 @@ def _with_shading(bundle: PropertyBundle, model: BuildingModel, design: SolarDes
     return design.model_copy(update={"panels": shaded.placements(design.panels)})
 
 
+@_with_state
 def design_pv(bundle: PropertyBundle, model: BuildingModel, baseline: BaselineResult,
               budget_usd: float | None = None) -> SolarDesign:
     """REAL: A14 fills the A11 roof planes in order of yield and stops at the roof, the budget or
@@ -456,6 +505,7 @@ def _describe_layout(bundle: PropertyBundle, model: BuildingModel, changed: Buil
     return _LAYOUT_CACHE[key]
 
 
+@_with_state
 def score_desk_positions(bundle: PropertyBundle, model: BuildingModel,
                          desks_requested: int | None = None) -> LayoutResult:
     """REAL (A23 with the A5 scorer): the scored candidate positions and the recommended desks."""
@@ -467,6 +517,7 @@ _FORMULAS = ["COST-01", "COST-02", "ECO-05", "ECO-06", "ECO-07", "ECO-09", "ECO-
              "INC-40"]
 
 
+@_with_state
 def price_measure(bundle: PropertyBundle, measure: MeasureResult) -> MeasureResult:
     """REAL (A24 costs, A25 economics) once the measure says how much of it there is (its
     `params` or `solar`). Where the quantity is not in the measure yet, the stub engine's own
@@ -503,6 +554,9 @@ def price_measure(bundle: PropertyBundle, measure: MeasureResult) -> MeasureResu
 
 def lookup_incentives(measure_id: MeasureId, summary: PropertySummary) -> list[Incentive]:
     """REAL (A24). The measure's parameters come from the stub engine's result until A16."""
+    if summary.state not in ("CA", "TX"):
+        state = _state_from(summary.address)
+        summary = summary.model_copy(update={"state": state}) if state else summary
     found = _measure(summary.sid, measure_id) or MeasureResult(measure_id=measure_id, title=measure_id,
                                                                applicable=True)
     # No bundle here, so no resolved utility: this door function takes a summary by
@@ -558,6 +612,7 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
     return select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy)
 
 
+@_with_state
 def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
     """REAL (A26, SPEC 6.5). Every round each measure is evaluated against the building as the plan
     has changed it (A16 engine, A2 and A3 simulation), priced (A24, A25), and the solar design is
@@ -620,6 +675,7 @@ def _after(base: EnergyUse, savings: list[EnergyUse]) -> EnergyUse:
         co2_kg=minus(base.co2_kg, [s.co2_kg for s in savings]))
 
 
+@_with_state
 def cpace_scenario(bundle: PropertyBundle, measure: MeasureResult) -> FinancingScenario:
     """REAL (A28) for the eligibility rules; the **payment** still needs a market quote,
     because `config.CPACE_RATE` and `CPACE_TERM_YEARS` are deliberately `None`.
@@ -641,6 +697,7 @@ def cpace_scenario(bundle: PropertyBundle, measure: MeasureResult) -> FinancingS
     return a28(measure, summary, in_pace_region=in_region)
 
 
+@_with_state
 def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> list[Question]:
     """REAL (A27) once the envelope, lighting and heating-and-cooling plug-ins are registered, so
     that the plan answers to the model; until then the example's questions, which keeps the ask

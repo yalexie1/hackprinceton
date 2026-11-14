@@ -290,9 +290,17 @@ def financial_breakdown(*, installed_cost_usd: Ranged, cost_source: str, net_upf
     `discount_rate` defaults to the config value and is echoed in the result."""
     d = config.DISCOUNT_RATE_REAL if discount_rate is None else discount_rate
     n = min(useful_life_years, config.ANALYSIS_PERIOD_CAP_YEARS)
-    city = city_key(state)
-    e_elec = default_escalation(city, segment, "electricity", n)[0].expected
-    e_gas = default_escalation(city, segment, "gas", n)[0].expected
+    try:
+        city = city_key(state)
+    except ValueError:      # no state, or one ECO-06 has no table for: price without escalation, and say so
+        city = None
+    if city is None:
+        e_elec = e_gas = 0.0
+        unknown_state_note = ["State unknown: real energy price escalation taken as 0 (ECO-06 could not be applied)."]
+    else:
+        e_elec = default_escalation(city, segment, "electricity", n)[0].expected
+        e_gas = default_escalation(city, segment, "gas", n)[0].expected
+        unknown_state_note = []
     e_elec_eff = (1 + e_elec) * (1 - degradation_rate) - 1
     residual = residual_value_linear(installed_cost_usd.expected, useful_life_years, n)
 
@@ -342,7 +350,8 @@ def financial_breakdown(*, installed_cost_usd: Ranged, cost_source: str, net_upf
     dp = discounted_payback(flows, d)
     year1 = Ranged(low=_r(s.low + om_saving), expected=_r(s.expected + om_saving),
                    high=_r(s.high + om_saving), unit="USD")
-    notes = default_escalation(city, segment, "electricity", n)[1] + default_escalation(city, segment, "gas", n)[1]
+    notes = unknown_state_note if city is None else (
+        default_escalation(city, segment, "electricity", n)[1] + default_escalation(city, segment, "gas", n)[1])
     irr_value = irr(flows)
     return FinancialBreakdown(
         installed_cost_usd=installed_cost_usd, cost_source=cost_source, incentives=list(incentives),

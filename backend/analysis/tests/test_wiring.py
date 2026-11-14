@@ -223,12 +223,35 @@ def test_load_driving_assumptions_widen_the_baseline_range():
     assert (wide.high - wide.low) > (narrow.high - narrow.low)
 
 
-def test_the_sample_year_is_used_when_the_site_file_is_not_cached():
+@pytest.fixture
+def isolated_climate_cache():
+    """The climate cache belongs to the test: it starts empty and leaves nothing behind."""
     clear_caches()
+    yield
+    clear_caches()
+
+
+def test_the_sample_year_is_used_when_the_site_file_is_not_cached(isolated_climate_cache, monkeypatch):
+    """Whatever is in data/cache on this machine (a live run writes the site file there), the site
+    file is treated as absent, so the test means the same on a clean checkout and after a live run."""
+    def absent(site, root=None):
+        raise FileNotFoundError(site.weather_path)
+    monkeypatch.setattr(api, "read_site_weather", absent)
     bundle, _ = load("office_houston")
     hours, weather, notes = api._climate(bundle)
     assert len(hours.temp_c) == 8760 and notes and "example year typical_year_hourly_houston.csv" in notes[0]
     assert float(hours.temp_c.mean()) > 18                                           # Houston, not Los Angeles
+
+
+def test_the_site_file_is_used_without_a_note_when_it_is_cached(isolated_climate_cache, monkeypatch):
+    from backend.analysis.physics.climate import read_weather
+    sample = api._WEATHER_SAMPLES / api._SAMPLE_FILE["TX"]
+    bundle, _ = load("office_houston")
+    site = bundle.climate
+    monkeypatch.setattr(api, "read_site_weather",
+                        lambda s, root=None: read_weather(sample, s.timezone, s.weather_time_convention, source="site file"))
+    hours, weather, notes = api._climate(bundle)
+    assert notes == () and weather.source == "site file" and len(hours.temp_c) == 8760
 
 
 def test_design_pv_stops_at_the_budget_and_reproduces_the_example_sizing():

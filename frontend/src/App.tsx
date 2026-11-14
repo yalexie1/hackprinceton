@@ -61,10 +61,7 @@ import HowItWorks from "./components/HowItWorks";
 import AuditTasks from "./components/AuditTasks";
 import { replayBatch } from "./lib/audit-replay";
 import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
-import {
-  initialConnectedBudget,
-  initialConnectedRole,
-} from "./lib/recorded-budget";
+import { initialConnectedBudget, initialConnectedRole } from "./lib/recorded-budget";
 type View =
   | "find"
   | "setup"
@@ -279,16 +276,10 @@ export default function App() {
     setError("");
     setView("setup");
     const options = demoBudgets(p.sid);
-    setRole(
-      demo
-        ? demoRun(p.sid, options[0]).request.role
-        : initialConnectedRole(p.sid),
-    );
+    setRole(demo ? demoRun(p.sid, options[0]).request.role : initialConnectedRole(p.sid));
     setBudget(
       demo
-        ? options.includes(15000)
-          ? 15000
-          : options[0]
+        ? (options.includes(15000) ? 15000 : options[0])
         : initialConnectedBudget(p.sid),
     );
     setElectricBills("");
@@ -972,62 +963,62 @@ export default function App() {
               {/* The question sits above the log: in a rehearsal it was below a
                   screenful of events, so the one thing the run needed from a person was
                   the last thing they saw. */}
-              {question && (
-                <div className="question-card">
-                  <span className="eyebrow">
-                    {approval
-                      ? "YOUR APPROVAL IS REQUIRED"
-                      : "A QUICK QUESTION"}
-                  </span>
-                  <h3>{question.prompt}</h3>
-                  <p>{question.impact_note}</p>
-                  {approval && (
-                    <p className="inline-note">
-                      Draft request:{" "}
-                      {String(approval.doc_type || "document").replaceAll(
-                        "_",
-                        " ",
-                      )}{" "}
-                      · {String(approval.state || "jurisdiction pending")}
-                      <br />
-                      Scope:{" "}
-                      {Array.isArray(approval.measure_ids)
-                        ? approval.measure_ids
-                            .map(
-                              (id) =>
-                                run.plan?.selected.find(
-                                  (item) => item.measure.measure_id === id,
-                                )?.measure.title ||
-                                run.measures.find(
-                                  (measure) => measure.measure_id === id,
-                                )?.title ||
-                                String(id),
-                            )
-                            .join(", ")
-                        : "Review the scope before approving."}
-                    </p>
-                  )}
-                  {demo && (
-                    <p className="fineprint">
-                      Demo replay: your choice advances the saved scenario. Its
-                      estimates and original answers remain unchanged.
-                    </p>
-                  )}
-                  <div>
-                    {question.choices.map((choice, i) => (
-                      <button
-                        className="secondary-button"
-                        disabled={busy}
-                        key={i}
-                        onClick={() => void answer(choice.value)}
-                      >
-                        {choice.label}
-                        <ArrowRight size={14} />
-                      </button>
-                    ))}
+                {question && (
+                  <div className="question-card">
+                    <span className="eyebrow">
+                      {approval
+                        ? "YOUR APPROVAL IS REQUIRED"
+                        : "A QUICK QUESTION"}
+                    </span>
+                    <h3>{question.prompt}</h3>
+                    <p>{question.impact_note}</p>
+                    {approval && (
+                      <p className="inline-note">
+                        Draft request:{" "}
+                        {String(approval.doc_type || "document").replaceAll(
+                          "_",
+                          " ",
+                        )}{" "}
+                        · {String(approval.state || "jurisdiction pending")}
+                        <br />
+                        Scope:{" "}
+                        {Array.isArray(approval.measure_ids)
+                          ? approval.measure_ids
+                              .map(
+                                (id) =>
+                                  run.plan?.selected.find(
+                                    (item) => item.measure.measure_id === id,
+                                  )?.measure.title ||
+                                  run.measures.find(
+                                    (measure) => measure.measure_id === id,
+                                  )?.title ||
+                                  String(id),
+                              )
+                              .join(", ")
+                          : "Review the scope before approving."}
+                      </p>
+                    )}
+                    {demo && (
+                      <p className="fineprint">
+                        Demo replay: your choice advances the saved scenario.
+                        Its estimates and original answers remain unchanged.
+                      </p>
+                    )}
+                    <div>
+                      {question.choices.map((choice, i) => (
+                        <button
+                          className="secondary-button"
+                          disabled={busy}
+                          key={i}
+                          onClick={() => void answer(choice.value)}
+                        >
+                          {choice.label}
+                          <ArrowRight size={14} />
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               <div className="audit-grid">
                 <section className="audit-timeline">
                   <div className="card-heading">

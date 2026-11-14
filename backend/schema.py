@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.6"
+SCHEMA_VERSION = "0.3.7"
 
 # ---------- primitives ----------
 
@@ -615,6 +615,9 @@ class RunResult(BaseModel):
     questions: list[Question] = []
     narrative_md: str = ""
     warnings: list[str] = []
+    data_source: Optional[Literal["live", "example"]] = None   # what the analysis ran on: live sponsor data, or the
+                                                # committed example bundle; a replayed recording keeps the value it was recorded with
+    served_by: Optional[Literal["live", "replay"]] = None      # how this result reached the client
 
 DocType = Literal["retrofit_contract_residential", "retrofit_contract_commercial",
                   "solar_installation_agreement", "bid_package_rfp",

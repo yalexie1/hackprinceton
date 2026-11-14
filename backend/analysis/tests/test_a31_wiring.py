@@ -109,3 +109,65 @@ def test_the_pv_warning_names_the_numbers_a_reader_needs_to_act_on():
     warning = crosscheck_warnings(card)[0]
     for part in ("kWh/kW", "transposition ratio", "loss ratio", "tolerance"):
         assert part in warning, warning
+
+
+# ---- BEN-01 to BEN-03, the baseline against the federal surveys ----
+
+def baseline_of(flavor):
+    bundle, request = load(flavor)
+    observed, flags = api.observe_interior(bundle)
+    model = api.build_building_model(bundle, observed, flags, request.overrides)
+    return bundle, model, api.run_baseline(bundle, model)
+
+
+def test_a_baseline_outside_the_band_warns_on_the_result():
+    """The house's gas intensity sits at about the 92nd percentile of comparable homes on the
+    example weather year, so the door must say so on the object a caller reads."""
+    _, _, baseline = baseline_of("house")
+    gas = [w for w in baseline.warnings if "Gas use intensity" in w]
+    assert len(gas) == 1
+    assert "percentile" in gas[0] and "RECS2020" in gas[0]
+    assert "furnace efficiency" in gas[0], "the warning names the end uses to look at (BEN-03)"
+
+
+def test_a_baseline_inside_the_band_is_silent():
+    """80 percent of real comparable buildings are inside the band, so a model that is must not
+    be warned about - otherwise the warning means nothing."""
+    _, _, baseline = baseline_of("office")
+    assert [w for w in baseline.warnings if "intensity" in w] == []
+
+
+def test_the_benchmark_changes_no_number_in_the_baseline():
+    bundle, model, baseline = baseline_of("house")
+    bare = api._simulate_baseline(bundle, model)
+    assert baseline.warnings and not bare.warnings
+    assert baseline.model_dump(exclude={"warnings"}) == bare.model_dump(exclude={"warnings"})
+
+
+def test_a_property_with_no_climate_zone_is_not_benchmarked_and_says_so():
+    """Missing inputs are reported, never raised (physics 02 section 13: `not_checked` with one
+    warning naming what was missing)."""
+    bundle, request = load("house")
+    off = bundle.model_copy(update={"climate": bundle.climate.model_copy(update={"climate_zone": None})})
+    observed, flags = api.observe_interior(off)
+    model = api.build_building_model(off, observed, flags, request.overrides)
+    baseline = api.run_baseline(off, model)
+    assert len(baseline.warnings) == 1 and "climate zone" in baseline.warnings[0].lower()
+
+
+def test_an_office_is_benchmarked_against_its_whole_building_not_its_suite():
+    """BEN-02: the CBECS size class is the gross area of the building (CoStar), not the scanned
+    suite. Houston's suite is 898 m2 inside a 15,101 m2 building, which is a different cut."""
+    bundle, request = load("office_houston")
+    observed, flags = api.observe_interior(bundle)
+    model = api.build_building_model(bundle, observed, flags, request.overrides)
+    with_costar = api.run_baseline(bundle, model).warnings
+    without = api.run_baseline(bundle.model_copy(update={"costar": None}), model).warnings
+    assert with_costar != without, "the building area must reach the cut"
+
+
+def test_the_measures_engine_baseline_is_not_benchmarked():
+    """The benchmark belongs on the baseline a person is shown, not on each internal variant the
+    measures engine simulates; a warning per variant would flood the result."""
+    bundle, model, _ = baseline_of("house")
+    assert api._simulate_baseline(bundle, model).warnings == []

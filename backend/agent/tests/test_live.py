@@ -609,6 +609,7 @@ def test_an_answer_to_a_closed_run_is_an_error_not_a_silent_queue(live_mode):
     api.answer(run_id, pending[1].id, None)
     assert drain(run_id)[-1].type == "done"
 
+
 # ---------- the data lane's provenance reaches the run (issue #319) ----------
 
 def test_a_bundle_fallback_becomes_a_run_event_and_a_warning(tmp_path):

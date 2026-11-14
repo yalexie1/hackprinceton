@@ -47,7 +47,7 @@ from backend.analysis.physics.systems import (HourlyLoads, SystemsBaseline, cale
                                               egrid_subregion, internal_gains_hourly, systems_baseline)
 from backend.analysis.physics.zone import zone_loads
 from backend.analysis.solar.layout import Module, layout_pv
-from backend.analysis.model.benchmark.checks import check_pv
+from backend.analysis.model.benchmark.checks import check_baseline, check_pv
 from backend.analysis.model.geometry import build_geometry
 from backend.analysis.model.registry import (build_registry, merge_assumptions, scanned_floor_area_m2,
                                              set_model_assumption)
@@ -391,7 +391,23 @@ def run_baseline(bundle: PropertyBundle, model: BuildingModel,
     if model.calibration is not None:
         result = result.model_copy(update={"calibrated_to_bills": model.calibration.calibrated,
                                            "calibration": model.calibration})
-    return result
+    return _benchmarked(bundle, model, result)
+
+
+def _benchmarked(bundle: PropertyBundle, model: BuildingModel, result: BaselineResult) -> BaselineResult:
+    """A31 (physics 02 BEN-01 to BEN-03): the baseline's energy use intensity against the homes of
+    RECS 2020 or the offices of CBECS 2018, in the closest cut with enough surveyed buildings.
+    A consultant's first sanity check on a model, and like PV-10 it may only add a warning.
+
+    One building in five really does sit outside the 10th-to-90th band, so a warning asks for a
+    look at the end uses it names; it is never evidence on its own that the model is wrong.
+    """
+    warnings, _ = check_baseline(result, _floor_area(model), bundle.summary.use_type,
+                                 bundle.climate.climate_zone,
+                                 building_area_m2=bundle.costar.building_area_m2 if bundle.costar else None)
+    if not warnings:
+        return result
+    return result.model_copy(update={"warnings": [*result.warnings, *warnings]})
 
 
 # ---------- S6 Measures ----------
@@ -547,8 +563,9 @@ def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: Building
         parts = [_plane_hourly(bundle, planes[pid].tilt_deg.expected, planes[pid].azimuth_deg) * k
                  for pid, k in kw.items() if pid in planes]
         hourly = sum(parts) if parts else None
-    card = evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly, existing_solar=bool(existing),
-                       state=bundle.summary.state, provenance=bundle.provenance)
+    card = evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly,
+                       existing_solar=bool(existing), state=bundle.summary.state,
+                       provenance=bundle.provenance)
     return _cross_checked_pv(bundle, model, card)
 
 

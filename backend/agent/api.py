@@ -55,6 +55,9 @@ def _get(run_id: str) -> dict:
 
 
 def start_run(request: RunRequest) -> str:
+    if request.mode == "analysis":           # real analysis: live data and the analysis door, no agent, whatever AGENT_MODE says
+        from backend.agent import analysis_run
+        return analysis_run.start_run(request)
     if mode() == "live":
         from backend.agent import live
         return live.start_run(request)

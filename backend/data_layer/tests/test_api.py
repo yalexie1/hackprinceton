@@ -201,5 +201,10 @@ def test_incomplete_bundle_carries_its_provenance():
 
 
 def test_use_type_mapping_covers_the_golden_properties():
-    assert api._USE_TYPE_BY_COSTAR["Office"] == "office"
-    assert api._USE_TYPE_BY_COSTAR["Detached"] == "single_family"
+    """The mapping moved to `index.use_type_for` in D7 and is keyed by CoStar's enum
+    *code*, not its name: `api` had a second table that had to agree with the
+    index's, and two tables that must agree eventually do not."""
+    from backend.data_layer import index
+
+    assert index.use_type_for("commercial_property", 5) == "office"       # Office
+    assert index.use_type_for("residential_listing", 1) == "single_family"  # Detached

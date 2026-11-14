@@ -98,6 +98,87 @@ Model ids also appear inside the records as `videoKey` on attachments and media;
 
 > `index.md` states: *"How to connect to the Matterport models is provided in a separate zip file."* **We may be missing a second zip.** Raised on the board. [V] quote, [P] whether a second zip exists.
 
+### 2.4a The index over the whole kit — D7
+
+[V] 2026-11-14, built and measured on the mirror.
+
+`search_properties` answered from `specs/examples/` alone until D7: three golden
+properties plus the nine rows in `search_results.json`. That was the stated pre-D7
+answer to workplan R4. `backend/data_layer/index.py` now backs it with the kit.
+
+**One pass, not 14,932 lookups.** `get_costar_data` streams the 193 MB
+`commercial-property.jsonl` and stops at the first match — right for one property,
+hopeless for all of them. The index reads each dataset exactly once (3,339 + 2,120
+records, **1.1 s together**) and keeps only the dozen fields a `PropertySummary`
+needs. Built once to `data/cache/costar/index/summaries.jsonl` (4.4 MB, git-ignored
+like the rest of the mirror), invalidated by the size and mtime of the four source
+files. Cold load **0.06 s**; a filtered search **0.006 s**.
+
+| Measured | Value |
+|---|---|
+| Scanned models indexed | **14,932** — every row `rows_by_model` keeps |
+| Distinct properties behind them | **5,098** (commercial 12,994 → 3,247; residential 1,938 → 1,851) |
+| With coordinates | **14,929** of 14,932 |
+| Office **properties** | **264** with a scan, out of 289 office records — 25 offices in the kit were never scanned |
+| Office **models** | 669 |
+| Largest single group | **32 unit scans** of one apartment complex |
+
+**A search result is a property, not a scan.** This was the one finding that changed
+the design. Indexing per model is correct — `PropertySummary.sid` *is* a Matterport
+model — but a search for offices in Houston then returns "333 Northbelt" five times
+and a radius search near the LA tower returns "Eighth & Grand" five times: the same
+building, once per scan. The door collapses the kit to one row per property
+(`index.property_key`: `PropertyId`, else `ResidentialListingId`, else the sid),
+after filtering and before ranking so the representative does not change with the
+query point. `all_scans=True` returns every model, and `api.scans_for_property(sid)`
+lists the siblings of one result — which is also the D5 criterion that an office with
+several models reports the alternatives.
+
+The **fixtures are not collapsed**, deliberately. `search_results.json` carries three
+suites of the LA tower on purpose, and one of them — `BkjvwqdchVY`, 2 rooms and **93
+panoramas** — is the open-plan scan the desk-placement demo wants. Collapsing a
+curated set of nine to tidy a list that is already short would throw that away.
+
+**`use_type` comes from the property record, never from which CSV the row was in.**
+2,765 of the 3,339 commercial properties are Multifamily and only 289 are Office, so
+`segment="commercial"` and `use_type="office"` are very different questions. One
+table, `index.use_type_for(kind, code)`, keyed by CoStar's enum **code**: `api.py`
+had a second table keyed by enum *name* that had to agree with it, and two tables
+that must agree eventually do not. Mapping notes:
+
+- `Multifamily` (11) → `multifamily_unit`: a Matterport scan of a multifamily
+  property is a scan of one unit, and the contract has no "multifamily building".
+- `Flex`, `Industrial`, `Hospitality`, `Healthcare`, `Land`, `Specialty` → `other`,
+  not `unknown` — we know what they are, we just have no template for them.
+- `Townhouse` (2) → `single_family`: one dwelling with party walls, and the party
+  wall is a surface adjacency, not a different use type.
+- `listingPropertyType` looks like a flag set (its values are powers of two) but all
+  2,120 records carry a single flag. A composite value would be **new data** and is
+  reported as `unknown` rather than guessed at by picking a bit.
+
+**Scan statistics are not in the kit.** `pano_count`, `room_count`, `floor_count`,
+`has_splat` and `has_defurnished` come from Matterport, and filling them for 14,932
+models means 14,932 GraphQL calls against a key shared with every other team. They
+keep their contract defaults in the index and get real values when the bundle is
+fetched. **A caller must not read a zero from search as "this scan has no
+panoramas".** The golden properties keep their fixture summaries, which do carry the
+real counts, and a kit row for a property a fixture already represents is dropped —
+otherwise the LA office appears twice, once with its 36 panoramas and once as a
+sibling scan with zeros.
+
+**A CSV row whose parent record the kit does not ship stays findable.** Its address is
+still real data, so it is indexed with `use_type: "unknown"` rather than dropped.
+
+The index is also what `get_property_summary` falls back to, so **any** of the 14,932
+models has a summary, not only the golden five, and live bundle assembly now names
+buildings properly: `jfiEvosX974` is "Executive Tower", not "11400 Olympic Blvd".
+
+**No kit mirror, no change.** The mirror is 49 MB of licensed sponsor data and is
+never committed, so a teammate's checkout has none; `index.summaries()` is empty
+there and search behaves exactly as it did before D7. Verified by running the lane
+suite both ways: 115 passed / 15 skipped with the mirror, 100 passed / 30 skipped
+without, no failures either way.
+
 ### 2.5 Field rules that are easy to get wrong
 
 [V] from `models/commercial-property.md` and `schemas/enums.json`
@@ -496,7 +577,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D4 | P0 | Cache + fetch records | `data-cache` | `backend/data_layer/cache.py` | `FetchRecord` |
 | D5 | P0 | The one public door | `data-api` | `backend/data_layer/api.py` | `PropertyBundle`, `PropertySummary` |
 | D6 | P0 | Golden fixtures | each source agent, in its own subdirectory | `data/fixtures/costar/`, `/matterport/`, `/vexcel/` — **never the parent** | — |
-| D7 | P1 | Index + office selection | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
+| D7 | P1 | Index + office selection — **done**, see 2.4a | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
 | D8 | P1 | Imagery + SAM 3 | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique |
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
 | D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
@@ -598,6 +679,11 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Open-Meteo archive | live, golden house | 2026-11-14 | 200; GHI/DNI/DHI + temp/RH/wind, units documented |
 | PVGIS v5_3 `PVcalc` | live, both golden lots | 2026-11-14 | 200; `E_y`, `SD_y`, `H(i)_y`; ERA5 only for the US |
 | NREL PVWatts / NSRDB | DNS | 2026-11-14 | **unreachable here** — `Could not resolve host` |
+| Kit index built (D7) | one pass over both datasets | 2026-11-14 | 14,932 models → **5,098 properties**; 264 office properties; 14,929 with coordinates; build 1.1 s, load 0.06 s |
+| Search collapses repeated scans | `use_type=office, q=houston` | 2026-11-14 | before: "333 Northbelt" **5x**; after: once per property |
+| Lane suite with and without the mirror | `pytest backend/data_layer -q` | 2026-11-14 | 115/15 skipped with, 100/30 skipped without — **no failures either way** |
+| Search makes no network call | `socket.socket.connect` patched to raise | 2026-11-14 | first call 0.069 s, second 0.006 s, no connection attempted |
+| Live bundle after D7 | all three golden, `refresh=True` | 2026-11-14 | 2.2–2.9 s; names now `Executive Tower`, `5836 La Mirada Avenue`, `2100 West Loop South` |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; open blocker |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |

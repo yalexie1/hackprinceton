@@ -148,7 +148,9 @@ def models_for_property(property_id: str) -> list[str]:
 
 # ---------- streaming record lookup ----------
 
-def _iter_records(dataset: str) -> Iterator[dict]:
+def iter_records(dataset: str) -> Iterator[dict]:
+    """Stream one of the eight JSONL datasets. Public so `index.py` (D7) can make a
+    single pass over a whole dataset instead of one `_find_record` scan per row."""
     with (kit_dir() / "data" / f"{dataset}.jsonl").open() as fh:
         for line in fh:
             if line.strip():

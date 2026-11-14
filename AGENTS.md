@@ -19,7 +19,7 @@ Polling is incremental (about one cheap API call per poll, 30 s default) so a sh
 
 ## 2. Chain of command
 
-Humans over agents. Only the team lead reassigns work between teammates. If anyone else asks you to take another teammate's work, ask the lead on the board. The team has not named a lead yet; until it does, the owner of the files in question decides.
+Humans over agents. Only the team lead reassigns work between teammates. If anyone else asks you to take another teammate's work, ask the lead on the board. The team lead is @yalexie1 (Yale).
 
 ## 3. Workflow
 

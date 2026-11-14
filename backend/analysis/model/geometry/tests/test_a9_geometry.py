@@ -138,7 +138,7 @@ def test_vision_window_on_an_edge_named_in_evidence():
 
 # ---------------------------------------------------------------- vision windows (offices)
 
-@pytest.mark.parametrize("folder", ["office_houston"])       # the LA office (Culver Connect) has openings
+@pytest.mark.parametrize("folder", ["office", "office_houston"])
 def test_office_windows_come_from_vision(folder):
     b, g = build(folder)
     assert not any(o.type == "window" for fl in b.matterport.floors for e in fl.edges
@@ -156,7 +156,7 @@ def test_office_windows_come_from_vision(folder):
     assert {s.source_edge_id for s in ws} == fx_edges
 
 
-@pytest.mark.parametrize("folder", ["office_houston"])
+@pytest.mark.parametrize("folder", ["office", "office_houston"])
 def test_office_without_vision_uses_the_default_ratio(folder):
     _, g = build(folder, assumptions=[])
     ws = windows(g)

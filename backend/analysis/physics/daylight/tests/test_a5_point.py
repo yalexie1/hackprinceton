@@ -183,7 +183,7 @@ def test_relative_center_reading_moves_the_window():
     assert first["df_components"]["irc_sky"] == pytest.approx(second["df_components"]["irc_sky"])
 
 
-@pytest.mark.parametrize("folder, source", [("house", {"measured", "vision"}), ("office", {"measured", None}),
+@pytest.mark.parametrize("folder, source", [("house", {"measured", "vision"}), ("office", {"vision", None}),
                                             ("office_houston", {"vision"})])
 def test_fixtures_score_every_room(folder, source):
     b = PropertyBundle.model_validate_json((EXAMPLES / folder / "property_bundle.json").read_text())

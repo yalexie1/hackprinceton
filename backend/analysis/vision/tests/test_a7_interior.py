@@ -103,7 +103,7 @@ def test_house_room_fallback_names_the_bedroom_only():
     assert [e.ref for e in a.evidence if e.kind == "pano"] == ["pano_03"]
 
 
-@pytest.mark.parametrize("folder,rooms_seen", [("office_houston", 4)])   # the LA office has openings
+@pytest.mark.parametrize("folder,rooms_seen", [("office", 6), ("office_houston", 4)])
 def test_office_window_count_and_size_from_vision(folder, rooms_seen):
     b = bundle(folder)
     keys = by_key(observe_interior(b, Recorder(REPLY), fake_bytes)[0])

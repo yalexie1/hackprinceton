@@ -1495,6 +1495,19 @@ From S11 Tables 17 to 25, small office. U in W/(m²·K) (Btu/(h·ft²·°F) in b
 
 S11 assigns the small office a steel-frame wall before 1980 and a mass wall afterwards, and a roof with insulation above deck before 1980 and an attic roof afterwards. The wall type of a real building comes from Vexcel and vision; when unknown, expected is the S11 type for the vintage and low and high span the other type. The 5.678 W/(m²·K) mass-wall value for Los Angeles is the code's "no requirement" entry (1.000 Btu/(h·ft²·°F)), not a measured wall; treat it as the high bound and use the steel-frame value as expected there. An apartment unit takes its envelope from DEF-01 and DEF-03 and has exterior boundaries only where its walls face outdoors; party walls and floors to other units are `adjacent_conditioned`.
 
+### DEF-12 Exterior walls when the scan has no wall graph
+
+Live office scans can return rooms with `area_m2` (and usually `height_m`) but no `polygon`, no `boundary_edge_ids` and floors with no edges (2026-11-14: Culver City `ZSPaQbkGcJJ`, 17 rooms, 2,028.6 m²; Houston `L3266YcPPvd`, 6 rooms). Without a rule such a model has a floor and no walls or windows, so its baseline leaves out the whole facade. For each floor that has rooms and no usable wall graph (no edges, or no room owns any edge):
+
+1. **Perimeter.** Take the footprint of the chosen Vexcel structure (the `primary` one, the same structure the roof and north use), projected to metres east and north. Each footprint edge becomes one exterior wall; its azimuth is the edge's outward normal in that frame, so it is a true azimuth and needs no north offset.
+2. **Scanned share.** `share = min(1, A_scan / A_fp)`, with `A_scan` the sum of the floor's room `area_m2` and `A_fp` the footprint area. Wall length per edge = edge length × `share`. This assumes the suite's exterior wall is in proportion to its area, spread evenly over every orientation; a suite that owns one façade gets the right total and the wrong orientations.
+3. **Height.** The floor's mean room height (zone volume / floor area): measured `height_m`, a room without one taking the mean of the measured rooms, and with no height at all the builder's existing 2.7 m (not sourced).
+4. **Windows.** The usual order on these walls: a vision `window.area_m2` spread in proportion to wall area, else the `DEF-03` window-to-wall ratio. Window surfaces built here have no `source_edge_id`.
+5. **Roof and ground.** Unchanged: the storey from the floor label (or CoStar stories), a roof only on the top storey, a ground floor only on storey 1, its exposed perimeter the sum of these wall lengths.
+6. **No footprint.** A square of `A_scan` aligned with the model axes, every side exterior, azimuths rotated by `north_offset_deg`. This is a last resort with a stronger warning.
+
+Provenance: assumption `geometry.envelope_source` (source `vintage_default`, confidence 0.2, or 0.05 for the square), with the footprint as evidence, and a warning naming the floor and the share. A conditioned zone that still has no exterior wall gets a warning. Desk placement needs room outlines and is not applicable on such a scan; no outline is invented. Not sourced (section 10, tier A).
+
 ## 9. Build-time test plan
 
 Every tool function gets a unit test that reproduces the worked example in its entry to the precision printed there (relative tolerance 1e-3 unless stated). On top of those:
@@ -1541,6 +1554,7 @@ Two tiers. Tier A items must not be implemented as sourced physics; where the pi
 | ISO 13790 loss utilisation factor for cooling (monthly method) | ZON-06 | equations illegible in the open text | no monthly cross-check for cooling |
 | Mapping of ISO 13790 mass classes to US construction types | ZON-01 | the standard gives classes only | medium for all, light and heavy as the range |
 | Window-to-wall ratio defaults (0.15 / 0.18 / 0.25 homes, 0.20 / 0.30 / 0.40 offices) | DEF-03, only when there are neither measured openings nor a vision reading | not sourced | result flagged; the ask rule of the master spec should fire |
+| Exterior wall from the footprint perimeter × scanned share when the scan has no wall graph | DEF-12 | a modelling rule, no source; a suite's facade is not in proportion to its area in general | result flagged; `geometry.envelope_source` at confidence 0.2 |
 | Office lighting power density after an LED retrofit (6.5 W/m²) and any 90.1 or Title 24 value after 2004 | DEF-10, `LGT_LED` | ASHRAE 90.1-2010 and later and Title 24 Part 6 lighting tables not opened | `LGT_LED` target is a measure parameter that the finance and measure library must source |
 | Savings fractions for lighting controls, the plug-load floor for `PLUG_MGMT`, the leakage reduction for `ENV_AIRSEAL`, the setback depth for `CTRL_TSTAT` | LGT-01, LGT-02, DEF-04, DEF-08 | no source opened | each is a measure parameter; this file gives only the physics that turns the parameter into energy |
 | Economizer high-limit temperatures and economizer requirements by climate zone (ASHRAE 90.1 section 6.5.1) | INF-06 | paywalled | `theta_limit` is a parameter; a default of 21 °C was used only in the worked example |
@@ -1674,7 +1688,7 @@ Also requested: make `Systems.hvac_type` a closed list, `Literal["central_ac_fur
 6. `ClimateSite.weather_path` must supply, hourly: dry-bulb temperature, humidity ratio (or dew point and pressure), wind speed, and if available sky temperature or horizontal infrared radiation. Plane irradiance comes from physics 01 (IRR-10).
 7. A window `Surface` is built from an `Opening` with `type == "window"`. A `"doorway"` on an exterior edge becomes a `door` surface. Still open on the Data lane and immaterial here: which vertex `relative_center` is measured from.
 8. `rentable_area_m2` must not be used in physics. Envelope and loads use measured Matterport areas for the scanned unit and `building_area_m2` for whole-building scaling.
-9. `MeasureResult.formula_ids` are the entry IDs of this file (`ENV-01` … `DEF-11`).
+9. `MeasureResult.formula_ids` are the entry IDs of this file (`ENV-01` … `DEF-12`).
 
 **Measure library, section 6.2:**
 

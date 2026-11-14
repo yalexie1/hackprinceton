@@ -16,6 +16,10 @@ Rules, in the order they apply:
   with none, in proportion to wall area; ``window.<room_id>.area_m2`` on the exterior wall of a
   room with none that an evidence ``ref`` names by edge id, else on its longest exterior wall.
   With neither measured nor vision windows, the DEF-03 window-to-wall ratio applies.
+- A floor with rooms but no usable wall graph (no edges, or no room owns an edge; live office
+  scans) takes its walls from the Vexcel footprint perimeter scaled by the scanned share of the
+  plate, or, with no footprint either, from a square of the scanned area (physics 02 DEF-12,
+  SPEC 5.1). Such a model is never left without exterior walls silently.
 - A roof surface on the top storey, a ground floor with its exposed perimeter on storey 1.
 - ``north_offset_deg`` and ``north_source`` from ``north.resolve_north``.
 
@@ -25,6 +29,7 @@ placeholders, and the result says so in ``warnings``.
 """
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -33,7 +38,7 @@ from typing import Iterable, Literal, Optional
 from backend.schema import (Assumption, EvidenceRef, Floor, MatterportData, Ranged, Room,
                             Surface, VexcelData, WallEdge, Zone)
 
-from .north import NorthSource, resolve_north
+from .north import NorthSource, footprint_local_xy, footprint_wkt, resolve_north
 from .walls import (azimuth_in_model, edge_length, edge_owners, edge_points, opening_fits,
                     outward_normal, room_area, vertex_xy)
 
@@ -147,17 +152,22 @@ class _Wall:
     edge: WallEdge
     floor_id: str
     zone_id: str
-    room: Room
+    room: Optional[Room]                  # None for a wall built from the footprint (DEF-12)
     length: float
     height: float
     azimuth: float
     boundary: Boundary
     surface_id: str
     children: list[Surface] = field(default_factory=list)
+    synthetic: bool = False               # not a Matterport edge: no source_edge_id
 
     @property
     def gross(self) -> float:
         return self.length * self.height
+
+    @property
+    def source_edge_id(self) -> Optional[str]:
+        return None if self.synthetic else self.edge.id
 
 
 def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = None,
@@ -217,6 +227,7 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
     zones: list[Zone] = []
     walls: list[_Wall] = []
     zone_of_floor: dict[str, str] = {}
+    no_graph: list[tuple[Floor, Zone]] = []      # floors for the DEF-12 fallback
     for fl in matterport.floors:
         rooms = rooms_by_floor[fl.id]
         if not rooms:
@@ -231,6 +242,9 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
 
         xy = vertex_xy(fl)
         owners = edge_owners(fl, rooms)
+        if not any(owners.values()):               # no edges, or no room owns one (DEF-12)
+            no_graph.append((fl, zones[-1]))
+            continue
         room_by_id = {r.id: r for r in rooms}
         envelope: list[tuple[WallEdge, Room]] = []
         for e in fl.edges:
@@ -256,6 +270,12 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
                 height=height[room.id], azimuth=_az(azimuth_in_model(n) + psi),
                 boundary=boundary[e.id],
                 surface_id=f"surf_wall_{fl.id}_{e.id}" if clash else f"surf_wall_{e.id}"))
+
+    new_assumptions: list[Assumption] = [north.assumption]
+    if no_graph:
+        fp_walls, fp_assumption = _footprint_envelope(no_graph, vexcel, psi, single, warnings)
+        walls += fp_walls
+        new_assumptions.append(fp_assumption)
 
     # measured openings on envelope edges
     measured_windows = 0
@@ -292,7 +312,6 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
             if any(o.type == "window" for o in e.openings):
                 rooms_with_windows.update(owners.get(e.id, []))
 
-    new_assumptions: list[Assumption] = [north.assumption]
     window_source: Optional[str] = "measured" if measured_windows else None
     exterior = [w for w in walls if w.boundary == "exterior"]
 
@@ -309,7 +328,7 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
             warnings.append(f"{a.key}: room {rid} has measured window openings; the vision "
                             f"reading is a cross-check only and builds no surface")
             continue
-        candidates = [w for w in exterior if w.room.id == rid]
+        candidates = [w for w in exterior if w.room is not None and w.room.id == rid]
         if not candidates:
             warnings.append(f"{a.key}: room {rid} has no exterior wall; no window built")
             continue
@@ -374,7 +393,7 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
             id=w.surface_id, zone_id=w.zone_id, kind="wall", boundary=w.boundary,
             area_m2=round(net, 4), azimuth_deg=w.azimuth, tilt_deg=90.0,
             u_value=props.get("wall.u_value" if ext else "partition.u_value"),
-            source_edge_id=w.edge.id,
+            source_edge_id=w.source_edge_id,
             solar_absorptance=props.get("wall.absorptance") if ext else None,
             emittance=DEFAULT_EMITTANCE if ext else None))
         surfaces.extend(w.children)
@@ -423,6 +442,11 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
             evidence=[EvidenceRef(kind="matterport_field", ref="floors.edges.thickness",
                                   note="thinner than the unit's exterior walls; the scan does "
                                        "not say which walls face outdoors")]))
+    for z in zones:
+        if z.conditioned and not any(s.zone_id == z.id and s.kind == "wall"
+                                     and s.boundary == "exterior" for s in surfaces):
+            warnings.append(f"zone {z.id} has no exterior wall: its baseline leaves out the "
+                            f"facade, and window measures cannot apply")
     if props.placeholders:
         warnings.append("placeholder envelope properties (no registry value passed): "
                         + ", ".join(sorted(props.placeholders)))
@@ -433,6 +457,103 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
 
 
 # ---------------------------------------------------------------- helpers
+
+def _footprint_ring(vexcel: Optional[VexcelData], warnings: list[str]
+                    ) -> Optional[list[tuple[float, float]]]:
+    """The chosen structure's footprint (the ``primary`` one, as A11 and ``north.py`` read it)
+    in metres east and north, counter-clockwise and closed; None when there is none."""
+    wkt = footprint_wkt(vexcel)
+    if not wkt:
+        return None
+    ring = footprint_local_xy(wkt)
+    if ring is None:
+        warnings.append("Vexcel footprint WKT could not be read; no footprint envelope")
+        return None
+    from shapely.geometry import Polygon
+    from shapely.geometry.polygon import orient
+    poly = Polygon(ring)
+    if not poly.is_valid or poly.area <= 0:
+        warnings.append("Vexcel footprint is not a valid polygon; no footprint envelope")
+        return None
+    return [(float(x), float(y)) for x, y in orient(poly, sign=1.0).exterior.coords]
+
+
+def _footprint_envelope(no_graph: list[tuple[Floor, Zone]], vexcel: Optional[VexcelData],
+                        psi: float, single: bool, warnings: list[str]
+                        ) -> tuple[list[_Wall], Assumption]:
+    """Exterior walls of floors without a usable wall graph (physics 02 DEF-12, SPEC 5.1).
+
+    Each edge of the Vexcel footprint becomes one exterior wall of length edge x share, with
+    share = min(1, scanned floor area / footprint area): a suite's exterior is taken as
+    proportional to its area. Azimuths are the outward normals in the footprint's own
+    east-north frame, so they are true azimuths without the north offset. With no footprint, a
+    square of the scanned area aligned with the model axes is the last resort (azimuths rotated
+    by the north offset). Height is the zone's mean room height (volume / area).
+    """
+    ring = _footprint_ring(vexcel, warnings)
+    fp_area = None
+    if ring is not None:
+        from shapely.geometry import Polygon
+        fp_area = float(Polygon(ring).area)
+    walls: list[_Wall] = []
+    notes: list[str] = []
+    for fl, zone in no_graph:
+        area = zone.floor_area_m2
+        height = zone.volume_m3 / area if area > 0 else DEFAULT_CEILING_HEIGHT_M
+        prefix = "footprint" if single else f"{fl.id}_footprint"
+        if any(o.type == "window" for e in fl.edges for o in e.openings):
+            warnings.append(f"floor {fl.id}: window openings on edges that bound no room are "
+                            f"left out")
+        if ring is not None:
+            share = min(1.0, area / fp_area)
+            sides = []
+            for (x0, y0), (x1, y1) in zip(ring, ring[1:]):
+                length = math.hypot(x1 - x0, y1 - y0)
+                if length > 1e-6:      # counter-clockwise ring: outward normal on the right
+                    sides.append((length * share, _az(math.degrees(math.atan2(y1 - y0,
+                                                                              -(x1 - x0))))))
+            warnings.append(
+                f"floor {fl.id}: the scan has no wall graph, so walls and windows come from the "
+                f"building footprint: the Vexcel footprint perimeter ({fp_area:.0f} m2) scaled "
+                f"by the scanned share {share:.2f} ({area:.0f} m2 scanned), assuming the "
+                f"suite's exterior is proportional to its area (physics 02 DEF-12)")
+            notes.append(f"floor {fl.id}: {len(sides)} footprint edges x share {share:.3f} "
+                         f"({area:.1f} of {fp_area:.1f} m2), height {height:.2f} m")
+        else:
+            side = math.sqrt(area)
+            sides = [(side, _az(a + psi)) for a in (0.0, 90.0, 180.0, 270.0)]
+            warnings.append(
+                f"floor {fl.id}: the scan has no wall graph and there is no Vexcel footprint, so "
+                f"the walls are a square of the scanned area ({area:.0f} m2, {side:.1f} m a "
+                f"side), every side exterior. Orientation, exterior share and window area are "
+                f"all guesses (physics 02 DEF-12); treat the envelope figures as rough")
+            notes.append(f"floor {fl.id}: no footprint; square of the scanned {area:.1f} m2, "
+                         f"height {height:.2f} m")
+        for i, (length, az) in enumerate(sides, start=1):
+            eid = f"{prefix}_{i}"
+            walls.append(_Wall(
+                edge=WallEdge(id=eid, type="wall", vertex_ids=(f"{eid}_a", f"{eid}_b")),
+                floor_id=fl.id, zone_id=zone.id, room=None, length=length, height=height,
+                azimuth=az, boundary="exterior", surface_id=f"surf_wall_{eid}", synthetic=True))
+    if ring is not None:
+        value, conf = "vexcel_footprint_perimeter_x_scanned_share", 0.2
+        evidence = [EvidenceRef(kind="vexcel_attr", ref="footprint.wkt",
+                                note="perimeter and edge azimuths of the chosen structure's "
+                                     "footprint; " + "; ".join(notes)),
+                    EvidenceRef(kind="matterport_field", ref="rooms.area_m2",
+                                note="scanned floor area; the scan has no wall edges or room "
+                                     "outlines")]
+    else:
+        value, conf = "square_of_scanned_area", 0.05
+        evidence = [EvidenceRef(kind="matterport_field", ref="rooms.area_m2",
+                                note="no wall graph and no Vexcel footprint; " + "; ".join(notes))]
+    evidence.append(EvidenceRef(kind="default_table", ref="DEF-12",
+                                note="physics 02 DEF-12, not sourced"))
+    return walls, Assumption(
+        key="geometry.envelope_source",
+        label="Exterior walls from the building footprint (the scan has no wall graph)",
+        value=value, source="vintage_default", confidence=conf, evidence=evidence)
+
 
 def _az(a: float) -> float:
     r = round(a % 360.0, 4)
@@ -461,7 +582,8 @@ def _window(sid: str, w: _Wall, area: float, props: _Props,
         azimuth_deg=w.azimuth, tilt_deg=90.0, u_value=props.get("window.u_value"),
         shgc=props.get("window.shgc"),
         visible_transmittance=props.get("glazing.visible_transmittance"),
-        parent_surface_id=w.surface_id, source_edge_id=w.edge.id, source_opening_id=opening_id)
+        parent_surface_id=w.surface_id, source_edge_id=w.source_edge_id,
+        source_opening_id=opening_id)
 
 
 def _spread(walls: list[_Wall], total: float, props: _Props, warnings: list[str],

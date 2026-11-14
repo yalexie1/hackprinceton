@@ -42,6 +42,11 @@ def _flow(bundle: PropertyBundle) -> str:
 
 
 def check(bundle: PropertyBundle, model: BuildingModel) -> Optional[tuple[str, str]]:
+    # Live office scans can carry room areas with no outline (physics 02 DEF-12): there is no
+    # floor to put a desk on, and none is invented.
+    if bundle.matterport.rooms and not any(len(r.polygon) >= 3 for r in bundle.matterport.rooms):
+        return ("feasibility", "The scan has no room outlines, so there is no floor plan to "
+                                 "place desks on.")
     if not window_surfaces(model):
         return ("feasibility", "No windows were found, so no position gets daylight to place a desk by.")
     if not candidate_grid(bundle.matterport):

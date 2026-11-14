@@ -1,0 +1,14 @@
+{
+  "run_id": "run_office_houston_example",
+  "doc_type": "cpace_package",
+  "state": "TX",
+  "measure_ids": [
+    "HVAC_RTU",
+    "HVAC_ECON"
+  ],
+  "fields": {
+    "property_address": "2100 West Loop S, Houston, TX 77027",
+    "pace_region": "City of Houston",
+    "application_date": "2026-11-20"
+  }
+}

@@ -1,67 +1,105 @@
 {
   "doc_id": "doc_office_example_1",
-  "doc_type": "cpace_package",
-  "state": "TX",
-  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# C-PACE project summary\n\nProperty: 9050 Emnora Ln, Houston, TX (CoStar property id 354635). Application date: 2026-11-20. PACE region: {{pace_region}}.\n\nProperty owner: {{owner_legal_name}}. Legal description: {{property_legal_description}}.\n\n## 1. Qualified improvement\n\n- LGT_LED: LED retrofit of ceiling troffers, useful life 15 years.\n\n## 2. Financing terms\n\nFinanced amount: $15,600. Term: 15 years. Rate: 6.5%. Annual assessment: $1,659. Capital provider: {{capital_provider_name}}.\n\n## 3. Savings test\n\nProgram savings-to-investment ratio (undiscounted, over the term): 0.43. The program requires at least 1.0, so this project does not pass the screen as it stands. The independent third-party reviewer determines the official figure: {{third_party_reviewer_name}}.\n\nLife-cycle savings-to-investment ratio (discounted, a different measure): 0.549.\n\n## 4. Lien and lender consent\n\nThe assessment is a lien that runs with the property. Existing mortgage holder: {{mortgage_holder_name}}. Written consent: {{mortgage_holder_consent_date}}.\n",
+  "doc_type": "retrofit_contract_commercial",
+  "state": "CA",
+  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# Commercial retrofit construction contract\n\nDate: 2026-11-20. Property: 11400 Olympic Blvd, Suite 140, Los Angeles, CA 90064 (CoStar property id 246899), an office suite in a privately owned office building; no public funds. Place of signing: {{signing_location}}.\n\n## Parties\n\nOwner: {{owner_name}}, {{owner_address}}, place of business {{owner_place_of_business}}.\n\nConstruction lender, if any: {{construction_lender_name}}, {{construction_lender_address}}.\n\nContractor: {{contractor_name}}, Contractors State License Board licence number {{contractor_license_number}}, classification {{contractor_license_classification}}.\n\n## 1. Work\n\n- LGT_LED: replace 48 fluorescent 2x4 troffers in Suite 140 with LED luminaires (DLC-listed if the LADWP lighting incentive is sought, with LADWP approval before purchase).\n\nStart date: {{start_date}}. Completion date: {{completion_date}}. Access to the occupied suite is arranged through the owner.\n\n## 2. Contract price\n\n{{contract_price_usd}}. For reference only, the audit's installed-cost estimate is $10,272 to $24,816 (expected $18,720); it is not a price.\n\n## 3. Payment and retention\n\nOwner pays each undisputed progress payment within 30 days after the Contractor's payment demand. Retention: {{retention_percent}} percent of each payment, not more than 5 percent of each payment or of the contract price, released within 45 days after completion. The Contractor pays each subcontractor within 7 days after receiving each progress payment and its share of retention within 10 days.\n\n## 4. Indemnity\n\nNo party is indemnified for its own sole negligence or wilful misconduct, and any indemnity by the Contractor excludes the Owner's active negligence.\n\n## 5. Liens\n\nSubcontractors and suppliers give preliminary notice within 20 days of first furnishing work. Lien releases are given only in the forms of Civil Code sections 8132 to 8138. If the Owner records a notice of completion, the Owner sends a copy within 10 days to the Contractor and to every claimant that gave preliminary notice.\n\n## 6. Contract information (Labor Code 2810)\n\nContractor's state employer identification number: {{contractor_employer_id}}. Workers' compensation policy: {{workers_comp_policy_number}}, insurer {{workers_comp_insurer}}. Number of workers and total wages: {{workforce_and_wages}}.\n\n## 7. Savings\n\nEnergy savings stated in the audit are estimates with low, expected and high values. They are not guaranteed.\n\n## 8. Notice\n\nContractors are required by law to be licensed and regulated by the Contractors State License Board which has jurisdiction to investigate complaints against contractors if a complaint regarding a patent act or omission is filed within four years of the date of the alleged violation. A complaint regarding a latent act or omission pertaining to structural defects must be filed within 10 years of the date of the alleged violation. Any questions concerning a contractor may be referred to the Registrar, Contractors State License Board, P.O. Box 26000, Sacramento, CA 95826.\n\n## 9. For the attorney\n\nWhether the home solicitation sections can reach a contract signed away from the Contractor's premises; arbitration-notice format; permits and Title 24 compliance forms for the lighting alteration.\n\nOwner signature: ____________________  Contractor signature: ____________________\n",
   "unfilled_placeholders": [
-    "pace_region",
-    "owner_legal_name",
-    "property_legal_description",
-    "capital_provider_name",
-    "third_party_reviewer_name",
-    "mortgage_holder_name",
-    "mortgage_holder_consent_date"
+    "signing_location",
+    "owner_name",
+    "owner_address",
+    "owner_place_of_business",
+    "construction_lender_name",
+    "construction_lender_address",
+    "contractor_name",
+    "contractor_license_number",
+    "contractor_license_classification",
+    "start_date",
+    "completion_date",
+    "contract_price_usd",
+    "retention_percent",
+    "contractor_employer_id",
+    "workers_comp_policy_number",
+    "workers_comp_insurer",
+    "workforce_and_wages"
   ],
   "statutory_checks": [
     {
-      "requirement_id": "TX-PACE-01",
-      "requirement": "Eligible property: commercial, industrial, or residential with five or more units",
-      "citation": "Loc. Gov't Code section 399.002(5)",
+      "requirement_id": "CA-COM-01",
+      "requirement": "Contractor licensed in the correct classification for the work",
+      "citation": "BPC 7031, 7048, 7125",
+      "satisfied": false,
+      "note": "contractor_name and contractor_license_classification are blank. Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-COM-02",
+      "requirement": "Licence number in the contract",
+      "citation": "BPC 7030.5",
+      "satisfied": false,
+      "note": "contractor_license_number is blank. Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-COM-03",
+      "requirement": "CSLB notice for prime contractors, at least 10-point type",
+      "citation": "BPC 7030(a), (c)",
       "satisfied": true,
-      "note": "CoStar property type Office. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "Verbatim text in section 8 of the draft. Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
     },
     {
-      "requirement_id": "TX-PACE-04",
-      "requirement": "Property lies in a designated PACE region",
-      "citation": "Loc. Gov't Code sections 399.006(a), 399.007, 399.008(a)",
-      "satisfied": false,
-      "note": "pace_region is blank: it is not confirmed that the address is inside the Houston city limits. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
-    },
-    {
-      "requirement_id": "TX-PACE-11",
-      "requirement": "Assessment period does not exceed the useful life of the qualified project",
-      "citation": "Loc. Gov't Code section 399.009(a)(8)",
+      "requirement_id": "CA-COM-04",
+      "requirement": "Progress payments within 30 days of payment demand unless the contract says otherwise",
+      "citation": "CIV 8800",
       "satisfied": true,
-      "note": "Term 15 years, useful life 15 years. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
     },
     {
-      "requirement_id": "TX-PACE-15",
-      "requirement": "The lien runs with the land",
-      "citation": "Loc. Gov't Code section 399.014(b)-(e)",
+      "requirement_id": "CA-COM-05",
+      "requirement": "Retention no more than 5 percent of each payment and of the contract price",
+      "citation": "CIV 8811",
+      "satisfied": false,
+      "note": "retention_percent is blank; it must be validated as at most 5. Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-COM-06",
+      "requirement": "Retention release within 45 days after completion",
+      "citation": "CIV 8812, 8814, 8818, 8820",
       "satisfied": true,
-      "note": "Stated in section 4 of the draft. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
     },
     {
-      "requirement_id": "TX-PACE-08",
-      "requirement": "Mortgage holder notice and written consent",
-      "citation": "Loc. Gov't Code section 399.010",
-      "satisfied": false,
-      "note": "mortgage_holder_name and mortgage_holder_consent_date are blank. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "requirement_id": "CA-COM-07",
+      "requirement": "Pay subcontractors within 7 days of each progress payment",
+      "citation": "BPC 7108.5",
+      "satisfied": true,
+      "note": "Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
     },
     {
-      "requirement_id": "TX-PACE-09",
-      "requirement": "Independent review of baseline conditions and projected savings",
-      "citation": "Loc. Gov't Code section 399.011(a), (a-1), (c)",
-      "satisfied": false,
-      "note": "third_party_reviewer_name is blank. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "requirement_id": "CA-COM-08",
+      "requirement": "Indemnity limits",
+      "citation": "CIV 2782(a), (c); 2782.05",
+      "satisfied": true,
+      "note": "Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
     },
     {
-      "requirement_id": "TX-PACE-30",
-      "requirement": "SIR of at least 1 over the life of the assessment, validated by the reviewer",
-      "citation": "Texas PACE Authority Program Guide v4.3, Steps 2, 7, 8",
+      "requirement_id": "CA-COM-09",
+      "requirement": "Lien regime: preliminary notices, statutory release forms, notice of completion copies",
+      "citation": "CIV 8180-8182, 8200-8204, 8124-8138, 8412-8414",
+      "satisfied": true,
+      "note": "Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-COM-11",
+      "requirement": "Space for the owner's name, address and place of business and the construction lender's name and address",
+      "citation": "CIV 8170",
+      "satisfied": true,
+      "note": "The spaces are present; the values are blank. Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "CA-COM-12",
+      "requirement": "Sufficient-funds information for the rebuttable presumption",
+      "citation": "LAB 2810",
       "satisfied": false,
-      "note": "The screen gives a program SIR of 0.43, below 1, and no reviewer has validated it. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "contractor_employer_id, workers' compensation details and workforce and wages are blank. Requirement id and citation from specs/legal/california.md section 3; the satisfied value is illustrative."
     }
   ],
-  "disclaimer": "Draft for attorney review, not legal advice. Blanks are left where a party, legal description or date was not supplied."
+  "disclaimer": "Draft for attorney review, not legal advice. Blanks are left where a party, licence number, price or date was not supplied."
 }

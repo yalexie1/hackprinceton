@@ -1,0 +1,10 @@
+{
+  "sid": "L3266YcPPvd",
+  "budget_usd": 50000.0,
+  "role": "landlord",
+  "bills": null,
+  "overrides": {
+    "lighting.lamp_type": "fluorescent"
+  },
+  "desks_requested": 4
+}

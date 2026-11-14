@@ -6,7 +6,6 @@ import {
   MapPin,
   Search,
   SlidersHorizontal,
-  ShieldCheck,
 } from "lucide-react";
 import type { PropertySummary } from "../lib/types";
 import PropertyPreview from "./PropertyPreview";
@@ -110,28 +109,10 @@ export default function Find({
           </select>
         </label>
       </div>
-      <div className="property-order-note">
-        <ShieldCheck size={23} />
-        <div>
-          <strong>Most measured evidence first</strong>
-          <p>
-            Properties with more measured inputs come first. This is a guide to
-            audit readiness, not a guarantee of savings or accuracy.
-          </p>
-          <details>
-            <summary>How this order is determined</summary>
-            <p>
-              The reviewed order is the house, Culver, then Houston. The house
-              has measured walls and window openings. None of the three has
-              measured room outlines. Both offices rely on an aerial footprint
-              and image-based window estimates; Culver has more scan views
-              available. Unassessed properties follow the reviewed ones. Review
-              the actual audit’s assumptions, weather source and utility-bill
-              calibration before relying on an estimate.
-            </p>
-          </details>
-        </div>
-      </div>
+      {/* The "Most measured evidence first" card was removed on request. The ordering it
+          described is unchanged - `orderedProperties` still puts the reviewed properties first -
+          and each card still carries its own readiness line, which is where a reader meets the
+          measured-versus-estimated distinction now. */}
       <div className="property-grid">
         {orderedProperties.map((p, i) => (
           <button
@@ -207,13 +188,10 @@ export default function Find({
         ))}
       </div>
       {properties.length > 0 && (
+        /* The explanatory prose was removed on request. The attribution links stay: the overhead
+           tiles are licensed imagery whose credit is a condition of use, and the per-card credit
+           line carries the same attribution beside every map. */
         <p className="property-imagery-note">
-          Side-angle aerial photos are shown when available from Vexcel.
-          Otherwise, an overhead image shows geospatial context around a scan,
-          street-address or reported listing location, not a surveyed property
-          boundary. Imagery may predate current conditions and differ from the
-          capture used for roof measurements. Scan locations are computed by
-          Matterport, not surveyed.{" "}
           <a
             href="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer"
             target="_blank"
@@ -261,7 +239,8 @@ export default function Find({
           <span>Three perspectives. One clearer picture.</span>
         </div>
         <p>
-          Matterport <span>·</span> Vexcel <span>·</span> CoStar
+          Matterport <span>·</span> Vexcel <span>·</span> CoStar <span>·</span>{" "}
+          LangChain
         </p>
         <small>
           {demo

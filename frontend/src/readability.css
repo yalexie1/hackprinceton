@@ -1574,3 +1574,11 @@ textarea {
   cursor: pointer;
   font-weight: 600;
 }
+
+/* The Leto logo (mark and wordmark, transparent background) replaces the drawn mark and the text. */
+.brand-logo {
+  display: block;
+  height: 40px;
+  width: auto;
+  margin-bottom: 4px;
+}

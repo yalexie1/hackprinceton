@@ -45,7 +45,6 @@ import {
   demoStages,
 } from "./lib/fixtures";
 import { auditStageLabel, download, money, number } from "./lib/format";
-import LetoMark from "./components/LetoMark";
 import Find from "./components/Find";
 import HouseViewer from "./components/HouseViewer";
 import Tour from "./components/Tour";
@@ -574,11 +573,9 @@ export default function App() {
             setMobileNav(false);
           }}
         >
-          <span className="brand-mark">
-            <LetoMark size={23} />
-          </span>
           <span>
-            Leto<span>BUILDING INTELLIGENCE</span>
+            <img className="brand-logo" src="/leto-logo.png" alt="Leto" />
+            <span>BUILDING INTELLIGENCE</span>
           </span>
         </a>
         <button

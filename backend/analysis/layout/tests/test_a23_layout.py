@@ -95,7 +95,9 @@ def test_candidates_on_grid_and_clear_of_walls(name):
     for c in cands:
         assert abs(c.x / GRID_M - round(c.x / GRID_M)) < 1e-9
         assert abs(c.y / GRID_M - round(c.y / GRID_M)) < 1e-9
-        assert Polygon(rooms[c.room_id].polygon).buffer(1e-9).contains(Point(c.x, c.y))
+        poly = Polygon(rooms[c.room_id].polygon)
+        assert poly.contains(Point(c.x, c.y))                       # strictly inside
+        assert poly.exterior.distance(Point(c.x, c.y)) > 1e-9       # never on the boundary
         f = floors[c.floor_id]
         vs = {v.id: (v.x, v.y) for v in f.vertices}
         for e in f.edges:
@@ -105,6 +107,18 @@ def test_candidates_on_grid_and_clear_of_walls(name):
             face = line.distance(Point(c.x, c.y)) - (e.thickness_m or 0.12) / 2
             assert face >= WALL_CLEARANCE_M - 1e-9, (c, e.id)
     assert len({(c.floor_id, c.x, c.y) for c in cands}) == len(cands)
+
+
+def test_no_candidate_on_an_invisible_room_edge():
+    # LA office room_01 has an invisible edge at y = 9.5 (to room_02). No wall clearance
+    # removes points there, and the daylight scorer may put a boundary point outside the
+    # room, so the grid must not offer them (15 such points before the fix).
+    b = bundle("office")
+    rooms = {r.id: r for r in b.matterport.rooms}
+    on_edge = [c for c in candidate_grid(b.matterport)
+               if Polygon(rooms[c.room_id].polygon).exterior.distance(Point(c.x, c.y)) < 1e-9]
+    assert on_edge == []
+    assert not [c for c in candidate_grid(b.matterport) if c.room_id == "room_01" and abs(c.y - 9.5) < 1e-9]
 
 
 def test_candidates_avoid_door_openings():

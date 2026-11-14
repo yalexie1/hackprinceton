@@ -117,7 +117,7 @@ def test_get_asset_missing_in_cache_raises_filenotfound():
 
 def test_get_asset_never_returns_a_url(tmp_path, monkeypatch):
     """A cached asset is returned as bytes; no URL is produced or stored."""
-    cache = api._CACHE / "_d5_selftest"
+    cache = api._cache_dir() / "_d5_selftest"
     cache.mkdir(parents=True, exist_ok=True)
     f = cache / "probe.bin"
     f.write_bytes(b"\x89PNG\r\n\x1a\n")

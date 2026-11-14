@@ -110,6 +110,43 @@ def _metres(a: tuple[float, float], b: tuple[float, float]) -> float:
     )
 
 
+def contains(wkt: Optional[str], lat: float, lon: float) -> bool:
+    """Whether a footprint ring encloses a point. Ray casting on the ring as given.
+
+    Needed because **nearest centroid is not the same as "the building at this
+    address"**: at the Los Angeles office the nearest centroid is 18 m away and the
+    structure that actually contains the address point is a different one, with a
+    different solar flag.
+    """
+    if not wkt:
+        return False
+    nums = [float(v) for v in _NUM.findall(wkt)]
+    points = list(zip(nums[0::2], nums[1::2]))        # (lon, lat)
+    if len(points) < 4:
+        return False
+    inside = False
+    for i in range(len(points) - 1):
+        (x1, y1), (x2, y2) = points[i], points[i + 1]
+        if (y1 > lat) != (y2 > lat):
+            crossing = x1 + (lat - y1) * (x2 - x1) / (y2 - y1)
+            if lon < crossing:
+                inside = not inside
+    return inside
+
+
+def containing_structure(lat: float, lon: float, *, half_m: float = 100.0, get=None):
+    """The smallest primary structure whose footprint encloses the point, or `None`.
+
+    Smallest, because overlapping structures are normal on a commercial parcel - the
+    Houston office has six containing it - and the smallest enclosing one is the
+    building rather than the block.
+    """
+    structures, notes = parcels_in_box(lat, lon, half_m, get=get)
+    enclosing = [s for s in structures if contains(s.get("footprint.wkt"), lat, lon)]
+    enclosing.sort(key=lambda s: s.get("footprint.area") or 0.0)
+    return (enclosing[0] if enclosing else None), notes
+
+
 def box_wkt(lat: float, lon: float, half_m: float) -> str:
     """An axis-aligned box of `half_m` either side of a point, as WKT."""
     dlat = half_m / _M_PER_DEG_LAT
@@ -333,11 +370,21 @@ def screen(
     unmatched = 0
     for summary in candidates.values():
         point = (summary.lat, summary.lon)
-        best, best_m = None, MATCH_TOLERANCE_M
-        for structure in unique:
-            metres = _metres(point, structure["_centre"])
-            if metres <= best_m:
-                best, best_m = structure, metres
+        # Containment first, nearest centroid only as a fallback. At the Los Angeles
+        # office the nearest centroid is 18 m away and encloses the address, while a
+        # different structure is nearer the Matterport georeference - and they carry
+        # different solar flags, so proximity alone picks the wrong building.
+        enclosing = [s for s in unique if contains(s.get("footprint.wkt"), *point)]
+        if enclosing:
+            enclosing.sort(key=lambda s: s.get("footprint.area") or 0.0)
+            best = enclosing[0]
+            best_m = _metres(point, best["_centre"])
+        else:
+            best, best_m = None, MATCH_TOLERANCE_M
+            for structure in unique:
+                metres = _metres(point, structure["_centre"])
+                if metres <= best_m:
+                    best, best_m = structure, metres
         if best is None:
             unmatched += 1
             continue

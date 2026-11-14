@@ -3,20 +3,22 @@ no sponsor API supplies.
 
 Every rule here is a verified finding from `specs/data-integration.md` section 5:
 
-- **Open-Meteo archive** is the hourly source: keyless, covers both cities, and
-  returns GHI, DNI and DHI already separated, which makes an irradiance
-  *decomposition* step optional and leaves only the transposition to plane-of-array.
-- **`weather_time_convention` is `hour_end`.** Verified twice: the 24 hourly
-  `shortwave_radiation` values for one day sum to 29.923 MJ/m2 against a daily
-  `shortwave_radiation_sum` of 29.92, a ratio of 1.0001, so they are full-hour means
-  and not instantaneous samples; and at sunrise 04:42 the stamps read 0.0 at 04:00,
-  2.0 at 05:00 and 85.0 at 06:00, which only fits the stamp labelling the hour that
-  *ends* at it. Reading a stamp as the following hour shifts every solar calculation
-  by an hour, and nothing downstream would error.
-- **What this writes is one real calendar year, not a TMY.** A true typical year
-  needs multi-year statistics that are out of scope, so `weather_source` names the
-  exact year and the inter-annual spread comes from PVGIS `SD_y` rather than being
-  invented.
+- **The hourly source is a TMYx typical year** from the nearest representative
+  station (#295, `tmyx.py`, data spec 5.1f). The Open-Meteo 2024 reanalysis it
+  replaces ran about 3 °F cold at the golden house against the Downtown USC station
+  in the same year, which inflated heating by half.
+- **Open-Meteo archive is the fallback**: keyless, covers both cities, and returns
+  GHI, DNI and DHI already separated. A `fallback` record says why it was used.
+- **`weather_time_convention` is `hour_end`** for both. For Open-Meteo, verified
+  twice: the 24 hourly `shortwave_radiation` values for one day sum to 29.923 MJ/m2
+  against a daily `shortwave_radiation_sum` of 29.92, a ratio of 1.0001, so they are
+  full-hour means and not instantaneous samples; and at sunrise 04:42 the stamps read
+  0.0 at 04:00, 2.0 at 05:00 and 85.0 at 06:00, which only fits the stamp labelling
+  the hour that *ends* at it. Reading a stamp as the following hour shifts every
+  solar calculation by an hour, and nothing downstream would error. For TMYx, the
+  EPW convention, with the irradiance checked and realigned (`tmyx.py`).
+- **An Open-Meteo file is one real calendar year, not a TMY**, so its
+  `weather_source` names the exact year.
 - **PVGIS** gives the annual cross-check and that spread. Only `PVGIS-ERA5` exists
   for the United States, and it is a ~30 km reanalysis, so it is a sanity band and
   never the hourly source. **PVWatts and NSRDB are unusable**: both
@@ -39,7 +41,7 @@ from typing import Callable, Optional
 
 from backend.schema import ClimateSite, FetchRecord, Tariff
 
-from . import cache
+from . import cache, tmyx
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -164,35 +166,43 @@ def _pvgis_annual_and_sd(payload: dict) -> tuple[Optional[float], Optional[float
     return float(e_y), sd_fraction
 
 
+def _pvgis_elevation(payload: Optional[dict]) -> Optional[float]:
+    """The site elevation PVGIS reports from its DEM, which the TMYx station rule uses
+    to keep a basin site off a valley station behind a ridge."""
+    elev = (((payload or {}).get("inputs") or {}).get("location") or {}).get("elevation")
+    return float(elev) if isinstance(elev, (int, float)) and not isinstance(elev, bool) else None
+
+
 def get_climate_site(
     sid: str, lat: float, lon: float, year: int, *,
     climate_zone: Optional[str] = None,
     get: Optional[Getter] = None,
+    get_bytes: Optional[tmyx.BytesGetter] = None,
     write: bool = True,
+    typical_year: bool = True,
 ) -> tuple[ClimateSite, list[FetchRecord]]:
     """`ClimateSite` plus provenance. Writes the hourly CSV into the cache.
 
-    `year` is a real calendar year, named in `weather_source` so nobody mistakes the
-    file for a typical meteorological year.
+    **TMYx first** (#295): the typical year of the nearest representative station,
+    see `tmyx.py`. **Open-Meteo archive `year` is the fallback** when no station
+    qualifies, the download fails or the file does not verify, and a `fallback`
+    record says why. `weather_source` always names which one was used.
+
+    An injected `get` without `get_bytes` means the caller is supplying Open-Meteo and
+    PVGIS only, so no TMYx download is attempted: the lane's rule is that an injected
+    transport puts the caller in control of every byte, and the suite makes no
+    network call.
     """
     notes: list[FetchRecord] = []
-    payload = fetch_hourly(lat, lon, year, get=get)
-    rows = len((payload.get("hourly") or {}).get("time") or [])
     rel = weather_path(sid)
-    if write:
-        # Atomic: a plain `write_text` interrupted part way leaves 8,760 rows of
-        # half a CSV that the next run happily reads as a complete year.
-        target = Path(rel) if Path(rel).is_absolute() else _ROOT / rel
-        cache.atomic_write_path(target, hourly_csv(payload).encode())
-    notes.append(FetchRecord(
-        layer="weather", what="open-meteo/archive",
-        status="ok" if rows >= 8760 else "fallback",
-        detail=f"{rows} hourly rows for {year}" + ("" if rows >= 8760 else "; short year"),
-    ))
+    target = Path(rel) if Path(rel).is_absolute() else _ROOT / rel
 
+    # PVGIS first: the cross-check, and the DEM elevation the station rule uses.
     annual = sd = None
+    pvgis_payload = None
     try:
-        annual, sd = _pvgis_annual_and_sd(fetch_pvgis(lat, lon, get=get))
+        pvgis_payload = fetch_pvgis(lat, lon, get=get)
+        annual, sd = _pvgis_annual_and_sd(pvgis_payload)
         notes.append(FetchRecord(layer="weather", what="pvgis/PVcalc",
                                  status="ok" if annual else "missing",
                                  detail="annual cross-check, PVGIS-ERA5 (~30 km reanalysis)"))
@@ -200,12 +210,59 @@ def get_climate_site(
         notes.append(FetchRecord(layer="weather", what="pvgis/PVcalc", status="error",
                                  detail=str(exc)[:200]))
 
+    why_not = None
+    if not typical_year:
+        why_not = "typical year not requested"
+    elif get is not None and get_bytes is None:
+        why_not = "a transport was injected for Open-Meteo and PVGIS only, so TMYx was not tried"
+    else:
+        try:
+            tmy = tmyx.typical_year(sid, lat, lon, site_elevation_m=_pvgis_elevation(pvgis_payload),
+                                    get_bytes=get_bytes)
+        except tmyx.Unavailable as exc:
+            why_not = str(exc)
+        else:
+            if write:
+                cache.atomic_write_path(target, tmy.csv_text.encode())
+            notes.append(FetchRecord(layer="weather", what="onebuilding/tmyx", status="ok",
+                                     detail=tmy.detail))
+            return ClimateSite(
+                lat=lat, lon=lon,
+                timezone=tmy.timezone,
+                climate_zone=climate_zone,
+                weather_path=rel,
+                weather_source=tmy.source,
+                weather_time_convention=tmyx.TIME_CONVENTION,
+                pvgis_annual_kwh_per_kw=annual,
+                pvgis_sd_fraction=sd,
+            ), notes
+
+    if typical_year:
+        notes.append(FetchRecord(layer="weather", what="onebuilding/tmyx", status="fallback",
+                                 detail=f"{why_not}; Open-Meteo archive {year} used instead"))
+
+    payload = fetch_hourly(lat, lon, year, get=get)
+    rows = len((payload.get("hourly") or {}).get("time") or [])
+    if write:
+        # Atomic: a plain `write_text` interrupted part way leaves 8,760 rows of
+        # half a CSV that the next run happily reads as a complete year.
+        cache.atomic_write_path(target, hourly_csv(payload).encode())
+    short = rows < 8760
+    notes.append(FetchRecord(
+        layer="weather", what="open-meteo/archive",
+        status="fallback" if (short or typical_year) else "ok",
+        detail=f"{rows} hourly rows for {year}" + ("; short year" if short else "")
+               + (f"; fallback for the TMYx typical year ({why_not})" if typical_year else ""),
+    ))
+
     return ClimateSite(
         lat=lat, lon=lon,
         timezone=payload.get("timezone") or "UTC",
         climate_zone=climate_zone,
         weather_path=rel,
-        weather_source=f"Open-Meteo archive, calendar year {year} (one real year, not a TMY)",
+        weather_source=(f"Open-Meteo archive, calendar year {year} (one real year, not a TMY; "
+                        f"fallback: {why_not})" if typical_year else
+                        f"Open-Meteo archive, calendar year {year} (one real year, not a TMY)"),
         weather_time_convention=TIME_CONVENTION,
         pvgis_annual_kwh_per_kw=annual,
         pvgis_sd_fraction=sd,

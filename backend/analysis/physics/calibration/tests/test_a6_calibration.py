@@ -39,6 +39,10 @@ def fast_simulate(bundle, model):
 class Site:
     def __init__(self, name, overrides=None):
         raw = PropertyBundle.model_validate_json((EX / name / "property_bundle.json").read_text())
+        # Pin the weather to the committed example year (specs/examples/weather/) on every machine: a
+        # cached site file (TMYx) would otherwise change every number here (#329).
+        raw = raw.model_copy(update={"climate": raw.climate.model_copy(
+            update={"weather_path": "data/cache/_pinned_to_the_example_year_/weather.csv"})})
         self.bundle = api._resolved(raw)
         observed, flags = api.observe_interior(self.bundle)
         self.model = api.build_building_model(self.bundle, observed, flags, overrides or {})

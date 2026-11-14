@@ -430,7 +430,9 @@ Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 | `ghi_w_m2` | W/m² | `shortwave_radiation` |
 | `dni_w_m2` | W/m² | `direct_normal_irradiance` |
 | `dhi_w_m2` | W/m² | `diffuse_radiation` |
-| `wind_m_s` | m/s (Open-Meteo returns km/h — convert) | `wind_speed_10m` |
+| `wind_m_s` | m/s (Open-Meteo returns km/h — convert, ×1000/3600) | `wind_speed_10m` |
+
+**What D9 writes is one real calendar year, not a TMY.** Building a true typical meteorological year needs multi-year statistics that are out of scope here, so `weather_source` names the exact year fetched and the inter-annual spread comes from PVGIS `SD_y` rather than being invented. A year short of 8,760 rows is reported as `FetchRecord{layer:"weather", status:"fallback"}` rather than passing silently.
 
 **`weather_time_convention` = `hour_end`.** [V] 2026-11-14, verified two independent ways on the golden house:
 
@@ -463,6 +465,8 @@ Choosing `246899` over the Houston warehouse puts **both** golden properties in 
   | TX | Residential | 2026-08 | 15.91 ¢/kWh |
   | CA | Commercial | 2026-08 | 30.02 ¢/kWh |
   | CA | Residential | 2026-08 | 29.75 ¢/kWh |
+
+  **EIA returns numeric fields as JSON strings** — `"price": "8.96"` — so an `isinstance(v, (int, float))` guard silently rejects every real response. A hand-written fixture using a float will not catch it: that is exactly what happened here, and only the live test found it. [V] 2026-11-14
 
   **This is a state monthly average, not the building's actual retail contract.** In deregulated ERCOT the real price varies widely by retail plan, so the office `Tariff` must carry `source` naming EIA with the state, sector and period, and a `FetchRecord{layer: "tariff", status: "fallback"}` beside it. It is defensible and traceable; it is not a lookup of that building's tariff. The LA home flow still uses the real LADWP rate from URDB.
 
@@ -508,6 +512,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 - Each agent on its own `<issue#>-<slug>` branch, or a git worktree when two need the same dependency tree.
 - **Branch from fresh `main` and open PRs against `main`** (AGENTS.md §3.2). `spec-draft` is **retired** as of PR #19 — do not commit to it or target it. `Closes #N` works again now that `main` is the merge target, so issues auto-close.
 - **Tests** live in `backend/data_layer/tests/test_<package>.py`, one file per package, so two agents never write the same test file (workplan R11).
+- **Network tests are opt-in: set `RUN_LIVE_NETWORK=1`.** A plain `pytest backend -q` must stay offline for every lane, because the server lane's checkpoint asserts the whole suite makes no network call. Gating a live test on "a key happens to be present" quietly breaks that the moment someone fills in `.env`, so every network-touching test in this lane requires the flag as well as its key. The D1 kit tests are the exception and gate on the mirror being on disk, since reading a local file is not a network call.
 - **`backend/schema.py` exists** as of PR #28 (`SCHEMA_VERSION` 0.2.0), with `backend/__init__.py` alongside it so `import backend.schema` works. `SPEC.md` §9 remains the source and **only @yalexie1 edits the module** — this lane imports it and never writes it. Independently verified 2026-11-14: the module is the §9 block, imports clean under pydantic 2.14.3, defines 56 models, and all 27 payloads in `specs/examples/` validate against it (99 `model_validate` calls, 0 failures). Note three example files are **arrays** — `measures.json` is `MeasureResult[]`, `run_events.json` is `RunEvent[]`, `search_results.json` is `PropertySummary[]` — so a validator assuming one object per file reports false failures.
 - Launch with `/data-wp <ID>`; check lane state with `/data-status`. Subagent definitions live in `.claude/agents/data-*.md` and carry the verified facts for their source inline, so an agent starts from evidence rather than from the stale spec.
 - **Fixtures ship with the package**, not after it. D5 and the other three lanes must never wait on live keys.
@@ -601,6 +606,8 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Vexcel `layer` affects the answer | live, LA office, 2 layer sets | 2026-11-14 | different collection, **1 vs 2 structures**, different footprint and height |
 | Vexcel calculated values reproducible? | live, repeated calls | 2026-11-14 | **no** — −15.497 then −15.338 on identical parameters |
 | Vexcel 403 vs 404 | live, 0°,0° | 2026-11-14 | **403 = outside coverage**, 404 = no parcel inside it |
+| Open-Meteo hour-end, re-checked | live, as an opt-in test | 2026-11-14 | hourly sum reconciles with the daily total, ratio 1.0001 |
+| EIA numeric fields | live | 2026-11-14 | **`price` is a JSON string** (`"8.96"`), not a number — parse it |
 | Residential field shapes | kit record + models/ | 2026-11-14 | `yearBuilt` scalar, area is `sqftMin`/`sqftMax` range, `propertyType` ambiguous |
 | Contract v0.2 extract + examples | independent check, pydantic 2.14.3 | 2026-11-14 | 538 lines, imports clean, 56 models, 27/27 examples valid (99 checks, 0 fail) |
 | Open-Meteo time convention | hourly-vs-daily reconciliation + sunrise boundary | 2026-11-14 | **`hour_end`** — ratio 1.0001; 05:00 stamp = 04:00–05:00 mean |

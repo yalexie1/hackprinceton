@@ -253,8 +253,10 @@ def test_obliques_are_requested_from_the_urban_layer_only():
 
 # ---------- live ----------
 
-live = pytest.mark.skipif(not os.environ.get("VEXCEL_API_KEY"),
-                          reason="no Vexcel key in the environment")
+#: Opt-in, so `pytest backend -q` stays offline for every lane.
+live = pytest.mark.skipif(
+    not (os.environ.get("RUN_LIVE_NETWORK") == "1" and os.environ.get("VEXCEL_API_KEY")),
+    reason="set RUN_LIVE_NETWORK=1 and VEXCEL_API_KEY to run")
 
 GOLDEN = [
     # lat, lon, roof shape, roof material, storeys

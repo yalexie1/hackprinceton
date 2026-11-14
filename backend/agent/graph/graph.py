@@ -22,6 +22,7 @@ SUBAGENT_TOOLS: dict[str, tuple[str, ...]] = {
     "physicist": ("run_baseline", "evaluate_measure", "design_pv", "score_desk_positions"),
     "financier": ("price_measure", "lookup_incentives", "build_plan", "cpace_scenario",
                   "sensitivity"),
+    "reviewer": ("read_run_file", "check_report"),     # read-only (tools.build_reader_tools)
 }
 AUDITOR_TOOLS = ("ask_user", "read_run_file", "check_report")   # the last two are read-only (tools.build_reader_tools)
 
@@ -58,6 +59,15 @@ _JOBS = {
                   "sensitivity returned questions, and how many) and the path /run/plan.json, not the numbers."),
 }
 
+_JOBS["reviewer"] = (
+    "Review report.md before the run ends, in your own context. Read /run/plan.json, /run/measures.json and "
+    "/run/baseline.json with read_run_file and read report.md with read_file. Run check_report on the full text of "
+    "report.md. Then compare the report with the files: every selected measure, cost, saving and total it states "
+    "must be the file's value, and the report must not call a skipped or financeable measure selected, or the "
+    "reverse. Never do arithmetic and never edit report.md yourself. Reply with exactly \"OK\" if there is nothing "
+    "to fix; otherwise a numbered list of fixes, each naming the sentence and the value from the file that "
+    "replaces it, or saying to delete it.")
+
 AUDITOR_PROMPT = """You are the auditor, orchestrator of an energy retrofit audit of one property.
 Keep a todo list with write_todos and update it as each step starts and finishes.
 Delegate with the task tool, one subagent at a time, in this order, giving each the property's sid. The
@@ -77,6 +87,9 @@ you need it (read_run_file):
      the selected measures with cost and saving, what is financeable, and what was skipped and why. Copy each
      figure from those files with the same digits and units. Then run check_report on the draft; if it lists
      a number, replace it with the value from the file or delete the sentence, and check again.
+  7. reviewer: last. It reads plan.json and report.md in its own context, runs check_report and compares the
+     report with the files. If it answers OK, finish. If it lists fixes, apply each one to report.md yourself
+     (one rewrite, no more reviews) and finish.
 You never do arithmetic. Do not write a total, a percentage, a sum, a ratio or any figure the files do not
 hold. Decide fallbacks when a layer is missing and say which you chose. The run is complete only when build_plan has returned and report.md is written."""
 

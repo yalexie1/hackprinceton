@@ -8,6 +8,18 @@ def placeholders_in(text):
     return list(dict.fromkeys(PLACEHOLDER.findall(text)))
 
 
+def expand_ids(cell):
+    """`CA-HIC-00a, -00b` -> CA-HIC-00a, CA-HIC-00b (short ids reuse the previous prefix)."""
+    out, prefix = [], None
+    for tok in re.findall(r"CA-[A-Z]+-\d+[a-z]?|-\d+[a-z]?", cell):
+        if tok.startswith("CA-"):
+            prefix = tok.rsplit("-", 1)[0]
+            out.append(tok)
+        elif prefix:
+            out.append(prefix + tok)
+    return out
+
+
 def header(key):
     m = re.search(r"<!--\s*" + key + r":\s*(.*?)\s*-->", TEXT)
     return m.group(1) if m else None
@@ -58,11 +70,11 @@ def test_every_required_term_id_has_a_clause_carrying_it():
     for l in section6:
         cells = [c.strip() for c in l.strip().strip("|").split("|")]
         if len(cells) == 5 and cells[0].startswith("CA-R-"):
-            needed.update(re.findall(r"CA-[A-Z]+-\d+[a-z]?", cells[4]))
+            needed.update(expand_ids(cells[4]))
     assert needed, "no ids found in legal.md section 6"
     carried = set()
     for m in re.finditer(r"<!--\s*clause:(.*?)-->", TEXT, re.S):
-        carried.update(re.findall(r"CA-[A-Z]+-\d+[a-z]?", m.group(1)))
+        carried.update(expand_ids(m.group(1)))
     assert needed - carried == set()
 
 

@@ -611,6 +611,74 @@ number comes from `imagery.detect_with_areas()`.
   an independent number exists to check against.
 - `Pillow` joins the data lane's dependencies, to decode the base64 PNG masks.
 
+### 4.4b D13: portfolio screening, and the 500-feature cap
+
+`backend/data_layer/screening.py`, 2026-11-14. [V] SPEC 1035 asks to "rank many
+properties by retrofit return using Vexcel filters and CoStar records". Four
+measurements decided the design.
+
+**One area query returns hundreds of parcels with the full attribute set.** A ~330 m
+box returns 164 features in about 3 s, and every structure carries all 92 keys —
+`roof-characteristics.*`, `building-type.class`, `footprint.area`,
+`primary-structure`. So screening costs roughly one call per **area**, not one per
+property. Note `get_vexcel_data_with_notes` reads only `features[0]`, which is correct
+for a point query and would discard 440 parcels here.
+
+**There is a hard cap of 500 features and nothing says so.**
+
+| box | features |
+|---|---|
+| ~330 m | 164 |
+| ~880 m | **500** |
+| ~1.8 km | **500** |
+| ~4.4 km | **500** |
+
+A city-wide screen would silently miss most of the city and report a confident answer.
+So a tile returning exactly 500 is **assumed truncated** and subdivided, recursion
+bounded, with a `FetchRecord` either way — and one saying the screen is *incomplete*
+if subdivision is exhausted.
+
+**Screen index-first, not Vexcel-first.** Of 441 parcels in one box, only **4**
+matched a scanned property within 25 m — and the count was identical at 25 m and
+100 m, so matches are unambiguous but sparse. Starting from the D7 index instead,
+**5 of 6** indexed properties in a box matched a parcel from a single call. A property
+with no Matterport scan cannot be audited by this tool, so screening unscanned parcels
+is work thrown away.
+
+**Tile around the candidates, not around the radius.** Covering a 500 m radius took
+**102 s and about 60 calls**; tiling only around the known candidate points took
+**13 s and 7 calls**, and a 400 m radius takes **1.5 s and 1 call**. Index-first means
+the points of interest are known in advance, which is what makes this affordable.
+
+#### What it does not claim
+
+Ranking by *retrofit return* needs the baseline and the measures, so this ranks by
+**usable roof area** — the measured quantity that bounds both PV and cool-roof savings
+— names the proxy on every result, and returns the attributes so a caller can rank
+differently. A "return" computed here without the physics would be a number with no
+model behind it.
+
+`Filters.roof_condition_min/max` take the raw 1-to-5 value rather than a "bad roof"
+flag. `roof-characteristics.condition` is the rounded `...condition.precise-value` and
+the kit ships **no legend for its direction**. The 1920s golden house grades 5 while
+the maintained 1974 office grades 3, which suggests higher is worse — but that is an
+inference from two properties, so it is not baked into an API callers would trust. [P]
+
+An attribute that is **absent fails** a filter that asks about it: screening is a
+positive claim, so a property that cannot be evaluated does not belong in the result.
+
+#### Two things it found
+
+**The Los Angeles office already has rooftop solar.** `roof-objects.solar` is `True`
+on `246899`'s 2,938 m² flat membrane roof. A11 returns `existing_solar`, so the
+analysis lane can account for it, but it changes the PV story for a golden property
+and should not surprise anyone on stage.
+
+A screen for PV candidates near that office — flat, no existing solar, at least
+400 m² — returns **zero**, correctly: the only large flat roof in range is the tower
+that already has panels. An empty result is an empty list, which is the workplan's
+stated acceptance.
+
 ### 4.5 Golden lots
 
 - **House**: `POINT(-118.3171 34.093491667)`, from the model's own `geocoordinates`. 2 structures. [V] `primary-structure` True, `footprint.area` 190.39 m², `ground-elevation` 100.584, roof `gable`/`shingle`, `condition.precise-value` 4.53, `tree-cover` 4.0, `ac-unit.count` 2, `chimney.count` 1, `roof-vent.count` 5, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
@@ -909,7 +977,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
 | D10 | P2 | The five unused datasets — **done**, see 2.4b | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
 | D12 | P1 | Splat + drone photos (track site) | `data-matterport` | `backend/data_layer/tracksite.py` | `splat_path`, `drone_photo_paths` |
-| D13 | P2 | Portfolio screening by Vexcel filters | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
+| D13 | P2 | Portfolio screening by Vexcel filters — **done**, see 4.4b | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
 | D14 | P1 | Incorporated place, utility and PACE region — **done**, see 5.1d | `data-costar` | `backend/data_layer/places.py` | `Tariff.utility`, `in_pace_region` |
 | D15 | P1 | Gas price on the tariff — **done**, see 5.1e | `data-costar` | `backend/data_layer/external.py` | `Tariff.gas_usd_per_kwh` |
 | D11 | — | this file | lane owner | `specs/data-integration.md` | — |
@@ -1089,6 +1157,12 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | `company-detail` join | Houston office tenants | 2026-11-14 | **224 of 225** matched; 413 and 215 employees total |
 | Cap rate sanity | both golden offices | 2026-11-14 | LA **5.30 %** vs Houston **7.90 %** — the right market structure |
 | A30 value uplift fires | both golden offices, live | 2026-11-14 | `None` before; **100,000 USD (LA) vs 65,500 (Houston)** on the same 12,000 USD/yr saving |
+| Vexcel area query (D13) | live, ~330 m box | 2026-11-14 | **164 parcels in one 3 s call**, full 92-key attribute set per structure |
+| Feature cap | 330 m / 880 m / 1.8 km / 4.4 km | 2026-11-14 | 164 / **500 / 500 / 500** — a hard cap with **no truncation signal** |
+| Parcel-to-scan match | 441 parcels, one box | 2026-11-14 | only **4** scanned properties matched; identical at 25 m and 100 m — unambiguous but sparse |
+| Index-first match yield | 6 indexed properties, one box | 2026-11-14 | **5 of 6 (83 %)** matched from a single call |
+| Screening cost | 500 m radius, two strategies | 2026-11-14 | radius tiling **102 s / ~60 calls**; candidate tiling **13 s / 7 calls**; 400 m is **1.5 s / 1 call** |
+| LA office already has solar | `roof-objects.solar` on 246899 | 2026-11-14 | **True** on a 2,938 m² flat membrane roof — PV_ROOF must account for it |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; resolved by the lead's EIA decision, 5.1c |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |

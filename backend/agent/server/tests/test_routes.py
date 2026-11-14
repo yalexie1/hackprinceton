@@ -314,3 +314,33 @@ def test_every_template_offered_can_be_drafted_and_nothing_else_is_offered():
 def test_templates_refuses_a_state_it_does_not_know():
     r = client.get("/api/templates", params={"state": "NY"})
     assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_request"
+
+
+# ---------- a document for the wrong kind of building is refused (422) ----------
+
+def _draft(flavor, doc_type, state):
+    run_id = client.post("/api/runs", json=_body(flavor, "run_request.json")).json()["run_id"]
+    body = {"run_id": run_id, "doc_type": doc_type, "state": state, "measure_ids": ["LGT_LED"], "fields": {}}
+    return client.post(f"/api/runs/{run_id}/documents", json=body)
+
+
+def test_a_residential_contract_for_an_office_is_refused():
+    r = _draft("office", "retrofit_contract_residential", "CA")
+    assert r.status_code == 422 and r.json()["error"]["code"] == "template_not_for_segment"
+    assert "commercial" in r.json()["error"]["message"]
+
+
+def test_c_pace_for_a_home_is_refused():
+    r = _draft("house", "cpace_package", "CA")
+    assert r.status_code == 422 and r.json()["error"]["code"] == "template_not_for_segment"
+
+
+def test_the_right_template_for_each_segment_still_drafts():
+    assert _draft("house", "retrofit_contract_residential", "CA").status_code == 200
+    assert _draft("office", "retrofit_contract_commercial", "CA").status_code == 200
+    assert _draft("office", "cpace_package", "CA").status_code == 200
+
+
+def test_a_type_with_no_template_at_all_is_still_a_404_not_a_segment_error():
+    r = _draft("house", "bid_package_rfp", "CA")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "template_not_available"

@@ -144,23 +144,16 @@ def draft_document(request: DocumentRequest) -> DocumentDraft:
     if live_run is not None:
         return live_run.draft(request)
     run = _get(request.run_id)
-    if run["flavor"] is None:                # a recorded live run: draft with the legal door, offline
-        from backend.legal import api as legal
-        from backend.schema import PropertyBundle
-        draft = legal.fill_template(request, run["result"], PropertyBundle.model_validate(run["bundle"]))
-        if not draft.statutory_checks:
-            # `engine.fill_template` always returns an empty checklist - running the
-            # predicates is the caller's job, and `LiveRun.draft` already does it. This
-            # path did not, so a document drafted from a recording came back with no
-            # statutory checklist at all - which is the one thing SPEC 15 step 7 shows,
-            # and the demo serves recordings.
-            draft = draft.model_copy(update={"statutory_checks": legal.check_document(draft)})
-        run["docs"][draft.doc_id] = draft
-        return draft
-    draft = DocumentDraft.model_validate(_load(run["flavor"], "document_draft.json"))
-    draft.doc_type = request.doc_type
-    draft.state = request.state
-    draft.doc_id = f"doc_{request.run_id}_{len(run['docs']) + 1}"
+    # A recorded run and an example run are drafted the same way, offline, with the legal door: the real
+    # template and the real checks, never a fixture draft relabelled with the request's type.
+    from backend.legal import api as legal
+    from backend.schema import PropertyBundle
+    raw = run["bundle"] if run["flavor"] is None else _load(run["flavor"], "property_bundle.json")
+    draft = legal.fill_template(request, run["result"], PropertyBundle.model_validate(raw))
+    if not draft.statutory_checks:
+        # `engine.fill_template` always returns an empty checklist: running the predicates is the
+        # caller's job (`LiveRun.draft` does it too), and the checklist is what SPEC 15 step 7 shows.
+        draft = draft.model_copy(update={"statutory_checks": legal.check_document(draft)})
     run["docs"][draft.doc_id] = draft
     return draft
 

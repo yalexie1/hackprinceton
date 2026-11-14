@@ -16,6 +16,7 @@ Stage mode is replay: it serves the saved real runs instantly and never calls a 
 - Recordings are in `data/runs/_demo/<sid>/` (git-ignored, per machine). A property with no recording falls back to the example in `specs/examples/`. Override the folder with `AGENT_DEMO_DIR`.
 - Make a recording with a live run (`AGENT_MODE=live`, needs `ANTHROPIC_API_KEY`, `EIA_API_KEY` and the mirrored CoStar kit): it is saved only when the run reaches `done` with a plan.
 - Before the demo: `python -m backend.data_layer.mirror --check` and `python -m backend.data_layer.demo_check`.
+- `demo_check` and every live run need the sponsor and EIA keys **in the process environment** (`set -a; source .env; set +a` in that shell); without them they stop with an auth error such as `MatterportAuthMissing`, never fall back silently. Check the run header says **live property data** before trusting a recording.
 - Frontend: `cd frontend && npm ci && npm run dev`, then open http://127.0.0.1:5173 (see `frontend/README.md`).
 
 ## How it works

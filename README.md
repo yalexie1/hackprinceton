@@ -10,6 +10,14 @@ Full walkthrough with the templates and an FAQ: **[marvelous-relative-5de.notion
 
 Stage mode is replay: it serves the saved real runs instantly and never calls a model.
 
+Install the backend once, in a virtual environment, from the repo root. Each lane has its own requirements file, and the server and the tests need all four:
+
+    python3 -m venv .venv && source .venv/bin/activate
+    pip install -r backend/data_layer/requirements.txt -r backend/analysis/requirements.txt \
+                -r backend/agent/requirements.txt -r backend/legal/requirements.txt
+
+Then start the server from the same shell:
+
     AGENT_MODE=replay uvicorn backend.server:app --port 8000
 
 - `AGENT_MODE=replay` is also the default; never set `live` on stage.

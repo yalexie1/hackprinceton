@@ -72,22 +72,15 @@ def test_the_door_runs_end_to_end_on_the_fixture(flavor, monkeypatch):
 
 
 @pytest.mark.parametrize("flavor", FLAVORS)
-def test_solar_and_layout_where_the_example_has_them(flavor):
+def test_solar_and_layout_come_from_the_physics(flavor):
     bundle, request = load(flavor)
     model = api.build_building_model(bundle)
     baseline = api.run_baseline(bundle, model)
-    run = json.loads((EX / flavor / "run_result.json").read_text())
-    ids = {m["measure_id"]: m for m in run["measures"]}
-    if ids.get("PV_ROOF", {}).get("solar"):
-        assert roundtrip(api.design_pv(bundle, model, baseline, 1000.0)) is not None
-    else:
-        with pytest.raises(LookupError):
-            api.design_pv(bundle, model, baseline)
-    if ids.get("LAYOUT", {}).get("layout"):
-        assert isinstance(api.score_desk_positions(bundle, model, 4), LayoutResult)
-    else:
-        with pytest.raises(LookupError):
-            api.score_desk_positions(bundle, model)
+    design = api.design_pv(bundle, model, baseline, 10_000.0)
+    assert roundtrip(design) == design and design.panel_count == len(design.panels)
+    layout = api.score_desk_positions(bundle, model, 4)
+    assert isinstance(layout, LayoutResult) and layout.desks_requested == 4
+    assert sum(1 for c in layout.candidates if c.recommended) == 4
 
 
 def test_tenant_plan_and_budget():

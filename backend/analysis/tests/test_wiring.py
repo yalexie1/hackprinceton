@@ -136,8 +136,9 @@ def test_the_house_plan_keeps_the_examples_solar_design_on_the_real_physics():
     bundle, request = load("house")
     plan = api.build_plan(bundle, model_of(bundle, request), request)
     ids = [i.measure.measure_id for i in plan.selected]
-    assert ids[:2] == ["PV_ROOF", "LGT_LED"]                                    # the example's picks, in its order
-    pv = plan.selected[0].measure
+    paid = [i for i in ids if i != "LAYOUT"]                                    # the zero-cost desk layout comes first
+    assert paid[:2] == ["PV_ROOF", "LGT_LED"]                                   # the example's picks, in its order
+    pv = next(i.measure for i in plan.selected if i.measure.measure_id == "PV_ROOF")
     assert pv.solar.system_kw_dc == 2.15 and pv.solar.panel_count == 5          # sized to the budget, as in the example
     assert pv.savings.cost_usd.expected == pytest.approx(942.08, rel=0.2)
     assert plan.selected[-1].cumulative_upfront_usd <= plan.budget_usd
@@ -252,36 +253,46 @@ def test_pv_roof_is_evaluated_by_the_engine_and_skips_when_the_roof_has_solar():
     assert not tenant.applicable and tenant.params["skip_reason"] == "role"
 
 
+class without_plugin:
+    """Take a plug-in off the engine for a moment, as if its package had not landed."""
+    def __init__(self, measure_id):
+        self.measure_id = measure_id
+
+    def __enter__(self):
+        self.saved = api.engine.REGISTRY.plugins.pop(self.measure_id)
+
+    def __exit__(self, *exc):
+        api.engine.REGISTRY.plugins[self.measure_id] = self.saved
+
+
 def test_a_registered_measure_runs_on_the_engine_and_the_rest_replay_the_example():
     office, request = load("office")
     model = model_of(office, request)
-    stubbed = api.evaluate_measure(office, model, "LAYOUT", request.role)          # A23 has not landed
-    assert any("not registered yet" in w for w in stubbed.warnings)
-    real = api.evaluate_measure(office, model, "LGT_CTRL", request.role)
+    with without_plugin("LAYOUT"):                                                  # as if A23 had not landed
+        stubbed = api.evaluate_measure(office, model, "LAYOUT", request.role)
+        assert any("not registered yet" in w for w in stubbed.warnings)
+    real = api.evaluate_measure(office, model, "LAYOUT", request.role)
     assert real.applicable and not any("not registered yet" in w for w in real.warnings)
-    assert real.formula_ids and real.savings.electricity_kwh.expected > 0
+    ctrl = api.evaluate_measure(office, model, "LGT_CTRL", request.role)
+    assert ctrl.applicable and ctrl.formula_ids and ctrl.savings.electricity_kwh.expected > 0
     attic = api.evaluate_measure(*load("house")[:1], model_of(*load("house")), "ENV_ATTIC", "owner_occupier")
-    assert attic.applicable and not any("not registered yet" in w for w in attic.warnings)    # A17 has landed
+    assert attic.applicable and not any("not registered yet" in w for w in attic.warnings)
 
 
 def test_a_plugin_that_lands_replaces_the_example_by_itself():
     office, request = load("office")
     model = model_of(office, request)
     registry = api.engine.REGISTRY
-    assert "LAYOUT" not in registry.plugins
 
     def describe(b, m, changed, before, options):
         return MeasureResult(measure_id="LAYOUT", title="Desk layout", applicable=True,
                              params={"grid_m": 0.5}, formula_ids=["LAY-01"])
-    before = api.evaluate_measure(office, model, "LAYOUT", request.role)
-    assert any("not registered yet" in w for w in before.warnings)
-    api.engine.register("LAYOUT", change=lambda b, m: m.model_copy(deep=True), describe=describe)
-    try:
+    with without_plugin("LAYOUT"):
+        before = api.evaluate_measure(office, model, "LAYOUT", request.role)
+        assert any("not registered yet" in w for w in before.warnings)
+        api.engine.register("LAYOUT", change=lambda b, m: m.model_copy(deep=True), describe=describe)
         out = api.evaluate_measure(office, model, "LAYOUT", request.role)
-        assert not any("not registered yet" in w for w in out.warnings) and out.savings is not None
-        assert out.formula_ids[0] == "LAY-01"
-    finally:
-        registry.plugins.pop("LAYOUT")
+        assert not any("not registered yet" in w for w in out.warnings) and out.formula_ids[0] == "LAY-01"
 
 
 def test_sensitivity_is_the_real_rule_once_the_core_plugins_are_registered(monkeypatch):
@@ -311,7 +322,7 @@ def test_the_real_ask_rule_runs_on_the_house_in_reasonable_time():
 def test_observe_interior_uses_the_vision_reader_once_a_model_client_is_given(monkeypatch):
     bundle, _ = load("house")
     seen = []
-    monkeypatch.setattr(api, "_vision_interior", lambda b, ask, get: seen.append((ask, get)) or ([], []))
+    monkeypatch.setattr(api, "_vision_interior", lambda b, ask, get, **kw: seen.append((ask, get)) or ([], []))
     try:
         api.set_vision(ask_model=lambda *a: "{}", get_bytes=lambda p: b"")
         assert api.observe_interior(bundle) == ([], []) and len(seen) == 1
@@ -335,3 +346,72 @@ def test_baseline_after_is_a_simulation_of_the_changed_building():
     plan = api.build_plan(bundle, model, request)
     before = api.run_baseline(bundle, model).annual
     assert plan.baseline_after.electricity_kwh.expected < before.electricity_kwh.expected
+
+
+# ---- A29 part 4: desks (A23 on A5), roof masks (A12), shading (A15), flags (A8) ----
+
+@pytest.mark.parametrize("flavor", ["office", "office_houston"])
+def test_the_layout_measure_places_desks_with_the_daylight_scorer(flavor):
+    bundle, request = load(flavor)
+    model = model_of(bundle, request)
+    m = api.evaluate_measure(bundle, model, "LAYOUT", request.role, 4)
+    assert m.applicable and len(m.anchors) == 4 and not any("not registered yet" in w for w in m.warnings)
+    assert {"LCT-02", "DAY-09"} <= set(m.formula_ids) or "LCT-02" in m.formula_ids
+    assert m.layout.desks_requested == 4 and sum(1 for c in m.layout.candidates if c.recommended) == 4
+    assert m.savings.electricity_kwh.low <= m.savings.electricity_kwh.expected <= m.savings.electricity_kwh.high
+    assert m.finance is None
+    again = api.evaluate_measure(bundle, model, "LAYOUT", request.role, 4)
+    assert again.model_dump_json() == m.model_dump_json()
+
+
+def test_a_position_the_daylight_model_refuses_is_never_recommended():
+    bundle, request = load("office")
+    layout = api.score_desk_positions(bundle, model_of(bundle, request), 4)
+    refused = [c for c in layout.candidates if any("refused" in w for w in c.warnings)]
+    recommended = [c for c in layout.candidates if c.recommended]
+    assert recommended and not set(map(id, refused)) & set(map(id, recommended))
+    assert all(c.daylight > 0 for c in recommended)
+
+
+def test_layout_is_part_of_the_plan_for_a_home_too():
+    bundle, request = load("house")
+    plan = api.build_plan(bundle, model_of(bundle, request), request)
+    assert "LAYOUT" in [i.measure.measure_id for i in plan.selected]
+
+
+def test_tree_detections_lower_the_usable_roof_area():
+    from backend.schema import VexcelDetection
+    bundle, request = load("house")
+    plain = model_of(bundle, request)
+    plane = plain.roof_planes[0]
+    tree = VexcelDetection(label="tree", confidence=0.9, image_id="ortho-1", bbox_wkt=plane.polygon_wkt,
+                           mask_wkt=plane.polygon_wkt, mask_area_m2=plane.area_m2 * 0.5)
+    treed = bundle.model_copy(update={"vexcel": bundle.vexcel.model_copy(update={
+        "detections": [*bundle.vexcel.detections, tree]})})
+    after = model_of(treed, request)
+    assert sum(p.usable_area_m2 for p in after.roof_planes) < sum(p.usable_area_m2 for p in plain.roof_planes)
+
+
+def test_panels_carry_a_shading_loss_and_a_parametric_roof_keeps_the_default_allowance():
+    bundle, request = load("house")
+    model = model_of(bundle, request)
+    design = api.design_pv(bundle, model, api.run_baseline(bundle, model), 10_000.0)
+    assert design.panels and all(p.shading_loss_fraction == pytest.approx(0.03) for p in design.panels)
+
+
+def test_the_vision_read_is_asked_for_the_room_fallback_and_its_flags_come_through(monkeypatch):
+    from backend.schema import Flag
+    bundle, _ = load("house")
+    seen = {}
+    flag = Flag(key="electrical.service", status="likely_upgrade", message="two-prong outlets")
+
+    def reader(b, ask, get, **kw):
+        seen.update(kw)
+        return [], [flag]
+    monkeypatch.setattr(api, "_vision_interior", reader)
+    try:
+        api.set_vision(ask_model=lambda *a: "{}", get_bytes=lambda p: b"")
+        assert api.observe_interior(bundle) == ([], [flag])
+    finally:
+        api.set_vision(None, None)
+    assert seen == {"room_fallback": True}

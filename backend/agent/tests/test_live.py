@@ -202,3 +202,76 @@ def test_parallel_tool_calls_do_not_lose_measures(tmp_path):
         list(pool.map(lambda m: t["evaluate_measure"](m), ids))
     saved = {m["measure_id"] for m in run.files.read_json("measures.json")}
     assert saved == set(ids)
+
+
+# ---- memoized tool calls ----
+
+class Counting:
+    """Wraps a door module and counts calls per function."""
+    def __init__(self, inner):
+        self._inner, self.calls = inner, {}
+
+    def __getattr__(self, name):
+        fn = getattr(self._inner, name)
+
+        def counted(*a, **k):
+            self.calls[name] = self.calls.get(name, 0) + 1
+            return fn(*a, **k)
+        return counted
+
+
+def memo_run(tmp_path):
+    from backend.agent import analysis_stub
+    from backend.agent.tools import Doors
+    from backend.data_layer import api as data
+    from backend.legal import api as legal
+    req = request()
+    model, sub = script(req.sid)
+    analysis = Counting(analysis_stub)
+    run = live.LiveRun("run_memo", req, live.LiveSettings(
+        model=model, subagent_model=sub, runs_dir=tmp_path,
+        doors=Doors(data=data, analysis=analysis, legal=legal)))
+    t = run.tools
+    t["get_property_bundle"](req.sid)
+    t["observe_interior"]()
+    t["build_building_model"]()
+    return run, t, analysis
+
+
+def test_identical_call_is_answered_from_the_memo(tmp_path):
+    run, t, analysis = memo_run(tmp_path)
+    first = t["run_baseline"]()
+    assert t["run_baseline"]() == first and analysis.calls["run_baseline"] == 1
+    a = t["evaluate_measure"]("LGT_LED")
+    assert t["evaluate_measure"]("LGT_LED") == a and analysis.calls["evaluate_measure"] == 1
+    t["evaluate_measure"]("PV_ROOF")                       # other arguments: a real call
+    assert analysis.calls["evaluate_measure"] == 2
+    t["price_measure"]("LGT_LED")
+    t["evaluate_measure"]("LGT_LED")                       # must not overwrite the priced row
+    assert analysis.calls["evaluate_measure"] == 2
+    row = next(m for m in run.files.read_json("measures.json") if m["measure_id"] == "LGT_LED")
+    assert row["finance"] is not None
+    t["price_measure"]("LGT_LED")
+    assert analysis.calls["price_measure"] == 1 and run.memo_hits == 4
+
+
+def test_a_changed_model_misses_the_memo(tmp_path):
+    run, t, analysis = memo_run(tmp_path)
+    t["run_baseline"]()
+    t["set_assumption"]("occupancy.count", 5.0)
+    t["run_baseline"]()                                    # same arguments, new model
+    assert analysis.calls["run_baseline"] == 2
+    t["set_assumption"]("occupancy.count", 5.0)            # idempotent repeat: answered from memo
+    assert analysis.calls["set_assumption"] == 1
+
+
+def test_a_failed_call_is_retried_and_fill_template_is_never_memoized(tmp_path):
+    run, t, analysis = memo_run(tmp_path)
+    assert "error" in t["evaluate_measure"]("NOT_A_MEASURE")
+    assert "error" in t["evaluate_measure"]("NOT_A_MEASURE")
+    assert analysis.calls["evaluate_measure"] == 2
+    t["evaluate_measure"]("LGT_LED")
+    args = ("retrofit_contract_residential", "CA", ["LGT_LED"], {})
+    t["fill_template"](*args)
+    t["fill_template"](*args)
+    assert run.memo_hits == 0

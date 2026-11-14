@@ -83,11 +83,11 @@
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Vexcel footprint is a podium; tower roof area from CoStar",
+    "message": "Aerial captures disagree on the roof extent; using the structure that matches the floor plate",
     "payload": {
       "layer": "vexcel",
-      "from": "footprint.area",
-      "to": "gross building area / storeys"
+      "from": "3,700 to 4,320 m2 outlines (four other captures)",
+      "to": "1,104.5 m2 structure (us-tx-houston-2023)"
     }
   },
   {
@@ -178,7 +178,7 @@
   {
     "type": "partial_result",
     "stage": "S6",
-    "message": "Finding: two rooftop units",
+    "message": "Finding: four rooftop units",
     "payload": {
       "kind": "finding",
       "measure_id": "HVAC_RTU",

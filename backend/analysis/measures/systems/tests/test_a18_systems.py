@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.schema import BaselineResult, BuildingModel, EnergyUse, MeasureResult, PropertyBundle, Ranged
+from backend.schema import BaselineResult, BuildingModel, EnergyUse, Flag, MeasureResult, PropertyBundle, Ranged
 from backend.analysis.measures import systems
 from backend.analysis.measures.engine import Registry, apply_measure, evaluate, skip_reason
 from backend.analysis.measures.systems import heat_pump, lighting, rooftop
@@ -39,6 +39,24 @@ def fixture_card(name: str, mid: str) -> dict:
     data = json.loads((EX / name / "measures.json").read_text())
     items = data if isinstance(data, list) else data.get("measures", data)
     return next(m for m in items if m["measure_id"] == mid)
+
+
+def unconfirmed_office():
+    """The LA office with nothing confirming a rooftop unit: both golden offices now have
+    Vexcel-counted units on the D16 structure, so HVAC-00's other branch needs this variant."""
+    b, m = bundle("office"), model("office")
+    s0 = b.vexcel.structures[0]
+    attrs = {k: v for k, v in s0.attributes.items() if k != "roof-objects.ac-unit.count"}
+    vex = b.vexcel.model_copy(update={"structures": [s0.model_copy(update={"attributes": attrs})]
+                                      + list(b.vexcel.structures[1:])})
+    flag = Flag(key="hvac.system_type", status="unknown", message="No rooftop unit confirmed.")
+    planes = [p.model_copy(update={"obstruction_counts": {k: v for k, v in p.obstruction_counts.items()
+                                                          if k != "ac-unit"}}) for p in m.roof_planes]
+    m = m.model_copy(update={"systems": m.systems.model_copy(update={"hvac_type": "unknown"}),
+                             "assumptions": [a for a in m.assumptions if a.key != "hvac.system_type"],
+                             "flags": [f for f in m.flags if f.key != "hvac.rtu_service"] + [flag],
+                             "roof_planes": planes})
+    return b.model_copy(update={"vexcel": vex}), m
 
 
 def R(x: float, unit: str) -> Ranged:
@@ -104,22 +122,25 @@ def test_hvac_rtu_reverse_and_hvac00(reg):
     house = run(reg, "house", "HVAC_RTU")
     assert not house.applicable and skip_reason(house) == "flow"
     assert house.not_applicable_reason == fixture_card("house", "HVAC_RTU")["not_applicable_reason"]
-    la = run(reg, "office", "HVAC_RTU")                     # no rooftop unit confirmed: HVAC-00
+    b, m = unconfirmed_office()                             # no rooftop unit confirmed: HVAC-00
+    la = evaluate(b, m, "HVAC_RTU", "landlord", FakeSimulate(), registry=reg, simulate_formula_ids=("ZON-04",))
     assert not la.applicable and skip_reason(la) == "feasibility"
-    assert la.not_applicable_reason == fixture_card("office", "HVAC_RTU")["not_applicable_reason"]
+    assert rooftop.NOT_CONFIRMED in la.not_applicable_reason.lower()
+    la = run(reg, "office", "HVAC_RTU")                     # Culver Connect: Vexcel counts three
+    assert la.applicable and la.params["units"] == 3
     hou = run(reg, "office_houston", "HVAC_RTU")
     assert hou.applicable and hou.savings.electricity_kwh.expected > 0
     assert hou.savings.gas_kwh.expected == 0
 
 
 def test_hvac_rtu_describe_guard_when_unconfirmed():
-    b, m = bundle("office"), model("office")
+    b, m = unconfirmed_office()
     card = rooftop.describe(b, m, rooftop.change(b, m), FakeSimulate()(b, m), {})
     assert not card.applicable and card.not_applicable_reason == rooftop.NOT_CONFIRMED
     assert [f.key for f in card.flags] == ["hvac.system_type"]
 
 
-@pytest.mark.parametrize("name", FIXTURES)
+@pytest.mark.parametrize("name", ("house", "office_houston"))   # the LA office is already LED
 def test_lgt_led_lowers_lighting_power(reg, name):
     b, m = bundle(name), model(name)
     changed = apply_measure(b, m, "LGT_LED", reg)
@@ -180,8 +201,15 @@ def test_already_done():
 
 # ---------------------------------------------------------------- cards against the fixtures
 
-CARDS = [("house", "HVAC_HP"), ("house", "LGT_LED"), ("office", "LGT_LED"),
+CARDS = [("house", "HVAC_HP"), ("house", "LGT_LED"),
          ("office_houston", "LGT_LED"), ("office_houston", "HVAC_RTU")]
+
+
+def test_lgt_led_already_done_on_the_la_office(reg):
+    """Culver Connect: the 2024 renovation fitted LED (the request's override), as the fixture says."""
+    r = run(reg, "office", "LGT_LED")
+    assert not r.applicable and skip_reason(r) == "already_done"
+    assert r.not_applicable_reason == fixture_card("office", "LGT_LED")["not_applicable_reason"]
 
 
 @pytest.mark.parametrize("name,mid", CARDS)
@@ -209,5 +237,5 @@ def test_card_matches_fixture(reg, name, mid):
 def test_pricing_quantities_present(reg):
     assert run(reg, "house", "HVAC_HP").params["capacity_tons"] == 3
     assert run(reg, "house", "LGT_LED").params["lamps"] == 30
-    assert run(reg, "office", "LGT_LED").params["fixtures"] == 48
+    assert run(reg, "office", "HVAC_RTU").params["units"] == 3
     assert run(reg, "office_houston", "HVAC_RTU").params["capacity_tons"] == 30

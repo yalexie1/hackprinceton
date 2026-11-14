@@ -103,7 +103,7 @@ def test_house_room_fallback_names_the_bedroom_only():
     assert [e.ref for e in a.evidence if e.kind == "pano"] == ["pano_03"]
 
 
-@pytest.mark.parametrize("folder,rooms_seen", [("office", 4), ("office_houston", 4)])
+@pytest.mark.parametrize("folder,rooms_seen", [("office_houston", 4)])   # the LA office has openings
 def test_office_window_count_and_size_from_vision(folder, rooms_seen):
     b = bundle(folder)
     keys = by_key(observe_interior(b, Recorder(REPLY), fake_bytes)[0])
@@ -183,9 +183,9 @@ def test_max_panos_one_per_room_first_and_prompt_schema():
 
 
 def test_two_panoramas_close_together_in_one_room_count_once():
-    b = bundle("office")
+    b = bundle("office_houston")                # no openings, so vision counts the windows
     p4 = next(p for p in b.matterport.panos if p.id == "pano_04")
-    p4.x, p4.y = 7.0, 3.0                       # 2 m from pano_01, both in room_01
+    p4.x, p4.y = 10.0, 3.0                      # 2 m from pano_01, both in room_plate
     keys = by_key(observe_interior(b, Recorder(REPLY), fake_bytes)[0])
     assert keys["window.count"].value.expected == 9
     assert keys["window.area_m2"].value.expected == pytest.approx(24.0)

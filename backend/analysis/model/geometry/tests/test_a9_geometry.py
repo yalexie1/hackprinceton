@@ -138,7 +138,7 @@ def test_vision_window_on_an_edge_named_in_evidence():
 
 # ---------------------------------------------------------------- vision windows (offices)
 
-@pytest.mark.parametrize("folder", ["office", "office_houston"])
+@pytest.mark.parametrize("folder", ["office_houston"])       # the LA office (Culver Connect) has openings
 def test_office_windows_come_from_vision(folder):
     b, g = build(folder)
     assert not any(o.type == "window" for fl in b.matterport.floors for e in fl.edges
@@ -156,7 +156,7 @@ def test_office_windows_come_from_vision(folder):
     assert {s.source_edge_id for s in ws} == fx_edges
 
 
-@pytest.mark.parametrize("folder", ["office", "office_houston"])
+@pytest.mark.parametrize("folder", ["office_houston"])
 def test_office_without_vision_uses_the_default_ratio(folder):
     _, g = build(folder, assumptions=[])
     ws = windows(g)
@@ -209,10 +209,9 @@ def test_roof_and_ground_floor_by_storey():
     floor = next(s for s in house.surfaces if s.kind == "floor")
     assert floor.boundary == "ground"
     assert floor.exposed_perimeter_m == pytest.approx(43.32, abs=0.01)
-    _, la = build("office")                       # floor 1 of 17: slab, no roof
-    assert [s.kind for s in la.surfaces if s.kind in ("roof", "floor")] == ["floor"]
-    assert next(s for s in la.surfaces if s.kind == "floor").exposed_perimeter_m == \
-        pytest.approx(42.0)
+    _, la = build("office")                       # floor 4 of 4: the roof, no slab
+    assert [s.kind for s in la.surfaces if s.kind in ("roof", "floor")] == ["roof"]
+    assert next(s for s in la.surfaces if s.kind == "roof").area_m2 == pytest.approx(2312.0)
     _, hou = build("office_houston")              # floor 5 of 16: neither
     assert not [s for s in hou.surfaces if s.kind in ("roof", "floor")]
 

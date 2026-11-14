@@ -150,7 +150,7 @@ def test_internal_gains_for_the_zone_model():
     model, _ = _fixture("office")
     area = sum(z.floor_area_m2 for z in model.zones)
     g = internal_gains_hourly(model.systems, area)
-    assert len(g["sensible_w"]) == 8760 and g["occupants"] == 20.0
+    assert len(g["sensible_w"]) == 8760 and g["occupants"] == 196.0      # Culver Connect, 4th floor
     g0 = internal_gains_hourly(model.systems.model_copy(update={"occupants": None}), area)
     assert g0["occupants_source"] == "schedule_default" and g0["occupants"] == pytest.approx(area / 18.59)
     assert (g["latent_w"] >= 0).all() and g["sensible_w"].min() > 0       # night lighting and plug base load

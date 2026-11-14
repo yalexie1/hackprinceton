@@ -224,7 +224,8 @@ def test_card_matches_fixture(name, mid):
     # formula ids: the card's own entries, in the fixture's order; the rest of the fixture list is
     # the simulation (ZON, HVAC), finance (ECO) and emissions (EMI) the engine and S7 add
     assert [f for f in want.formula_ids if f in got.formula_ids] == got.formula_ids
-    assert all(f.split("-")[0] in ("ZON", "HVAC", "ECO", "EMI")
+    # (the LA office fixture is real analysis output, priced: COST, INC and the simulation's TAR, UNC)
+    assert all(f.split("-")[0] in ("ZON", "HVAC", "ECO", "EMI", "COST", "INC", "TAR", "UNC", "ENV", "INF", "LGT")
                for f in want.formula_ids if f not in got.formula_ids)
     assert [e.model_dump() for e in got.evidence] == [e.model_dump() for e in want.evidence]
     # anchors: positions exactly; labels exactly except the Houston one (spec note in the PR)
@@ -244,7 +245,8 @@ def test_card_warnings_against_fixture():
     w = fixture_card("house", "ROOF_COOL").warnings[0]
     assert card("house", "ROOF_COOL").warnings == [w.split(". ")[0] + "."]
     for name in ("office", "office_houston"):
-        assert card(name, "ENV_AIRSEAL").warnings == fixture_card(name, "ENV_AIRSEAL").warnings
+        got = card(name, "ENV_AIRSEAL").warnings      # pricing (A24) appends its notes after these
+        assert fixture_card(name, "ENV_AIRSEAL").warnings[:len(got)] == got and got
     assert card("house", "ENV_ATTIC").warnings == []
 
 
@@ -252,7 +254,8 @@ def test_pricing_quantities_in_params():
     """The finance cost table multiplies these keys (finance/costs quantity_of)."""
     assert card("house", "ENV_ATTIC").params["area_m2"] == pytest.approx(82.04)
     assert card("house", "ROOF_COOL").params["roof_area_m2"] == pytest.approx(202.6)   # the two roof planes
-    assert card("office", "ENV_AIRSEAL").params["floor_area_m2"] == pytest.approx(383.42)
+    assert card("office", "ENV_AIRSEAL").params["floor_area_m2"] == pytest.approx(2312.0)
+    assert card("office", "ROOF_COOL").params["roof_area_m2"] == pytest.approx(2312.0)   # top-floor suite
     assert card("house", "ENV_AIRSEAL").params["floor_area_m2"] == pytest.approx(82.04)
 
 
@@ -265,12 +268,14 @@ def test_house_airseal_card():
 
 
 def test_no_roof_check_is_not_supported():
-    for name in ("office", "office_houston"):
+    for name in ("office_houston",):          # the LA suite (Culver Connect) is on the top floor
         b, m = bundle(name), model(name)
         for mod in (attic, roof_cool):
             reason, detail = mod.check(b, m)
             assert reason == "not_supported" and "roof is not part of its envelope" in detail
-    assert roof_cool.check(bundle("office"), model("office"))[1] == fixture_card("office", "ROOF_COOL").not_applicable_reason
+    assert roof_cool.check(bundle("office_houston"), model("office_houston"))[1].startswith(
+        fixture_card("office_houston", "ROOF_COOL").not_applicable_reason.rstrip("."))
+    assert roof_cool.check(bundle("office"), model("office")) is None
 
 
 # ---------------------------------------------------------------- through the engine
@@ -303,7 +308,10 @@ def test_engine_on_the_offices(reg):
     for name in ("office", "office_houston"):
         b, m = bundle(name), model(name)
         r = evaluate(b, m, "ROOF_COOL", "landlord", fake_simulate, registry=reg)
-        assert not r.applicable and r.params[SKIP_PARAM] == "not_supported"
+        if name == "office":                  # top floor: the roof is the suite's
+            assert r.applicable
+        else:
+            assert not r.applicable and r.params[SKIP_PARAM] == "not_supported"
         s = evaluate(b, m, "ENV_AIRSEAL", "landlord", fake_simulate, registry=reg, simulate_formula_ids=SIM_IDS)
         assert s.applicable and s.savings.gas_kwh.expected > 0 and s.formula_ids == ["INF-05", "ZON-04"]
     # Houston tenant: the consent flag is blocked, so the engine skips it for feasibility

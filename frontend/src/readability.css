@@ -1565,3 +1565,12 @@ textarea {
     overflow-x: auto;
   }
 }
+
+/* The report's lead on the plan page; the rest one click away. */
+.narrative-rest {
+  margin-top: 0.6rem;
+}
+.narrative-rest > summary {
+  cursor: pointer;
+  font-weight: 600;
+}

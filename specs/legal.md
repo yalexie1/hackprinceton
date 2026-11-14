@@ -64,7 +64,7 @@ The order below follows B&P §7159(c) and (d). The statute does not prescribe an
 **First-page block** (B&P §7159(c)(3)(B); Civ. Code §1689.7(b); type no smaller than the body)
 
 - Date the buyer signed: {{buyer_signature_date}}
-- Contractor: {{contractor_legal_name}}, {{contractor_business_address}}, telephone {{contractor_phone}}
+- Contractor: {{contractor_name}}, {{contractor_business_address}}, telephone {{contractor_phone}}
 - Notices of cancellation may be sent to the contractor at the address above or by email to {{contractor_cancellation_email}}.
 
 <!-- fmt: 10pt bold heading -->
@@ -75,7 +75,7 @@ The order below follows B&P §7159(c) and (d). The statute does not prescribe an
 
 **4.1 Parties**
 
-This contract is between {{owner_names}} ("Owner"), of {{owner_mailing_address}}, and {{contractor_legal_name}} ("Contractor"), California contractor licence number {{contractor_license_number}}, licence classification(s) {{contractor_license_classes}}, business address {{contractor_business_address}}. {{salesperson_block}}
+This contract is between {{owner_names}} ("Owner"), of {{owner_mailing_address}}, and {{contractor_name}} ("Contractor"), California contractor licence number {{contractor_license_number}}, licence classification(s) {{contractor_license_classes}}, business address {{contractor_business_address}}. {{salesperson_block}}
 
 The work will be done at {{property_address}}, {{property_city}}, California ("the Property"). Owner states that Owner is the {{owner_role_text}} of the Property.
 
@@ -238,7 +238,7 @@ Owner's signature and date for the {{cancel_title}} notice: ______________ Date:
 |---|---|---|
 | `salesperson_block` | `salesperson_name` given | "Salesperson: {{salesperson_name}}, registration number {{salesperson_registration_number}}." (B&P §7159(d)(2)) |
 | `finance_charge_block` | `finance_charge_usd` given | heading **Finance Charge** (10pt bold), then "Finance charge: ${{finance_charge_usd}}. This is separate from the Contract Price." (B&P §7159(d)(6), §7159.5(a)(2)) |
-| `downpayment_block` | `downpayment_usd` > 0 | "Down payment: ${{downpayment_usd}}, due when this contract is signed." Generator rejects any value above the cap in check `CA-R-08`. If no down payment, the block reads "No down payment." and `stat_ca_downpayment_cap` is still printed (it does no harm and avoids a missed heading). |
+| `downpayment_block` | `down_payment_usd` > 0 | "Down payment: ${{down_payment_usd}}, due when this contract is signed." Generator rejects any value above the cap in check `CA-R-08`. If no down payment, the block reads "No down payment." and `stat_ca_downpayment_cap` is still printed (it does no harm and avoids a missed heading). |
 | `retention_block` | `retention_percent` > 0 | "Owner may hold back {{retention_percent}}% of each progress payment as retention. Owner will pay all retention within 45 days after completion, less any amount Owner disputes in good faith, up to 150% of the disputed amount." (Civ. Code §8812; the §8811 5% cap does not apply to non-mixed-use residential projects of four stories or fewer, §8811(b)(3), but the generator caps retention at 5% anyway as a conservative default) |
 | `financing_contingency_block` | `financing_contingent = yes` | clause 4.13 below |
 | `pre_1978_lead_notice_block` | `CostarData.year_built` < 1978 or unknown | "The home may have been built before 1978. Contractor will follow the federal lead-safe work practice rules that apply to renovation of such homes." *[Unverified federal rule, section 8.]* |
@@ -263,7 +263,7 @@ Owner's initials: ______ Contractor's initials: ______
 
 **Progress payment table** (`progress_payment_table`, also Schedule B). Columns: stage number, work or delivery completed, amount in dollars and cents.
 - Default stages: one per measure in Schedule A, in the order of `Plan.selected` (rank), plus a final stage "Final inspections passed and hand-over documents delivered" holding at least 10% of the price.
-- Amounts: from `stage_amounts_usd` if the user gave them. Otherwise the generator proposes amounts by splitting (`contract_price_usd` − `downpayment_usd`) in proportion to each measure's `finance.installed_cost_usd.expected`, rounds to cents, puts the rounding difference in the final stage, and marks every row *proposed by software, confirm with contractor*.
+- Amounts: from `stage_amounts_usd` if the user gave them. Otherwise the generator proposes amounts by splitting (`contract_price_usd` − `down_payment_usd`) in proportion to each measure's `finance.installed_cost_usd.expected`, rounds to cents, puts the rounding difference in the final stage, and marks every row *proposed by software, confirm with contractor*.
 - Checks: amounts sum exactly to the price less the down payment (`CA-R-09`); no stage pays for work before it is done (each row's text names a completed item, never a date alone) (`CA-R-10`).
 
 **Schedule A rows** (`schedule_a_rows`). From each `MeasureResult` for the routed measures: improvement = `title`; location = rooms named by `anchors[].room_id` / `label`; work = `description`; materials and equipment = rendered from `params` (for example insulation R-value, heat pump efficiency rating, lamp count) and from `contractor_equipment_specs[measure_id]` if the user supplied it; completion test = the measure's default in the table below. Flags with `status` `likely_upgrade` or `blocked` (for example "electrical.service") are listed under the row as "Known risks that may need a change order", with their `added_cost_usd` range.
@@ -290,7 +290,7 @@ Sources: **user** = `DocumentRequest.fields[name]`; a dotted path = a contract t
 | `disclaimer` | gen | yes | section 1.2 |
 | `state_name` | gen | yes | "California" |
 | `buyer_signature_date` | user | yes | left blank for hand completion by default |
-| `contractor_legal_name` | user | yes | exactly as on the licence |
+| `contractor_name` | user | yes | exactly as on the licence |
 | `contractor_business_address` | user | yes | |
 | `contractor_phone` | user | yes | |
 | `contractor_cancellation_email` | user | yes | |
@@ -303,7 +303,7 @@ Sources: **user** = `DocumentRequest.fields[name]`; a dotted path = a contract t
 | `property_address`, `property_city` | `PropertySummary.address`, `.city` | yes | user may override; check `state == "CA"` |
 | `contract_price_usd` | user | yes | from the contractor's bid. Never from analysis estimates |
 | `finance_charge_usd` | user | no | |
-| `downpayment_usd` | user | no | ≤ min(1000, 10% × price) unless `contractor_bond_exempt` (check `CA-R-08`) |
+| `down_payment_usd` | user | no | ≤ min(1000, 10% × price) unless `contractor_bond_exempt` (check `CA-R-08`) |
 | `stage_amounts_usd` | user | no | list, one per stage; else proposed (4.B) |
 | `payment_due_days` | user | no | default 10. Civ. Code §8800 allows the parties to agree a period; without agreement it is 30 days |
 | `retention_percent` | user | no | default 0; capped at 5 |
@@ -346,7 +346,12 @@ Sources: **user** = `DocumentRequest.fields[name]`; a dotted path = a contract t
 
 ## 6. Statutory checks (document 1, CA)
 
-Each row becomes one `StatutoryCheck` (`requirement`, `citation`, `satisfied`, `note`). The citation is the statute section. Once `specs/legal/california.md` lands, each citation also names that file's entry, and the statute summaries here are trimmed to a pointer.
+Each row becomes one `StatutoryCheck`. Field mapping:
+- `requirement_id`: the statute file's requirement id (for example `CA-HIC-07`, `CA-CXL-01` in `specs/legal/california.md`). One check row may cover several statute ids; it then emits one `StatutoryCheck` per id, each with the same `satisfied` result. Until that file lands, `requirement_id` is the `CA-R-nn` id below.
+- `requirement`: the text in the Requirement column, prefixed with this file's `CA-R-nn` id.
+- `citation`: the statute section, as below. `satisfied` and `note` as below.
+
+Once `specs/legal/california.md` lands, a column mapping each `CA-R-nn` to its statute ids is added here, and the statute summaries in section 7 are trimmed to a pointer.
 
 | ID | Requirement | Citation | `satisfied` when |
 |---|---|---|---|

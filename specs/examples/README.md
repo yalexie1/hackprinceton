@@ -111,6 +111,9 @@ These are not facts about the buildings. They are the defaults and rules of the 
 ### 2.3 Illustrative, stated plainly
 
 - **Every energy quantity**: the baseline end uses, monthly values, peaks, heating and cooling needs, and the kWh each measure saves. So are all the figures computed from them.
+- **Superseded since these examples were written** (the files are kept as they are, because the checker and the lanes' tests reproduce them):
+  - Los Angeles electricity is now priced at the EIA California state average (about 0.2975 residential and 0.3002 commercial USD per kWh, `Tariff.source` naming EIA, with a `fallback` record), and `Tariff.utility` names the utility only once the incorporated-place lookup confirms it. The flat LADWP prices below are illustrative.
+  - Office water heating: the office baselines show 600 and 1,200 kWh, but physics 02 (DHW-02) does not model office hot water, so the code reports 0 with a warning.
 - **Prices with no published default**: the Los Angeles electricity prices (house 0.25 flat; LA office 0.19 / 0.22 / 0.26 USD per kWh, standing for which LADWP commercial schedule applies), the gas prices and the house's fixed charge. `Tariff.source` says so. Demand charges are not modelled.
 - **PVGIS for the two offices**: no PVGIS run is recorded for either lot, so 1,690 (LA) and 1,330 (Houston) kWh per kW at a 15-degree rack, and their deviations, are invented. The house's PVGIS figure is real.
 - **The Houston georeference**: its rotation is not recorded on main, so the quaternion (a 30-degree turn, north offset 330.00) and the coordinates (approximate for the address) are invented.

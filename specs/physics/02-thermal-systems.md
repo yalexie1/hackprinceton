@@ -664,7 +664,7 @@ Validity: mechanically ventilated commercial buildings. The infiltration rule is
 
 Primary: S11 section 5.1.2 and Tables 5 and 6 (office: 18.59 m²/person, 9.44 L/s per person, 0.51 L/(s·m²) total, from ASHRAE 62-1999) and the infiltration section (7.5 and 2.0 L/(s·m²) at 75 Pa, exponent 0.65 to 4 Pa, 25 % with the ventilation system running). Second source: none independent was opened for the office rates; ASHRAE 62.1 itself is paywalled. Listed in section 10 as single-sourced.
 
-Worked example: office suite `A_f` = 500 m², no tenant data. `N_occ` = 26.9, `Q_oa` = 0.2539 m³/s (0.508 L/(s·m²), matching the table's 0.51), `H_ve` from ventilation alone = 304.7 W/K. Envelope 1036.6 m² (four 22.36 m × 3 m walls plus the roof), pre-2004: leakage at 4 Pa = 7.5 × 0.1488 = 1.1159 L/(s·m²); `Q_inf,off` = 1.1567 m³/s, `Q_inf,on` = 0.2892 m³/s.
+Worked example: office suite `A_f` = 500 m², no tenant data. `N_occ` = 26.9, `Q_oa` = 0.2539 m³/s (0.508 L/(s·m²), matching the table's 0.51), `H_ve` from ventilation alone = 304.7 W/K. Envelope 1036.6 m² (two sets of four 22.36 m × 3 m walls plus the roof, as the printed values need (four walls plus the roof alone is 768.3 m²)), pre-2004: leakage at 4 Pa = 7.5 × 0.1488 = 1.1159 L/(s·m²); `Q_inf,off` = 1.1567 m³/s, `Q_inf,on` = 0.2892 m³/s.
 
 Tool: `office_outdoor_air(occupants, envelope_area_m2, hvac_on: bool, leakage_75pa_l_s_m2=7.5) -> flow_m3_s`.
 
@@ -810,7 +810,7 @@ Validity: the interior coefficients describe closed or half-open devices on ordi
 
 Primary: S13, sections "HPXML Interior Shading" and "HPXML Exterior Shading" (opened). It attributes the interior formula and coefficients to the ASHRAE Handbook of Fundamentals 2021, chapter 15, Table 14, and the exterior values 0.30 and 0.70 to the MulTEA Engineering Manual, Table A.3.4; neither original was opened. Second source: S10 section 4.2.2 for existing homes ("a constant interior shading multiplier of 0.7"), which sits inside the range the table gives; and S1 clause 11.4.3 for the structure (a separate transmittance with the shade in use, chosen each hour). The film and screen values are single-sourced (section 10, tier B).
 
-Worked example at `SHGC` = 0.60: light blinds closed, 0.78 − 0.47 × 0.60 = 0.498; medium shades over half the window, 0.5 × (0.90 − 0.228) + 0.5 = 0.836; light curtains over half, 0.794. The window of WIN-01 with a film (0.70 in place of the interior factor): 264.6 W; with an exterior screen: 113.4 W. Recomputed by script.
+Worked example at `SHGC` = 0.60: light blinds closed, 0.78 − 0.47 × 0.60 = 0.498; medium shades over half the window, 0.5 × (0.90 − 0.228) + 0.5 = 0.836; light curtains over half, 0.794. The window of WIN-01 with a film, the film's 0.70 multiplied with the interior factor 0.70 (the printed number needs both): 264.6 W; with an exterior screen: 113.4 W. Recomputed by script.
 
 Tool: `shading_factor(interior_type=None, exterior_type=None, shgc, fraction_covered=None) -> factor`.
 
@@ -1108,7 +1108,7 @@ V_hot = V_cw + V_dw + (V_shower + V_bath + V_sink) * (theta_mix - theta_mains) /
 
 `N_br` is the number of bedrooms, counted from Matterport room labels. `theta_set` = 51.7 °C (125 °F). Multiply gallons by 0.00378541 for m³. Because the mixed uses depend on `theta_mains`, compute `V_hot` per day (or per month with `day = 30 × month − 15`).
 
-Validity: US average behaviour, single-family and multifamily units. Carry ±30 % on the volume (household size and habits; no spread is given in the source, so this range is a judgment, section 10 tier B). Offices: hot water is a minor end use and is not modelled; `Systems.dhw_*` is ignored for the office flow.
+Validity: US average behaviour, single-family and multifamily units. Carry ±30 % on the volume (household size and habits; no spread is given in the source, so this range is a judgment, section 10 tier B). Offices: hot water is a minor end use and is not modelled; `Systems.dhw_*` is ignored for the office flow, and the office baseline reports 0 kWh for water heating with a warning (the office examples show 600 and 1,200 kWh, which are illustrative).
 
 Primary: S10 section 2.1.4, Table 11, and section 4.3 (set point 125 °F, mixed temperature 110 °F), opened. Second source for magnitude: S15 appendix E, whose "medium" test draw pattern is 55 gallons (208 L) per day and "high" is 84 gallons; the three-bedroom result below is 52.8 gallons.
 
@@ -1187,7 +1187,7 @@ Validity: the home formula is the Building America benchmark, a US-average house
 
 Primary: S11 Table A-2 and Table B-13 (office power densities and schedules); S10 section 2.1.7, eqs. (6), (7) and (10), Table 18 (home formula, lamp fractions, efficacy ratios), all opened. The first home line is the sum of eq. (6) (hard-wired, 80 %) and eq. (7) (plug-in, 20 %); eq. (10) is written in the source for the hard-wired part and is applied here to both parts. Second source: S13 default lighting schedule (hourly shares and monthly multipliers, credited there to ANSI/RESNET/ICC 301-2022 Addendum C, Tables C.3(3) and C.3(4)).
 
-Worked example, home: 150 m² = 1615 ft². `E_light,base` = 0.542 × 1615 + 334 = 1209 kWh/yr. All LED with the source's ratio 0.30: factor = (0.34 − 0.0567 + 0.30 − 0.0221) × 1 × 0.9 + 0.1 = 0.6051, 732 kWh/yr, saving 478 kWh/yr. With `ER_led` = 0.167: factor 0.4851.
+Worked example, home: 150 m² = 1615 ft². `E_light,base` = 0.542 × 1615 + 334 = 1209 kWh/yr. All LED with the source's ratio 0.30: factor = (0.34 − 0.0567 + 0.30 − 0.0221) × 1 × 0.9 + 0.1 = 0.6051, 732 kWh/yr, saving 478 kWh/yr. With `ER_led` = 15/90 (0.1667): factor 0.4851; the rounded 0.167 gives 0.4854.
 
 Worked example, office: the small-office lighting schedule (`DEF-09`) sums to 10.50 on a weekday, 2.80 on a Saturday and 1.20 on other days, which is 2939 equivalent full-power hours per year (260 weekdays, 52 Saturdays, 53 other days). For 500 m²: `LPD` 19.48 W/m² → 28 628 kWh/yr; 10.76 → 15 813 kWh/yr; 6.5 → 9552 kWh/yr.
 

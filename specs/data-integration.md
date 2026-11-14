@@ -82,6 +82,16 @@ Four key sets live in a git-ignored `.env`: the unlabelled set plus `_B`, `_C`, 
 - `PropertyId` → `id` in `data/commercial-property.jsonl`. `ListingId` → `id` in `data/residential-listings.jsonl`.
 - City split: Houston 7,154, Los Angeles 5,970, `LOS ANGELES` 14, `houston` 9. **Normalise city and state** — the index's `state` column is dirty the same way (`TX`/`Texas`/`Tx`, `CA`/`Ca`/`California`, blanks).
 
+**A `MatterportModelId` is not unique to one parent.** [V] 2026-11-14, measured while building D1. Of the 15,319 rows that carry a model id, **387 are second-or-later rows for a model already seen**, so **307 model ids have more than one parent**:
+
+| Case | Models | What it is |
+|---|---|---|
+| Commercial, several `PropertyId`s | **55** | multi-building complexes — one scan at 2121 Brittmoore Rd is attached to **13** property records, and 6 more models have 4 each |
+| Residential, several `ListingId`s under **one** `ResidentialListingId` | **202** | one sale marketed through several MLSs |
+| Residential, several `ResidentialListingId`s | **50** | separate sales or rentals of the same home over time |
+
+`CostarData` carries a single `property_id` / `listing_id`, so the reader picks a primary by a documented deterministic rule — commercial: the first CSV row whose record exists; residential: the latest `listDate`, being the most recent marketing of that home — and exposes the alternatives through `parents_for_model(sid)` so nothing is silently dropped. **Keying a dict by model id and keeping the last row loses 387 rows without any error**, which is how this was found. Neither golden office is affected: `jfiEvosX974` → `246899` and `L3266YcPPvd` → `234088`, one parent each.
+
 **Do not use the `homes_listing_id` / `costar_property_id` path via `models_index.csv` that `SPEC.md` §9 describes.** It is the join the sponsor marked untested, and the kit ships a direct `MatterportModelId` join with better coverage.
 
 Model ids also appear inside the records as `videoKey` on attachments and media; an item is a Matterport model when `videoExternalReferenceType` (or `externalReferenceType` on residential media) is **36** (MatterportScan) or **234** (MatterportStreamingKey). Join on the key and the model id together.
@@ -92,6 +102,9 @@ Model ids also appear inside the records as `videoKey` on attachments and media;
 
 [V] from `models/commercial-property.md` and `schemas/enums.json`
 
+- **Residential records differ from commercial ones in two ways.** `property.yearBuilt` **is** a plain scalar there (1920 on the golden house), unlike commercial; and residential area is a **range**, `property.sqftMin`/`sqftMax` (1628/1628 on the golden house), not a single field. [V] 2026-11-14
+- **`property.propertyType` on a residential record is ambiguous — do not use it.** On the golden house it is `1`, which under `PropertyResidentialType` means `ApartmentCommunity`, contradicting the record's own `mlsPropertyType` of "Residential Single-Family, Single Family Residence". `listingPropertyType` is also `1`, which under `ListingPropertyType` means `Detached` and agrees. Use `listingPropertyType` with the `ListingPropertyType` enum. [V] 2026-11-14
+- **No owner name exists on a property record.** `commercial-property` carries only `isOwnerOccupied` and `apartmentOwnershipType`; `compOwners` is on sale comps (D10). `CostarData.owner_name` stays null. [V] 2026-11-14
 - **`yearBuilt` is not a scalar.** Years live in `constructionEvents[]` keyed by `ConstructionEventType`: 1 GroundBreaking, **2 ConstructionComplete**, 3 RenovationBegun, 4 RenovationFinished, 5 CommonAreaRenovated, 6 Demolished, 7 Converted, 17 Redeveloped. `year` can be approximate, `month` is often empty, and a property can carry several events. Prefer `ConstructionComplete` and record which event was used — vintage drives every envelope and systems default in `physics.md`.
 - **Two area fields.** `grossBuildingAreaSquareFeet` (GBA, to the outside of exterior walls) → **use for the envelope**. `rentableBuildingAreaSquareFeet` (RBA, inside the walls, excluding vertical shafts) → leasing and vacancy only. Do not mix them.
 - **`propertyType` integer enum**: 0 Unknown, 1 Hospitality, 2 Industrial, 3 Land, **5 Office**, 6 GeneralRetail, 7 Flex, 8 SportsAndEntertainment, 9 MixedUse, 10 Specialty, 11 Multifamily, 13 Healthcare, 14 PropertyTypeUnknown, 15 Residential, 16 Homes. **The office flow selects `propertyType == 5`**, not the index's "commercial" segment — most commercial models are apartment units (`SPEC.md` §3.2 is right about the problem, and this is the fix).
@@ -564,6 +577,8 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | EPA eGRID factors | page only | 2026-11-14 | eGRID2023 current; **values not opened, unverified** |
 | EIA API v2 retail price | live, TX + CA, both sectors | 2026-11-14 | 200; TX com 8.96, TX res 15.91, CA com 30.02, CA res 29.75 ¢/kWh (2026-08) |
 | Measure cost data | — | — | **[P] not started, no owner** |
+| Model-id uniqueness | both CSVs, full scan | 2026-11-14 | **307 ids have >1 parent** (55 commercial, 252 residential); 387 extra rows |
+| Residential field shapes | kit record + models/ | 2026-11-14 | `yearBuilt` scalar, area is `sqftMin`/`sqftMax` range, `propertyType` ambiguous |
 | Contract v0.2 extract + examples | independent check, pydantic 2.14.3 | 2026-11-14 | 538 lines, imports clean, 56 models, 27/27 examples valid (99 checks, 0 fail) |
 | Open-Meteo time convention | hourly-vs-daily reconciliation + sunrise boundary | 2026-11-14 | **`hour_end`** — ratio 1.0001; 05:00 stamp = 04:00–05:00 mean |
 | Golden office openings | live query | 2026-11-14 | **5 openings, all `doorway` — no windows** |

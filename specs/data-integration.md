@@ -23,7 +23,8 @@ Four key sets live in a git-ignored `.env`: the unlabelled set plus `_B`, `_C`, 
 
 - Set `_D` is the screenshot-copied set the board flagged. It is both **invalid and incomplete** — never assign it. It needs re-sharing as text.
 - `ANTHROPIC_API_KEY` is **missing from `.env`** entirely, though `SPEC.md` §12 requires it for the Agent lane and Analysis vision. [V]
-- Variable names: `MATTERPORT_API_KEY`, `MATTERPORT_API_TOKEN`, `MATTERPORT_SDK_KEY`, `VEXCEL_API_KEY`, `COSTAR_KIT_URL`, `COSTAR_ZIP_PASSWORD` (shared across sets), `ANTHROPIC_API_KEY`.
+- Variable names: `MATTERPORT_API_KEY`, `MATTERPORT_API_TOKEN`, `MATTERPORT_SDK_KEY`, `VEXCEL_API_KEY`, `COSTAR_KIT_URL`, `COSTAR_ZIP_PASSWORD` (shared across sets), `ANTHROPIC_API_KEY`, `EIA_API_KEY`.
+- `ANTHROPIC_API_KEY` and `EIA_API_KEY` are both present and verified against their APIs as of 2026-11-14. **`.env.example` needs an `EIA_API_KEY=` line** — that is a root file @yalexie1 owns.
 - **One key set per concurrent agent, three agents maximum.** The keys are shared across the whole hackathon. Matterport must stay well under 10 req/s; Vexcel returns 429 and needs exponential backoff.
 - No key value ever goes in a commit, a log, a fixture, a cache entry, or chat.
 
@@ -65,7 +66,7 @@ Four key sets live in a git-ignored `.env`: the unlabelled set plus `_B`, `_C`, 
 | Commercial listing summary | `data/commercial-listing-summary.jsonl` | 1,022 | 14 MB | `id` | D10 |
 | Location occupancy | `data/location-occupancy.jsonl` | 74,093 | 69 MB | `id` | **D10 — occupancy schedules** |
 | Company detail | `data/company-detail.jsonl` | 49,575 | 42 MB | `id` | **D10 — employee counts → plug loads** |
-| Commercial sale comp | `data/commercial-sale-comp.jsonl` | 6,120 | 23 MB | `id` | **D10 — value uplift** |
+| Commercial sale comp | `data/commercial-sale-comp.jsonl` | 6,120 | 23 MB | `id` | **D10 — `MarketData` for value uplift** |
 | Apartment listing | `data/apartment-listing.jsonl` | 1,747 | 6 MB | `id` | D10 — asking rents |
 | Residential listings | `data/residential-listings.jsonl` | 2,120 | 45 MB | `id` = `ListingId` | D1 — home flow |
 | Residential listing features | `data/residential-listing-features.jsonl` | 1,899 | 28 MB | `id` | D10 |
@@ -147,6 +148,8 @@ Verified georeferences: [V] 2026-11-14
 
 `SPEC.md` §3.3 says the scan "does not give ... window type". **Wrong for geometry**: per-opening width, height and sill elevation are measured, so **window area and orientation are derivable** and belong in the building model as data. Glazing *performance* (U-value, SHGC) is still inferred — keep that distinction crisp, because §5.1's assumption registry currently treats the whole window as an assumption.
 
+**The golden office has no window openings at all.** [V] 2026-11-14 — `HjEyXryhRLk` ("Suite A - 2,000SF") returns 5 openings across its single floor, **every one `doorway`**. So window surfaces cannot be derived from the scan for the office flow, which matters because office daylight, glare and desk placement (`SPEC.md` §6.4) depend on them. Either office windows are inferred from the footprint and facade, or the golden office is re-picked. Raised for the analysis lane — the same shape of problem as `ac-unit.count` being 0 on the same building (§4.5).
+
 **The enum values settle it.** [V] 2026-11-14
 
 - **`OpeningType` = `divider` | `doorway` | `opening` | `window`.** `window` is an explicit, first-class value — windows are *typed*, not merely "an opening we guess about".
@@ -167,6 +170,15 @@ Working query: `floors { id label edges { id type thickness openings { id type w
 - Defurnished: `view(type: "matterport.model.defurnished") { id }`, then query `model(id: <view id>)`; pano ids match. 6,979 models have one.
 - Floor plans: `assets { floorplans(provider: "matterport") { format flags url width height resolution origin { x y } } }`, plus a DXF.
 - MatterPak: `bundle(id: "mp:matterpak") { availability }`, then `assets { resources(format: "matterpak") { status filename url } }`. Zip with `cloud.xyz` and an OBJ mesh. Unlocked for the 232 splat models, "being unlocked" for the rest — treat **locked as a normal outcome**, not an error.
+- **MatterPak on the golden house: `bundle(id:"mp:matterpak").availability` is `unlocked`, but all three resources report `status: "unavailable"`** (`mp_matterpak_...zip`, `mp_obj_...zip`, `mp_obj-low-res_...zip`). So `mesh_path` and `point_cloud_path` **cannot be filled today** — unlocked is not the same as available, and anything depending on the mesh must treat it as absent. [V] 2026-11-14
+- **Splat and drone photos exist for both golden properties, and they are very large.** [V] 2026-11-14, from the track site:
+
+| Model | `outsideView` | `splatBytes` | `totalBytes` | drone images |
+|---|---|---|---|---|
+| House `zvKHR9DHNjJ` | `true` | 553,269,021 (553 MB) | **15,567,074,993 (15.6 GB)** | `DJI_20260915...*_D.JPG` |
+| Office `HjEyXryhRLk` | **`false`** | 394,940,609 (395 MB) | 4,131,262,549 (4.1 GB) | `DJI_20261105...*_V.JPG` |
+
+  The office record also carries `propertyId: "354635"`, which **independently confirms the CoStar join** from a second source. The 15.6 GB total is a hard constraint on D12 — fetch selectively, never the whole folder.
 - Splats and drone photos come from the track site, not the Model API: `GET <site>/api/models/<sid>` lists files, `GET <site>/resources/<sid>/<file>` redirects to a one-hour signed link. Splat frame is local, z up, **not north-aligned**; drone GPS and gimbal angles are in the JPEG XMP block (first 48 KB). [U] not re-verified
 - **No geographic search in the API.** Property search comes from the CoStar kit CSVs (§2.4). [V]
 - Mattertags were empty on the models the sponsor checked. [U]
@@ -307,6 +319,7 @@ Checked live 2026-11-14. **Two of the sources `SPEC.md` and `handoff-plan.md` na
 | Annual PV yield + inter-annual uncertainty | **PVGIS v5_3 `PVcalc`** (EC Joint Research Centre) | none | [V] 200 on both golden lots |
 | PV reference implementation for unit tests | **pvlib 0.16.1** (local wheel) | n/a | [V] downloads |
 | Utility tariff, Los Angeles | **NREL URDB** via `api.openei.org/utility_rates` | free NREL key (`DEMO_KEY` works for probing) | [V] returns LADWP, `eiaid` 11208 |
+| State average retail price (tariff fallback) | **EIA API v2** `electricity/retail-sales` | free EIA key, `EIA_API_KEY` | [V] 200 for TX and CA, commercial and residential |
 
 Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 
@@ -320,12 +333,44 @@ Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 
 **Open-Meteo returns DNI and DHI already separated from GHI.** So for the hourly path the irradiance *decomposition* step (Erbs 1982) in the `physics.md` brief is **optional** — only the transposition to plane-of-array (Perez 1990) is strictly needed. Worth knowing before that module gets written.
 
+### 5.1a Weather file format and time convention (workplan R2)
+
+`ClimateSite.weather_path` points at a typical-year hourly CSV in the cache. Format, written by `external.py`:
+
+| Column | Unit | Open-Meteo field |
+|---|---|---|
+| `time_local` | ISO 8601 local, no offset (the site's `timezone` is on `ClimateSite`) | `hourly.time` |
+| `temp_c` | °C | `temperature_2m` |
+| `rh_pct` | % | `relative_humidity_2m` |
+| `ghi_w_m2` | W/m² | `shortwave_radiation` |
+| `dni_w_m2` | W/m² | `direct_normal_irradiance` |
+| `dhi_w_m2` | W/m² | `diffuse_radiation` |
+| `wind_m_s` | m/s (Open-Meteo returns km/h — convert) | `wind_speed_10m` |
+
+**`weather_time_convention` = `hour_end`.** [V] 2026-11-14, verified two independent ways on the golden house:
+
+1. **Full-hour means, not instantaneous samples.** The 24 hourly `shortwave_radiation` values for 2024-06-21 sum to 8,312 W/m²·h = **29.923 MJ/m²**, against the daily `shortwave_radiation_sum` of **29.92 MJ/m²** — ratio **1.0001**. If the values were instantaneous samples the sum would not reconcile with the daily total.
+2. **The stamp labels the hour that *ends* at that time.** Sunrise was 04:42. GHI reads 0.0 at the 04:00 stamp, **2.0** at 05:00, 85.0 at 06:00. Under an hour-*start* reading, the 05:00 stamp would cover 05:00–06:00 with the sun already 18–78 minutes up and would have to read roughly 60+, not 2.0. Under hour-end it covers 04:00–05:00, which contains only the 18 minutes after sunrise at 0–3° elevation — which is exactly what 2.0 looks like.
+
+So an hour stamped `05:00` is the mean over `04:00`–`05:00`. **Anything that treats it as the following hour shifts every solar calculation by one hour.**
+
 ### 5.2 What is blocked, and the caveats
 
 - **`developer.nrel.gov` and `nsrdb.nrel.gov` both fail DNS resolution from this environment** (`curl: (6) Could not resolve host`). So **PVWatts v8 and NSRDB PSM3 are unusable here**, although `api.openei.org` — also NREL-operated — resolves fine. `handoff-plan.md` names PVWatts as a reference implementation for the test plan; use **pvlib locally** instead, with PVGIS as an independent cross-check. [V]
 - **PVGIS offers only `PVGIS-ERA5` for the United States.** `PVGIS-NSRDB` is not a valid value in v5_3, and `PVGIS-SARAH3` answers "location out of the spatial coverage" for Los Angeles. ERA5 is a ~30 km reanalysis, materially coarser than satellite-derived NSRDB, so treat PVGIS as a **sanity band and annual cross-check, not the primary hourly source**. Open-Meteo is the hourly source. [V]
-- **URDB has no tariff at the Houston office coordinates at all** — 0 items for `sector=Commercial`, `sector=Residential`, and with no sector filter. That is consistent with ERCOT's deregulated retail market, where there is no single regulated utility tariff to look up. **The Houston tariff needs a different route** and is currently an open blocker for the office flow's savings figures. Candidates, none yet verified: a named retail provider's published plan, or EIA state average price by sector. [V] the zero result; [P] the replacement
-- **`api.eia.gov` resolves but requires a free API key**, which nobody has yet. It is the most likely Texas fallback (state average retail price by sector, monthly). [P]
+- **URDB has no tariff at the Houston office coordinates at all** — 0 items for `sector=Commercial`, `sector=Residential`, and with no sector filter. That is consistent with ERCOT's deregulated retail market, where there is no single regulated utility tariff to look up. [V]
+- **Resolved via EIA, as a documented fallback.** `EIA_API_KEY` is now in `.env` and verified. `GET https://api.eia.gov/v2/electricity/retail-sales/data/` with `frequency=monthly`, `data[0]=price`, `facets[stateid][]`, `facets[sectorid][]` returns the state monthly average retail price in **cents per kWh**: [V] 2026-11-14, latest period 2026-08
+
+  | State | Sector | Period | Price |
+  |---|---|---|---|
+  | TX | Commercial | 2026-08 | **8.96 ¢/kWh** |
+  | TX | Residential | 2026-08 | 15.91 ¢/kWh |
+  | CA | Commercial | 2026-08 | 30.02 ¢/kWh |
+  | CA | Residential | 2026-08 | 29.75 ¢/kWh |
+
+  **This is a state monthly average, not the building's actual retail contract.** In deregulated ERCOT the real price varies widely by retail plan, so the office `Tariff` must carry `source` naming EIA with the state, sector and period, and a `FetchRecord{layer: "tariff", status: "fallback"}` beside it. It is defensible and traceable; it is not a lookup of that building's tariff. The LA home flow still uses the real LADWP rate from URDB.
+
+  **One consequence worth stating before anyone is surprised by it.** Texas commercial power is **8.96 ¢/kWh against California commercial at 30.02 — a factor of 3.35**. Since every retrofit's dollar saving is energy saved times price, the Houston office will show markedly worse payback, NPV and SIR than the Los Angeles house for identical physics. That is a real result, not a bug, and it is exactly the sort of thing the C-PACE route in `SPEC.md` §6.6 exists to address. The demo script should not treat a weak office result as a failure.
 - **Emission factors: eGRID2023 is the current edition** (the EPA page also still references eGRID2022). The relevant subregions are **CAMX** for Los Angeles and **ERCT** for Houston. **The factor values have not been opened**, and per the double-check protocol they are therefore **unverified — do not hardcode them from memory.** The data file must be read before any CO₂ figure is computed. [P]
 - **Measure cost data** is not started. [P]
 
@@ -334,7 +379,7 @@ Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 1. The analysis lane should write the PV module against **pvlib**, not PVWatts-over-HTTP, and validate against PVGIS annual totals.
 2. The irradiance decomposition module is **optional**, not required, if Open-Meteo is the hourly source.
 3. **Every CO₂ figure is blocked** until eGRID2023 is actually opened. Until then the plan should report energy and dollars, and mark CO₂ unavailable rather than estimated.
-4. **Office-flow dollar savings are blocked in Houston** until a tariff source is settled. The LA home flow is unblocked.
+4. **Office-flow dollar savings are unblocked**, using the EIA state-average fallback with an explicit `fallback` FetchRecord. But expect weak office economics: Texas commercial power is 3.35x cheaper than California's, so identical physics yields far worse payback in Houston.
 
 ## 6. Data-lane workflow
 
@@ -354,7 +399,9 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D7 | P1 | Index + office selection | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
 | D8 | P1 | Imagery + SAM 3 | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique |
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
-| D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `occupancy`, `value_uplift` |
+| D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
+| D12 | P1 | Splat + drone photos (track site) | `data-matterport` | `backend/data_layer/tracksite.py` | `splat_path`, `drone_photo_paths` |
+| D13 | P2 | Portfolio screening by Vexcel filters | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
 | D11 | — | this file | lane owner | `specs/data-integration.md` | — |
 
 **Critical path:** D0 (kit mirror) → D1 / D2 / D3 in parallel → D5 → D6. D4 can be stubbed from the contract and hardened later. D7–D10 come strictly after the walking skeleton.
@@ -364,10 +411,10 @@ One writer per path. Dependencies name **contract types only**, never another pa
 - **Three source agents at most**, one per working key set (unlabelled, `_B`, `_C`). Set `_D` is invalid. This cap is a rate-limit constraint, not a style preference — the keys are shared across every team.
 - Each agent on its own `<issue#>-<slug>` branch, or a git worktree when two need the same dependency tree.
 - **Branch from fresh `main` and open PRs against `main`** (AGENTS.md §3.2). `spec-draft` is **retired** as of PR #19 — do not commit to it or target it. `Closes #N` works again now that `main` is the merge target, so issues auto-close.
-- **`backend/schema.py` does not exist yet.** The v0.2 contract currently lives only as the block between `<!-- contract:start -->` and `<!-- contract:end -->` in `SPEC.md` §9, and `backend/schema.py` belongs to @yalexie1 (contract lane). Every package D1–D5 imports it, so **extracting it is the gate on all Data-lane implementation.** Independently verified 2026-11-14: the block extracts to 538 lines, imports clean under pydantic 2.14.3, defines 56 models, and all 27 payloads in `specs/examples/` validate against it (99 `model_validate` calls, 0 failures). So the extraction is mechanical and low-risk — it just needs doing by its owner.
+- **Tests** live in `backend/data_layer/tests/test_<package>.py`, one file per package, so two agents never write the same test file (workplan R11).
+- **`backend/schema.py` exists** as of PR #28 (`SCHEMA_VERSION` 0.2.0), with `backend/__init__.py` alongside it so `import backend.schema` works. `SPEC.md` §9 remains the source and **only @yalexie1 edits the module** — this lane imports it and never writes it. Independently verified 2026-11-14: the module is the §9 block, imports clean under pydantic 2.14.3, defines 56 models, and all 27 payloads in `specs/examples/` validate against it (99 `model_validate` calls, 0 failures). Note three example files are **arrays** — `measures.json` is `MeasureResult[]`, `run_events.json` is `RunEvent[]`, `search_results.json` is `PropertySummary[]` — so a validator assuming one object per file reports false failures.
 - Launch with `/data-wp <ID>`; check lane state with `/data-status`. Subagent definitions live in `.claude/agents/data-*.md` and carry the verified facts for their source inline, so an agent starts from evidence rather than from the stale spec.
 - **Fixtures ship with the package**, not after it. D5 and the other three lanes must never wait on live keys.
-- `backend/schema.py` belongs to @yalexie1. This lane imports it and never edits it.
 
 ### 6.3 Board post types
 
@@ -377,10 +424,17 @@ On top of the AGENTS.md rules: `CONTRACT-CHANGE:` (a contract type is wrong or m
 
 ```
 data/cache/           git-ignored — the CoStar kit mirror, fetched bytes, Vexcel calculated results
-data/fixtures/        committed — golden-property payloads other lanes build against
+data/fixtures/        git-ignored — REAL captures replayed offline, never committed
   costar/  matterport/  vexcel/
+specs/examples/       committed — the shared fixture set every lane builds against
 mp_out/               git-ignored
 ```
+
+**What may be committed (workplan R1).** An earlier version of this section called `data/fixtures/` "committed", which contradicts `SPEC.md` §3.6 and §14 and the hard rules in the Data agent definitions: sponsor data is hackathon-licensed and this repository is **public**. The rule is:
+
+- **`specs/examples/` is the single committed fixture set.** Its README states that no API response and no CoStar kit record is copied into it; a short list of identifiers and verified scalars is real and everything else is illustrative. Lanes build and test against it.
+- **`data/fixtures/` holds real captures and is git-ignored.** It exists so the lane can replay live responses offline without a network, which is what the acceptance tests need. It is never pushed.
+- A committed file may contain: synthetic payloads shaped like the real ones, identifiers (model ids, `PropertyId`, `ListingId`), and the small set of verified scalars already published in this document. It may **never** contain a raw Matterport GraphQL response, a Vexcel GeoJSON response, a CoStar kit record, or any image or mask bytes.
 
 Cache keys include source, identifier **and query shape** (Vexcel's `include=` and `layer`, Matterport's field selection, CoStar's dataset and record id). **No signed URL is ever persisted.** Writes are atomic so an interrupted run cannot leave a half-written entry that later reads as a hit.
 
@@ -436,5 +490,12 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; open blocker |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |
 | EPA eGRID factors | page only | 2026-11-14 | eGRID2023 current; **values not opened, unverified** |
-| Measure cost data | — | — | **[P] not started** |
+| EIA API v2 retail price | live, TX + CA, both sectors | 2026-11-14 | 200; TX com 8.96, TX res 15.91, CA com 30.02, CA res 29.75 ¢/kWh (2026-08) |
+| Measure cost data | — | — | **[P] not started, no owner** |
 | Contract v0.2 extract + examples | independent check, pydantic 2.14.3 | 2026-11-14 | 538 lines, imports clean, 56 models, 27/27 examples valid (99 checks, 0 fail) |
+| Open-Meteo time convention | hourly-vs-daily reconciliation + sunrise boundary | 2026-11-14 | **`hour_end`** — ratio 1.0001; 05:00 stamp = 04:00–05:00 mean |
+| Golden office openings | live query | 2026-11-14 | **5 openings, all `doorway` — no windows** |
+| Golden house MatterPak | live query | 2026-11-14 | `unlocked` but all 3 resources `unavailable` |
+| Splat / drone, both lots | track site | 2026-11-14 | house 15.6 GB total, office 4.1 GB; office `outsideView` false |
+| CoStar join, second source | track site `propertyId` | 2026-11-14 | `HjEyXryhRLk` -> `354635`, matches the kit CSV |
+| Edge-fraction origin, rotation sense | — | — | **[P] open — footprint registration cross-check** |

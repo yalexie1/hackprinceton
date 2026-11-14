@@ -74,8 +74,11 @@ def test_other_rules():
     b = _bundle("office")
     b.costar = None
     b.matterport.matterpak_available = False
+    for f in b.matterport.floors:                       # the rule, whatever the example holds
+        for e in f.edges:
+            e.openings = [o for o in e.openings if o.type != "window"]
     keys = {e.payload["fallback"] for e in detect_fallbacks(b)}
-    assert {"no_costar", "matterpak_locked", "no_window_openings"} <= keys   # office has doorways only
+    assert {"no_costar", "matterpak_locked", "no_window_openings"} <= keys   # no window left in the wall graph
 
 
 # ---- the prompts ----

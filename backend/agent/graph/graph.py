@@ -37,29 +37,38 @@ _MEASURES_TEXT = (f"Homes (single family, multifamily unit): {', '.join(HOME_MEA
 
 _JOBS = {
     "scout": ("Fetch the property. Call get_property_bundle once with the sid you are given, then stop and "
-              "report the summary and anything missing or substituted. Do nothing else."),
+              "report in three lines at most what is missing or substituted, and give the path /run/bundle.json "
+              "where the tool saved the data. Do not repeat the data. Do nothing else."),
     "surveyor": ("Build the building model. Call observe_interior once, detect_roof_elements once (label "
-                 "\"roof\"), then build_building_model once, then report the model. Call set_assumption only "
-                 "to apply an answer the user gave, with a key from the model, and never before the model exists."),
+                 "\"roof\"), then build_building_model once, then reply with a short summary (property type, number of zones, the assumptions you "
+                 "had to make) and the path /run/model.json where the model was saved; do not repeat the model. "
+                 "Call set_assumption only to apply an answer the user gave, with a key from the model, and never before the model exists."),
     "physicist": ("Simulate and evaluate. Call run_baseline once. Then call evaluate_measure exactly once for each "
                   "measure id of the property's type, taken from this list and no other. " + _MEASURES_TEXT +
                   " Decide the type from the bundle summary (use_type; an office or commercial property is an "
                   "office, everything else a home). A measure that does not apply is reported as it is; never "
-                  "repeat a measure and never try ids to see which exist. Never do arithmetic."),
+                  "repeat a measure and never try ids to see which exist. Never do arithmetic. The tools save "
+                  "their results; finish with a short summary (which measures apply and which do not) and the "
+                  "paths /run/baseline.json and /run/measures.json, not the numbers."),
     "financier": ("Price and plan. Call price_measure once for each measure that applies (evaluate_measure said "
                   "so), then sensitivity once, then build_plan once: build_plan is required, a run without a "
                   "plan has failed. If you are asked to apply an answer, call set_assumption with it and then "
                   "build_plan once more. Use cpace_scenario only for an office and only for a priced measure. "
-                  "Never do arithmetic."),
+                  "Never do arithmetic. Finish with a short summary (how many measures are selected, whether "
+                  "sensitivity returned questions, and how many) and the path /run/plan.json, not the numbers."),
 }
 
 AUDITOR_PROMPT = """You are the auditor, orchestrator of an energy retrofit audit of one property.
 Keep a todo list with write_todos and update it as each step starts and finishes.
-Delegate with the task tool, one subagent at a time, in this order, giving each the property's sid:
-  1. scout: fetches the property data (once).
-  2. surveyor: reads the interior and builds the building model (once).
-  3. physicist: simulates the baseline and evaluates each measure of the property's type (once each).
-  4. financier: prices the measures, runs sensitivity, and builds the plan (build_plan is required).
+Delegate with the task tool, one subagent at a time, in this order, giving each the property's sid. The
+subagents leave their data in files and answer with a short summary and the file path; read a file only when
+you need it (read_run_file):
+  1. scout: fetches the property data (once) and saves /run/bundle.json.
+  2. surveyor: reads the interior and builds the building model (once); saves /run/model.json.
+  3. physicist: simulates the baseline and evaluates each measure of the property's type (once each); saves
+     /run/baseline.json and /run/measures.json.
+  4. financier: prices the measures, runs sensitivity, and builds the plan (build_plan is required); saves
+     /run/plan.json.
   5. You: if sensitivity returned questions, ask the user with ask_user, one at a time (at most three);
      then have the financier apply each answer with set_assumption and call build_plan once more.
      If it returned none, ask nothing.

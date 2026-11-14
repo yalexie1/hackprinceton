@@ -46,7 +46,7 @@ def test_the_model_is_built_from_the_real_modules(flavor):
 
 
 def test_vision_observations_reach_the_model():
-    bundle, request = load("office")
+    bundle, request = load("office_houston")
     model = model_of(bundle, request)
     assert any(a.source == "vision" for a in model.assumptions)
     assert any(s.kind == "window" and s.source_opening_id is None for s in model.surfaces)   # no openings in an office scan
@@ -612,8 +612,8 @@ def test_a_number_written_as_text_is_a_number():
 
 def test_the_whole_door_works_for_a_property_that_has_no_example():
     bundle, request = load("office_houston")
-    real = bundle.model_copy(update={"summary": bundle.summary.model_copy(update={"sid": "ZSPaQbkGcJJ"})})
-    assert not api._has_example("ZSPaQbkGcJJ") and api._measures("ZSPaQbkGcJJ") == []
+    real = bundle.model_copy(update={"summary": bundle.summary.model_copy(update={"sid": "NO_EXAMPLE_SID"})})
+    assert not api._has_example("NO_EXAMPLE_SID") and api._measures("NO_EXAMPLE_SID") == []
     observed, flags = api.observe_interior(real)
     assert observed == [] and flags == []
     model = api.build_building_model(real, observed, flags, request.overrides)

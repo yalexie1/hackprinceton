@@ -214,15 +214,21 @@ def test_masks_are_cached_as_bytes_that_get_asset_can_serve():
     assert (cache._ROOT / path).read_bytes()[:4] == b"\x89PNG", "not a PNG on disk"
 
 
-def test_a_cache_path_inside_the_repo_becomes_repo_relative():
+def test_a_cache_path_inside_the_repo_becomes_repo_relative(tmp_path):
     """`mask_png_path` and `ortho_path` are resolved against the repo root by
     `get_asset`, so an absolute path from the cache has to be converted. A cache
     pointed outside the repo (as these tests do) has no relative form, and saying so
-    beats inventing one."""
+    beats inventing one.
+
+    The outside case compares against the **resolved** path, not a literal: on macOS
+    `/tmp` is a symlink to `/private/tmp`, so a hard-coded `/tmp/...` string failed
+    there while passing on Linux. Reported by @Sri-SriPod.
+    """
     inside = cache._ROOT / "data" / "cache" / "vexcel-mask" / "x.png"
     assert cache.relative(inside) == "data/cache/vexcel-mask/x.png"
-    outside = pathlib.Path("/tmp/elsewhere/x.png")
-    assert cache.relative(outside) == "/tmp/elsewhere/x.png"
+    outside = tmp_path / "elsewhere" / "x.png"
+    assert cache.relative(outside) == str(outside.resolve())
+    assert pathlib.Path(cache.relative(outside)).is_absolute()
 
 
 def test_mask_wkt_is_left_unset_on_purpose():

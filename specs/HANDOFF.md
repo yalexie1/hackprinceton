@@ -2,6 +2,8 @@
 
 Written 2026-11-13 about 11:10 PM ET. The first computer's Claude account hit its usage limit mid-task. This file carries everything needed to finish the spec from a different computer and account. Delete it once the spec is complete.
 
+**Superseded in part, 2026-11-14.** The Data lane has since verified the sponsor data live. Where this file and `specs/data-integration.md` disagree, that file is right. Known stale statements here: the CoStar kit is 49 MB with JSONL datasets and no `commercial-property/` folder; the CoStar join is direct on `MatterportModelId`, not through `models_index.csv`; the Model API does return the rotation to north (`Model.geocoordinates`) and wall openings (`Edge.openings`).
+
 ## 1. Resume in five steps
 
 1. Get the branch:

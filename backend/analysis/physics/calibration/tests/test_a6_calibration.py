@@ -181,7 +181,9 @@ def test_electricity_only_does_not_rewrite_the_gas_side(house):
     assert res.fuels == ["electricity"] and res.calibrated_to_bills
     for key in ("setpoint.heating", "infiltration.ach50"):          # move gas more than electricity
         assert key not in res.values
-        assert any(s.startswith(key) and "acts mainly on gas" in s for s in res.screened_out)
+        # screened out either as gas-side or, in a mild climate, as too weak on the electricity bills
+        assert any(s.startswith(key) and ("acts mainly on gas" in s or "moves the bills by less than" in s)
+                   for s in res.screened_out)
     assert "hvac.heating_rating" not in res.values                  # moves gas only
     assert any(s.startswith("hvac.heating_rating") for s in res.screened_out)
     assert any("No gas bills were given" in w for w in res.warnings)

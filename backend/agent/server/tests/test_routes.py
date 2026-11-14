@@ -163,3 +163,19 @@ def test_answer_to_a_run_that_is_not_waiting_is_409():
 def test_invalid_run_request_is_422_envelope():
     r = client.post("/api/runs", json={"sid": "x", "budget_usd": "lots"})
     assert r.status_code == 422 and set(r.json()["error"]) == {"code", "message"}
+
+
+# ---- G10: document routes ----
+
+def test_document_roundtrip_and_refusals(monkeypatch):
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    dreq = {**_body("house", "document_request.json"), "run_id": run_id}
+    post = client.post(f"/api/runs/{run_id}/documents", json=dreq)
+    draft = DocumentDraft.model_validate(post.json())
+    assert client.get(f"/api/runs/{run_id}/documents/{draft.doc_id}").json() == post.json()
+    r = client.post(f"/api/runs/{run_id}/documents", json={**dreq, "run_id": "other"})
+    assert r.status_code == 400 and r.json()["error"]["code"] == "run_id_mismatch"
+    monkeypatch.setattr(api.get_run(run_id), "status", "waiting_for_user")
+    r = client.post(f"/api/runs/{run_id}/documents", json=dreq)
+    assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_done"
+    assert client.post("/api/runs/zzz/documents", json=dreq).status_code == 404

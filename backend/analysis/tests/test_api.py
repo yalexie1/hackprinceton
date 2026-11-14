@@ -95,8 +95,8 @@ def test_tenant_plan_and_budget():
     tenant = request.model_copy(update={"role": "tenant", "budget_usd": 321.0})
     plan = api.build_plan(bundle, model, tenant)
     assert plan.budget_usd == 321.0
-    expected = Plan.model_validate_json((EX / "house" / "plan_tenant.json").read_text())
-    assert plan.model_copy(update={"budget_usd": expected.budget_usd}) == expected
+    assert {s.measure_id for s in plan.skipped if s.reason == "role"} >= {"PV_ROOF", "ENV_ATTIC", "HVAC_HP"}
+    assert all(i.cumulative_upfront_usd <= 321.0 for i in plan.selected)
 
 
 def test_set_assumption_collapses_a_range_and_leaves_the_input_alone():

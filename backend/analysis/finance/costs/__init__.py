@@ -32,6 +32,7 @@ def cost_fields(measure: MeasureResult, summary: PropertySummary, quantity: Opti
                 extra: Optional[dict] = None) -> CostFields:
     q = quantity if quantity is not None else quantity_of(measure)
     if q is None:
+        measure_cost(measure.measure_id, 1.0, summary.segment)     # a measure with no cost source says so first
         raise NoCostData("no_quantity", f"{measure.measure_id}: the quantity to price is unknown")
     cost, source = measure_cost(measure.measure_id, q, summary.segment)
     years, status = useful_life(measure.measure_id, summary.segment)

@@ -1,0 +1,10 @@
+# Analysis lane dependencies. Owned by the holder of package A0 (@Sri-SriPod); other
+# packages name the libraries they need in their PR and A0's owner adds them here.
+pydantic>=2.7
+pytest>=8
+numpy              # runtime: A1 climate, A4 PV, A9 geometry
+shapely>=2.0       # runtime: A9 geometry, A11 roof planes
+# Test references only (the physics code does not import them):
+pandas             # A1, A4 tests
+scipy              # A9 tests (ROOF-02 second source), A10
+pvlib>=0.16,<0.17  # A1, A4 reference implementation (A1 tested on 0.16.1)

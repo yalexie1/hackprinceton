@@ -10,11 +10,20 @@ finding from `specs/data-integration.md` section 4:
   structure id, so on a multi-structure parcel it cannot be joined back to the
   precomputed structures at all.
 - The response is a **GeoJSON `FeatureCollection`**; the flat dotted attributes sit
-  inside `features[0].properties`, not at the top level.
+  inside a feature's `properties`, not at the top level.
+- **One response holds one feature per capture collection, and `features[0]` is not
+  the newest.** A single point returned 5 features on the golden house, 4 on the Los
+  Angeles office and 6 on the Houston office - the same parcel as seen by different
+  flights, every ring containing the point. Which one is read changes the footprint,
+  the rooftop AC count and the solar flag. `locate.py` (D16) chooses; nothing here may
+  go back to `features[0]`.
 - **`404` means no parcel at that point and is a normal outcome**, reported as a
   `FetchRecord` rather than raised. **`429` is retried with exponential backoff.**
 - Parcel geometry can be a **`MultiPolygon`**, so the largest ring is taken.
-- **`primary-structure` picks the building**: the golden house parcel holds two.
+- **`primary-structure` does not reliably pick the building.** It is right on the
+  golden house, which holds two structures, and wrong on both golden offices: at the
+  Los Angeles office the flagged structure is one the address point is not inside. It
+  is kept in `attributes` and `VexcelStructure.primary` now carries D16's choice.
 - **`roof-characteristics.height` must not be used for building height.** Across
   three lots its magnitude equals `|roof - ground|` but its sign came out +, -, +
   with no pattern, and on both towers the magnitude is wrong (15.5 m and 15.7 m
@@ -46,6 +55,8 @@ import time
 from typing import Callable, Optional
 
 from backend.schema import FetchRecord, VexcelData, VexcelStructure
+
+from . import cache
 
 BASE = "https://api.vexcelgroup.com/v2"
 
@@ -183,6 +194,24 @@ def _structures(props: dict) -> list[VexcelStructure]:
     return out
 
 
+def _chosen_first(structures: list[VexcelStructure], index: int) -> list[VexcelStructure]:
+    """Put the chosen structure first and make it the only `primary` one.
+
+    Every consumer picks the building the same two ways - the first structure flagged
+    `primary`, or a sort on `not primary` - so satisfying both is what makes the choice
+    in `locate.py` actually reach A2, A11, A12, A14 and A19 without a contract change.
+
+    **Vexcel's own flag is not lost**: `_structures` keeps every raw key except the
+    footprint WKT, so `attributes["primary-structure"]` still reports what the service
+    said. `VexcelStructure.primary` now means "the building this bundle is about",
+    which is what every caller already read it as.
+    """
+    if not structures or not (0 <= index < len(structures)):
+        return structures
+    ordered = [structures[index]] + [s for i, s in enumerate(structures) if i != index]
+    return [s.model_copy(update={"primary": i == 0}) for i, s in enumerate(ordered)]
+
+
 def primary_structure(data: VexcelData) -> Optional[VexcelStructure]:
     """The building on the parcel. Falls back to the only structure when no flag is
     set, and otherwise to the largest footprint, so a caller always gets something
@@ -197,46 +226,89 @@ def primary_structure(data: VexcelData) -> Optional[VexcelStructure]:
     return max(data.structures, key=lambda s: s.footprint_area_m2 or 0.0)
 
 
+#: What goes into the D4 cache key besides the point. `include=precomputed` and
+#: `include=precomputed,calculated` return different key sets for the same parcel
+#: (finding 4.3), so sharing an entry would serve a caller asking for roof height a
+#: payload that has none, silently.
+def _query_shape(layers: str) -> dict:
+    return {"include": "precomputed,calculated", "layer": layers, "srid": 4326}
+
+
 def get_vexcel_data_with_notes(
     wkt: str, *, layers: str = DEFAULT_LAYERS, stories: Optional[int] = None,
-    get: Optional[Getter] = None,
+    at: Optional[tuple[float, float]] = None, floor_plate_m2: Optional[float] = None,
+    locator: str = "address",
+    get: Optional[Getter] = None, refresh: bool = False,
 ) -> tuple[Optional[VexcelData], list[FetchRecord]]:
     """Parcel attributes and geometry for one point or area.
 
     Returns `(None, [FetchRecord])` when there is no parcel or the service stayed
     rate-limited, because both are normal outcomes for this lane rather than faults.
+
+    **One response holds several captures of the same parcel, and the first is not the
+    newest.** `at` and `floor_plate_m2` are how a caller says which building it means;
+    `locate.py` carries the rule and the measurements behind it. Without them this
+    still prefers the newest capture over `features[0]`, because `features[0]` is
+    whatever the service happened to order first - at the Los Angeles office, a 2022
+    capture of a building the address is not inside.
+
+    Cached by D4 when the default transport is used; **an injected `get` bypasses the
+    cache**. The HTTP status is cached with the body, because "no parcel here" is a
+    stable fact about coverage and worth not re-asking - but a 429 is not, since it
+    says nothing about the parcel and everything about the last few seconds.
     """
-    status, body = (get or _default_get)("property/extract", {
-        "wkt": wkt,
-        "srid": 4326,
-        # One call: `calculated` alone cannot be joined back to the precomputed
-        # structures, and `precomputed` alone leaves every height null.
-        "include": "precomputed,calculated",
-        "layer": layers,
-    })
-    if status == 403:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="missing",
-                                  detail=f"outside the licensed coverage: {wkt}")]
-    if status == 404:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="missing",
-                                  detail=f"no parcel at {wkt}")]
+    def fetch():
+        status, body = (get or _default_get)("property/extract", {
+            "wkt": wkt,
+            "srid": 4326,
+            # One call: `calculated` alone cannot be joined back to the precomputed
+            # structures, and `precomputed` alone leaves every height null.
+            "include": "precomputed,calculated",
+            "layer": layers,
+        })
+        return {"status": status, "body": body}
+
+    shape = _query_shape(layers)
+    payload, from_cache = cache.cached_json(
+        "vexcel", wkt, fetch, shape, use_cache=get is None, refresh=refresh)
+    status, body = payload.get("status"), payload.get("body")
+
     if status == 429:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="error",
-                                  detail="rate limited after retries")]
+        # Never cache a rate limit: it describes the service's last few seconds, not
+        # this parcel, and a cached 429 would poison the point until the key changed.
+        if get is None and not from_cache:
+            cache.path_for("vexcel", wkt, shape).unlink(missing_ok=True)
+        return None, [cache.record("vexcel.rate_limited", wkt)]
+    if status == 403:
+        return None, [cache.record("vexcel.outside_coverage", wkt)]
+    if status == 404:
+        return None, [cache.record("vexcel.no_parcel", wkt)]
     features = (body or {}).get("features") or []
     if not features:
-        return None, [FetchRecord(layer="vexcel", what="property/extract", status="missing",
-                                  detail="response carried no features")]
+        return None, [cache.record("vexcel.no_features", wkt)]
 
-    feature = features[0]
+    from . import locate as d16
+
+    chosen, choice_notes = d16.choose(features, at=at, plate_m2=floor_plate_m2,
+                                      locator=locator)
+    # A parcel with no structure in any capture is still a parcel: it has a polygon,
+    # which `elements/detect` needs, and attributes. Keep the newest capture of it and
+    # let the record say there was no building to choose.
+    index = chosen.feature if chosen is not None else d16.newest_feature(features)
+    feature = features[index]
     props = feature.get("properties") or {}
+    structures = _structures(props)
     data = VexcelData(
         collection=props.get("metadata.collection") or props.get("parcel-source"),
         parcel_wkt=largest_ring_wkt(feature.get("geometry")),
         attributes={k: v for k, v in props.items() if k != "structures"},
-        structures=_structures(props),
+        structures=(_chosen_first(structures, chosen.structure)
+                    if chosen is not None else structures),
     )
     notes = [FetchRecord(layer="vexcel", what="property/extract", status="ok")]
+    notes += choice_notes
+    if get is None:
+        notes.append(cache.cache_note("vexcel", "property/extract", hit=from_cache))
     primary = primary_structure(data)
     if not plausible_building_height(primary.attributes if primary else {}, stories):
         notes.append(FetchRecord(
@@ -248,10 +320,12 @@ def get_vexcel_data_with_notes(
 
 def get_vexcel_data(
     wkt: str, *, layers: str = DEFAULT_LAYERS, stories: Optional[int] = None,
+    at: Optional[tuple[float, float]] = None, floor_plate_m2: Optional[float] = None,
     get: Optional[Getter] = None,
 ) -> VexcelData:
     """As above, but raises `NoParcel` instead of returning notes."""
-    data, notes = get_vexcel_data_with_notes(wkt, layers=layers, stories=stories, get=get)
+    data, notes = get_vexcel_data_with_notes(wkt, layers=layers, stories=stories,
+                                             at=at, floor_plate_m2=floor_plate_m2, get=get)
     if data is None:
         raise NoParcel(notes[0].detail or "no parcel")
     return data

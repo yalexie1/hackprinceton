@@ -31,6 +31,7 @@ These are fixed. A file that disagrees with this table is wrong.
 | Tilt | 0 = horizontal facing up, 90 = vertical | SPEC 9, `Surface.tilt_deg` |
 | Model frame to true north | `north_offset_deg` is the azimuth of the model frame's +y axis, clockwise from true north. `azimuth_true = azimuth_in_model + north_offset_deg`, with `azimuth_in_model` measured clockwise from model +y | SPEC 9; `ROOF-02`; physics 03 section 0.2 |
 | Hourly weather stamps | a value stamped at an hour is the mean over the hour **ending** at that stamp (`hour_end`). Verified on Open-Meteo by the Data lane on 2026-11-14. Sun position for an hourly value is taken at the middle of that hour. This closes the open risk named in physics 01 | `ClimateSite.weather_time_convention`; data spec 5 |
+| Weather year | one real calendar year (2024, Open-Meteo), not a typical meteorological year (TMY). A leap-year file has 8,784 hours; the reader drops 29 February and returns 8,760 with a warning. A single real year carries that year's anomalies, so the PV-09 year-to-year range (from PVGIS) is what covers weather variability | data spec 5.1a; A1 reader; `specs/examples/weather/` |
 | Irradiance inputs | the weather source supplies GHI, DNI and DHI separately, so transposition (`IRR`, Perez) is the required path and decomposition from GHI alone is the fallback | physics 01 section 2 |
 | Gas | carried as kWh of higher heating value. 1 therm = 29.3071 kWh | `TAR-05` |
 | Emissions | kg CO2-equivalent, first year, eGRID total-output rate for electricity and the EPA combustion factor for gas. The non-baseload figure is an optional "up to" number | `EMI-01`, `EMI-02` |
@@ -89,14 +90,17 @@ What that does not cover:
 | Roof pitch by roof shape rests on one lidar study; gable and hip share a range (`ROOF-03`) | tilt is a range, and with the unconfirmed ridge direction it is the main spread in the solar yield |
 | Most useful lives (`COST-02`) | flagged placeholders; five are sourced |
 | Rent uplift (`VAL-02`) | a stub; value uplift has no rent component |
+| Installed cost of an electrical service upgrade, the `added_cost_usd` on an `electrical.service` flag of `likely_upgrade` | an estimate carried as a range, 2,250 / 3,000 / 4,500 USD (the COST-00 range rule around 3,000), with the flag's message saying it is not sourced. When the signal is only grounded outlets, 0 / 1,500 / 4,500 |
+| Hours of a home thermostat setback (`DEF-08`) | nights 22:00 to 06:00 and weekdays 08:00 to 18:00, this project's judgment; only used when a home has a setback, so baselines are unaffected |
 | Fire-code roof setbacks: the residential code section for the house and Houston's local adoption | setback values flagged unverified (physics 01 section 8) |
 
 ## 8. Open items that cross files
 
 | Item | Who | Affects |
 |---|---|---|
-| Which way the Matterport georeference quaternion rotates, to be confirmed against the Vexcel footprint on the golden house | Data lane | the sign of `north_offset_deg`, so every azimuth in 01, 02 and 03 |
+| Which way the Matterport georeference quaternion rotates. Evidence so far (A9, 2026-11-14): on all three golden properties the footprint's edge directions support the `ROOF-02` reading; the other reading misses by 7.2° (house), 6.9° (LA office) and 30° (Houston office). This holds only if the example footprint polygons are real, and the check works modulo 90°, so a confirmation on live Vexcel footprints is still wanted | Data lane | the sign of `north_offset_deg`, so every azimuth in 01, 02 and 03 |
 | Which vertex `Opening.relative_center` is measured from | Data lane | point daylight, glare and comfort in 03: the other reading mirrors each off-centre window along its wall |
-| The golden office model has no window openings and no rooftop unit is counted on its roof | team decision: use the vision fallbacks or pick another office | desk placement in 03; `HVAC_RTU` and `HVAC_ECON` in 02 |
+| Office scans have no window openings (decided: windows from vision, then the `DEF-03` window-to-wall default); no rooftop unit is counted on the golden offices' roofs | Analysis lane | desk placement in 03; `HVAC_RTU` and `HVAC_ECON` in 02 |
 | Ridge direction on a parametric roof is assumed until an oblique image confirms it | Analysis lane | about a fifth of annual solar energy on the golden house (`PV-09`) |
 | The Texas PACE program SIR formula rests on the legal spec's reading of the program guide; how escalation and fees enter was not confirmed (`ECO-12b`) | Analysis lane, with the legal spec | the C-PACE eligibility flag |
+| Contract gaps found while building A1, A9 and A11, not yet proposed as a `CONTRACT-CHANGE`: `ClimateSite` has no elevation (SOL-01 pressure; the code defaults to 0 m, a negligible effect); `Source` has no value for an assumed north offset (A9 uses `published_default` with confidence 0); `RoofPlane` has no existing-solar field (A11 returns it beside the planes) | Analysis lane | none at present; each is handled in code |

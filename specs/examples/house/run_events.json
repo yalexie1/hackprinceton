@@ -59,6 +59,26 @@
   {
     "type": "fallback",
     "stage": "S2",
+    "message": "Electricity priced at the EIA California state average, not a LADWP schedule",
+    "payload": {
+      "layer": "tariff",
+      "from": "utility tariff",
+      "to": "EIA state average (CA RES, 2026-08)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "Gas priced at the EIA California state average, not a SoCalGas schedule",
+    "payload": {
+      "layer": "tariff",
+      "from": "gas utility tariff",
+      "to": "EIA state average (CA RES, 2025)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
     "message": "MatterPak resources are unavailable; using the wall graph",
     "payload": {
       "layer": "matterport",
@@ -132,9 +152,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 1695.7,
-        "expected": 1912.0,
-        "high": 2197.11,
+        "low": 1918.54,
+        "expected": 2212.44,
+        "high": 2579.01,
         "unit": "USD"
       }
     }
@@ -209,7 +229,7 @@
             "value": null
           }
         ],
-        "impact_note": "A service upgrade could add up to $4,500 to rooftop solar. At the high end, solar no longer fits the budget and the selected measures change."
+        "impact_note": "A service upgrade is likely and could add $2,250 to $4,500 to rooftop solar. It is not in the installed cost; at the high end, solar no longer fits the budget and the selected measures change."
       }
     }
   },

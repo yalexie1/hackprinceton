@@ -16,17 +16,21 @@ import hashlib
 import json
 import os
 import queue
+import time
 import threading
+import uuid
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Optional
 
 from backend.agent.ask import AskSession, make_ask_user
 from backend.agent.graph import build_auditor, detect_fallbacks
-from backend.agent.narrative import check_narrative
+from backend.agent.narrative import check_narrative, remove_unsupported
+from backend.agent.runtime.replan import PatchError, replan
 from backend.agent.runtime.runtime import DEFAULT_RUNS_DIR, RunStore, build_result, execute_run
 from backend.agent.tools import Doors, ToolContext, build_tools
-from backend.schema import (Choice, DocumentDraft, DocumentRequest, PropertyBundle, Question,
+from backend.schema import (BuildingModel, Choice, DocumentDraft, DocumentRequest, PropertyBundle, Question,
                             RunEvent, RunRequest, RunResult)
 
 STAGE_OF = {
@@ -66,15 +70,42 @@ class LiveSettings:
 SETTINGS: Optional[LiveSettings] = None
 
 
-def _load_api_key() -> None:
-    """Pick ANTHROPIC_API_KEY up from the repo's (git-ignored) .env when it is not exported."""
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        return
+_ENV_KEYS = ("ANTHROPIC_API_KEY", "LANGSMITH_API_KEY", "LANGSMITH_PROJECT", "LANGSMITH_TRACING",
+             "LANGSMITH_ENDPOINT", "LANGSMITH_WORKSPACE_ID")
+DEFAULT_PROJECT = "energy-consultant"
+
+
+def _load_env() -> None:
+    """Pick the keys this module needs up from the repo's (git-ignored) .env when they are not
+    exported. Values are never printed or logged."""
     env = DEFAULT_RUNS_DIR.parents[1] / ".env"
-    if env.is_file():
-        for line in env.read_text().splitlines():
-            if line.startswith("ANTHROPIC_API_KEY="):
-                os.environ["ANTHROPIC_API_KEY"] = line.split("=", 1)[1].strip().strip("'\"")
+    if not env.is_file():
+        return
+    for line in env.read_text().splitlines():
+        key, _, value = line.partition("=")
+        if key in _ENV_KEYS and not os.environ.get(key):
+            os.environ[key] = value.strip().strip("'\"")
+
+
+def configure_tracing(env=None) -> bool:
+    """LangSmith tracing for live runs. On when a LANGSMITH_API_KEY is present and tracing has not
+    been switched off; with no key it is forced off, so a missing or empty key never makes the
+    run fail or log errors. Returns whether traces will be sent."""
+    env = os.environ if env is None else env
+    flag = (env.get("LANGSMITH_TRACING") or "true").strip().lower()
+    on = bool(env.get("LANGSMITH_API_KEY")) and flag not in ("false", "0", "no", "off")
+    for name in ("LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2"):
+        env[name] = "true" if on else "false"
+    if on and not env.get("LANGSMITH_PROJECT"):
+        env["LANGSMITH_PROJECT"] = DEFAULT_PROJECT
+    try:                                    # langsmith caches its environment lookups
+        from langsmith import utils
+        utils.get_env_var.cache_clear()
+        if hasattr(utils.tracing_is_enabled, "cache_clear"):
+            utils.tracing_is_enabled.cache_clear()
+    except Exception:
+        pass
+    return on
 
 
 def default_doors() -> Doors:
@@ -129,6 +160,8 @@ class LiveRun:
         # Tools share the run files (read-modify-write of measures.json, model.json), and
         # the model may issue parallel tool calls: one tool at a time per run.
         self._tool_lock = threading.RLock()
+        self._update_lock = threading.Lock()
+        self._warnings: list[str] = []
         self._memo: dict[str, Any] = {}      # (tool, args, run state) -> result
         self.memo_hits = 0
         self._stage: Optional[str] = None
@@ -152,8 +185,14 @@ class LiveRun:
         tools = self.tools = {name: self._instrument(name, fn) for name, fn in raw.items()}
         ask_user = make_ask_user(self.session, lambda k, v: tools["set_assumption"](k, v))
         self.usage_handler = UsageMetadataCallbackHandler()
+        self.tracing = os.environ.get("LANGSMITH_TRACING") == "true" and bool(os.environ.get("LANGSMITH_API_KEY"))
+        self.trace_id = uuid.uuid4()          # the root trace of the first segment (a resumed segment is its own trace)
+        self._first_segment = True
         self.config = {"configurable": {"thread_id": self.run_id}, "recursion_limit": 200,
-                       "callbacks": [self.usage_handler]}
+                       "callbacks": [self.usage_handler], "run_name": "energy-audit",
+                       "tags": ["energy-audit", f"sid:{self.request.sid}"],
+                       "metadata": {"audit_run": self.run_id, "sid": self.request.sid, "role": self.request.role,
+                                    "budget_usd": self.request.budget_usd}}
         orchestrator = settings.model or os.environ.get("AGENT_ORCHESTRATOR_MODEL") or None
         subagent = settings.subagent_model or os.environ.get("AGENT_SUBAGENT_MODEL") or None
         self.graph = build_auditor(tools, model=orchestrator, subagent_model=subagent,
@@ -207,6 +246,9 @@ class LiveRun:
                     # stored under the state before and after, so the same call repeated
                     # once the run files have moved on (a saved row, a new model) still hits
                     self._memo[key] = self._memo[self._memo_key(name, a, k)] = copy.deepcopy(out)
+            if isinstance(out, dict) and "error" in out:
+                # a failing tool is a recoverable error of the run, not something only the model sees
+                self._emit({"type": "error", "stage": STAGE_OF.get(name), "message": str(out["error"])[:300]})
             if name == "get_property_bundle" and isinstance(out, dict) and "error" not in out:
                 bundle = self.files.read_json("bundle.json")
                 if bundle:
@@ -223,12 +265,37 @@ class LiveRun:
         r = self.request
         return (f"Audit the property with sid {r.sid}. Budget: ${r.budget_usd:,.0f}. Role: {r.role}. "
                 f"Desks requested: {r.desks_requested}. Overrides already given by the user: "
-                f"{json.dumps(r.overrides)}. Run the pipeline in order: scout, surveyor, "
-                "physicist (evaluate each measure id once, and no measure twice), financier (price "
-                "the measures, call the sensitivity tool, then build the plan). Call ask_user "
-                "once per question the sensitivity tool returned, and not at all if it "
-                "returned none. Finish by writing report.md: a short summary whose every number "
-                "is copied from a tool result.")
+                f"{json.dumps(r.overrides)}. Follow the order in your instructions: scout, surveyor, "
+                "physicist, financier, then the questions if sensitivity returned any, then report.md. "
+                "Finish only when build_plan has returned a plan and report.md is written.")
+
+    def _segment_config(self) -> dict:
+        config = dict(self.config)
+        if self._first_segment and self.tracing:
+            config["run_id"] = self.trace_id
+        self._first_segment = False
+        return config
+
+    def trace_url(self) -> Optional[str]:
+        """Link to this run's first trace in LangSmith, or None (tracing off, not yet ingested, or
+        any failure). Private: it is never put in an event, a result or a log."""
+        if not self.tracing:
+            return None
+        try:
+            from langchain_core.tracers.langchain import wait_for_all_tracers
+            from langsmith import Client
+            wait_for_all_tracers()
+            client = Client()
+            for _ in range(3):
+                try:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")      # read_run is being renamed; the old name works
+                        return client.read_run(self.trace_id).url
+                except Exception:
+                    time.sleep(2)
+        except Exception:
+            pass
+        return None
 
     def _agent(self, graph_input: Any):
         async def agent(request, files) -> AsyncIterator:
@@ -237,7 +304,7 @@ class LiveRun:
 
             async def produce():
                 try:
-                    async for chunk in self.graph.astream(graph_input, self.config,
+                    async for chunk in self.graph.astream(graph_input, self._segment_config(),
                                                           stream_mode="updates"):
                         q.put_nowait(("chunk", chunk))
                     q.put_nowait(("end", None))
@@ -293,27 +360,85 @@ class LiveRun:
                             self._last_text = text
         return out
 
-    async def _finish(self) -> AsyncIterator:
-        if self._stage:
-            yield {"stage_done": self._stage, "message": STAGE_TITLE[self._stage]}
-        yield {"stage_started": "S8", "message": STAGE_TITLE["S8"]}
-        report = ""
+    def _build_plan_now(self) -> None:
+        bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+        model = BuildingModel.model_validate(self.files.read_json("model.json"))
+        plan = self.doors.analysis.build_plan(bundle, model, self.request)
+        self.files.write("plan.json", plan.model_dump_json(indent=2))
+        self.files.write("measures.json", [m.model_dump(mode="json")
+                                           for m in [i.measure for i in plan.selected] + list(plan.financeable)])
+
+    async def _plan_if_missing(self) -> AsyncIterator:
+        """The plan is the point of a run. If the agent finished without building it (it chose not to,
+        or every pricing call failed), the runtime builds it from the model the agent made, as
+        SPEC 8 rule 5 allows for a decision the agent skipped, and says so."""
+        if self.files.read_json("plan.json") is not None:
+            return
+        if self.files.read_json("bundle.json") is None or self.files.read_json("model.json") is None:
+            yield {"type": "error", "stage": "S7",
+                   "message": "the run ended without a building model, so no plan could be built"}
+            return
+        try:
+            await asyncio.get_running_loop().run_in_executor(None, self._build_plan_now)
+        except Exception as exc:
+            yield {"type": "error", "stage": "S7", "message": f"the runtime could not build the plan: {type(exc).__name__}: {exc}"[:300]}
+            return
+        yield {"fallback": "The agent did not build the plan; the runtime built it from the building model.",
+               "stage": "S7", "payload": {"fallback": "plan_built_by_runtime"}}
+
+    async def _report_text(self) -> str:
         state = await self.graph.aget_state(self.config)
         vfiles = (state.values or {}).get("files") or {}
         for key in REPORT_KEYS:
             if key in vfiles:
                 data = vfiles[key]
                 content = data.get("content") if isinstance(data, dict) else data
-                report = "\n".join(content) if isinstance(content, list) else str(content or "")
-                break
-        report = report or self._last_text
+                return "\n".join(content) if isinstance(content, list) else str(content or "")
+        return self._last_text
+
+    async def _ask_for_a_corrected_report(self, problems: list[str]) -> None:
+        """One more turn for the auditor: the numbers no tool returned, and the instruction to rewrite."""
+        message = ("report.md states numbers that no tool returned: " + "; ".join(problems[:8]) + ". Rewrite "
+                   "report.md now, using only numbers copied exactly from tool results and removing any figure "
+                   "you worked out yourself. Do not call other tools.")
+        async for chunk in self.graph.astream({"messages": [("user", message)]}, self._segment_config(),
+                                              stream_mode="updates"):
+            self._map_update(chunk)
+
+    def _check(self, report: str) -> list[str]:
+        result = build_result(self.run_id, self.request, self.files, "done")
+        bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+        return check_narrative(report, result, bundle, result.building_model)
+
+    async def _finish(self) -> AsyncIterator:
+        async for out in self._plan_if_missing():
+            yield out
+        if self._stage:
+            yield {"stage_done": self._stage, "message": STAGE_TITLE[self._stage]}
+        yield {"stage_started": "S8", "message": STAGE_TITLE["S8"]}
+        report = await self._report_text()
         if report:
             self.files.write("report.md", report)
             try:
-                result = build_result(self.run_id, self.request, self.files, "done")
-                bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
-                for problem in check_narrative(report, result, bundle, result.building_model)[:5]:
-                    yield {"type": "error", "stage": "S8", "message": f"check_narrative: {problem}"}
+                problems = self._check(report)
+                if problems:        # SPEC 8 rule 1: the text may not state a number the tools did not return
+                    yield {"fallback": f"The summary stated {len(problems)} number(s) no tool returned; the "
+                                       "auditor was asked to correct it.", "stage": "S8",
+                           "payload": {"fallback": "narrative_repair", "problems": problems[:8]}}
+                    try:
+                        await self._ask_for_a_corrected_report(problems)
+                        report = await self._report_text() or report
+                        self.files.write("report.md", report)
+                        problems = self._check(report)
+                    except Exception as exc:
+                        yield {"type": "error", "stage": "S8", "message": f"narrative repair failed: {type(exc).__name__}: {exc}"[:300]}
+                if problems:        # still wrong: drop the lines that state them, and say so
+                    result = build_result(self.run_id, self.request, self.files, "done")
+                    bundle = PropertyBundle.model_validate(self.files.read_json("bundle.json"))
+                    report, dropped = remove_unsupported(report, result, bundle, result.building_model)
+                    self.files.write("report.md", report)
+                    yield {"type": "error", "stage": "S8",
+                           "message": f"check_narrative: removed {len(dropped)} line(s) that stated numbers no result holds"}
             except ValueError:
                 pass
         yield {"stage_done": "S8", "message": "Summary written"}
@@ -321,6 +446,12 @@ class LiveRun:
     # ---- threading ----
 
     def start(self) -> None:
+        if self.tracing:
+            # The key may be able to write traces but not read them back (then trace_url() is None),
+            # so the ids that find the trace are kept with the run. Private: data/runs is git-ignored.
+            (self.files.root / "trace.json").write_text(json.dumps({
+                "trace_id": str(self.trace_id), "project": os.environ.get("LANGSMITH_PROJECT"),
+                "run_id": self.run_id, "metadata_to_search": {"audit_run": self.run_id, "sid": self.request.sid}}, indent=2))
         self._thread.start()
 
     def _publish(self, event: RunEvent) -> None:
@@ -345,6 +476,8 @@ class LiveRun:
                                         self.run_id):
                 # A question is held back, and so is the final event, until the result is
                 # saved and `active` is off, so GET /runs/{id} always agrees with the stream.
+                if ev.type == "error" and ev.message not in self._warnings:
+                    self._warnings.append(ev.message)          # kept across a pause and a resume
                 if ev.type == "question":
                     deferred.append(ev)
                     continue
@@ -363,17 +496,19 @@ class LiveRun:
             self.active = True
 
     def _keep_asked_questions(self) -> None:
-        """A resumed segment sees no question event, so its saved result would drop the
-        questions the user answered; keep the ones the ask session handed out."""
+        """A resumed segment sees no question event and none of the earlier errors, so its saved
+        result would drop the questions the user answered and the warnings of the first segment;
+        keep both."""
         try:
             saved = self.store.load(self.run_id)
         except KeyError:
             return
         known = {q.id for q in saved.questions}
         missing = [q for q in self.session.asked if q.id not in known]
-        if missing:
-            self.store.save(self.run_id, saved.model_copy(
-                update={"questions": [*saved.questions, *missing]}))
+        warnings = list(dict.fromkeys([*self._warnings, *saved.warnings]))
+        if missing or warnings != saved.warnings:
+            self.store.save(self.run_id, saved.model_copy(update={
+                "questions": [*saved.questions, *missing], "warnings": warnings}))
 
     def _write_usage(self) -> None:
         self.usage = dict(self.usage_handler.usage_metadata)
@@ -391,6 +526,17 @@ class LiveRun:
         self.pending = None
         self.active = True
         self._inbox.put(Command(resume={"value": value}))
+
+    def update(self, budget_usd: Optional[float], overrides: Optional[dict]) -> None:
+        """G11: a new budget and/or assumption values on a finished run; the plan is re-run by the
+        analysis door (no model call) and the events of the re-run join the stream."""
+        with self._update_lock:
+            if self.active or not self.closed:
+                raise PatchError(409, "run_not_done", f"run {self.run_id} is still running; adjust a finished run")
+            result = self.store.load(self.run_id)
+            new, events = replan(result, self.files, self.store, self.doors, budget_usd, overrides)
+            self.request = new.request
+            self.events.extend(events)
 
     def result(self) -> RunResult:
         if not self.active:
@@ -430,7 +576,8 @@ _RUNS: dict[str, LiveRun] = {}
 
 
 def start_run(request: RunRequest) -> str:
-    _load_api_key()
+    _load_env()
+    configure_tracing()
     settings = SETTINGS or LiveSettings()
     store = RunStore(settings.runs_dir or DEFAULT_RUNS_DIR)
     run = LiveRun(store.new_run_id(), request, settings)

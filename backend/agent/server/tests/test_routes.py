@@ -179,3 +179,43 @@ def test_document_roundtrip_and_refusals(monkeypatch):
     r = client.post(f"/api/runs/{run_id}/documents", json=dreq)
     assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_done"
     assert client.post("/api/runs/zzz/documents", json=dreq).status_code == 404
+
+
+# ---- G11: adjust and re-run ----
+
+def _events_of(run_id):
+    with client.stream("GET", f"/api/runs/{run_id}/events") as s:
+        return [RunEvent.model_validate_json(l[6:]) for l in s.iter_lines() if l.startswith("data: ")]
+
+
+def test_a_lower_budget_gives_new_events_ending_in_done_and_a_plan_with_that_budget():
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    before = _events_of(run_id)
+    assert client.patch(f"/api/runs/{run_id}", json={"budget_usd": 500}).json() == {"ok": True}
+    after = _events_of(run_id)
+    assert len(after) > len(before) and after[-1].type == "done" and after[-1].message == "Re-run complete"
+    assert any(e.type == "tool_call" and e.payload.get("name") == "set_budget" for e in after)
+    run = RunResult.model_validate(client.get(f"/api/runs/{run_id}").json())
+    assert run.plan.budget_usd == 500 and run.request.budget_usd == 500 and run.status == "done"
+
+
+def test_an_override_key_that_is_not_an_assumption_is_refused_with_the_envelope():
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    r = client.patch(f"/api/runs/{run_id}", json={"overrides": {"not.an.assumption": 1.0}})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "unknown_assumption"
+    assert client.get(f"/api/runs/{run_id}").json()["request"]["overrides"].get("not.an.assumption") is None
+    ok = client.patch(f"/api/runs/{run_id}", json={"overrides": {"occupancy.count": 6}})
+    assert ok.status_code == 200
+    assert client.get(f"/api/runs/{run_id}").json()["request"]["overrides"]["occupancy.count"] == 6
+
+
+def test_bad_patches_and_runs_that_are_not_done():
+    run_id = client.post("/api/runs", json=_body("house", "run_request.json")).json()["run_id"]
+    assert client.patch(f"/api/runs/{run_id}", json={"budget_usd": -1}).status_code == 422
+    r = client.patch(f"/api/runs/{run_id}", json={})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "empty_patch"
+    r = client.patch(f"/api/runs/{run_id}", json={"overrides": {"geometry.ceiling_height_m": 3.0}})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "not_editable"
+    api.get_run(run_id).status = "waiting_for_user"
+    r = client.patch(f"/api/runs/{run_id}", json={"budget_usd": 100})
+    assert r.status_code == 409 and r.json()["error"]["code"] == "run_not_done"

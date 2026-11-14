@@ -118,3 +118,63 @@ def test_no_arithmetic_in_wrappers():
            if isinstance(n, ast.AugAssign)
            or (isinstance(n, ast.BinOp) and not isinstance(n.op, (ast.Div, ast.BitOr)))]
     assert ops == []
+
+
+# ---- the tool schemas the model sees ----
+
+def _schema(name, tools=None):
+    from backend.agent.graph.graph import as_langchain_tool
+    tools = tools or make(Path("."))[0]
+    return as_langchain_tool(name, tools[name]).args_schema.model_json_schema()
+
+
+def _enum(prop):
+    """The allowed values of a property, whether the schema nests them in anyOf or not."""
+    if "enum" in prop:
+        return set(prop["enum"])
+    for part in prop.get("anyOf", []) + prop.get("allOf", []):
+        if "enum" in part:
+            return set(part["enum"])
+    return None
+
+
+def test_measure_tools_list_the_allowed_measure_ids():
+    from typing import get_args
+    from backend.schema import MeasureId
+    allowed = set(get_args(MeasureId))
+    for name in ("evaluate_measure", "price_measure", "lookup_incentives", "cpace_scenario"):
+        assert _enum(_schema(name)["properties"]["measure_id"]) == allowed, name
+
+
+def test_document_and_search_tools_list_their_allowed_values():
+    from typing import get_args
+    from backend.schema import DocType, Segment, UseType
+    fill = _schema("fill_template")["properties"]
+    assert _enum(fill["doc_type"]) == set(get_args(DocType)) and _enum(fill["state"]) == {"CA", "TX"}
+    assert _enum(fill["measure_ids"]["items"]) is not None
+    search = _schema("search_properties")["properties"]
+    assert _enum(search["segment"]) == set(get_args(Segment)) and _enum(search["use_type"]) == set(get_args(UseType))
+    assert _enum(_schema("list_templates")["properties"]["state"]) == {"CA", "TX"}
+
+
+def test_every_tool_describes_itself_and_the_order_it_belongs_in():
+    from backend.agent.graph.graph import as_langchain_tool
+    tools, _ = make(Path("."))
+    for name, fn in tools.items():
+        doc = as_langchain_tool(name, fn).description
+        assert len(doc) > 40 and doc != name.replace("_", " "), name
+    assert "REQUIRED" in as_langchain_tool("build_plan", tools["build_plan"]).description
+    assert "never a property id" in as_langchain_tool("get_asset", tools["get_asset"]).description
+
+
+def test_a_tool_called_too_early_says_which_tool_to_call_first(tmp_path):
+    tools, files = make(tmp_path)
+    for name, args, first in (("build_building_model", (), "get_property_bundle"),
+                              ("run_baseline", (), "get_property_bundle")):
+        out = tools[name](*args)
+        assert "error" in out and f"call {first} first" in out["error"], name
+    tools["get_property_bundle"]("zvKHR9DHNjJ")
+    out = tools["set_assumption"]("occupancy.count", 4.0)
+    assert "error" in out and "call build_building_model first" in out["error"]
+    out = tools["price_measure"]("LGT_LED")
+    assert "error" in out and "call evaluate_measure('LGT_LED') first" in out["error"]

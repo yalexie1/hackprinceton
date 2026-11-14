@@ -73,6 +73,16 @@
   {
     "type": "fallback",
     "stage": "S2",
+    "message": "Gas priced at the EIA Texas state average, not a CenterPoint Energy schedule",
+    "payload": {
+      "layer": "tariff",
+      "from": "gas utility tariff",
+      "to": "EIA state average (TX COM, 2025)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
     "message": "Vexcel footprint is a podium; tower roof area from CoStar",
     "payload": {
       "layer": "vexcel",
@@ -146,9 +156,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 11154.82,
-        "expected": 13167.0,
-        "high": 19824.36,
+        "low": 11073.76,
+        "expected": 13069.16,
+        "high": 19670.63,
         "unit": "USD"
       }
     }

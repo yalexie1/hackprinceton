@@ -48,6 +48,8 @@ from backend.schema import (
     WallEdge,
 )
 
+from . import cache
+
 ENDPOINT = "https://api.matterport.com/api/models/graph"
 
 #: Documented ceiling is 10 requests/second on keys shared with every other team,
@@ -293,15 +295,37 @@ def _notes(errors: list[dict]) -> list[FetchRecord]:
     return out
 
 
+#: The query shape that goes into the cache key. The document text itself, hashed:
+#: adding a field to `MODEL_QUERY` must not serve a caller the older, narrower
+#: response, which is the Vexcel `include=` trap in a different costume.
+def _query_shape() -> dict:
+    import hashlib
+
+    return {"document": hashlib.sha256(MODEL_QUERY.encode()).hexdigest()[:12]}
+
+
 def get_matterport_data_with_notes(
-    sid: str, *, post: Optional[Poster] = None
+    sid: str, *, post: Optional[Poster] = None, refresh: bool = False
 ) -> tuple[MatterportData, list[FetchRecord]]:
     """As `get_matterport_data`, plus a `FetchRecord` for every field-scoped error.
 
     Raises `LookupError` only when `data.model` is unusable; a response carrying both
     `errors` and a populated model is a success with notes.
+
+    The response is cached by D4 when the default transport is used, so re-assembling
+    a bundle does not re-query a key shared with every other team. **An injected
+    `post` bypasses the cache entirely** - a caller supplying the response is in
+    control of what comes back, and a stubbed response has no business being left on
+    disk for the next caller to find.
     """
-    body = (post or _default_post)(MODEL_QUERY, {"id": sid}) or {}
+    body, from_cache = cache.cached_json(
+        "matterport", sid,
+        lambda: (post or _default_post)(MODEL_QUERY, {"id": sid}) or {},
+        _query_shape(),
+        use_cache=post is None,
+        refresh=refresh,
+    )
+    body = body or {}
     model = (body.get("data") or {}).get("model")
     errors = body.get("errors") or []
     if not model:
@@ -310,6 +334,9 @@ def get_matterport_data_with_notes(
 
     defurnished_id = (model.get("view") or {}).get("id")
     bundle = model.get("bundle") or {}
+    notes = _notes(errors)
+    if post is None:
+        notes.append(cache.cache_note("matterport", f"model:{sid}", hit=from_cache))
     return MatterportData(
         georeference=_georeference(model.get("geocoordinates")),
         floors=_floors(model.get("floors")),
@@ -321,4 +348,4 @@ def get_matterport_data_with_notes(
         # resource is actually fetched (D12).
         matterpak_available=bundle.get("availability") == "unlocked",
         defurnished_view_id=defurnished_id,
-    ), _notes(errors)
+    ), notes

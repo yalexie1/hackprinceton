@@ -26,6 +26,7 @@ import sys
 from typing import AsyncIterator
 
 from backend.agent.fixtures import flavor_for_sid as _flavor_for_sid, load as _load
+from backend.agent.runtime.replan import patch_request, replan_events, validate_patch
 from backend.schema import DocumentDraft, DocumentRequest, RunEvent, RunRequest, RunResult
 
 _counter = itertools.count(1)
@@ -99,14 +100,21 @@ def answer(run_id: str, question_id: str, value: float | str | bool | None) -> N
 
 def update_run(run_id: str, budget_usd: float | None = None,
                overrides: dict[str, float | str | bool] | None = None) -> None:
-    if _live(run_id) is not None:
-        raise NotImplementedError("adjust and re-run of a live run is G11")
+    """Adjust and re-run (G11). Raises PatchError for a patch that cannot be applied. A live run
+    re-runs the analysis for real; a replay run only replays the shape: the request and the plan's
+    budget change and the re-run events are added, the plan itself is the example's."""
+    live_run = _live(run_id)
+    if live_run is not None:
+        live_run.update(budget_usd, overrides)
+        return
     run = _get(run_id)
-    request = run["result"].request
-    if budget_usd is not None:
-        request.budget_usd = budget_usd
-    if overrides:
-        request.overrides = {**request.overrides, **overrides}
+    result = run["result"]
+    validate_patch(result, budget_usd, overrides)
+    request = patch_request(result.request, budget_usd, overrides)
+    plan = result.plan.model_copy(update={"budget_usd": request.budget_usd}) if result.plan else None
+    run["result"] = result.model_copy(update={"request": request, "plan": plan})
+    run["events"] = [*run["events"], *replan_events(
+        result.request, request, f"{len(plan.selected) if plan else 0} measures within ${request.budget_usd:,.0f} (replayed)")]
 
 
 def draft_document(request: DocumentRequest) -> DocumentDraft:

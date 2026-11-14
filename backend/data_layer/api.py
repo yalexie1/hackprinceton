@@ -49,11 +49,19 @@ from backend.schema import (
     VexcelDetection,
 )
 
-from . import index
+from . import cache, index
 
 _ROOT = Path(__file__).resolve().parents[2]
 _EXAMPLES = _ROOT / "specs" / "examples"
-_CACHE = _ROOT / "data" / "cache"
+#: Overridden by tests via `monkeypatch.setattr(api, "_CACHE", tmp_path)`. `None`
+#: means "ask D4", which honours `DATA_LAYER_CACHE_DIR` - without that, a runbook or
+#: a test asking for a temporary cache still wrote bundles and weather files into the
+#: real one, which is how a test asserting a cache file's *absence* came to fail.
+_CACHE: Optional[Path] = None
+
+
+def _cache_dir() -> Path:
+    return _CACHE if _CACHE is not None else cache.cache_root()
 
 #: The calendar year fetched for the hourly weather file. One real year, not a TMY -
 #: see D9. Pinned so a bundle is reproducible.
@@ -202,7 +210,7 @@ def scans_for_property(sid: str) -> list[PropertySummary]:
 
 
 def _bundle_cache_path(sid: str) -> Path:
-    return _CACHE / sid / "bundle.json"
+    return _cache_dir() / sid / "bundle.json"
 
 
 def _fixture_bundle(sid: str) -> PropertyBundle:
@@ -235,12 +243,123 @@ def get_property_bundle(
 
     cached = _bundle_cache_path(sid)
     if cached.is_file() and not refresh:
-        return PropertyBundle.model_validate_json(cached.read_text())
+        replayed = _read_bundle_cache(sid, cached)
+        if replayed is not None:
+            return replayed
 
     bundle = _assemble(sid)
-    cached.parent.mkdir(parents=True, exist_ok=True)
-    cached.write_text(bundle.model_dump_json())
+    try:
+        _write_bundle_cache(cached, bundle)
+    except cache.SignedUrlInCache as exc:
+        # The bundle is fine; it simply cannot be cached without persisting a URL.
+        # Returning it uncached is right - refusing to answer would be worse, and
+        # scrubbing it would make a cache hit disagree with a fresh assembly.
+        bundle.provenance = list(bundle.provenance) + [FetchRecord(
+            layer="matterport", what="bundle:cache", status="error",
+            detail=f"not cached: a URL-valued field would be persisted ({exc})"[:200],
+        )]
     return bundle
+
+
+#: What `_write_bundle_cache` removes before writing, and `_read_bundle_cache` puts
+#: back. `CostarData.raw` is "the record as found in the kit" per the contract, and
+#: those records carry CDN image URLs and agent websites - 54 of them on the golden
+#: house. A cached URL is a trap: nothing says when it stopped working.
+#:
+#: Stripping it is safe precisely because it is *local* data. The kit mirror is on
+#: disk, so `raw` is rebuilt on a cache hit in about 0.04 s, and the field stays
+#: truthful on both paths. Scrubbing it in place instead would make a cache hit
+#: disagree with a fresh assembly, which is the worse failure: silent and invisible.
+#: Used only when neither the CoStar kit nor the Census geocoder can say which state
+#: a property is in, and `get_tariff` requires one. Two of the three golden properties
+#: are in California, and Vexcel's coverage is Los Angeles and Houston - so this is
+#: the less-wrong guess, not a correct one, and `_assemble` records it as a fallback.
+_TARIFF_DEFAULT_STATE = "CA"
+
+_STRIPPED = "costar.raw"
+
+#: Bumped whenever a change to assembly makes an existing cached bundle **wrong**
+#: rather than merely old. An entry stamped with a different number is a miss.
+#:
+#: The bundle cache is keyed on the sid alone, which is right - one property, one
+#: bundle - but it means a rule change does not change the key, so a warm cache keeps
+#: serving the old answer. D16 is exactly that case: every bundle written before it
+#: names whichever structure `features[0]` happened to hold, and at the Los Angeles
+#: office that is a building 100 m from the address. A demo laptop with a warm cache
+#: would have shown the old roof with nothing in the output to say so.
+#:
+#: 1 - pre-D16: Vexcel's `primary-structure` flag from an arbitrary capture.
+#: 2 - D16: the structure enclosing the CoStar address point, floor plate deciding.
+BUNDLE_RULE_VERSION = 2
+
+
+def _write_bundle_cache(path: Path, bundle: PropertyBundle) -> Path:
+    """Write the bundle atomically, with `costar.raw` left out.
+
+    Raises `SignedUrlInCache` if any URL survives the strip, rather than persisting
+    it or quietly mangling it. That is a loud failure on an unexpected payload shape,
+    which is what a cache with a documented invariant should do when the invariant is
+    about to break.
+    """
+    payload = bundle.model_dump(mode="json")
+    stripped: list[str] = []
+    if payload.get("costar") and payload["costar"].get("raw"):
+        payload["costar"]["raw"] = {}
+        stripped.append(_STRIPPED)
+    _, urls = cache.scrub_urls(payload)
+    if urls:
+        raise cache.SignedUrlInCache(f"URL-valued fields remain: {urls[:5]}")
+    return cache.atomic_write_path(
+        path,
+        json.dumps({"rule": BUNDLE_RULE_VERSION, "stripped": stripped, "bundle": payload},
+                   separators=(",", ":")).encode(),
+    )
+
+
+def _read_bundle_cache(sid: str, path: Path) -> Optional[PropertyBundle]:
+    """The cached bundle with `costar.raw` restored from the kit, or `None` on a miss.
+
+    A miss covers a truncated entry and an entry written before this format, both of
+    which cost a reassembly rather than the run.
+    """
+    try:
+        entry = json.loads(path.read_text())
+        payload = entry["bundle"]
+        stripped = entry.get("stripped") or []
+        if entry.get("rule") != BUNDLE_RULE_VERSION:
+            # Written under an older assembly rule, so it is wrong rather than stale.
+            # `KeyError` is how the handler below is already told to bin an entry.
+            raise KeyError(f"rule {entry.get('rule')!r}, want {BUNDLE_RULE_VERSION}")
+    except (json.JSONDecodeError, KeyError, TypeError, OSError):
+        # An entry this code can never read again is garbage, a pre-D4 entry is
+        # garbage that keeps leaking the URLs D4 exists to keep out of the cache, and
+        # an entry from an older assembly rule is garbage that looks exactly like a
+        # good answer. All of it is git-ignored and regenerable, so it goes.
+        path.unlink(missing_ok=True)
+        return None
+
+    if _STRIPPED in stripped and payload.get("costar"):
+        from backend.data_layer import costar as d1
+
+        try:
+            payload["costar"]["raw"] = d1.get_costar_data(sid).raw
+        except Exception:
+            # No kit mirror on this machine. The bundle is still usable; `raw` being
+            # empty is visible, where a wrong `raw` would not be.
+            pass
+    try:
+        return PropertyBundle.model_validate(payload)
+    except Exception:
+        return None
+
+
+def _parcel_at(point, locator: str, costar, plate):
+    """One parcel extract at `point`, with D16 choosing the capture and structure."""
+    from backend.data_layer import vexcel as d3
+
+    return d3.get_vexcel_data_with_notes(
+        d3.point_wkt(*point), stories=(costar.stories if costar else None),
+        at=point, floor_plate_m2=plate, locator=locator)
 
 
 def _assemble(sid: str) -> PropertyBundle:
@@ -252,7 +371,9 @@ def _assemble(sid: str) -> PropertyBundle:
     """
     from backend.data_layer import costar as d1
     from backend.data_layer import external as d9
+    from backend.data_layer import locate as d16
     from backend.data_layer import matterport as d2
+    from backend.data_layer import places as d14
     from backend.data_layer import vexcel as d3
 
     provenance: list[FetchRecord] = []
@@ -268,6 +389,17 @@ def _assemble(sid: str) -> PropertyBundle:
         provenance.append(FetchRecord(layer="costar", what="kit", status="missing",
                                       detail=str(exc)[:200]))
 
+    # D10: the five datasets the spec never used. `Plan.value_uplift` (A30) needs a cap
+    # rate and at least ten comparables or it returns None, and office plug loads and
+    # schedules were being inferred while real tenancy data sat in the kit.
+    if costar is not None and costar.property_id:
+        from backend.data_layer import costar_extra as d10
+
+        market, mnotes = d10.market_data(costar.property_id)
+        occupancy, onotes = d10.occupancy_data(costar.property_id)
+        costar = costar.model_copy(update={"market": market, "occupancy": occupancy})
+        provenance += mnotes + onotes
+
     row = {}
     try:
         row = d1.index_by_model().get(sid) or {}
@@ -278,11 +410,46 @@ def _assemble(sid: str) -> PropertyBundle:
     lat = geo.latitude if geo else None
     lon = geo.longitude if geo else None
 
+    # D16, on the lead's rule: **the CoStar address point decides which building this
+    # bundle is about**, not the georeference and not Vexcel's own `primary-structure`
+    # flag. At the Los Angeles office the georeference sits inside no building in any
+    # capture, 45 m from the address point, and the structure the response listed
+    # first is a 2022 capture of the building next door.
+    #
+    # The parcel is **queried at that same point**, not at the georeference. Measured
+    # over the six kit properties whose two locators are furthest apart: four returned
+    # a different set of captures from the two points, and at `9xZApYqePUx` (Piney
+    # Point Offices II, 78 m apart) the structure enclosing the address is **absent
+    # from the georeference query altogether**, so querying there cannot find it. A
+    # parcel extract costs 0.3 to 1.1 s. `locate.py` has the rest of the measurements.
+    at, locator = (lat, lon), "georeference"
+    indexed = index.by_sid().get(sid)
+    if indexed is not None and indexed.lat is not None and indexed.lon is not None:
+        at, locator = (indexed.lat, indexed.lon), "CoStar address"
+    else:
+        provenance.append(FetchRecord(
+            layer="costar", what="address:coordinates", status="fallback",
+            detail=("no CoStar address coordinates, so the Matterport georeference "
+                    "picks the building; it locates the scan, not the parcel"),
+        ))
+    plate = d16.floor_plate_m2(costar)
+
     vexcel = None
     if lat is not None and lon is not None:
-        vexcel, vnotes = d3.get_vexcel_data_with_notes(
-            d3.point_wkt(lat, lon), stories=(costar.stories if costar else None))
+        vexcel, vnotes = _parcel_at(at, locator, costar, plate)
         provenance += vnotes
+        if vexcel is None and locator != "georeference":
+            # A geocode can land off the parcel, and then there is no parcel at all to
+            # work from. The georeference is physically at the building because the
+            # scan was taken there, so it is the right second try - and saying so
+            # matters, since the building is then whatever is under the scan.
+            vexcel, gnotes = _parcel_at((lat, lon), "georeference", costar, plate)
+            provenance.append(FetchRecord(
+                layer="vexcel", what="property/extract:locator", status="fallback",
+                detail=(f"no parcel at the CoStar address point, so the georeference was "
+                        f"used instead"),
+            ))
+            provenance += gnotes
     else:
         provenance.append(FetchRecord(layer="vexcel", what="property/extract",
                                       status="missing",
@@ -295,16 +462,52 @@ def _assemble(sid: str) -> PropertyBundle:
     climate, cnotes = d9.get_climate_site(sid, lat, lon, WEATHER_YEAR)
     provenance += cnotes
 
+    # D17: without a kit mirror the starter-CSV row is `{}`, so `state` was `None` and
+    # `get_tariff` fell back to a hard-coded "CA". In Houston that is not a near miss -
+    # it swaps 0.0896 for 0.3002 USD/kWh, moves the eGRID subregion from ERCT to CAMX,
+    # and selects California contract clauses for a Texas building. @Sri-SriPod hit it
+    # on a live run. The Census call D14 already makes carries the state FIPS, so this
+    # is free on the bundle path and needs no new source.
     state = row.get("state")
+    city = row.get("city")
+    if not state:
+        state, srecord = d14.state_for(lat, lon)
+        provenance.append(srecord)
+    if not city:
+        city, crecord = d14.city_for(lat, lon)
+        provenance.append(crecord)
     sector = "RES" if (costar and costar.kind == "residential_listing") else "COM"
-    tariff, tnotes = d9.get_tariff(state or "CA", sector)
+
+    # D14: who serves the meter, from the Census incorporated-place layer rather than
+    # the CoStar `City` field, which is a *mailing* city - right 14/14 for Los Angeles
+    # and only 9 of 16 for Houston. `None` means "do not guess", and `get_tariff` then
+    # keeps its own honest label rather than being handed a wrong utility name.
+    utility, ploc = d14.utility_for(lat, lon, state or _TARIFF_DEFAULT_STATE)
+    provenance.append(ploc)
+
+    if not state:
+        # Everything above failed: no kit row and no geocoder. The tariff state is a
+        # required argument, so there is a default - but it is recorded as a guess
+        # rather than passed silently, because a wrong state is invisible downstream.
+        provenance.append(FetchRecord(
+            layer="tariff", what="state", status="fallback",
+            detail=(f"neither the CoStar kit nor the Census geocoder gave a state, so "
+                    f"the tariff, the emissions factor and the legal templates all use "
+                    f"{_TARIFF_DEFAULT_STATE} - check this before quoting any number"),
+        ))
+    tariff, tnotes = d9.get_tariff(state or _TARIFF_DEFAULT_STATE, sector, utility=utility)
     provenance += tnotes
     if tariff is None:
         raise IncompleteBundle(
             f"{sid}: tariff is a required field and could not be sourced", provenance)
 
+    # Built before the bundle, not inside the constructor: it appends to `provenance`,
+    # and relying on left-to-right argument evaluation to get that record into the
+    # bundle is the kind of thing that silently stops being true.
+    summary = _summary_from(sid, matterport, costar, row, state=state, city=city,
+                            provenance=provenance)
     return PropertyBundle(
-        summary=_summary_from(sid, matterport, costar, row),
+        summary=summary,
         matterport=matterport,
         vexcel=vexcel,
         costar=costar,
@@ -314,10 +517,66 @@ def _assemble(sid: str) -> PropertyBundle:
     )
 
 
-def _summary_from(sid, matterport, costar, row) -> PropertySummary:
+#: Room labels that only a dwelling has. Measured on the golden set: the house returns
+#: Bedroom, Bathroom, Closet, Dining Room and Hallway, while **all three commercial
+#: scans return no room labels at all** - which is the same finding as the empty
+#: `classifications` in the spec's section 3.4.
+#:
+#: Deliberately narrow. Bathroom, Kitchen, Closet and Hallway all occur in offices, so
+#: they are not here; these are the ones that cannot. The test is positive-only:
+#: finding one proves residential, finding none proves nothing.
+_DWELLING_ROOMS = frozenset({
+    "bedroom", "primary bedroom", "master bedroom", "living room", "dining room",
+    "nursery", "guest bedroom", "family room", "den",
+})
+
+
+def _segment_evidence(matterport) -> Optional[str]:
+    """`"residential"` when the scan's own room labels prove a dwelling, else `None`.
+
+    The only second source for segment when there is no CoStar kit. **Vexcel's
+    `building-type.class` cannot be used**: measured under D16 it reads
+    `'single_family'` on the house but `'condo_apartment'` on *both* golden offices and
+    `None` on the third, so it would not merely fail to help - it would argue for
+    residential on a 16-storey office tower.
+    """
+    for room in matterport.rooms:
+        if room.label and room.label.strip().casefold() in _DWELLING_ROOMS:
+            return "residential"
+    return None
+
+
+def _summary_from(sid, matterport, costar, row, *, state=None, city=None,
+                  provenance=None) -> PropertySummary:
     geo = matterport.georeference
+    known = bool(row.get("property_id")) or (
+        costar is not None and costar.kind in ("commercial_property", "residential_listing"))
     commercial = bool(row.get("property_id")) or (
         costar is not None and costar.kind == "commercial_property")
+
+    if not known:
+        # No kit, so nothing authoritative says which this is - and `segment` is not a
+        # cosmetic field: it picks the measure catalogue (`catalogue.py:79`), the cost
+        # and useful-life tables, the incentive filter, **C-PACE eligibility**
+        # (`cpace.py:63` requires commercial) and which legal templates are listed.
+        # The scan's room labels can prove a dwelling; nothing available can prove an
+        # office, so an office without the kit is still recorded as a guess.
+        evidence = _segment_evidence(matterport)
+        if evidence == "residential":
+            commercial = False
+        if provenance is not None:
+            provenance.append(FetchRecord(
+                layer="costar", what="summary:segment",
+                status="ok" if evidence else "fallback",
+                detail=(
+                    f"no CoStar record, so segment is inferred: the scan's room labels "
+                    f"prove a dwelling" if evidence else
+                    f"no CoStar record and no dwelling room label, so segment falls back to "
+                    f"'{'commercial' if commercial else 'residential'}' - it decides the "
+                    f"measure catalogue, the cost tables, the incentive filter, C-PACE "
+                    f"eligibility and the legal templates, so mirror the kit before "
+                    f"trusting a plan built on it"),
+            ))
     # One use-type table for the lane, in `index.py`. A second one here, keyed by
     # enum *name* instead of code, is how the two quietly stop agreeing.
     use_type: UseType = (
@@ -331,9 +590,12 @@ def _summary_from(sid, matterport, costar, row) -> PropertySummary:
         name=(indexed.name if indexed else None) or row.get("address") or sid,
         segment="commercial" if commercial else "residential",
         use_type=use_type,
+        # The address itself has no second source: a street address is not derivable
+        # from a coordinate without a reverse-geocode this lane does not make, so it
+        # stays empty without the kit rather than being approximated.
         address=row.get("address"),
-        city=row.get("city"),
-        state=row.get("state"),
+        city=row.get("city") or city,
+        state=row.get("state") or state,
         lat=geo.latitude if geo else None,
         lon=geo.longitude if geo else None,
         costar_property_id=row.get("property_id"),
@@ -349,21 +611,90 @@ def _summary_from(sid, matterport, costar, row) -> PropertySummary:
     )
 
 
-def detect_roof_elements(sid: str, labels: Optional[list[str]] = None) -> list[VexcelDetection]:
-    """Vexcel `elements/detect` with SAM 3; the live code is `D8`. Lives in this lane
-    because it is a network call and SPEC 14 requires analysis to run without one.
+def detect_roof_elements(
+    sid: str, labels: Optional[list[str]] = None, *, live: Optional[bool] = None
+) -> list[VexcelDetection]:
+    """Vexcel `elements/detect` with SAM 3 (`D8`). Lives in this lane because it is a
+    network call and SPEC 14 requires analysis to run without one.
 
     `specs/data-integration.md` 4.4 measured the label quality: use `"roof"`, not
     `"roof plane"`, which returns nothing, and a detection threshold near 0.3 rather
-    than the quickstart's 0.5. Roof obstruction counts should come from the Vexcel
-    precomputed `roof-objects` attributes, not from these masks.
+    than the quickstart's 0.5. **Roof obstruction counts must come from the Vexcel
+    precomputed `roof-objects` attributes, not from these masks** - SAM 3 missed a
+    chimney the attributes report and invented two skylights they say do not exist.
+
+    Live detection is opt-in on the same flag as the bundle, and needs the parcel
+    polygon: a bare `POINT` makes `elements/detect` return 404.
     """
+    if live is None:
+        live = os.environ.get("DATA_LAYER_LIVE") == "1"
+
+    if live:
+        from backend.data_layer import imagery as d8
+
+        bundle = get_property_bundle(sid, live=True)
+        parcel = bundle.vexcel.parcel_wkt if bundle.vexcel else None
+        if parcel:
+            found, _ = d8.detect(
+                parcel, sid=sid,
+                labels=tuple(labels) if labels else d8.DEFAULT_LABELS,
+            )
+            return found
+        return []
+
     bundle = get_property_bundle(sid)
     found = list(bundle.vexcel.detections) if bundle.vexcel else []
     if labels is not None:
         wanted = {l.casefold() for l in labels}
         found = [d for d in found if d.label.casefold() in wanted]
     return found
+
+
+def roof_area_m2(sid: str, *, live: Optional[bool] = None) -> Optional[float]:
+    """Usable roof area for the primary structure from the SAM 3 masks, or `None`.
+
+    The **largest single mask**, never the sum and never the most confident: the
+    detections are nested, so summing over-states by 2.6x, and on the golden house the
+    most confident detection was the secondary structure. Measured 180.9 m2 against a
+    precomputed footprint of 190.4 m2 - within 5 %. See `imagery.roof_area_m2`.
+    """
+    if live is None:
+        live = os.environ.get("DATA_LAYER_LIVE") == "1"
+    if not live:
+        return None
+
+    from backend.data_layer import imagery as d8
+
+    bundle = get_property_bundle(sid, live=True)
+    parcel = bundle.vexcel.parcel_wkt if bundle.vexcel else None
+    if not parcel:
+        return None
+    area, _ = d8.roof_area_m2(parcel, sid=sid)
+    return area
+
+
+def in_pace_region(sid: str, *, live: Optional[bool] = None) -> Optional[bool]:
+    """Whether the property sits in a PACE region, for `cpace_scenario` (A28).
+
+    **Three answers, and the third is not the second.** `True` positively inside,
+    `False` positively elsewhere, `None` could not be checked. A28 treats anything
+    other than `True` as not eligible, which is right - but the caller must not report
+    "not eligible" to a user when the real answer is that a geocoder was unreachable.
+
+    `None` offline, because the check is a network call and SPEC 14 requires the
+    analysis lane to run without one. The Houston golden office returns `True` live.
+    """
+    if live is None:
+        live = os.environ.get("DATA_LAYER_LIVE") == "1"
+    if not live:
+        return None
+
+    from backend.data_layer import places as d14
+
+    summary = get_property_summary(sid)
+    if summary.lat is None or summary.lon is None or not summary.state:
+        return None
+    return d14.in_pace_region(summary.lat, summary.lon, summary.state)[0]
 
 
 def get_asset(path: str) -> bytes:
@@ -378,8 +709,8 @@ def get_asset(path: str) -> bytes:
     raises `FileNotFoundError` - the server should answer that with 404.
     """
     target = (_ROOT / path).resolve() if not Path(path).is_absolute() else Path(path).resolve()
-    cache = _CACHE.resolve()
-    if not target.is_relative_to(cache):
+    cache_root = _cache_dir().resolve()
+    if not target.is_relative_to(cache_root):
         raise ValueError(f"path outside the cache directory: {path}")
     if not target.is_file():
         raise FileNotFoundError(f"not cached: {path}")

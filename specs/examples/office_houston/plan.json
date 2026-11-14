@@ -384,9 +384,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 1771.42,
-            "expected": 3557.18,
-            "high": 5416.52,
+            "low": 1770.8,
+            "expected": 3555.94,
+            "high": 5415.19,
             "unit": "USD"
           },
           "co2_kg": {
@@ -435,9 +435,9 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 1771.42,
-            "expected": 3557.18,
-            "high": 5416.52,
+            "low": 1770.8,
+            "expected": 3555.94,
+            "high": 5415.19,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
@@ -445,19 +445,19 @@
           "simple_payback_years": {
             "low": 5.32,
             "expected": 12.28,
-            "high": 25.29,
+            "high": 25.3,
             "unit": "years"
           },
           "discounted_payback_years": null,
           "npv_usd": {
-            "low": -26638.81,
-            "expected": -549.67,
-            "high": 29586.28,
+            "low": -26648.16,
+            "expected": -565.89,
+            "high": 29568.63,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": -10821.49,
+          "npv_sensitivity_usd": -10833.76,
           "sir": 0.987,
-          "irr": 0.0283,
+          "irr": 0.0282,
           "airr": 0.0291,
           "discount_rate": 0.03,
           "electricity_escalation": 0.0022,
@@ -472,9 +472,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 1771.42,
-                "expected": 3557.18,
-                "high": 5416.52,
+                "low": 1770.8,
+                "expected": 3555.94,
+                "high": 5415.19,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -490,12 +490,12 @@
               "term_years": 15,
               "annual_payment_usd": 4645.49,
               "net_cashflow_year1_usd": {
-                "low": -2874.07,
-                "expected": -1088.31,
-                "high": 771.03,
+                "low": -2874.69,
+                "expected": -1089.55,
+                "high": 769.7,
                 "unit": "USD"
               },
-              "program_sir": 0.766,
+              "program_sir": 0.765,
               "notes": [
                 "Program SIR 0.77: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
                 "Savings-to-debt-service ratio 0.77.",
@@ -1277,9 +1277,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 50.87,
-          "expected": 102.0,
-          "high": 166.02,
+          "low": 51.21,
+          "expected": 102.68,
+          "high": 166.97,
           "unit": "USD"
         },
         "co2_kg": {
@@ -1311,30 +1311,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 50.87,
-          "expected": 102.0,
-          "high": 166.02,
+          "low": 51.21,
+          "expected": 102.68,
+          "high": 166.97,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 31.44,
-          "expected": 67.56,
-          "high": 174.5,
+          "low": 31.26,
+          "expected": 67.11,
+          "high": 173.34,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -14083.2,
-          "expected": -5632.14,
-          "high": -2959.37,
+          "low": -14074.65,
+          "expected": -5623.25,
+          "high": -2949.37,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -5933.47,
-        "sir": 0.183,
+        "npv_sensitivity_usd": -5926.75,
+        "sir": 0.184,
         "irr": null,
-        "airr": -0.0803,
+        "airr": -0.0799,
         "discount_rate": 0.03,
         "electricity_escalation": 0.0022,
         "gas_escalation": 0.0126,
@@ -1348,9 +1348,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 50.87,
-              "expected": 102.0,
-              "high": 166.02,
+              "low": 51.21,
+              "expected": 102.68,
+              "high": 166.97,
               "unit": "USD"
             },
             "program_sir": null,
@@ -1366,12 +1366,12 @@
             "term_years": 15,
             "annual_payment_usd": 732.85,
             "net_cashflow_year1_usd": {
-              "low": -681.98,
-              "expected": -630.85,
-              "high": -566.83,
+              "low": -681.64,
+              "expected": -630.17,
+              "high": -565.88,
               "unit": "USD"
             },
-            "program_sir": 0.139,
+            "program_sir": 0.14,
             "notes": [
               "Program SIR 0.14: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). Texas requires at least 1; this does not pass, so the scenario is not eligible.",
               "Savings-to-debt-service ratio 0.14.",
@@ -1474,9 +1474,9 @@
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 1996.41,
-    "expected": 3783.4,
-    "high": 5743.32,
+    "low": 1995.78,
+    "expected": 3782.16,
+    "high": 5742.0,
     "unit": "USD"
   },
   "total_co2_kg": {
@@ -1487,9 +1487,9 @@
   },
   "baseline_after": {
     "electricity_kwh": {
-      "low": 77357.26,
-      "expected": 100222.05,
-      "high": 135076.25,
+      "low": 76325.8,
+      "expected": 99022.05,
+      "high": 133679.86,
       "unit": "kWh"
     },
     "gas_kwh": {
@@ -1499,15 +1499,15 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 6642.05,
-      "expected": 9383.6,
-      "high": 16276.39,
+      "low": 6557.8,
+      "expected": 9287.0,
+      "high": 16125.66,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 27679.77,
-      "expected": 35316.7,
-      "high": 46916.28,
+      "low": 27335.15,
+      "expected": 34915.75,
+      "high": 46449.45,
       "unit": "kg"
     },
     "co2_nonbaseload_kg": null
@@ -1515,8 +1515,8 @@
   "value_uplift": {
     "value_usd": {
       "low": 0.0,
-      "expected": 20684.33,
-      "high": 81187.14,
+      "expected": 20677.44,
+      "high": 81168.29,
       "unit": "USD"
     },
     "method": "VAL-01",

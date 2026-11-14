@@ -179,6 +179,81 @@ there and search behaves exactly as it did before D7. Verified by running the la
 suite both ways: 115 passed / 15 skipped with the mirror, 100 passed / 30 skipped
 without, no failures either way.
 
+### 2.4b D10: the five datasets the spec never used
+
+`backend/data_layer/costar_extra.py`, 2026-11-14. [V] `CostarData.occupancy` and
+`.market` were always `None`, so `Plan.value_uplift` (A30, VAL-01) **never fired on
+live data** — `plan_value_uplift` returns `None` without a cap rate and at least ten
+comparables — and office plug loads and schedules were inferred from vintage defaults
+while real tenancy data sat in the kit.
+
+| dataset | records | joined by | gives |
+|---|---|---|---|
+| `commercial-sale-comp` | 6,120 | `entities[].propertyId` (5,753 of 6,120) | cap rates |
+| `location-occupancy` | 74,093 | `propertyId` | who is in the building, since when, how much space |
+| `company-detail` | 49,575 | `tenantLocationId` → `id` (224 of 225) | employees, industry |
+| `apartment-listing` | 1,747 | `propertyId` | multifamily asking rent |
+
+Full passes measured at **0.86 / 0.13 / 0.34 / 0.58 / 0.04 s**, so in-memory indexes
+are enough and nothing here needs the D4 disk cache.
+
+**Cap rates are stored in percent**, median 6.5 and range 0.75–23.58, while the
+contract documents `cap_rate` as a fraction per year. A hundredfold error, with
+nothing to catch it.
+
+**The comp window decides whether A30 can run at all.** Comps with a cap rate, by
+market:
+
+| market | all | since 2015 | since 2020 |
+|---|---|---|---|
+| Los Angeles office | 45 | **12** | **1** |
+| Houston office | 86 | **27** | 9 |
+| Los Angeles multifamily | 1,098 | 379 | 182 |
+| Houston multifamily | 530 | 152 | 65 |
+
+A 2020 window silently turns value uplift off for **both** golden offices, and no
+window is loose enough to reach ten without reaching back toward 1983. **2015 is a
+judgement, not a fact**, so `comp_count` travels on the result for the reader to
+weigh. One observation per property, most recent first, so a building that trades
+often cannot dominate: Houston goes 27 → 25, Los Angeles stays at 12.
+
+**`sale_price_usd_per_m2` is deliberately not supplied.** `soldForPrice` covers
+**whatever was sold** — often one condominium unit or a partial interest — while the
+only area the kit gives is the whole building's. Measured on the Los Angeles office
+market: **86 priced sales over 29 distinct properties, one contributing 43, spanning
+6 to 40,025 USD/m²**. A 6,600-fold spread is not a market, and deduplicating still
+leaves Houston spanning 73 to 81,685. `value.py:60` would multiply it straight into
+the property value and cap the uplift with it, so a wrong figure produces a
+confidently wrong valuation. **The cap rate is unaffected**: a yield is intrinsic to
+the transaction whatever slice sold.
+
+**"Still in place" means no `toDate`** — not `expirationReason == 0`, whose zero value
+is "Unknown" in an enum that explains why a tenancy *ended*. No record in either
+golden office has a `toDate` in the future, so the kit marks a sitting tenant by
+leaving the field out. Historic tenancies are dropped rather than returned with a
+`move_out`, because `employees_total` and `occupied_area_m2` describe the building
+*now*; summing everyone who was ever there would count every floor several times.
+
+**What the golden offices now carry, and the sanity checks that justify trusting it:**
+
+| | cap rate (p25/median/p75) | comps | sitting tenants | employees | occupied |
+|---|---|---|---|---|---|
+| LA office `246899` | 4.30 / **5.30** / 6.00 % | 12 | 37 | 413 | 19,665 m², **81 % of RBA** |
+| Houston office `234088` | 6.75 / **7.90** / 9.16 % | 25 | 34 | 215 | 10,756 m², **71 % of RBA** |
+
+Houston's cap rate above Los Angeles's is the right structure for a riskier market
+with cheaper assets, and 81 % and 71 % occupancy are plausible for a let office tower.
+Neither would survive a units error or a mixed-up market filter.
+
+**A second Houston-versus-Los Angeles contrast, from the cap rate rather than the
+price.** The same 12,000 USD/yr saving capitalises to **100,000 USD of value in Los
+Angeles against 65,500 in Houston**, because a lower cap rate prices income higher.
+That is independent of the 3.35x electricity price gap of 5.2 and pushes the same way:
+the Los Angeles office is the stronger retrofit case on both axes.
+
+The house carries neither, correctly: it is a residential listing with no
+`PropertyId`, and commercial sale comps and tenancy records do not describe it.
+
 ### 2.5 Field rules that are easy to get wrong
 
 [V] from `models/commercial-property.md` and `schemas/enums.json`
@@ -457,7 +532,160 @@ Four conclusions the analysis lane needs:
 
 `POST /ortho/extract` and `POST /oriented/extract` return image bytes, 1,024-tile cap per extract. `POST /embedding/extract` does semantic search over pre-computed tile embeddings. [V] from the tutorial, [P] not exercised
 
+### 4.4a What D8 built, and the three numbers that decide how to use it
+
+`backend/data_layer/imagery.py`, 2026-11-14. [V] all measured live on the golden
+house parcel. Section 4.4 said SAM 3's label quality is poor; this says what it *is*
+good for, and the answer is narrower and more useful than expected.
+
+**The pixel-to-map transform exists and is exact.** 4.4 left `images[].metadata` as
+`[P]`. It carries `geometry` (the image footprint, an axis-aligned polygon), `width`,
+`height`, `srid`, `collection` and the capture dates, so pixels map linearly onto the
+footprint. The direction was **not** assumed: the response gives both `pixel-bbox` and
+a map-coordinate `bbox` for every detection, so the transform can be checked against
+the service's own answer. Over all 13 detections and both corners:
+
+| Assumption | mean corner error | worst |
+|---|---|---|
+| **row 0 = north** | **0.024 m** | 0.124 m |
+| row 0 = south | 17.1 m | 34.8 m |
+
+Sub-pixel one way, a third of the parcel the other. North-up it is.
+
+**Do not use `min-gsd` or `max-gsd` for scale.** They bracket the truth without
+matching it — reported 0.05623 and 0.07821 m/px where the footprint and pixel
+dimensions imply 0.06182 by 0.06140. Using `min-gsd` under-states ground area by
+about **17 %**. The footprint and the pixel dimensions are the scale.
+
+**`pixel-bbox` can start outside the image.** The first detection on the golden house
+has `x = -1`, so coordinates are clamped before being transformed.
+
+**`features` is one feature per detection.** 4.4's "13 detections" was 13 *features*,
+each with `properties.label` and a `properties.detections` list of length one.
+
+#### Roof area is the thing SAM 3 is actually good for
+
+With the transform in hand, each mask's ground area is its white-pixel count times
+the per-pixel area. The result is a genuine capability and three traps:
+
+| | m² | vs the 190.4 m² precomputed footprint |
+|---|---|---|
+| **Largest single mask** (conf 0.484) | **180.9** | **−5 %** |
+| Sum of all 13 masks | 485.8 | **+155 %** |
+| Highest-confidence mask (0.695) | 38.8 | a different building |
+
+1. **Never sum.** The masks are *nested*, not adjacent: 8 of the other 12 detections
+   are **100 %** inside the largest one's box and 3 more are 81–97 % inside. Summing
+   over-states by 2.6×.
+2. **Never rank by confidence.** The most confident detection sits **0 %** inside the
+   largest one. This parcel has two structures (4.2), and 0.695 is the secondary —
+   ranking by confidence hands back the garage.
+3. **Never use the bounding box.** Mask fill ran **43–93 %** of its own box, so box
+   area over-states a fragment by up to a factor of two.
+
+So `imagery.roof_area_m2()` returns the **largest single mask**, and the
+`FetchRecord` names which detection it came from and its confidence. Agreeing with an
+independently-sourced footprint to 5 % is what makes this usable at all; the three
+obvious alternatives are wrong by 17 %, 155 % and 2×.
+
+#### `mask_wkt` is left unset, deliberately
+
+The contract describes it as "map polygon derived from the pixel mask". The two honest
+options were a convex hull and the exact rectilinear outline, and **a hull is the
+dangerous one**: it is a valid single-ring polygon that a consumer would reasonably
+take the area of, and for a concave roof fragment that area is wrong by an amount
+nothing in the payload reveals. `bbox_wkt` already gives location and
+`roof_area_m2` gives true area, so a hull would add no capability and one silent trap.
+`mask_area_m2` is proposed to @yalexie1 as an additive contract field; until then the
+number comes from `imagery.detect_with_areas()`.
+
+#### Consequences for other lanes
+
+- **Obstruction counts stay on the precomputed `roof-objects` attributes.** SAM 3
+  missed a chimney they report, invented two skylights they say do not exist, and
+  found one of five roof vents. `SPEC.md` 16 lists this as a risk with precomputed as
+  the fallback — the fallback is the primary.
+- **Roof *geometry* stays with A11's parametric planes.** 13 fragments on one small
+  house is not plane segmentation.
+- **Roof *area* is now measured rather than inferred**, to 5 % on the one case where
+  an independent number exists to check against.
+- `Pillow` joins the data lane's dependencies, to decode the base64 PNG masks.
+
+### 4.4b D13: portfolio screening, and the 500-feature cap
+
+`backend/data_layer/screening.py`, 2026-11-14. [V] SPEC 1035 asks to "rank many
+properties by retrofit return using Vexcel filters and CoStar records". Four
+measurements decided the design.
+
+**One area query returns hundreds of parcels with the full attribute set.** A ~330 m
+box returns 164 features in about 3 s, and every structure carries all 92 keys —
+`roof-characteristics.*`, `building-type.class`, `footprint.area`,
+`primary-structure`. So screening costs roughly one call per **area**, not one per
+property. Note `get_vexcel_data_with_notes` reads only `features[0]`, which is correct
+for a point query and would discard 440 parcels here.
+
+**There is a hard cap of 500 features and nothing says so.**
+
+| box | features |
+|---|---|
+| ~330 m | 164 |
+| ~880 m | **500** |
+| ~1.8 km | **500** |
+| ~4.4 km | **500** |
+
+A city-wide screen would silently miss most of the city and report a confident answer.
+So a tile returning exactly 500 is **assumed truncated** and subdivided, recursion
+bounded, with a `FetchRecord` either way — and one saying the screen is *incomplete*
+if subdivision is exhausted.
+
+**Screen index-first, not Vexcel-first.** Of 441 parcels in one box, only **4**
+matched a scanned property within 25 m — and the count was identical at 25 m and
+100 m, so matches are unambiguous but sparse. Starting from the D7 index instead,
+**5 of 6** indexed properties in a box matched a parcel from a single call. A property
+with no Matterport scan cannot be audited by this tool, so screening unscanned parcels
+is work thrown away.
+
+**Tile around the candidates, not around the radius.** Covering a 500 m radius took
+**102 s and about 60 calls**; tiling only around the known candidate points took
+**13 s and 7 calls**, and a 400 m radius takes **1.5 s and 1 call**. Index-first means
+the points of interest are known in advance, which is what makes this affordable.
+
+#### What it does not claim
+
+Ranking by *retrofit return* needs the baseline and the measures, so this ranks by
+**usable roof area** — the measured quantity that bounds both PV and cool-roof savings
+— names the proxy on every result, and returns the attributes so a caller can rank
+differently. A "return" computed here without the physics would be a number with no
+model behind it.
+
+`Filters.roof_condition_min/max` take the raw 1-to-5 value rather than a "bad roof"
+flag. `roof-characteristics.condition` is the rounded `...condition.precise-value` and
+the kit ships **no legend for its direction**. The 1920s golden house grades 5 while
+the maintained 1974 office grades 3, which suggests higher is worse — but that is an
+inference from two properties, so it is not baked into an API callers would trust. [P]
+
+An attribute that is **absent fails** a filter that asks about it: screening is a
+positive claim, so a property that cannot be evaluated does not belong in the result.
+
+#### Two things it found
+
+**The Los Angeles office already has rooftop solar.** `roof-objects.solar` is `True`
+on `246899`'s 2,938 m² flat membrane roof. A11 returns `existing_solar`, so the
+analysis lane can account for it, but it changes the PV story for a golden property
+and should not surprise anyone on stage.
+
+A screen for PV candidates near that office — flat, no existing solar, at least
+400 m² — returns **zero**, correctly: the only large flat roof in range is the tower
+that already has panels. An empty result is an empty list, which is the workplan's
+stated acceptance.
+
 ### 4.5 Golden lots
+
+> **Superseded in part by 4.5a.** The per-structure numbers below are faithful
+> readings of `features[0]`, which is **not the building at the address** on either
+> office. The parcel-level findings (flat membrane roofs, `building-type.class`
+> unreliable) still hold. D16's figures are in 4.5a.
+
 
 - **House**: `POINT(-118.3171 34.093491667)`, from the model's own `geocoordinates`. 2 structures. [V] `primary-structure` True, `footprint.area` 190.39 m², `ground-elevation` 100.584, roof `gable`/`shingle`, `condition.precise-value` 4.53, `tree-cover` 4.0, `ac-unit.count` 2, `chimney.count` 1, `roof-vent.count` 5, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
 - **Office**: `POINT(-118.44311817454468 34.036533907520074)` = 11400 Olympic Blvd, LA 90064 (`PropertyId 246899`), from `geocoordinates` on `jfiEvosX974`. [V] 2026-11-14 — 1 structure, `primary-structure` True, `footprint.area` **2,207.43 m²**, `ground-elevation` 54.5592, roof **`flat`** / **`membrane`**, `condition.precise-value` 3.17, roof `tree-cover` 0.0, parcel `tree-cover` 5.0, `ac-unit.count` **0**, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
@@ -473,6 +701,186 @@ Two cautions carried over:
 - **`ac-unit.count` is 0 here too**, on a 17-storey Class A office built 1989. A tower of that vintage certainly has rooftop plant, so this is a **detection limit, not an absence** — the same lesson as §4.4, where SAM 3 missed a chimney that Vexcel's own attributes reported. `HVAC_RTU` and `HVAC_ECON` need evidence from elsewhere.
 - **`building-type.class` is null again.** It returned `"commercial"` on the old industrial lot and null on both the house and this office, so it is unreliable on both flows and must never be required.
 
+### 4.5a D16: one response holds several captures, and `features[0]` is the wrong one
+
+**A point query returns one feature per capture collection, and the first is not the
+newest.** [V] 2026-11-14. A single `POINT` returned **5** features on the golden
+house, **4** on the LA office and **6** on the Houston office. They are not
+neighbouring parcels: every feature's parcel ring contains the query point, and they
+are distinguished by `metadata.collection` and `metadata.ortho-date-estimate`
+(`us-ca-losangeles-2023`, `us-ca-losangeles-2025`, `us-ca-glendale-2024`, …). D3 kept
+`features[0]`, so the bundle modelled an arbitrary capture of an arbitrary structure.
+
+This was live on the demo path and nothing reported it. What changed:
+
+| property | `features[0]` | D16 chooses | corroboration |
+|---|---|---|---|
+| house | 190.4 m², **2** rooftop AC, imagery 2022-12 | 191.3 m², **0** rooftop AC, imagery 2025-12 | 5 captures of one house, areas within 1 % |
+| LA office | 2,207 m², a building the address point is **not inside**, 100 m from the georeference | **1,566 m²**, imagery 2025-12 | 17 storeys over 24,148 m² = a 1,420 m² plate, so 10 % |
+| Houston office | 4,320 m² | **1,104 m²**, imagery 2023-01 | a 944 m² plate (17 %); and D8's roof mask measured **1,064 m²** |
+
+**The Houston row is the one that settles it.** D8's SAM 3 mask is derived from imagery
+and knows about neither the plate nor the footprint. Against `features[0]` it measured
+**0.25** of the footprint — the number @yalexie1 built A12's flat-roof lower bound
+around in #242 — and against D16's structure it measures **0.96**. Two independent
+sources (the storey count and the mask) said the kept structure was wrong, in the same
+direction, on two different properties.
+
+**The rule, from the lead on the board 2026-11-14.** Candidates are every structure in
+every capture **whose footprint encloses the CoStar address point**; the one whose area
+is closest to the CoStar floor plate (`building_area_m2 / stories`) wins; everything
+within `PLATE_BAND` = 10 percentage points of the best ties, and the **newest capture**
+wins among those. `backend/data_layer/locate.py` carries it.
+
+- **The parcel is queried at the address point, not the georeference.** Measured over
+  the six kit properties whose two locators are furthest apart: **four returned a
+  different set of captures from the two points**, and at `9xZApYqePUx` (Piney Point
+  Offices II, 78 m apart) the structure enclosing the address is **absent from the
+  georeference query altogether**. A parcel extract costs 0.3–1.1 s. [V] 2026-11-14
+- **The plate separates buildings; the capture decides within a building.** Captures of
+  one building agree on area to about 1 %, so comparing them against the plate is
+  choosing on noise — that is what `PLATE_BAND` prevents. Captures of one building do
+  *not* agree on `ac-unit.count`: the house reads 2, 1, 1, 1, 0 across its five. Anyone
+  sizing an HVAC measure from one capture's count should know that.
+- **The right building beats a newer capture of the wrong one.** Houston's newest
+  capture (`us-tx-houston-2026`, imagery 2025-12-31) outlines 4,164 m² over the
+  address; a 2023 capture outlines 1,104 m². Every roof number downstream scales with
+  the footprint, while an older capture only ages the roof condition — so the plate
+  wins and the capture date is reported. The cost is real and visible: the chosen
+  Houston capture reports **no roof condition at all** (`parcel-source` `Real`
+  captures do not carry one), where the 4,320 m² structure reported 2.88.
+- **`primary-structure` does not reliably pick the building.** Right on the house,
+  wrong on both offices. `VexcelStructure.primary` now means "the building this bundle
+  is about": D16 puts the chosen structure first and makes it the only `primary` one,
+  which is what makes the choice reach A2, A11, A12, A14 and A19, since every consumer
+  reads it either as the first `primary` or by sorting on `not primary`. **No contract
+  change** — Vexcel's own flag stays readable at
+  `structure.attributes["primary-structure"]`.
+- **Captures with `metadata.is-ortho-image` false lose every tie.** The two in the
+  golden set gave 9,162 m² against a 1,420 m² plate and 3,802 m² against a 944 m² one,
+  both with no AC count and no roof condition.
+- **A warm cache was a trap.** The bundle cache is keyed on the sid, so a rule change
+  does not change the key: a demo laptop with a warm cache would have kept serving the
+  pre-D16 structure silently. Entries now carry `BUNDLE_RULE_VERSION` and an older
+  stamp is a miss.
+
+#### The open question this leaves: a tower against its podium
+
+At the LA office **two captures outline the same building 1.9x apart** — 2,938 m²
+(`us-ca-losangeles-2024`) and 1,566 m² (`us-ca-losangeles-2025`), centroids 9 m apart
+and 87 % nested — **and they disagree about rooftop solar** (2024 True, 2025 False).
+The plate picks the smaller, which is consistent with §4.3's finding that Vexcel
+outlines a podium rather than a tower. But D8's mask over the 2025 parcel measures
+**2,337 m², which is 1.49x the chosen footprint**, and A12 treats a flat-roof mask as a
+*lower bound*. So:
+
+- the storey count says the tower floor is ~1,420 m² → 1,566 m²;
+- the imagery says the contiguous roof is at least 2,337 m² → 2,938 m².
+
+Both can be true of a 17-storey tower on a podium deck, and panels on the podium with
+none on the tower explains the solar split exactly. **This lane does not resolve it.**
+It picks the building, records the disagreement (`property/extract:extent`, layer
+`vexcel`, status `fallback`) and surfaces it in the runbook. **Which extent A11 and A14
+should model is @yalexie1's call**, and it moves PV capacity by roughly 1.9x.
+
+### 4.6 D17: a complete bundle without the kit, and the one-command mirror
+
+Two `HANDOFF-REQUEST:`s from @Sri-SriPod, both found by a real live run rather than by
+reading code.
+
+#### `state` was empty without a kit mirror, and the default was silently wrong
+
+`_assemble` read `state`, `city` and `address` from the starter-CSV join, which needs
+the extracted kit. With no kit the row is `{}`, so `state` was `None` and `get_tariff`
+fell back to a hard-coded `"CA"`. On a Houston property that is not a near miss:
+
+| | with the "CA" default | resolved |
+|---|---|---|
+| electricity | 0.3002 USD/kWh | **0.0896** |
+| export regime | `net_metering` | **`none`** (ERCOT has no state regime) |
+| eGRID subregion | CAMX | **ERCT** |
+| legal templates | `specs/legal/california.md` | **`texas.md`** |
+
+Matterport carries no address (`MatterportData` has no such field, and adding one is a
+`CONTRACT-CHANGE:` in @yalexie1's file), so the state has to come from the
+coordinates. **The Census call D14 already makes carries it**: `STATE` arrives as a
+two-digit FIPS on both the place and the county record, so `places.state_for` costs
+nothing extra on the bundle path. There is **no state abbreviation anywhere in the
+response**, which is why `STATE_FIPS` exists; it is complete (50 + DC + 5 territories)
+because a partial table resolves to `None` and lands back on the `"CA"` default, which
+is the bug being fixed. `city_for` fills `city` from the same call, stripping the
+Census LSAD suffix ("Houston city" → "Houston") - while every *boundary* rule keeps
+the full name, because "Los Angeles city" and "Los Angeles County" are different
+places and collapsing them is how a county property gets handed LADWP.
+
+`address` is left empty. A street address is not derivable from a coordinate without a
+reverse-geocode this lane does not make, and an invented one would end up quoted in a
+legal document.
+
+#### What running it then found: `segment` read residential on a 16-storey office
+
+Not asked for, and worse than the reported bug. `segment` is not cosmetic - it selects
+the measure catalogue (`catalogue.py:79`), the cost and useful-life tables, the
+incentive filter, **C-PACE eligibility** (`cpace.py:63` requires commercial) and which
+legal templates are listed. With no kit it fell to `"residential"` for both golden
+offices.
+
+What can and cannot settle it, measured 2026-11-14:
+
+| source | house | Culver Connect | Houston office | usable? |
+|---|---|---|---|---|
+| room labels | Bedroom, Bathroom, Dining Room… | **none** | **none** | **yes, positive-only** |
+| `property_classifications` | `[]` | `[]` | `[]` | no |
+| Vexcel `building-type.class` | `single_family` | **`condo_apartment`** | **`condo_apartment`** | **no - argues residential for an office** |
+
+So room labels prove a dwelling and nothing available proves an office. The house is
+now *confirmed* residential from its own scan; an office without the kit keeps the
+fallback and gets a `FetchRecord` naming everything the guess decides. **The actual fix
+is to mirror the kit**, which is the other half of this package.
+
+#### The mirror
+
+`costar.kit_dir()` had always told the reader to "mirror it once from
+`COSTAR_KIT_URL`" and nothing implemented it, so the kit was extracted by hand.
+`python -m backend.data_layer.mirror` now does it; `--check` reports without changing
+anything, `--force` re-mirrors. 52 MB zip → 404 MB extracted, all under git-ignored
+`data/cache/`, because **the kit is sponsor data and is never committed**.
+
+- **The archive is ZipCrypto, not AES** (`flag_bits & 1` set, compression method 8,
+  not 99), so Python's `zipfile` decrypts it at **16 MB/s - about 26 s for 423 MB**.
+  That path uses no subprocess, no argv and no tty, so it is the default. [V] 2026-11-14
+- **`unzip` will not take a password on stdin.** Piping it gives `unable to get
+  password`, skips every member and exits 5: it reads the prompt from `/dev/tty`. So
+  the AES fallback has to use `-P`, which puts the password where `ps` can read it -
+  which is exactly why it is the fallback and not the default. [V] 2026-11-14
+- **Neither secret can reach the output.** `COSTAR_KIT_URL` is a signed S3 URL whose
+  query carries an AWS credential and signature, so it is only ever printed through
+  `_describe_url`, which keeps scheme, host, port and path. `hostname` and not
+  `netloc`, so `user:password@` cannot slip through either. A download failure does
+  **not** interpolate the exception, because an httpx error carries the request URL.
+  Tests assert all of it, including that the source never formats the password into a
+  string.
+- Extraction is staged beside the target and moved in at the end, and a truncated
+  archive that happens to contain the marker is **refused** - otherwise it reads as
+  mirrored and fails later, one dataset at a time, inside the demo.
+
+**What the runbook now says.** `demo_check` fails on a missing kit, because with the
+kit hidden: `use_type` falls to `unknown`, `segment` to a recorded guess, `address` to
+`None`, there is no floor plate so D16 picks the newest capture's own primary structure
+instead of the plate-matched one (**the Houston office reads 4,164 m² rather than
+1,104 m²**), and there is no occupancy or market data at all. The state and city
+survive. **None of that raises.**
+
+#### One for the next person to write a live test
+
+The first version of D17's live test assembled a kit-less bundle **without pointing
+`DATA_LAYER_CACHE_DIR` anywhere**, so it overwrote the real Houston entry - and two
+D16 tests then failed with 4,164 m² because a cached bundle carries whichever answer
+was current when it was written. Any test that assembles live must send the cache
+somewhere temporary, and must clear `costar.enums`, `costar.rows_by_model`,
+`index.by_sid` and `index.summaries`, which are `lru_cache`d on the kit's contents.
+This is the same class of fault @Sri-SriPod reported in the weather test (#243).
+
 ## 5. External data — D9
 
 Checked live 2026-11-14. **Two of the sources `SPEC.md` and `handoff-plan.md` name are unreachable from this environment**, so the recommended set differs from the plan.
@@ -484,8 +892,8 @@ Checked live 2026-11-14. **Two of the sources `SPEC.md` and `handoff-plan.md` na
 | Hourly irradiance (GHI, DNI, DHI), temperature, RH, wind | **Open-Meteo archive API** (`archive-api.open-meteo.com/v1/archive`) | none | [V] 200; units in `hourly_units`; timezone-aware; returns site `elevation` |
 | Annual PV yield + inter-annual uncertainty | **PVGIS v5_3 `PVcalc`** (EC Joint Research Centre) | none | [V] 200 on both golden lots |
 | PV reference implementation for unit tests | **pvlib 0.16.1** (local wheel) | n/a | [V] downloads |
-| Utility tariff, Los Angeles | **NREL URDB** via `api.openei.org/utility_rates` | free NREL key (`DEMO_KEY` works for probing) | [V] returns LADWP, `eiaid` 11208 |
-| State average retail price (tariff fallback) | **EIA API v2** `electricity/retail-sales` | free EIA key, `EIA_API_KEY` | [V] 200 for TX and CA, commercial and residential |
+| Retail electricity price, **all three golden properties** | **EIA API v2** `electricity/retail-sales`, state average | free EIA key, `EIA_API_KEY` | [V] 200 for TX and CA, commercial and residential |
+| Utility tariff, Los Angeles | ~~**NREL URDB**~~ — **off the path**, see 5.1c | free NREL key (`DEMO_KEY` works for probing) | [V] returns LADWP, `eiaid` 11208, but unused |
 
 Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 
@@ -526,12 +934,185 @@ So an hour stamped `05:00` is the mean over `04:00`–`05:00`. **Anything that t
 
 Choosing `246899` over the Houston warehouse puts **both** golden properties in Los Angeles. Four consequences: [V] 2026-11-14
 
-1. **Both use the real LADWP tariff** from URDB (`eiaid` 11208), so the EIA state-average fallback is **off the demo path**. It stays implemented and documented — any Houston property still needs it, and 183 of the 274 office candidates are in Houston.
+1. ~~**Both use the real LADWP tariff** from URDB (`eiaid` 11208), so the EIA state-average fallback is **off the demo path**.~~ **Superseded 2026-11-14 by the lead** (board #6873683873): all three golden properties take the EIA state average. See 5.1c.
 2. **Both are eGRID subregion CAMX.** ZIP 90064 has prefix 900, inside the range EMI-01 confirmed for all 533 LA-area ZIPs (900–918). So `EF_avg` = **0.19504 kg CO₂e/kWh** for both, and the ERCT-versus-SRMV ambiguity that affected Houston ZIP 77080 **disappears**.
 3. **The 3.35× Texas/California price gap leaves the demo.** The weaker-Houston-economics warning below no longer applies to either golden property, though it stays true for any Houston run.
-**Resolved 2026-11-14:** a third golden property, the Houston office `234088` / `L3266YcPPvd`, was added so the Texas path keeps a demo vehicle. The demo now shows both states — LADWP and CAMX on the LA house and LA office, and the Texas price, ERCT 0.33413, the Texas documents and the Texas C-PACE route on the Houston office. The EIA state-average fallback is therefore **back on the demo path** for that property, and the 3.35× price gap becomes a visible, honest contrast between the two offices rather than a hidden surprise. Items 1–3 above still describe the two Los Angeles properties.
+**Resolved 2026-11-14:** a third golden property, the Houston office `234088` / `L3266YcPPvd`, was added so the Texas path keeps a demo vehicle. The demo now shows both states — the California price and CAMX on the LA house and LA office, and the Texas price, ERCT 0.33413, the Texas documents and the Texas C-PACE route on the Houston office. The EIA state-average fallback is therefore **back on the demo path** for that property, and the 3.35× price gap becomes a visible, honest contrast between the two offices rather than a hidden surprise. Items 1–3 above still describe the two Los Angeles properties.
 
 4. **~~Texas now has no demo vehicle.~~** `specs/legal/texas.md`, the Texas documents 2–6 and the Texas PACE Act route in `SPEC.md` §6.6 have no golden property to run against, while California does. That is a real cost of this choice: either accept that Texas is specified but not demonstrated, or add a Houston office as a third property. Flagged, not decided — candidates are in §3.3.
+
+### 5.1c One price source for all three properties — the lead's decision
+
+**Decided 2026-11-14 by @yalexie1 (lead), board #6873683873.** Every golden property
+takes its electricity price from the **EIA state average**, not from a looked-up
+utility schedule:
+
+| Property | State | Sector | Price | `FetchRecord` |
+|---|---|---|---|---|
+| LA house `zvKHR9DHNjJ` | CA | RES | **0.2975** USD/kWh | `tariff / fallback` |
+| LA office `jfiEvosX974` | CA | COM | **0.3002** USD/kWh | `tariff / fallback` |
+| Houston office `L3266YcPPvd` | TX | COM | **0.0896** USD/kWh | `tariff / fallback` |
+
+`Tariff.source` names EIA with the state, sector and period, and the `fallback`
+record sits beside it, so no reader mistakes a state average for the building's
+retail contract. **LADWP is unchanged as the utility** for net metering, the LADWP
+rebates and eGRID CAMX — the decision is about where the *price* comes from.
+
+**URDB stays off the path. My call, and the reasons:** [V] 2026-11-14
+
+1. **It cannot serve all three properties.** URDB returns 0 rates at the Houston
+   office for every sector filter, because ERCOT is deregulated and there is no
+   single regulated schedule to look up. So the EIA path has to exist regardless,
+   and one sourcing path for three properties beats two.
+2. **The contract carries a single marginal price.**
+   `Tariff.electricity_usd_per_kwh` is one number, so a URDB time-of-use schedule
+   has to be flattened to an average anyway. That flattening is itself an
+   assumption, and it is less traceable than "EIA, CA, COM, 2026-08".
+3. It remains implemented-adjacent and documented here, so it is a half-hour of work
+   if the finance lane later wants a real LADWP schedule and the contract grows a
+   place to put one.
+
+**`Tariff.utility` is a separate, open question.** [P] It currently reads
+`CA state average (RES)`, not `LADWP`, and the easy fix is unsafe: resolving the
+utility from the CoStar `City` field would repeat the mistake the PACE work already
+caught, where `cityId` 5316 "Houston" included a property that is **not** in the
+incorporated city. LADWP serves the city of Los Angeles while surrounding
+unincorporated county is SCE territory, so the same trap applies. Doing it properly
+means the Census incorporated-place lookup that answered the PACE question — which
+is cheap, but whether `utility` must literally read `LADWP` depends on how the
+analysis and legal lanes key the rebates off it. Raised with the lead; not guessed
+at here.
+
+**`Tariff.export_regime` is now set**, which it was not before: `net_metering` for
+California and `none` for Texas. This is the contract's own rule — the field's
+comment reads "None where no export price is mandated (Texas)" — and ERCOT mandates
+no export compensation, so leaving it unset was losing data the schema asked for.
+
+### 5.1d D14: which place, and therefore which utility
+
+`backend/data_layer/places.py`, 2026-11-14. [V] This closes the `Tariff.utility`
+question 5.1c left open, and answers a second one nobody had assigned to a package.
+
+**CoStar's `City` is a mailing city, and the error rate is not small.** Measured
+against the US Census Bureau geocoder's `Incorporated Places` layer:
+
+| CoStar `City` | sample | actually |
+|---|---|---|
+| `"Houston"`, TX | 16 | **9 Houston city, 6 unincorporated, 1 Nassau Bay city** |
+| `"Los Angeles"`, CA | 14 | **14 Los Angeles city** |
+
+So the field is reliable for Los Angeles and wrong **7 times in 16** for Houston. This
+is a **sample, not a census** — enough to justify the lookup, not a figure to quote as
+the kit's true error rate. It confirms at scale what §2.4 caught on one property.
+
+**Two consumers, both of which were getting a wrong answer rather than no answer:**
+
+1. **C-PACE.** A28's `cpace_scenario(..., in_pace_region=...)` sets `eligible = False`
+   for Texas unless it is `True`, and nothing supplied it, so the Houston golden
+   office — the only property that demonstrates the Texas route — reported ineligible.
+2. **`Tariff.utility`.** `incentives.py` inferred it from the CoStar city field, with
+   8 `LADWP` and 4 `CenterPoint` registry entries keyed on the result.
+
+One keyless Census call answers both: `Incorporated Places` and `Counties` come back
+together. Verified live — a point off land returns no place rather than an error, and
+Burbank, Glendale and Pasadena return their own names, which is what lets the module
+decline to guess for the Los Angeles County cities that run their own utilities
+(`california.md:1001`).
+
+**The rule is the lead's, from the board.** City of Los Angeles → `LADWP`; elsewhere
+in LA County → `SCE`, status `fallback`, flagged as needing confirmation; a city with
+its own utility → **neither**; California outside LA County → not guessed, since the
+state has about forty publicly owned utilities; **outside California → unchanged**.
+The price always stays on the EIA fallback: `Tariff.source` carries the price
+provenance and `utility` names who serves the meter.
+
+**Texas gets no utility from this.** CenterPoint is the Houston wires utility but its
+delivery area is not the city limit, so an incorporation test is the wrong instrument
+— it says nothing about a property in unincorporated Harris County that CenterPoint
+does serve. The field keeps its honest label there.
+
+**`None` is not `False`.** A failed lookup returns `None` from both
+`in_pace_region` and `utility_for`. A28 treats anything other than `True` as not
+eligible, which is the right default — but "we could not check" must never be reported
+to a user as "your property is not in a PACE region". The records distinguish them.
+
+#### What this did and did not fix
+
+Verified live on the Houston office: the region blocker is **cleared for all seven
+priced measures**. Eligibility does not follow, and it is worth being precise about
+why, because it is not a data gap:
+
+1. `config.CPACE_RATE` and `CPACE_TERM_YEARS` are deliberately `None` — a rate is a
+   market quote, so no payment is computed.
+2. Supplying an illustrative 7 % over 20 years, every measure then fails Texas's
+   `SIR >= 1` rule (ECO-12b): LGT_LED 0.74, PV_ROOF 0.25, HVAC_RTU 0.17.
+
+That second result is the 3.35x price gap of 5.2 showing up exactly where this
+document predicted it would. **Houston C-PACE may simply not pencil at 8.96 ¢/kWh**,
+which is a real finding for the demo script rather than a bug to fix.
+
+Also closed: the live-versus-fixture mismatch. `specs/examples/README.md:593` checks
+`"LADWP" in tariff["utility"]`, which passed on the fixtures and would have failed on
+live data. All three golden properties now pass it **live**.
+
+### 5.1e D15: the gas price, and the unit that would have been wrong by 10x
+
+`physics/04:1060` assigned this to the data lane as open — *"Houston gas price
+default: no source opened; [P] Data lane (the gas utility's tariff or EIA state gas
+prices)"*. [V] 2026-11-14.
+
+**Why it mattered.** `Tariff.gas_usd_per_kwh` was never set, so on every live bundle
+it was `None`, and three places in the analysis lane branch on that:
+
+| Reader | With the price missing |
+|---|---|
+| `registry.py:182` | **Fixed by @yalexie1 in #201** — a missing price is now "unknown", and the home keeps its gas-furnace default at a lower confidence. D15 raises that confidence from 0.25 to 0.4 |
+| `physics/systems/baseline.py:149` | assumes **electric** heating |
+| `physics/systems/baseline.py:216` | assumes an **electric** water heater |
+| `physics/systems/baseline.py:252` | prices gas energy at **0.00 USD/kWh** |
+
+So A3's baseline still reads a 1920s Los Angeles house as all-electric. Supplying the
+number removes the question.
+
+**The unit trap, which is the real finding.** EIA prices gas in **dollars per thousand
+cubic feet**, not per therm. Applying TAR-04's `usd_per_therm / 29.3071` to a `$/MCF`
+figure overstates the price by a factor of about **10.37**, and nothing downstream
+would error — it would just quietly make gas look as expensive as electricity. A
+volume becomes energy through the heat content of gas delivered to consumers, about
+1,037 Btu/cf, hence **1.037 MMBtu per MCF** and 303.915 kWh per MCF.
+
+That factor carries about **±0.5 %** (heat content runs roughly 1,030–1,040 Btu/cf),
+which is far inside the uncertainty already present in using a state average rather
+than the building's own tariff. The reader can reconstruct the number: `Tariff.source`
+carries the raw `$/MCF` figure, the period and the conversion factor.
+
+`_eia_gas_usd_per_kwh` **refuses any series whose units are not per-MCF** rather than
+converting it. The same lesson as D9: there, an offline fixture used a float where the
+API sends a string, and the suite stayed green against a shape that cannot occur.
+
+**Measured prices** (EIA annual, 2025; **annual** not monthly, because gas swings hard
+with the heating season in a way the electricity price does not):
+
+| | $/MCF | USD/therm | USD/kWh |
+|---|---|---|---|
+| CA residential | 22.01 | 2.1225 | **0.072422** |
+| CA commercial | 16.56 | 1.5969 | **0.054489** |
+| TX residential | 19.42 | 1.8727 | **0.063900** |
+| TX commercial | 10.98 | 1.0588 | **0.036129** |
+
+California dearer than Texas and commercial below residential, the same shape as the
+electricity prices — a weak but real sanity check.
+
+**Why the four values are committed.** The live route is slow and erratic: measured
+1 s, 14 s, 41 s and 66 s on the four combinations, with 504s in between, and the
+heat-content series 504'd outright. Waiting on it took a cold bundle from 2.5 s to
+**44–76 s**, which is not a demo path. These are public EIA figures, not sponsor data,
+and they change once a year, so the table is committed with its series ids and a test
+that notices if it drifts. `EIA_GAS_REFRESH=1` still fetches live first, so the table
+can be refreshed rather than rotting. Either route is labelled `fallback` — it is a
+state average either way — and the record says which one answered.
+
+After the table, a cold live bundle is **0.4–0.6 s** with the gas price present.
 
 ### 5.2 What is blocked, and the caveats
 
@@ -549,7 +1130,7 @@ Choosing `246899` over the Houston warehouse puts **both** golden properties in 
 
   **EIA returns numeric fields as JSON strings** — `"price": "8.96"` — so an `isinstance(v, (int, float))` guard silently rejects every real response. A hand-written fixture using a float will not catch it: that is exactly what happened here, and only the live test found it. [V] 2026-11-14
 
-  **This is a state monthly average, not the building's actual retail contract.** In deregulated ERCOT the real price varies widely by retail plan, so the office `Tariff` must carry `source` naming EIA with the state, sector and period, and a `FetchRecord{layer: "tariff", status: "fallback"}` beside it. It is defensible and traceable; it is not a lookup of that building's tariff. The LA home flow still uses the real LADWP rate from URDB.
+  **This is a state monthly average, not the building's actual retail contract.** In deregulated ERCOT the real price varies widely by retail plan, so the office `Tariff` must carry `source` naming EIA with the state, sector and period, and a `FetchRecord{layer: "tariff", status: "fallback"}` beside it. It is defensible and traceable; it is not a lookup of that building's tariff. As of the lead's decision below, **every** golden property is sourced this way, not just the Houston one.
 
   **One consequence worth stating before anyone is surprised by it.** Texas commercial power is **8.96 ¢/kWh against California commercial at 30.02 — a factor of 3.35**. Since every retrofit's dollar saving is energy saved times price, the Houston office will show markedly worse payback, NPV and SIR than the Los Angeles house for identical physics. That is a real result, not a bug, and it is exactly the sort of thing the C-PACE route in `SPEC.md` §6.6 exists to address. The demo script should not treat a weak office result as a failure.
 - **Emission factors: eGRID2023 is the current edition** (the EPA page also still references eGRID2022). The relevant subregions are **CAMX** for Los Angeles and **ERCT** for Houston. **The factor values have not been opened**, and per the double-check protocol they are therefore **unverified — do not hardcode them from memory.** The data file must be read before any CO₂ figure is computed. [P]
@@ -574,15 +1155,17 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D1 | P0 | CoStar kit reader | `data-costar` | `backend/data_layer/costar.py`, `data/fixtures/costar/` | `CostarData` |
 | D2 | P0 | Matterport client | `data-matterport` | `backend/data_layer/matterport.py`, `data/fixtures/matterport/` | `MatterportData` |
 | D3 | P0 | Vexcel client | `data-vexcel` | `backend/data_layer/vexcel.py`, `data/fixtures/vexcel/` | `VexcelData` |
-| D4 | P0 | Cache + fetch records | `data-cache` | `backend/data_layer/cache.py` | `FetchRecord` |
+| D4 | P0 | Cache + fetch records — **done**, see 6.5 | `data-cache` | `backend/data_layer/cache.py` | `FetchRecord` |
 | D5 | P0 | The one public door | `data-api` | `backend/data_layer/api.py` | `PropertyBundle`, `PropertySummary` |
 | D6 | P0 | Golden fixtures | each source agent, in its own subdirectory | `data/fixtures/costar/`, `/matterport/`, `/vexcel/` — **never the parent** | — |
 | D7 | P1 | Index + office selection — **done**, see 2.4a | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
-| D8 | P1 | Imagery + SAM 3 | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique |
+| D8 | P1 | Imagery + SAM 3 — **done**, see 4.4a | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique, roof area |
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
-| D10 | P2 | The five unused datasets | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
+| D10 | P2 | The five unused datasets — **done**, see 2.4b | `data-costar` | `backend/data_layer/costar_extra.py` | `OccupancyData`, `MarketData` |
 | D12 | P1 | Splat + drone photos (track site) | `data-matterport` | `backend/data_layer/tracksite.py` | `splat_path`, `drone_photo_paths` |
-| D13 | P2 | Portfolio screening by Vexcel filters | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
+| D13 | P2 | Portfolio screening by Vexcel filters — **done**, see 4.4b | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
+| D14 | P1 | Incorporated place, utility and PACE region — **done**, see 5.1d | `data-costar` | `backend/data_layer/places.py` | `Tariff.utility`, `in_pace_region` |
+| D15 | P1 | Gas price on the tariff — **done**, see 5.1e | `data-costar` | `backend/data_layer/external.py` | `Tariff.gas_usd_per_kwh` |
 | D11 | — | this file | lane owner | `specs/data-integration.md` | — |
 
 **Critical path:** D0 (kit mirror) → D1 / D2 / D3 in parallel → D5 → D6. D4 can be stubbed from the contract and hardened later. D7–D10 come strictly after the walking skeleton.
@@ -624,6 +1207,55 @@ mp_out/               git-ignored
 Cache keys include source, identifier **and query shape** (Vexcel's `include=` and `layer`, Matterport's field selection, CoStar's dataset and record id). **No signed URL is ever persisted.** Writes are atomic so an interrupted run cannot leave a half-written entry that later reads as a hit.
 
 Every fetch returns a `FetchRecord` alongside its payload. Outcomes that must each be distinct and are all **normal**: Vexcel 404 (no parcel) and 429 (rate limited), MatterPak locked, no splat, no defurnished view, rooms missing dimensions, a CoStar property with an empty `MatterportModelId` (51 commercial, 1 residential), a hidden residential address (4) or a non-public listing (228), `building-type.class` absent.
+
+### 6.5 What D4 actually does, and the one invariant that bit
+
+`backend/data_layer/cache.py`, built 2026-11-14. [V]
+
+**Measured.** With every source payload cached, a full live re-assembly of a bundle
+drops from **2.9 s to 0.39 s** and makes no call to a sponsor API; the bundle cache
+on top of that serves in **0.002–0.046 s**. The point is not the milliseconds, it is
+that the keys are shared with every other team at the hackathon, so a demo that
+re-assembles three times should query Matterport once.
+
+**An injected transport bypasses the cache, read and write.** D5 shipped the opposite
+once: its bundle cache was consulted *before* the live-or-offline decision, so on a
+machine where someone had run a live assembly the tests silently ran against cached
+data instead of the fixtures — and passed. A caller supplying the response is in
+control of what comes back, and a stubbed response has no business being left on disk
+for the next caller. Checked by running the whole lane suite with the cache empty and
+with it fully populated from live runs: **150 passed / 15 skipped both ways.**
+
+**A 429 is never cached.** It describes the service's last few seconds, not the
+parcel, so a cached one would poison that point for every later run. A 404 *is*
+cached: "Vexcel has never flown this parcel" is a stable fact about coverage.
+
+**The URL invariant caught a real leak in my own code.** The rule above says no
+signed URL is ever persisted, and the first version of the bundle cache broke it:
+`CostarData.raw` is "the record as found in the kit" per the contract, and the golden
+house's record carries **54 URL-valued fields** — `imagescdn.homes.com` image URIs
+with query strings, agent profile images, brokerage websites. Three ways to fix it,
+and only one is right:
+
+- *Scrub `raw` in place on write* — then a cache hit disagrees with a fresh assembly.
+  That is the worst option: silent, invisible, and exactly the class of bug the D5
+  cache-ordering mistake belonged to.
+- *Scrub `raw` at assembly* — then the field no longer is what the contract says it
+  is, and the contract is not mine to redefine.
+- **Strip `raw` from the cache entry and rebuild it on read.** Safe precisely because
+  it is *local* data: the kit mirror is on disk, so `raw` comes back in about 0.04 s
+  and the field stays truthful on both paths. Verified: `hit == miss` on all three
+  golden properties, `raw` rebuilt in each.
+
+If a URL ever survives the strip — a new field somewhere starts carrying one — the
+write is **refused** rather than persisting or mangling it. The caller still gets its
+bundle, with a `FetchRecord` saying it was not cached and why. A loud failure on an
+unexpected shape is what a cache with a documented invariant owes its reader.
+
+**Unreadable entries are deleted on read.** A pre-D4 bundle entry cannot be parsed by
+this code, so it was dead weight that went on leaking those 54 URLs indefinitely. The
+reader removes it; it is git-ignored and regenerable. A test asserts no entry anywhere
+in the real cache carries a URL, so this cannot quietly regress.
 
 ---
 
@@ -684,8 +1316,41 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Lane suite with and without the mirror | `pytest backend/data_layer -q` | 2026-11-14 | 115/15 skipped with, 100/30 skipped without — **no failures either way** |
 | Search makes no network call | `socket.socket.connect` patched to raise | 2026-11-14 | first call 0.069 s, second 0.006 s, no connection attempted |
 | Live bundle after D7 | all three golden, `refresh=True` | 2026-11-14 | 2.2–2.9 s; names now `Executive Tower`, `5836 La Mirada Avenue`, `2100 West Loop South` |
+| Source payload cache (D4) | all three golden, two passes | 2026-11-14 | full re-assembly **2.9 s → 0.39 s**, zero sponsor-API calls on the second pass |
+| Bundle cache round trip (D4) | all three golden | 2026-11-14 | 0.002–0.046 s; `raw` rebuilt from the kit; **hit == miss** on name, tariff and `raw` |
+| No URL in any cache entry | regex over the whole cache tree | 2026-11-14 | clean — after fixing the bundle entry, which carried **54** URL-valued fields from `costar.raw` |
+| Suite with an empty vs a fully populated cache | `pytest backend/data_layer -q` | 2026-11-14 | **150 passed / 15 skipped both ways** |
+| `elements/detect` metadata (D8) | live, golden house | 2026-11-14 | `geometry` + `width`/`height` give the transform; `features` is one per detection |
+| Pixel-to-map direction | all 13 detections, both corners, vs the service's own `bbox` | 2026-11-14 | **row 0 = north**: 0.024 m mean error against 17.1 m for south-up |
+| gsd versus footprint scale | same response | 2026-11-14 | reported 0.05623/0.07821 vs implied 0.06182/0.06140 — **`min-gsd` is 17 % low** |
+| Mask ground areas | 13 masks, pixel counts | 2026-11-14 | largest **180.9 m²** vs 190.4 m² precomputed (**−5 %**); sum 485.8 (**+155 %**) |
+| Mask nesting | pixel-box containment, 12 pairs | 2026-11-14 | 8 **100 %** contained in the largest, 3 at 81–97 %, 3 disjoint — never sum |
+| Highest-confidence detection | same response | 2026-11-14 | 0.695 is 38.8 m² and **0 % inside** the largest — the secondary structure |
+| CoStar `City` vs incorporation, Houston (D14) | Census geocoder, 16 sampled | 2026-11-14 | **9 Houston city, 6 unincorporated, 1 Nassau Bay** — 7 of 16 wrong |
+| CoStar `City` vs incorporation, Los Angeles | Census geocoder, 14 sampled | 2026-11-14 | **14/14 Los Angeles city** — reliable there |
+| Census edge cases | Burbank, Glendale, Pasadena, Santa Monica, off-land | 2026-11-14 | municipal-utility cities return their own names; the Pacific returns no place, not an error |
+| Golden properties placed | live, all three | 2026-11-14 | both LA → `Los Angeles city` → **LADWP**; Houston → `Houston city` → **`in_pace_region` True** |
+| A28 region blocker cleared | live, all 7 priced Houston measures | 2026-11-14 | blocker gone for every one; eligibility then fails **SIR ≥ 1** (0.74, 0.25, 0.17) |
+| Golden tariff check on live data | `README.md:593` rule | 2026-11-14 | **passes live** for all three, where it previously only passed on fixtures |
+| EIA gas route discovered (D15) | `facet/process`, `facet/duoarea` | 2026-11-14 | `PRS` residential, `PCS` commercial; `SCA`/`STX`; **units `$/MCF`, not per therm** |
+| Gas prices, all four | live, EIA annual 2025 | 2026-11-14 | CA 22.01/16.56, TX 19.42/10.98 $/MCF → 0.0724/0.0545/0.0639/0.0361 USD/kWh |
+| Gas route latency | same four calls | 2026-11-14 | **1 s, 14 s, 41 s, 66 s** plus 504s; heat-content series 504'd — hence the committed table |
+| Cold live bundle after D15 | all three golden | 2026-11-14 | **0.4–0.6 s** with gas present (44–76 s if the live gas route is waited on) |
+| Sale comps joined (D10) | `entities[].propertyId` | 2026-11-14 | 5,753 of 6,120 join; **1,891 (30.9 %) carry a cap rate**, stored in **percent** |
+| Comp depth by window | 4 markets x 3 windows | 2026-11-14 | since 2015: LA office **12**, Houston office **27**; since 2020: **1** and 9 — 2020 breaks A30 |
+| `sale_price_usd_per_m2` rejected | 86 LA office priced sales | 2026-11-14 | 29 distinct properties, one with 43; **6 to 40,025 USD/m²** — not supplied |
+| Sitting tenants | both golden offices | 2026-11-14 | 37 and 34 (of 590 and 371 on record); **81 % and 71 % of RBA** occupied |
+| `company-detail` join | Houston office tenants | 2026-11-14 | **224 of 225** matched; 413 and 215 employees total |
+| Cap rate sanity | both golden offices | 2026-11-14 | LA **5.30 %** vs Houston **7.90 %** — the right market structure |
+| A30 value uplift fires | both golden offices, live | 2026-11-14 | `None` before; **100,000 USD (LA) vs 65,500 (Houston)** on the same 12,000 USD/yr saving |
+| Vexcel area query (D13) | live, ~330 m box | 2026-11-14 | **164 parcels in one 3 s call**, full 92-key attribute set per structure |
+| Feature cap | 330 m / 880 m / 1.8 km / 4.4 km | 2026-11-14 | 164 / **500 / 500 / 500** — a hard cap with **no truncation signal** |
+| Parcel-to-scan match | 441 parcels, one box | 2026-11-14 | only **4** scanned properties matched; identical at 25 m and 100 m — unambiguous but sparse |
+| Index-first match yield | 6 indexed properties, one box | 2026-11-14 | **5 of 6 (83 %)** matched from a single call |
+| Screening cost | 500 m radius, two strategies | 2026-11-14 | radius tiling **102 s / ~60 calls**; candidate tiling **13 s / 7 calls**; 400 m is **1.5 s / 1 call** |
+| LA office already has solar | `roof-objects.solar` on 246899 | 2026-11-14 | **True** on a 2,938 m² flat membrane roof — PV_ROOF must account for it |
 | NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
-| NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; open blocker |
+| NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; resolved by the lead's EIA decision, 5.1c |
 | pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |
 | EPA eGRID factors | page only | 2026-11-14 | eGRID2023 current; **values not opened, unverified** |
 | EIA API v2 retail price | live, TX + CA, both sectors | 2026-11-14 | 200; TX com 8.96, TX res 15.91, CA com 30.02, CA res 29.75 ¢/kWh (2026-08) |
@@ -715,3 +1380,14 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Office inventory in the kit | streamed all 3,339 records + CSV join | 2026-11-14 | 289 type-5 offices, **274 with models** (183 HOU, 90 LA) |
 | Openings: office vs residential | 12 + 12 live models | 2026-11-14 | office 2/12 any opening, **0 windows**; residential 12/12, 34 windows |
 | Edge-fraction origin, rotation sense | — | — | **[P] open — footprint registration cross-check** |
+| `property/extract` features per point | live, 3 golden points | 2026-11-14 | **5 / 4 / 6 features = one per capture collection**, every ring containing the point; `features[0]` is not the newest |
+| Capture sets from the two locators | live, 6 widest-apart kit properties | 2026-11-14 | **4 of 6 differ**; at `9xZApYqePUx` the address-enclosing structure is absent from the georeference query |
+| D16 choice, golden three | live after the change | 2026-11-14 | house 191.3 m² / LA 1,566.2 m² / Houston 1,104.5 m²; all three enclose the CoStar address point |
+| D8 mask against D16's footprint | live detection | 2026-11-14 | house **0.95**, Houston **0.96** (was 0.25 against `features[0]`), LA **1.49** → the podium question, §4.5a |
+| `ac-unit.count` across captures of one roof | live, golden house ×5 | 2026-11-14 | **2, 1, 1, 1, 0** — capture-dependent, so never quote one count as the building's |
+| LA office tower vs podium extent | live, 2 captures + mask | 2026-11-14 | **[P] open — 1,566 m² vs 2,938 m², 87 % nested, solar flag differs; @yalexie1 to decide which A11/A14 model** |
+| CoStar kit zip cipher | real archive, 2026-11-14 | 2026-11-14 | **ZipCrypto** (flag 1, method 8, not 99/AES); `zipfile` decrypts at **16 MB/s**, 423 MB in ~26 s |
+| `unzip` password on stdin | real archive | 2026-11-14 | **does not work** - `unable to get password`, every member skipped, exit 5; it reads `/dev/tty` |
+| Kit mirror end to end | live download + extract to a clean target | 2026-11-14 | 52 MB downloaded, 42 files / 404 MB mirrored, lane tests green against it |
+| State without a kit mirror | live, kit hidden | 2026-11-14 | Houston resolves **TX** and 0.0896 USD/kWh; the old default gave CA and 0.3002 |
+| Segment signals without a kit | live, 4 properties | 2026-11-14 | room labels positive-only; `property_classifications` empty on all; **Vexcel `building-type.class` says `condo_apartment` for both offices** |

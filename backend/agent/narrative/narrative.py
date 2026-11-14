@@ -70,3 +70,13 @@ def check_narrative(narrative_md: str, result: RunResult,
         if not any(abs(c - value) <= half + 1e-9 for c in candidates):
             problems.append(f"{written}: no structured result has this value")
     return problems
+
+
+def remove_unsupported(narrative_md: str, result: RunResult, bundle: Optional[PropertyBundle] = None,
+                       model: Optional[BuildingModel] = None) -> tuple[str, list[str]]:
+    """The narrative without the lines that state a number no result holds, and those lines. The
+    last resort when the agent has been asked to correct its text and has not."""
+    kept, dropped = [], []
+    for line in narrative_md.splitlines():
+        (dropped if line.strip() and check_narrative(line, result, bundle, model) else kept).append(line)
+    return "\n".join(kept), dropped

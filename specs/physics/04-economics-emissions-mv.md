@@ -452,7 +452,7 @@ Rules:
 - Primary: the three official sources in the table. Second sources: CPUC page and SCE page agree with each other on the SCE regime; LADWP's rates page and LADWP's NEM Guidelines agree on the LADWP regime; for Texas only the PUC rule was opened.
 - Example (a): E_pv = 8 000 kWh, f_sc = 0.45, p_import = 0.30, p_export = 0.06: S_pv = 0.45 * 8 000 * 0.30 + 0.55 * 8 000 * 0.06 = 1 080 + 264 = **1 344 USD/yr**. Hourly script check with a block PV profile against a flat 10 000 kWh/yr load: f_sc = 0.4167, bill difference 1 280.00 USD, formula 1 280.00 USD.
 - Example (b): E_load = 10 000 kWh, p_energy = 0.30. E_pv = 8 000 gives **2 400 USD/yr**. E_pv = 12 000 gives 10 000 * 0.30 = **3 000 USD/yr**, with 2 000 kWh of credit that the model values at zero.
-- Tool: `self_consumption_fraction(hourly_load_kwh, hourly_pv_kwh) -> float`; `pv_bill_savings(regime: Literal["net_billing","net_metering"], e_pv_kwh, e_load_kwh, f_sc, p_import, p_export) -> float` (USD/yr); `export_regime(utility: str) -> Literal["net_billing","net_metering"]`.
+- Tool: `self_consumption_fraction(hourly_load_kwh, hourly_pv_kwh) -> float`; `pv_bill_savings(regime: Literal["net_billing","net_metering"], e_pv_kwh, e_load_kwh, f_sc, p_import, p_export) -> float` (USD/yr); `export_regime(tariff: Tariff) -> (Literal["net_billing","net_metering","none"], warnings)`: `Tariff.export_regime` when the Data lane set it (`none` in Texas, where no export price is mandated), otherwise read from the utility name. A `Tariff.utility` that names no utility (for example a state-average price) is unconfirmed: it is never taken as LADWP, and the result carries a warning.
 
 ### TAR-04 Gas bill
 

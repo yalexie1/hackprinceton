@@ -1,12 +1,16 @@
 # Master spec
 
-Status: draft v0.3.1, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.3, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
 v0.3 (contract 0.3.0) adds what the physics and legal specs needed, all additive: incentive eligibility and a rebate-after-install kind, real-rate and AIRR fields on the financial breakdown, the export regime on the tariff, a `published_default` source, a `no_cost_data` skip reason, the non-baseload CO2 figure, desk-score and layout detail, visible transmittance on windows, room polygons, and value uplift on the rooftop solar measure for homes.
 
 v0.3.1 adds `CostarData.parent_ids`: one Matterport scan can be attached to several CoStar records, so the alternatives travel with the bundle.
+
+v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so the area of a detection is the area of its own mask, never a sum of masks, a bounding box or a hull. `mask_wkt` stays `None` until a true polygon is derived from the mask.
+
+v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
 
 Companion files:
 
@@ -108,7 +112,7 @@ What is data and what is an assumption:
 | Outlets: two-prong, three-prong, GFCI; main panel if visible | panoramas | wiring-age cue, service flag |
 | Roof: roof outline and usable area, trees | Vexcel ortho and obliques via SAM 3, label `roof` | roof masks. Obstruction counts and existing solar come from Vexcel's precomputed `roof-objects` and `solar` attributes, not from SAM 3 |
 
-Outlet type and wall material are cues, not proof. They move an assumption's range and confidence; they never set a hard fact. The items that decide solar installation are service panel capacity and roof structure, so those are reported as `likely_ok`, `likely_upgrade`, or `unknown`.
+Outlet type and wall material are cues, not proof. They move an assumption's range and confidence; they never set a hard fact. The items that decide solar installation are service panel capacity and roof structure, so those are reported as `likely_ok`, `likely_upgrade`, or `unknown`. A fourth value, `blocked`, is for a cue that rules a measure out on site rather than adding cost, for example a water heater in a closet too small for a heat pump unit (`dhw.space`, which blocks `DHW_HPWH`). Each `likely_upgrade` carries `added_cost_usd` as a range.
 
 ### 5.3 When the agent asks the user
 
@@ -170,6 +174,10 @@ IDs are stable and appear in the contract as `MeasureId`.
 
 A measure is skipped with a stated reason when the role cannot do it, when the model shows it is already done, or when a feasibility flag blocks it.
 
+"Tenant with consent" means the assumption `lease.alteration_consent` is true (a user answer or a document); without it a tenant gets the measure as financeable with the owner's consent, not selected.
+
+Conventions on `MeasureResult.params`, agreed on the board on 2026-11-14 between the measure packages (A16 to A22) and finance (A24): when `applicable` is false, `params["skip_reason"]` holds the machine-readable reason (`role`, `feasibility`, `already_done`, `not_supported`), set by the measure engine, and `not_applicable_reason` holds the sentence. The quantity finance prices is in `params` under the key its cost entry names (for example `floor_area_m2`, `roof_area_m2`, `glazing_area_m2`, `thermostats`); solar size comes from `MeasureResult.solar`. For `PV_ROOF`, `savings.electricity_kwh` is the full production; the netted, self-consumed and exported kWh are in `params`.
+
 Limits the physics spec puts on this table (`specs/physics/02-thermal-systems.md`, sections 10 and 12):
 
 - **`HVAC_RTU` and `HVAC_ECON`** are evaluated only when a packaged rooftop unit is confirmed, by Vexcel, by interior vision, or by the user. Otherwise they return not applicable. `HVAC_ECON` savings are net of the added latent load.
@@ -190,6 +198,7 @@ Limits the physics spec puts on this table (`specs/physics/02-thermal-systems.md
 3. **Roof understanding.** Two sources, each used for what it measured well on the golden house (`data-integration.md` section 4.4):
    - **Obstructions and existing solar: Vexcel precomputed attributes first.** `roof-objects` counts (chimney, skylight, roof vent, AC unit) and `solar` are the primary source. SAM 3 missed the house's chimney, reported two skylights that are not there, and found one of five vents.
    - **Roof extent and usable area: SAM 3** through Vexcel `elements/detect` on the ortho and the newest obliques, label `roof` at a detection threshold near 0.3, keeping each detection's confidence. The label `roof plane` returns nothing, and the default threshold of 0.5 discards most real detections (confidences ran 0.31 to 0.70). SAM 3 returns roof fragments, not clean planes (13 on one small house), so the masks give area and tree overhang, not plane geometry. Each detection comes back as a map-coordinate bounding polygon plus a pixel mask (a PNG cropped to its pixel box); the Analysis lane turns masks into map polygons.
+   - **Which building, and which extent: the floor plate decides.** The design roof is the Vexcel structure that contains the CoStar address point; where it and the structure at the Matterport georeference differ, the one whose footprint best matches the CoStar floor plate (`building_area_m2 / stories`) is used, and the georeference is the fallback when CoStar has no point (data-integration D16). On a tower standing on a podium, aerial captures can outline either the tower or tower plus podium, 1.9x apart at the old LA office, sometimes disagreeing about rooftop solar. **A11 and A14 design on the plate-matched structure (the tower).** The podium can belong to another owner, is often already used (the old LA office podium carries panels), and is not the building the scan and the CoStar record describe. The larger outline is reported, not designed on: D16 records it as `property/extract:extent` (layer `vexcel`, status `fallback`), and A19 turns that record into a `PV_ROOF` warning naming both areas (`extent_warnings`). Designing on the podium is not supported: `roof.usable_area_m2` is reported as an assumption, but an override of it does not yet resize the solar design. Decided by the lead on 2026-11-14.
    Usable area is the roof area minus an allowance per counted obstruction minus fire-code setbacks (setback values: `physics.md` or `legal.md`, cited). [V] 2026-11-14 request shape, labels and thresholds, live on the golden house; [P] the office lot.
 4. **Tilt, azimuth, shading.** Per plane from the geometry: fitted planes where a splat exists; otherwise the parametric roof, with azimuth from the footprint's ridge direction and tilt as the pitch range for the roof shape. On the parametric roof the ridge direction is an assumption until an oblique image confirms it, and it is the largest single source of spread in the yield (about a fifth of annual energy on the golden house, against a few percent each for pitch and weather), so both ridge hypotheses are carried in the range. Shading: where exterior geometry exists (a splat), it is computed hour by hour by casting rays from panel points toward the sun against that geometry and the tree masks; on the parametric roof there is nothing to cast against, so shading is the default loss allowance in the PV model (`specs/physics/01-solar-pv.md`, SHD entries).
 5. **Weather and production.** Typical-year irradiance and temperature for the site, then the PV model in `physics.md`.
@@ -198,9 +207,9 @@ Limits the physics spec puts on this table (`specs/physics/02-thermal-systems.md
 
 ### 6.4 Desk placement (office flow, `LAYOUT`)
 
-1. Candidate desk positions on a 0.5 m grid inside rooms classed as work areas, at least 0.6 m from walls and clear of door swings.
+1. Candidate desk positions on a 0.5 m grid inside rooms classed as work areas, at least 0.6 m from walls and clear of door swings. Office scans carry no room labels, so an unlabelled room counts as a work area; a room whose label names a bathroom, kitchen, closet, hall or stair does not. The door clearance is each door opening widened by the door width plus 0.6 m, kept clear under both readings of `Opening.relative_center` while the measuring vertex is unconfirmed (physics.md section 8).
 2. For each candidate: daylight availability, glare risk for a seated viewer, and thermal comfort near glazing (`physics.md`, daylight, glare and comfort modules).
-3. Score and choose the top N positions with a minimum spacing, N from the user or from area per person.
+3. Score and choose the top N positions with a minimum spacing of 2.0 m (a design choice, not physics), N from the user, else from `Systems.occupants`, else from work area at 8 m² per desk. No desk is recommended where the radiant asymmetry from glazing reaches 10 K (physics 03, CMF).
 4. Savings come from lighting energy displaced where daylight targets are met, and are reported like any other measure, with zero cost. They are claimed in full only where automatic daylight control exists or `LGT_CTRL` is in the plan. Without it, moving a desk saves energy only if people switch the lights off, so the saving is shown as a potential range from zero to the automatic-control figure; the midpoint used as expected has no published source and is flagged as an assumption (`specs/physics/03-daylight-comfort.md`, LCT-02).
 
 The home flow uses the same engine for a home-office desk or reading spot.
@@ -343,7 +352,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.1"
+SCHEMA_VERSION = "0.3.3"
 
 # ---------- primitives ----------
 
@@ -516,6 +525,7 @@ class VexcelDetection(BaseModel):
     pixel_bbox: Optional[tuple[int, int, int, int]] = None   # x, y, w, h in the image
     mask_png_path: Optional[str] = None         # cached pixel mask, cropped to pixel_bbox
     mask_wkt: Optional[str] = None              # map polygon derived from the pixel mask
+    mask_area_m2: Optional[float] = None        # ground area of the mask itself (pixel count x pixel ground area), not of its box or hull
 
 class VexcelData(BaseModel):
     collection: Optional[str] = None
@@ -596,7 +606,7 @@ class Tariff(BaseModel):
     retrieved: str                             # ISO date
 
 class FetchRecord(BaseModel):
-    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff"]
+    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff", "place"]   # place: incorporated-place and program-area lookups
     what: str
     status: Literal["ok", "missing", "locked", "error", "fallback"]
     detail: Optional[str] = None

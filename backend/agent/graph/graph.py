@@ -25,19 +25,49 @@ SUBAGENT_TOOLS: dict[str, tuple[str, ...]] = {
 }
 AUDITOR_TOOLS = ("ask_user",)
 
+# SPEC 6.2: the measures of each property type. A subagent is told which ids exist so that it does not
+# have to probe the tool for them; the tool schemas also list every allowed id.
+HOME_MEASURES = ("ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE", "ROOF_COOL",
+                 "HVAC_HP", "HVAC_DUCT", "DHW_HPWH", "LGT_LED", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
+OFFICE_MEASURES = ("ENV_ATTIC", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE", "ROOF_COOL", "HVAC_RTU",
+                   "HVAC_ECON", "LGT_LED", "LGT_CTRL", "PLUG_MGMT", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
+
+_MEASURES_TEXT = (f"Homes (single family, multifamily unit): {', '.join(HOME_MEASURES)}. "
+                  f"Offices and other commercial: {', '.join(OFFICE_MEASURES)}.")
+
 _JOBS = {
-    "scout": "Find and ingest the property. Write the bundle to the run files.",
-    "surveyor": "Read imagery and build the building model. Log a fallback when a layer is missing.",
-    "physicist": "Run the baseline and evaluate measures. Never do arithmetic yourself.",
-    "financier": "Price measures, look up incentives and build the plan. Never do arithmetic yourself.",
+    "scout": ("Fetch the property. Call get_property_bundle once with the sid you are given, then stop and "
+              "report the summary and anything missing or substituted. Do nothing else."),
+    "surveyor": ("Build the building model. Call observe_interior once, detect_roof_elements once (label "
+                 "\"roof\"), then build_building_model once, then report the model. Call set_assumption only "
+                 "to apply an answer the user gave, with a key from the model, and never before the model exists."),
+    "physicist": ("Simulate and evaluate. Call run_baseline once. Then call evaluate_measure exactly once for each "
+                  "measure id of the property's type, taken from this list and no other. " + _MEASURES_TEXT +
+                  " Decide the type from the bundle summary (use_type; an office or commercial property is an "
+                  "office, everything else a home). A measure that does not apply is reported as it is; never "
+                  "repeat a measure and never try ids to see which exist. Never do arithmetic."),
+    "financier": ("Price and plan. Call price_measure once for each measure that applies (evaluate_measure said "
+                  "so), then sensitivity once, then build_plan once: build_plan is required, a run without a "
+                  "plan has failed. If you are asked to apply an answer, call set_assumption with it and then "
+                  "build_plan once more. Use cpace_scenario only for an office and only for a priced measure. "
+                  "Never do arithmetic."),
 }
 
-AUDITOR_PROMPT = """You are the auditor, orchestrator of an energy retrofit audit.
+AUDITOR_PROMPT = """You are the auditor, orchestrator of an energy retrofit audit of one property.
 Keep a todo list with write_todos and update it as each step starts and finishes.
-Delegate with the task tool: scout (ingest), surveyor (model), physicist (baseline and
-measures), financier (plan). You never do arithmetic: every number you write comes from a
-tool result. Decide fallbacks when a layer is missing and say which you chose. Ask the user
-(ask_user) only for the question the sensitivity tool returns. Write report.md last."""
+Delegate with the task tool, one subagent at a time, in this order, giving each the property's sid:
+  1. scout: fetches the property data (once).
+  2. surveyor: reads the interior and builds the building model (once).
+  3. physicist: simulates the baseline and evaluates each measure of the property's type (once each).
+  4. financier: prices the measures, runs sensitivity, and builds the plan (build_plan is required).
+  5. You: if sensitivity returned questions, ask the user with ask_user, one at a time (at most three);
+     then have the financier apply each answer with set_assumption and call build_plan once more.
+     If it returned none, ask nothing.
+  6. You: write report.md last: a short plain summary of the property, the baseline, the selected measures
+     with cost and saving, what is financeable, and what was skipped and why.
+You never do arithmetic. Every number in report.md is copied from a tool result with the same digits; do not
+write a total, a percentage, a sum or any figure no tool returned. Decide fallbacks when a layer is missing
+and say which you chose. The run is complete only when build_plan has returned and report.md is written."""
 
 
 def as_langchain_tool(name: str, fn: Callable) -> StructuredTool:

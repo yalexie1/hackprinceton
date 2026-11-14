@@ -655,7 +655,7 @@ q_ve        = Q_oa + Q_inf
 |---|---|---|
 | `N_occ` | design occupant count. From `Systems.occupants` when CoStar tenancy data gives employees; otherwise `A_f / 18.59` | persons |
 | `q_person` | outdoor air per person, 0.00944 (20 cfm) | m³/s |
-| `I_75` | envelope leakage at 75 Pa per unit above-grade envelope area: 7.5 for buildings built before 2004, 2.0 after | L/(s·m²) |
+| `I_75` | envelope leakage at 75 Pa per unit above-grade envelope area: 7.5 for buildings built in 2004 or earlier, 2.0 from 2005 | L/(s·m²) |
 | `A_env` | above-grade exterior wall plus roof area of the zone | m² |
 
 The design occupant count sets ventilation; the hourly occupancy schedule (`DEF-09`) does not modulate it (no demand-controlled ventilation assumed).
@@ -664,7 +664,7 @@ Validity: mechanically ventilated commercial buildings. The infiltration rule is
 
 Primary: S11 section 5.1.2 and Tables 5 and 6 (office: 18.59 m²/person, 9.44 L/s per person, 0.51 L/(s·m²) total, from ASHRAE 62-1999) and the infiltration section (7.5 and 2.0 L/(s·m²) at 75 Pa, exponent 0.65 to 4 Pa, 25 % with the ventilation system running). Second source: none independent was opened for the office rates; ASHRAE 62.1 itself is paywalled. Listed in section 10 as single-sourced.
 
-Worked example: office suite `A_f` = 500 m², no tenant data. `N_occ` = 26.9, `Q_oa` = 0.2539 m³/s (0.508 L/(s·m²), matching the table's 0.51), `H_ve` from ventilation alone = 304.7 W/K. Envelope 1036.6 m² (four 22.36 m × 3 m walls plus the roof), pre-2004: leakage at 4 Pa = 7.5 × 0.1488 = 1.1159 L/(s·m²); `Q_inf,off` = 1.1567 m³/s, `Q_inf,on` = 0.2892 m³/s.
+Worked example: office suite `A_f` = 500 m², no tenant data. `N_occ` = 26.9, `Q_oa` = 0.2539 m³/s (0.508 L/(s·m²), matching the table's 0.51), `H_ve` from ventilation alone = 304.7 W/K. Envelope 1036.6 m² (two sets of four 22.36 m × 3 m walls plus the roof, as the printed values need (four walls plus the roof alone is 768.3 m²)), pre-2004: leakage at 4 Pa = 7.5 × 0.1488 = 1.1159 L/(s·m²); `Q_inf,off` = 1.1567 m³/s, `Q_inf,on` = 0.2892 m³/s.
 
 Tool: `office_outdoor_air(occupants, envelope_area_m2, hvac_on: bool, leakage_75pa_l_s_m2=7.5) -> flow_m3_s`.
 
@@ -810,7 +810,7 @@ Validity: the interior coefficients describe closed or half-open devices on ordi
 
 Primary: S13, sections "HPXML Interior Shading" and "HPXML Exterior Shading" (opened). It attributes the interior formula and coefficients to the ASHRAE Handbook of Fundamentals 2021, chapter 15, Table 14, and the exterior values 0.30 and 0.70 to the MulTEA Engineering Manual, Table A.3.4; neither original was opened. Second source: S10 section 4.2.2 for existing homes ("a constant interior shading multiplier of 0.7"), which sits inside the range the table gives; and S1 clause 11.4.3 for the structure (a separate transmittance with the shade in use, chosen each hour). The film and screen values are single-sourced (section 10, tier B).
 
-Worked example at `SHGC` = 0.60: light blinds closed, 0.78 − 0.47 × 0.60 = 0.498; medium shades over half the window, 0.5 × (0.90 − 0.228) + 0.5 = 0.836; light curtains over half, 0.794. The window of WIN-01 with a film (0.70 in place of the interior factor): 264.6 W; with an exterior screen: 113.4 W. Recomputed by script.
+Worked example at `SHGC` = 0.60: light blinds closed, 0.78 − 0.47 × 0.60 = 0.498; medium shades over half the window, 0.5 × (0.90 − 0.228) + 0.5 = 0.836; light curtains over half, 0.794. The window of WIN-01 with a film, the film's 0.70 multiplied with the interior factor 0.70 (the printed number needs both): 264.6 W; with an exterior screen: 113.4 W. Recomputed by script.
 
 Tool: `shading_factor(interior_type=None, exterior_type=None, shgc, fraction_covered=None) -> factor`.
 
@@ -1108,7 +1108,7 @@ V_hot = V_cw + V_dw + (V_shower + V_bath + V_sink) * (theta_mix - theta_mains) /
 
 `N_br` is the number of bedrooms, counted from Matterport room labels. `theta_set` = 51.7 °C (125 °F). Multiply gallons by 0.00378541 for m³. Because the mixed uses depend on `theta_mains`, compute `V_hot` per day (or per month with `day = 30 × month − 15`).
 
-Validity: US average behaviour, single-family and multifamily units. Carry ±30 % on the volume (household size and habits; no spread is given in the source, so this range is a judgment, section 10 tier B). Offices: hot water is a minor end use and is not modelled; `Systems.dhw_*` is ignored for the office flow.
+Validity: US average behaviour, single-family and multifamily units. Carry ±30 % on the volume (household size and habits; no spread is given in the source, so this range is a judgment, section 10 tier B). Offices: hot water is a minor end use and is not modelled; `Systems.dhw_*` is ignored for the office flow, and the office baseline reports 0 kWh for water heating with a warning (the office examples show 600 and 1,200 kWh, which are illustrative).
 
 Primary: S10 section 2.1.4, Table 11, and section 4.3 (set point 125 °F, mixed temperature 110 °F), opened. Second source for magnitude: S15 appendix E, whose "medium" test draw pattern is 55 gallons (208 L) per day and "high" is 84 gallons; the three-bedroom result below is 52.8 gallons.
 
@@ -1187,7 +1187,7 @@ Validity: the home formula is the Building America benchmark, a US-average house
 
 Primary: S11 Table A-2 and Table B-13 (office power densities and schedules); S10 section 2.1.7, eqs. (6), (7) and (10), Table 18 (home formula, lamp fractions, efficacy ratios), all opened. The first home line is the sum of eq. (6) (hard-wired, 80 %) and eq. (7) (plug-in, 20 %); eq. (10) is written in the source for the hard-wired part and is applied here to both parts. Second source: S13 default lighting schedule (hourly shares and monthly multipliers, credited there to ANSI/RESNET/ICC 301-2022 Addendum C, Tables C.3(3) and C.3(4)).
 
-Worked example, home: 150 m² = 1615 ft². `E_light,base` = 0.542 × 1615 + 334 = 1209 kWh/yr. All LED with the source's ratio 0.30: factor = (0.34 − 0.0567 + 0.30 − 0.0221) × 1 × 0.9 + 0.1 = 0.6051, 732 kWh/yr, saving 478 kWh/yr. With `ER_led` = 0.167: factor 0.4851.
+Worked example, home: 150 m² = 1615 ft². `E_light,base` = 0.542 × 1615 + 334 = 1209 kWh/yr. All LED with the source's ratio 0.30: factor = (0.34 − 0.0567 + 0.30 − 0.0221) × 1 × 0.9 + 0.1 = 0.6051, 732 kWh/yr, saving 478 kWh/yr. With `ER_led` = 15/90 (0.1667): factor 0.4851; the rounded 0.167 gives 0.4854.
 
 Worked example, office: the small-office lighting schedule (`DEF-09`) sums to 10.50 on a weekday, 2.80 on a Saturday and 1.20 on other days, which is 2939 equivalent full-power hours per year (260 weekdays, 52 Saturdays, 53 other days). For 500 m²: `LPD` 19.48 W/m² → 28 628 kWh/yr; 10.76 → 15 813 kWh/yr; 6.5 → 9552 kWh/yr.
 
@@ -1263,6 +1263,8 @@ How to read these tables:
 - **Low / expected / high** are in the order low value, expected value, high value of the quantity itself (so for a U-value, "high" is the leakiest case). For ResStock distributions, expected is the median and low and high are the 10th and 90th percentiles of the option distribution, averaged without weights over the dependency bins that do not concern us (floor-area bins for infiltration; income and tenure bins for windows). That averaging is a simplification of this file.
 - A stronger source in the assumption registry (user, measured, vision) replaces the default.
 - U-values from US tables are whole-assembly values with the ASHRAE films, used as published (ENV-01).
+
+**Year boundaries in every DEF table and in INF-05.** A building built in 2004 takes the older row: "1980–2004", "2004 or earlier" and "before 2004" in older text all include 2004, and "after 2004" means 2005 on. The same applies to any boundary year: the year printed at the end of a range belongs to that range.
 
 ### DEF-01 Home opaque envelope by vintage
 
@@ -1369,7 +1371,7 @@ Homes, central air conditioner or heat pump, by year the **equipment** was insta
 | 2015–2022 | 14 (Texas and California) | 8.2 | S15 10 CFR 430.32(c)(1) to (3) |
 | 2023 and later | 14.3 SEER2 (= 15.05 SEER) | 7.5 HSPF2 (= 8.8 HSPF) | S15 10 CFR 430.32(c)(5), (6) |
 
-The equipment year is rarely the building year. Rule: if the building is 2006 or newer, use the building year. If older and nothing is observed, carry SEER 10 / 13 / 14 as worst / expected / best (the unit has probably been replaced at least once). That rule is a judgment (section 10, tier B); the vision reading of the outdoor unit's age band replaces it.
+The equipment year is rarely the building year. Rule: if the building is 2006 or newer, use the building year. If older and nothing is observed, carry SEER 10 / 13 / 14 as worst / expected / best (the unit has probably been replaced at least once), and for a heat pump HSPF 7.1 / 7.7 / 8.2, the same rows of the table. That rule is a judgment (section 10, tier B); the vision reading of the outdoor unit's age band replaces it.
 
 Room air conditioner: EER 6.5 before 1981, 7.5 for 1981–1991, 9.75 after 1991 for units under 5.9 kW (S10 Table 34).
 
@@ -1391,6 +1393,7 @@ Offices (packaged unit with gas furnace, single zone, constant volume: S11 Table
 |---|---|---|---|
 | before 1980 (equipment since replaced) | SEER 11.06 under 19 kW; EER 9.63 for 19 to 40 kW | combustion efficiency 0.80 | S11 Tables 31 and 34 |
 | 1980–2004 | as above (the 90.1-1989 values were not opened) | 0.80 | S11 |
+| 2005–2022 | as above: no value for this period was opened, so the 1980–2004 row is carried (judgment, section 10, tier B) | 0.80 | S11 |
 | new or replaced from 2023 | IEER 14.8 (19 to 40 kW, electric or no heat); 14.6 with other heat | 0.80 | S15 10 CFR 431.97 Table 1 |
 
 Carry the office cooling rating as −10 % / expected / +15 %.
@@ -1422,7 +1425,7 @@ EF (the pre-2017 metric) and UEF are not identical; they are treated as equal he
 | office, occupied (06:00–22:00 weekdays, 06:00–18:00 Saturdays) | 21.0 °C | 24.0 °C | S11 Table B-13 |
 | office, unoccupied (other hours, Sundays and holidays) | 15.6 °C | 26.7 °C | S11 Table B-13 |
 
-Range ±1 K on each. `CTRL_TSTAT` for a home: a setback or setup schedule entered as hourly setpoints; its saving is the difference between two year runs (ZON-04). No default setback depth was sourced; it is a measure parameter.
+Range ±1 K on each. `CTRL_TSTAT` for a home: a setback or setup schedule entered as hourly setpoints; its saving is the difference between two year runs (ZON-04). No default setback depth was sourced; it is a measure parameter. No home setback hours were sourced either. The implementation uses this project's judgment, a common programmable-thermostat pattern: setback and setup apply at night from 22:00 to 06:00 every day and on weekdays from 08:00 to 18:00, and only when the home has a setback set (section 10, tier B).
 
 ### DEF-09 Schedules
 
@@ -1461,8 +1464,8 @@ Interior lighting monthly multipliers, January to December: 1.19 1.11 1.02 0.93 
 
 | Building | Lighting W/m² low / expected / high | Plug W/m² low / expected / high | Source |
 |---|---|---|---|
-| office built before 2004, lighting not yet upgraded | 10.76 / 19.48 / 19.48 | 8.61 / 10.76 / 10.76 | S11 Table A-2 (19.48 W/m² = 1.81 W/ft², ASHRAE 90.1-1989; 10.76 W/m² = 1.0 W/ft², 90.1-2004) |
-| office built 2004 or later | 6.5 / 10.76 / 10.76 | 8.61 / 10.76 / 10.76 | S11 Table A-2 |
+| office built in 2004 or earlier, lighting not yet upgraded | 10.76 / 19.48 / 19.48 | 8.61 / 10.76 / 10.76 | S11 Table A-2 (19.48 W/m² = 1.81 W/ft², ASHRAE 90.1-1989; 10.76 W/m² = 1.0 W/ft², 90.1-2004) |
+| office built 2005 or later | 6.5 / 10.76 / 10.76 | 8.61 / 10.76 / 10.76 | S11 Table A-2 |
 | office after `LGT_LED` | measure parameter | unchanged | not sourced: see below |
 | home | by LGT-01 | by LGT-02 | S10 |
 
@@ -1478,6 +1481,7 @@ From S11 Tables 17 to 25, small office. U in W/(m²·K) (Btu/(h·ft²·°F) in b
 | roof | 1980–2004 | 0.375 (0.066) | 0.568 (0.100) |
 | roof | after 2004, insulation above deck / attic | 0.358 (0.063) / 0.193 (0.034) | 0.358 / 0.193 |
 | wall, steel frame | before 1980 | 1.306 (0.230) | 1.306 (0.230) |
+| wall, mass | before 1980 | not in the source; the 1980–2004 values are carried as the bound (judgment) | as left |
 | wall, mass | 1980–2004 | 1.931 (0.340) | 5.678 (1.000) |
 | wall, mass | after 2004 | 3.293 (0.580) | 0.857 (0.151) |
 | wall, steel frame | 1980–2004 | 0.852 (0.150) | 1.249 (0.220) |

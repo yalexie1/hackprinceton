@@ -63,6 +63,26 @@
   {
     "type": "fallback",
     "stage": "S2",
+    "message": "Electricity priced at the EIA California state average, not a LADWP schedule",
+    "payload": {
+      "layer": "tariff",
+      "from": "utility tariff",
+      "to": "EIA state average (CA COM, 2026-08)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "Gas priced at the EIA California state average, not a SoCalGas schedule",
+    "payload": {
+      "layer": "tariff",
+      "from": "gas utility tariff",
+      "to": "EIA state average (CA COM, 2025)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
     "message": "No aerial splat for this model; using the Vexcel flat roof",
     "payload": {
       "layer": "matterport",
@@ -167,9 +187,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 9866.97,
-        "expected": 12338.0,
-        "high": 15632.63,
+        "low": 13603.5,
+        "expected": 16587.18,
+        "high": 20280.28,
         "unit": "USD"
       }
     }

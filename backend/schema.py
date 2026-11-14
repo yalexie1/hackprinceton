@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.1"
+SCHEMA_VERSION = "0.3.3"
 
 # ---------- primitives ----------
 
@@ -175,6 +175,7 @@ class VexcelDetection(BaseModel):
     pixel_bbox: Optional[tuple[int, int, int, int]] = None   # x, y, w, h in the image
     mask_png_path: Optional[str] = None         # cached pixel mask, cropped to pixel_bbox
     mask_wkt: Optional[str] = None              # map polygon derived from the pixel mask
+    mask_area_m2: Optional[float] = None        # ground area of the mask itself (pixel count x pixel ground area), not of its box or hull
 
 class VexcelData(BaseModel):
     collection: Optional[str] = None
@@ -255,7 +256,7 @@ class Tariff(BaseModel):
     retrieved: str                             # ISO date
 
 class FetchRecord(BaseModel):
-    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff"]
+    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff", "place"]   # place: incorporated-place and program-area lookups
     what: str
     status: Literal["ok", "missing", "locked", "error", "fallback"]
     detail: Optional[str] = None

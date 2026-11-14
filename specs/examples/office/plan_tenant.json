@@ -37,8 +37,8 @@
           },
           "cost_usd": {
             "low": 0.0,
-            "expected": 74.88,
-            "high": 150.98,
+            "expected": 102.17,
+            "high": 204.87,
             "unit": "USD"
           },
           "co2_kg": {
@@ -71,8 +71,8 @@
           },
           "annual_savings_usd": {
             "low": 0.0,
-            "expected": 74.88,
-            "high": 150.98,
+            "expected": 102.17,
+            "high": 204.87,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
@@ -86,11 +86,11 @@
           "discounted_payback_years": 0.0,
           "npv_usd": {
             "low": 0.0,
-            "expected": 327.21,
-            "high": 659.9,
+            "expected": 446.48,
+            "high": 895.47,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": 293.31,
+          "npv_sensitivity_usd": 400.22,
           "sir": null,
           "irr": null,
           "airr": null,
@@ -108,8 +108,8 @@
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
                 "low": 0.0,
-                "expected": 74.88,
-                "high": 150.98,
+                "expected": 102.17,
+                "high": 204.87,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -126,8 +126,8 @@
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
                 "low": 0.0,
-                "expected": 74.88,
-                "high": 150.98,
+                "expected": 102.17,
+                "high": 204.87,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -385,9 +385,9 @@
             "unit": "kWh"
           },
           "cost_usd": {
-            "low": 1790.99,
-            "expected": 3719.3,
-            "high": 4727.13,
+            "low": 2489.63,
+            "expected": 5084.6,
+            "high": 6226.85,
             "unit": "USD"
           },
           "co2_kg": {
@@ -440,30 +440,30 @@
             "unit": "USD"
           },
           "annual_savings_usd": {
-            "low": 1790.99,
-            "expected": 3719.3,
-            "high": 4727.13,
+            "low": 2489.63,
+            "expected": 5084.6,
+            "high": 6226.85,
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
           "useful_life_years": 15,
           "simple_payback_years": {
-            "low": 2.52,
-            "expected": 5.03,
-            "high": 10.69,
+            "low": 1.89,
+            "expected": 3.68,
+            "high": 7.7,
             "unit": "years"
           },
-          "discounted_payback_years": 5.8,
+          "discounted_payback_years": 4.1,
           "npv_usd": {
-            "low": -144.41,
-            "expected": 22028.53,
-            "high": 36277.01,
+            "low": 7650.92,
+            "expected": 36989.81,
+            "high": 52680.11,
             "unit": "USD"
           },
-          "npv_sensitivity_usd": 12619.36,
-          "sir": 2.177,
-          "irr": 0.1689,
-          "airr": 0.0848,
+          "npv_sensitivity_usd": 24125.74,
+          "sir": 2.976,
+          "irr": 0.2488,
+          "airr": 0.1077,
           "discount_rate": 0.03,
           "electricity_escalation": -0.0116,
           "gas_escalation": -0.0076,
@@ -477,9 +477,9 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": 1790.99,
-                "expected": 3719.3,
-                "high": 4727.13,
+                "low": 2489.63,
+                "expected": 5084.6,
+                "high": 6226.85,
                 "unit": "USD"
               },
               "program_sir": null,
@@ -495,17 +495,17 @@
               "term_years": 15,
               "annual_payment_usd": 1990.92,
               "net_cashflow_year1_usd": {
-                "low": -199.93,
-                "expected": 1728.38,
-                "high": 2736.21,
+                "low": 498.71,
+                "expected": 3093.68,
+                "high": 4235.93,
                 "unit": "USD"
               },
-              "program_sir": 1.868,
+              "program_sir": 2.554,
               "notes": [
                 "C-PACE is available to the property owner, not to a tenant.",
                 "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
-                "Program SIR 1.87: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
-                "Savings-to-debt-service ratio 1.87.",
+                "Program SIR 2.55: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
+                "Savings-to-debt-service ratio 2.55.",
                 "Term of 15 years does not exceed the useful life of 15 years: a programme rule for a new commercial assessment in California, not a statutory condition (CA-PACE-11).",
                 "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
                 "Statutory test for commercial property: annual property taxes plus assessments, with this one, may not exceed 5 percent of market value at approval (Streets and Highways Code 5898.15; CA-PACE-07). The new annual assessment of $1,991 is 0.0013 percent of an estimated market value of $156,959,400 (illustrative comparable sale price times the gross building area). The current tax bill and existing assessments are not known, so the test cannot be completed.",
@@ -584,9 +584,9 @@
           "unit": "kWh"
         },
         "cost_usd": {
-          "low": 56.96,
-          "expected": 117.0,
-          "high": 178.21,
+          "low": 74.48,
+          "expected": 151.44,
+          "high": 228.4,
           "unit": "USD"
         },
         "co2_kg": {
@@ -637,30 +637,30 @@
           "unit": "USD"
         },
         "annual_savings_usd": {
-          "low": 56.96,
-          "expected": 117.0,
-          "high": 178.21,
+          "low": 74.48,
+          "expected": 151.44,
+          "high": 228.4,
           "unit": "USD"
         },
         "annual_om_change_usd": 0.0,
         "useful_life_years": 15,
         "simple_payback_years": {
-          "low": 12.44,
-          "expected": 25.14,
-          "high": 65.72,
+          "low": 9.7,
+          "expected": 19.42,
+          "high": 50.51,
           "unit": "years"
         },
         "discounted_payback_years": null,
         "npv_usd": {
-          "low": -5310.71,
-          "expected": -1652.89,
-          "high": -368.57,
+          "low": -4972.54,
+          "expected": -1276.04,
+          "high": 108.78,
           "unit": "USD"
         },
-        "npv_sensitivity_usd": -1950.73,
-        "sir": 0.438,
+        "npv_sensitivity_usd": -1660.87,
+        "sir": 0.566,
         "irr": null,
-        "airr": -0.0252,
+        "airr": -0.0083,
         "discount_rate": 0.03,
         "electricity_escalation": -0.0116,
         "gas_escalation": -0.0076,
@@ -674,9 +674,9 @@
             "term_years": null,
             "annual_payment_usd": 0.0,
             "net_cashflow_year1_usd": {
-              "low": 56.96,
-              "expected": 117.0,
-              "high": 178.21,
+              "low": 74.48,
+              "expected": 151.44,
+              "high": 228.4,
               "unit": "USD"
             },
             "program_sir": null,
@@ -692,17 +692,17 @@
             "term_years": 15,
             "annual_payment_usd": 312.77,
             "net_cashflow_year1_usd": {
-              "low": -255.81,
-              "expected": -195.77,
-              "high": -134.56,
+              "low": -238.29,
+              "expected": -161.33,
+              "high": -84.37,
               "unit": "USD"
             },
-            "program_sir": 0.374,
+            "program_sir": 0.484,
             "notes": [
               "C-PACE is available to the property owner, not to a tenant.",
               "Hypothetical: no official page names a programme, public agency or administrator that takes commercial PACE applications in the City or County of Los Angeles (specs/legal/california.md section 7.3, CA-PACE-15 and CA-PACE-16), so this scenario is not eligible until one is confirmed.",
-              "Program SIR 0.37: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
-              "Savings-to-debt-service ratio 0.37.",
+              "Program SIR 0.48: undiscounted savings over the 15-year term divided by all assessment payments (physics 04 ECO-12b). California has no statutory SIR test; a programme may apply one, so the ratio is a screen only.",
+              "Savings-to-debt-service ratio 0.48.",
               "Term of 15 years does not exceed the useful life of 15 years: a programme rule for a new commercial assessment in California, not a statutory condition (CA-PACE-11).",
               "The assessment and any interest and penalties are a lien on the parcel until paid, collected with and in the same manner as the general property taxes (Streets and Highways Code 5898.30; specs/legal/california.md CA-PACE-10).",
               "Statutory test for commercial property: annual property taxes plus assessments, with this one, may not exceed 5 percent of market value at approval (Streets and Highways Code 5898.15; CA-PACE-07). The new annual assessment of $313 is 0.0002 percent of an estimated market value of $156,959,400 (illustrative comparable sale price times the gross building area). The current tax bill and existing assessments are not known, so the test cannot be completed.",
@@ -796,9 +796,9 @@
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 1861.69,
-    "expected": 3794.18,
-    "high": 4814.0,
+    "low": 2587.7,
+    "expected": 5186.77,
+    "high": 6338.34,
     "unit": "USD"
   },
   "total_co2_kg": {
@@ -809,9 +809,9 @@
   },
   "baseline_after": {
     "electricity_kwh": {
-      "low": 29074.55,
-      "expected": 38059.65,
-      "high": 52028.62,
+      "low": 28557.73,
+      "expected": 37459.65,
+      "high": 51333.63,
       "unit": "kWh"
     },
     "gas_kwh": {
@@ -821,15 +821,15 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 5874.08,
-      "expected": 8543.82,
-      "high": 12362.01,
+      "low": 8203.91,
+      "expected": 11400.41,
+      "high": 15915.2,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 6187.33,
-      "expected": 7938.75,
-      "high": 10647.76,
+      "low": 6086.53,
+      "expected": 7821.73,
+      "high": 10512.11,
       "unit": "kg"
     },
     "co2_nonbaseload_kg": null
@@ -837,8 +837,8 @@
   "value_uplift": {
     "value_usd": {
       "low": 0.0,
-      "expected": 26166.76,
-      "high": 87527.27,
+      "expected": 35770.83,
+      "high": 115242.55,
       "unit": "USD"
     },
     "method": "VAL-01",

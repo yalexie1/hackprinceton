@@ -21,10 +21,13 @@ Every rule here is a verified finding from `specs/data-integration.md` section 5
   for the United States, and it is a ~30 km reanalysis, so it is a sanity band and
   never the hourly source. **PVWatts and NSRDB are unusable**: both
   `developer.nrel.gov` and `nsrdb.nrel.gov` fail DNS resolution from here.
-- **Tariff**: URDB gives the real utility where one exists, but it has **zero** rates
-  at the Houston office because ERCOT is a deregulated retail market with no single
-  regulated tariff. The EIA state average is the documented fallback and is always
-  labelled as one - it is a state monthly average, not that building's contract.
+- **Tariff**: the **EIA state average for all three golden properties**, decided by
+  the lead on 2026-11-14 (`specs/data-integration.md` 5.1c). URDB gives the real
+  utility where one exists but has **zero** rates at the Houston office, ERCOT being
+  a deregulated retail market with no single regulated tariff, and
+  `electricity_usd_per_kwh` is one marginal price, so a time-of-use schedule would
+  have to be flattened regardless. The figure is always labelled a `fallback` - it is
+  a state monthly average, not that building's contract.
 """
 from __future__ import annotations
 
@@ -35,6 +38,8 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from backend.schema import ClimateSite, FetchRecord, Tariff
+
+from . import cache
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -70,7 +75,15 @@ def _default_get(url: str, params: dict) -> dict:
 # ---------- weather ----------
 
 def weather_path(sid: str) -> str:
-    return f"data/cache/{sid}/weather/typical_year_hourly.csv"
+    """Where the hourly CSV lives, as the string `ClimateSite.weather_path` carries.
+
+    Routed through D4's cache root so `DATA_LAYER_CACHE_DIR` actually redirects it -
+    the hard-coded `data/cache/...` meant a temporary cache still had 8,760 rows
+    written into the real one. `cache.relative` keeps the value repo-relative in the
+    default case, so the contract field is unchanged, and `get_asset` resolves an
+    absolute path too, with its containment check following the same root.
+    """
+    return cache.relative(cache.cache_root() / sid / "weather" / "typical_year_hourly.csv")
 
 
 def hourly_csv(payload: dict) -> str:
@@ -97,13 +110,27 @@ def hourly_csv(payload: dict) -> str:
     return buf.getvalue()
 
 
-def fetch_hourly(lat: float, lon: float, year: int, *, get: Optional[Getter] = None) -> dict:
-    return (get or _default_get)(OPEN_METEO, {
+def fetch_hourly(lat: float, lon: float, year: int, *, get: Optional[Getter] = None,
+                 refresh: bool = False) -> dict:
+    """A year of hourly weather. Cached by D4 - it is 8,760 rows and the slowest call
+    in the lane at 1.3 s - and the cache is bypassed when `get` is injected.
+
+    The variable list is in the key: adding one must not serve the older response
+    that lacks it.
+    """
+    params = {
         "latitude": lat, "longitude": lon,
         "start_date": f"{year}-01-01", "end_date": f"{year}-12-31",
         "hourly": ",".join(HOURLY_VARS),
         "timezone": "auto",
-    })
+    }
+    payload, _ = cache.cached_json(
+        "open-meteo", f"{lat:.5f},{lon:.5f},{year}",
+        lambda: (get or _default_get)(OPEN_METEO, params),
+        {"hourly": params["hourly"]},
+        use_cache=get is None, refresh=refresh,
+    )
+    return payload
 
 
 def fetch_pvgis(lat: float, lon: float, *, tilt: float = 20.0, azimuth: float = 0.0,
@@ -114,11 +141,18 @@ def fetch_pvgis(lat: float, lon: float, *, tilt: float = 20.0, azimuth: float = 
     `PVGIS-NSRDB` is not a valid v5_3 value and `PVGIS-SARAH3` reports Los Angeles
     out of coverage.
     """
-    return (get or _default_get)(PVGIS, {
+    params = {
         "lat": lat, "lon": lon, "peakpower": 1, "loss": 14,
         "angle": tilt, "aspect": azimuth, "mountingplace": "building",
         "outputformat": "json",
-    })
+    }
+    payload, _ = cache.cached_json(
+        "pvgis", f"{lat:.5f},{lon:.5f}",
+        lambda: (get or _default_get)(PVGIS, params),
+        {"angle": tilt, "aspect": azimuth, "loss": 14},
+        use_cache=get is None,
+    )
+    return payload
 
 
 def _pvgis_annual_and_sd(payload: dict) -> tuple[Optional[float], Optional[float]]:
@@ -146,9 +180,10 @@ def get_climate_site(
     rows = len((payload.get("hourly") or {}).get("time") or [])
     rel = weather_path(sid)
     if write:
-        target = _ROOT / rel
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(hourly_csv(payload))
+        # Atomic: a plain `write_text` interrupted part way leaves 8,760 rows of
+        # half a CSV that the next run happily reads as a complete year.
+        target = Path(rel) if Path(rel).is_absolute() else _ROOT / rel
+        cache.atomic_write_path(target, hourly_csv(payload).encode())
     notes.append(FetchRecord(
         layer="weather", what="open-meteo/archive",
         status="ok" if rows >= 8760 else "fallback",
@@ -217,6 +252,153 @@ def _eia_price_usd_per_kwh(state: str, sector: str, *, get: Optional[Getter] = N
     return cents * CENTS_TO_USD, rows[0].get("period")
 
 
+# ---------- gas (D15) ----------
+
+EIA_GAS = "https://api.eia.gov/v2/natural-gas/pri/sum/data/"
+
+#: EIA's process codes for the delivered gas price. Discovered from the route's own
+#: `facet/process` listing rather than guessed.
+GAS_PROCESS = {"RES": "PRS", "COM": "PCS"}      # Residential / Commercial consumers
+GAS_AREA = {"CA": "SCA", "TX": "STX"}
+
+#: **Annual**, not monthly, and deliberately. Gas prices swing hard with the winter
+#: heating season, so one month is a poor proxy for an annual energy model in a way
+#: that the electricity price is not. The monthly route also times out far more often.
+GAS_FREQUENCY = "annual"
+
+#: 1 therm = 29.3071070172 kWh, so 1 MMBtu = 10 therms = 293.071070172 kWh. This is
+#: physics 04 TAR-05's constant, restated here rather than imported: the analysis lane
+#: imports this lane, never the reverse.
+KWH_PER_MMBTU = 293.071070172
+
+#: **The unit trap.** EIA prices gas in **dollars per thousand cubic feet**, not per
+#: therm, so physics 04 TAR-04's `usd_per_therm / 29.3071` is the wrong conversion to
+#: apply to this number - it would overstate the price by a factor of about ten.
+#: Volume becomes energy through the heat content of gas delivered to consumers, about
+#: 1,037 Btu per cubic foot (EIA's published average), hence 1.037 MMBtu per MCF.
+#:
+#: That factor carries roughly ±0.5 % of uncertainty, since the heat content varies
+#: year to year and by region between about 1,030 and 1,040 Btu/cf. It is far below
+#: the uncertainty already in using a **state average** instead of the building's own
+#: tariff, which is why the state average is labelled a fallback.
+MMBTU_PER_MCF = 1.037
+
+
+def usd_per_mcf_to_usd_per_kwh(price: float) -> float:
+    """EIA's `$/MCF` to the contract's `gas_usd_per_kwh` (higher heating value)."""
+    return price / (MMBTU_PER_MCF * KWH_PER_MMBTU)
+
+
+#: The four delivered gas prices this project needs, in EIA's own `$/MCF`, with the
+#: series and the date they were read. **Committed on purpose.**
+#:
+#: The live route is slow and erratic: measured 1 s, 14 s, 41 s and 66 s on the four
+#: combinations, with 504s in between. Waiting on it took a cold bundle assembly from
+#: 2.5 s to **44-76 s**, which is not a demo path. These are public EIA figures (not
+#: sponsor data, so committing them is fine), they change once a year, and a table
+#: beats a timeout that silently leaves the field unknown.
+#:
+#: The live lookup still runs first when `GAS_REFRESH` is set, so the table can be
+#: refreshed rather than drifting. Either way the figure is a **state average** and is
+#: labelled `fallback`; the detail says which route produced it.
+GAS_DEFAULTS: dict[tuple[str, str], tuple[float, str, str]] = {
+    ("CA", "RES"): (22.01, "2025", "N3010CA3"),
+    ("CA", "COM"): (16.56, "2025", "N3020CA3"),
+    ("TX", "RES"): (19.42, "2025", "N3010TX3"),
+    ("TX", "COM"): (10.98, "2025", "N3020TX3"),
+}
+
+#: Set to `1` to try EIA live before the table. Off by default so a bundle never waits
+#: on a route that has taken over a minute.
+GAS_REFRESH_ENV = "EIA_GAS_REFRESH"
+
+#: Short on purpose. If EIA has not answered in this long, the table is better than
+#: both waiting and giving up.
+GAS_TIMEOUT_S = 15.0
+
+
+def _gas_from_table(state: str, sector: str) -> tuple[Optional[float], Optional[str], Optional[str]]:
+    entry = GAS_DEFAULTS.get((state.upper(), sector.upper()))
+    if entry is None:
+        return None, None, None
+    price, period, series = entry
+    return usd_per_mcf_to_usd_per_kwh(price), period, f"{price} $/MCF, EIA {series}, table"
+
+
+def _gas_get(url: str, params: dict) -> dict:
+    """Like `_default_get` but with `GAS_TIMEOUT_S`, so one slow route cannot hold up
+    a bundle that is otherwise two and a half seconds."""
+    import httpx
+
+    resp = httpx.get(url, params=params, timeout=GAS_TIMEOUT_S)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _eia_gas_usd_per_kwh(
+    state: str, sector: str, *, get: Optional[Getter] = None
+) -> tuple[Optional[float], Optional[str], Optional[str]]:
+    """`(usd_per_kwh, period, raw_label)` for the state's delivered gas price.
+
+    The committed table answers immediately. A live fetch is tried first only when
+    `EIA_GAS_REFRESH=1`, or when a caller injects a transport - which is what the
+    tests do, so they still exercise the real parsing and the unit guard.
+    """
+    if get is None and os.environ.get(GAS_REFRESH_ENV) != "1":
+        return _gas_from_table(state, sector)
+
+    key = os.environ.get("EIA_API_KEY")
+    area, process = GAS_AREA.get(state.upper()), GAS_PROCESS.get(sector.upper())
+    if not key or not area or not process:
+        return _gas_from_table(state, sector)
+
+    params = {
+        "api_key": key, "frequency": GAS_FREQUENCY, "data[0]": "value",
+        "facets[duoarea][]": area, "facets[process][]": process,
+        "sort[0][column]": "period", "sort[0][direction]": "desc", "length": 1,
+    }
+    try:
+        payload, _ = cache.cached_json(
+            "eia-gas", f"{state.upper()}-{sector.upper()}",
+            lambda: (get or _gas_get)(EIA_GAS, params),
+            {"frequency": GAS_FREQUENCY, "process": process},
+            use_cache=get is None,
+        )
+    except Exception:
+        # A gas price is an improvement on the bundle, never a precondition for it.
+        return _gas_from_table(state, sector)
+
+    rows = ((payload or {}).get("response") or {}).get("data") or []
+    if not rows:
+        return _gas_from_table(state, sector)
+    row = rows[0]
+    # **Guard the unit, do not assume it.** The whole conversion hangs on the price
+    # being per thousand cubic feet; a per-therm or per-MMBtu series would be out by a
+    # factor of ten or a hundred and nothing downstream would notice. This is the same
+    # lesson as D9, where an offline fixture used a float and kept the suite green
+    # against a shape the real API never sends.
+    units = str(row.get("units") or "")
+    if "MCF" not in units.upper():
+        return None, None, f"unexpected units {units!r}"
+
+    price = _as_number(row.get("value"))      # EIA sends numbers as strings
+    if price is None:
+        return None, None, None
+    return (
+        usd_per_mcf_to_usd_per_kwh(price),
+        str(row.get("period") or ""),
+        f"{price} {row.get('units') or '$/MCF'}",
+    )
+
+
+#: Whether the state mandates a price for exported PV. The contract's own rule -
+#: `Tariff.export_regime` is documented as "None where no export price is mandated
+#: (Texas)" - so California is `net_metering` and ERCOT, which mandates no export
+#: compensation at all, is `none`. Leaving the field unset was discarding something
+#: the schema asked for, and the PV measure needs it to value exported generation.
+EXPORT_REGIME: dict[str, str] = {"CA": "net_metering", "TX": "none"}
+
+
 def get_tariff(
     state: str, sector: str, *, utility: Optional[str] = None,
     get: Optional[Getter] = None,
@@ -225,21 +407,53 @@ def get_tariff(
 
     `state` is `CA` or `TX`; `sector` is EIA's `RES` or `COM`.
 
-    **This is a state monthly average, not the building's retail contract.** For the
-    Los Angeles properties URDB does return the real utility (LADWP, `eiaid` 11208),
-    but at the Houston office URDB has **no tariff at all** - ERCOT is a deregulated
-    retail market with no single regulated tariff to look up - so the fallback is the
-    only route that works for both states. The `fallback` status and the source string
-    exist so no reader mistakes it for a looked-up rate.
+    **This is a state monthly average, not the building's retail contract**, and as
+    of the lead's decision of 2026-11-14 it is the source for **all three** golden
+    properties, not only the Houston one (`specs/data-integration.md` 5.1c). URDB
+    does return the real utility for Los Angeles (LADWP, `eiaid` 11208) but has
+    **no tariff at all** at the Houston office - ERCOT is deregulated, so there is no
+    single regulated schedule to look up - and `electricity_usd_per_kwh` is one
+    marginal price, so a time-of-use schedule would have to be flattened anyway. The
+    `fallback` status and the source string exist so no reader mistakes a state
+    average for a looked-up rate.
+
+    `utility` is passed in rather than inferred. Deriving it from the CoStar `City`
+    field would repeat the mistake the PACE work caught, where `cityId` 5316
+    "Houston" included a property outside the incorporated city: LADWP serves the
+    city of Los Angeles and the surrounding unincorporated county is SCE, so the
+    same trap applies. Absent a verified utility the field says what the number
+    actually is.
     """
     price, period = _eia_price_usd_per_kwh(state, sector, get=get)
     if price is None:
         return None, [FetchRecord(layer="tariff", what="eia/retail-sales", status="missing",
                                   detail="no EIA_API_KEY, or no price for that state and sector")]
     label = f"EIA state average retail price, {state} {sector}, {period}"
+    notes = [FetchRecord(layer="tariff", what="eia/retail-sales", status="fallback", detail=label)]
+
+    # D15. Without this the field stays None, and `physics/systems/baseline.py` reads
+    # a missing gas price as **electric** heating and hot water (`:149`, `:216`) and
+    # prices any gas at zero (`:252`), so a 1920s Los Angeles house came out
+    # all-electric on every live bundle. A missing price is "unknown", not "no gas".
+    gas, gas_period, raw = _eia_gas_usd_per_kwh(state, sector, get=get)
+    if gas is not None:
+        gas_label = (f"EIA state average delivered gas price, {state} {sector}, {gas_period} "
+                     f"({raw} at {MMBTU_PER_MCF} MMBtu/MCF, +/-0.5% on the heat content)")
+        notes.append(FetchRecord(layer="tariff", what="eia/natural-gas-price",
+                                 status="fallback", detail=gas_label))
+        label = f"{label}; {gas_label}"
+    else:
+        notes.append(FetchRecord(
+            layer="tariff", what="eia/natural-gas-price", status="missing",
+            detail=("no delivered gas price for that state and sector, so gas_usd_per_kwh is "
+                    "unknown - which is not the same as the site having no gas"),
+        ))
+
     return Tariff(
         utility=utility or f"{state} state average ({sector})",
         electricity_usd_per_kwh=round(price, 6),
+        gas_usd_per_kwh=round(gas, 6) if gas is not None else None,
+        export_regime=EXPORT_REGIME.get(state),
         source=label,
         retrieved=period or "",
-    ), [FetchRecord(layer="tariff", what="eia/retail-sales", status="fallback", detail=label)]
+    ), notes

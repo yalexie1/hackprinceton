@@ -90,3 +90,22 @@ def test_a_number_in_no_source_still_fails_with_every_source_passed():
     r, b = run("house"), bundle("house")
     assert check_narrative("Solar saves 98,765 kWh.", r, b, r.building_model) == [
         "98,765: no structured result has this value"]
+
+
+# ---- removing what cannot be supported ----
+
+def test_unsupported_lines_are_removed_and_reported():
+    from backend.agent.narrative import remove_unsupported
+    r = run("house")
+    text = "# Summary\nSolar saves 98,765 kWh a year.\nThe budget is a plan, not a number.\n"
+    kept, dropped = remove_unsupported(text, r)
+    assert "98,765" not in kept and dropped == ["Solar saves 98,765 kWh a year."]
+    assert "# Summary" in kept and "The budget is a plan" in kept
+    assert check_narrative(kept, r) == []
+
+
+def test_a_clean_narrative_is_untouched():
+    from backend.agent.narrative import remove_unsupported
+    r = run("house")
+    kept, dropped = remove_unsupported(r.narrative_md, r)
+    assert dropped == [] and kept.strip() == r.narrative_md.strip()

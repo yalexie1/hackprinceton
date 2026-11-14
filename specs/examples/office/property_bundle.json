@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.1",
+  "schema_version": "0.3.3",
   "summary": {
     "sid": "jfiEvosX974",
     "name": "Executive Tower - Suite 140 - 4,410 SF",
@@ -838,59 +838,123 @@
     "detections": [
       {
         "label": "roof",
-        "confidence": 0.63,
+        "confidence": 0.402,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.4433127 34.0366749, -118.4431034 34.0365206, -118.4429509 34.0366636, -118.4431602 34.0368179, -118.4433127 34.0366749))",
+        "bbox_wkt": "POLYGON((-118.4433127 34.0363639, -118.4433127 34.0369613, -118.4425856 34.0369613, -118.4425856 34.0363639, -118.4433127 34.0363639))",
         "pixel_bbox": [
-          561,
-          380,
-          445,
-          440
+          333,
+          333,
+          893,
+          886
         ],
         "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det01.png",
-        "mask_wkt": "POLYGON((-118.4433111 34.0366750, -118.4431035 34.0365219, -118.4429525 34.0366635, -118.4431601 34.0368166, -118.4433111 34.0366750))"
+        "mask_wkt": null,
+        "mask_area_m2": 2122.9
       },
       {
         "label": "roof",
-        "confidence": 0.57,
+        "confidence": 0.641,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.4431034 34.0365206, -118.4428909 34.0363639, -118.4427384 34.0365069, -118.4429509 34.0366636, -118.4431034 34.0365206))",
+        "bbox_wkt": "POLYGON((-118.4430073 34.0366029, -118.4430073 34.0367104, -118.4428910 34.0367104, -118.4428910 34.0366029, -118.4430073 34.0366029))",
         "pixel_bbox": [
-          818,
-          608,
-          449,
-          443
+          709,
+          705,
+          143,
+          159
         ],
         "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det02.png",
-        "mask_wkt": "POLYGON((-118.4431019 34.0365207, -118.4428910 34.0363651, -118.4427400 34.0365068, -118.4429508 34.0366623, -118.4431019 34.0365207))"
+        "mask_wkt": null,
+        "mask_area_m2": 112.8
       },
       {
         "label": "roof",
-        "confidence": 0.44,
+        "confidence": 0.566,
         "image_id": "ortho-1",
-        "bbox_wkt": "POLYGON((-118.4431602 34.0368179, -118.4427384 34.0365069, -118.4425856 34.0366502, -118.4430073 34.0369613, -118.4431602 34.0368179))",
+        "bbox_wkt": "POLYGON((-118.4432763 34.0365431, -118.4432763 34.0368418, -118.4429128 34.0368418, -118.4429128 34.0365431, -118.4432763 34.0365431))",
         "pixel_bbox": [
-          748,
-          168,
-          707,
-          672
+          378,
+          510,
+          447,
+          443
         ],
         "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det03.png",
-        "mask_wkt": "POLYGON((-118.4431586 34.0368180, -118.4427385 34.0365081, -118.4425871 34.0366501, -118.4430072 34.0369600, -118.4431586 34.0368180))"
+        "mask_wkt": null,
+        "mask_area_m2": 678.7
       },
       {
         "label": "roof",
-        "confidence": 0.33,
-        "image_id": "oriented-1",
-        "bbox_wkt": "POLYGON((-118.4433127 34.0366749, -118.4428909 34.0363639, -118.4425856 34.0366502, -118.4430073 34.0369613, -118.4433127 34.0366749))",
+        "confidence": 0.523,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.4429855 34.0364834, -118.4429855 34.0367821, -118.4426220 34.0367821, -118.4426220 34.0364834, -118.4429855 34.0364834))",
         "pixel_bbox": [
-          561,
-          168,
-          894,
-          884
+          735,
+          599,
+          447,
+          443
+        ],
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det04.png",
+        "mask_wkt": null,
+        "mask_area_m2": 634.2
+      },
+      {
+        "label": "roof",
+        "confidence": 0.447,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.4431309 34.0366626, -118.4431309 34.0369434, -118.4427674 34.0369434, -118.4427674 34.0366626, -118.4431309 34.0366626))",
+        "pixel_bbox": [
+          557,
+          360,
+          447,
+          416
+        ],
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det05.png",
+        "mask_wkt": null,
+        "mask_area_m2": 512.5
+      },
+      {
+        "label": "roof",
+        "confidence": 0.381,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.4430946 34.0363758, -118.4430946 34.0366029, -118.4428037 34.0366029, -118.4428037 34.0363758, -118.4430946 34.0363758))",
+        "pixel_bbox": [
+          601,
+          865,
+          357,
+          337
+        ],
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det06.png",
+        "mask_wkt": null,
+        "mask_area_m2": 304.4
+      },
+      {
+        "label": "roof",
+        "confidence": 0.329,
+        "image_id": "ortho-1",
+        "bbox_wkt": "POLYGON((-118.4426947 34.0366029, -118.4426947 34.0367343, -118.4425638 34.0367343, -118.4425638 34.0366029, -118.4426947 34.0366029))",
+        "pixel_bbox": [
+          1093,
+          670,
+          161,
+          195
+        ],
+        "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/ortho-1_det07.png",
+        "mask_wkt": null,
+        "mask_area_m2": 116.3
+      },
+      {
+        "label": "roof",
+        "confidence": 0.334,
+        "image_id": "oriented-1",
+        "bbox_wkt": "POLYGON((-118.4433127 34.0363281, -118.4433127 34.0369852, -118.4425856 34.0369852, -118.4425856 34.0363281, -118.4433127 34.0363281))",
+        "pixel_bbox": [
+          238,
+          213,
+          638,
+          696
         ],
         "mask_png_path": "data/cache/jfiEvosX974/vexcel/masks/oriented-1_det01.png",
-        "mask_wkt": null
+        "mask_wkt": null,
+        "mask_area_m2": 2154.1
       }
     ]
   },
@@ -980,12 +1044,12 @@
   },
   "tariff": {
     "utility": "LADWP (electricity), SoCalGas (gas)",
-    "electricity_usd_per_kwh": 0.22,
-    "gas_usd_per_kwh": 0.06,
+    "electricity_usd_per_kwh": 0.3002,
+    "gas_usd_per_kwh": 0.054489,
     "export_usd_per_kwh": null,
     "export_regime": "net_metering",
     "fixed_usd_per_month": 0.0,
-    "source": "ILLUSTRATIVE flat prices, not a retrieved LADWP commercial schedule. Under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Demand and fixed charges are not modelled (TAR-02).",
+    "source": "Electricity: EIA state average retail price, CA COM, 2026-08 (0.3002 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas: EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content), 0.054489 USD/kWh, a state average and not the SoCalGas schedule (data-integration 5.1e). Demand charges are not modelled (TAR-02).",
     "retrieved": "2026-11-14"
   },
   "provenance": [
@@ -1035,7 +1099,7 @@
       "layer": "vexcel",
       "what": "elements/detect (SAM 3, label 'roof', threshold 0.3)",
       "status": "ok",
-      "detail": "roof fragments, not planes"
+      "detail": "roof fragments, not planes: 7 roof masks on ortho-1, nested in the largest one's box; the largest single mask, 2,122.9 m2, is within 4 % of the 2,207.43 m2 footprint, and the most confident detection (0.641) is a small plant enclosure. Masks are never summed; mask_wkt is left unset and mask_area_m2 carries each mask's area (data-integration 4.4a)"
     },
     {
       "layer": "vexcel",
@@ -1068,10 +1132,22 @@
       "detail": null
     },
     {
-      "layer": "tariff",
-      "what": "LADWP commercial rate (URDB lookup, eiaid 11208)",
+      "layer": "place",
+      "what": "Census geocoder, incorporated place",
       "status": "ok",
-      "detail": "the prices in this example are illustrative"
+      "detail": "Los Angeles city: the electric utility is LADWP (data-integration 5.1d)"
+    },
+    {
+      "layer": "tariff",
+      "what": "electricity price (EIA retail sales, CA COM)",
+      "status": "fallback",
+      "detail": "EIA state average retail price, CA COM, 2026-08: a state average, not a looked-up LADWP schedule (data-integration 5.1c)"
+    },
+    {
+      "layer": "tariff",
+      "what": "eia/natural-gas-price",
+      "status": "fallback",
+      "detail": "EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)"
     }
   ]
 }

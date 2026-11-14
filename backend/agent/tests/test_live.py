@@ -2,6 +2,7 @@
 door against the fixture-backed doors. No network, no API key."""
 import asyncio
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
@@ -12,8 +13,19 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from backend.agent import api, live
+from backend.agent.runtime.replan import PatchError
 from backend.agent.fixtures import EXAMPLES, flavors
 from backend.schema import RunRequest, RunResult
+
+
+def stub_doors():
+    """Data and legal from their lanes, analysis from the agent lane's fixture-backed stub: these tests
+    are about the agent's plumbing, not about the physics, and run offline in a moment."""
+    from backend.agent import analysis_stub
+    from backend.agent.tools import Doors
+    from backend.data_layer import api as data
+    from backend.legal import api as legal
+    return Doors(data=data, analysis=analysis_stub, legal=legal)
 
 
 class Scripted(GenericFakeChatModel):
@@ -33,20 +45,31 @@ def request(flavor="house") -> RunRequest:
     return RunRequest.model_validate_json((EXAMPLES / flavor / "run_request.json").read_text())
 
 
-def script(sid, ask=True):
+def script(sid, ask=True, plan=True, bad_tool=False, final=("The audit is complete.",)):
     orchestrator = [call("write_todos", todos=[{"content": "audit", "status": "in_progress"}]),
                     task("scout"), task("surveyor"), task("physicist"), task("financier")]
     if ask:
         orchestrator.append(call("ask_user"))
-    orchestrator.append(AIMessage(content="The audit is complete."))
+    orchestrator.extend(AIMessage(content=text) for text in final)
     subagents = [
         call("get_property_bundle", sid=sid), AIMessage(content="ingested"),
         call("observe_interior"), call("build_building_model"), AIMessage(content="modelled"),
-        call("run_baseline"), call("evaluate_measure", measure_id="LGT_LED"), AIMessage(content="evaluated"),
-        call("price_measure", measure_id="LGT_LED"), call("sensitivity"), call("build_plan"),
+        call("run_baseline"), call("evaluate_measure", measure_id="LGT_LED"),
+        AIMessage(content="evaluated"),
+        *([call("price_measure", measure_id="HVAC_ECON")] if bad_tool else []),     # a valid id, never evaluated
+        call("price_measure", measure_id="LGT_LED"), call("sensitivity"),
+        *([call("build_plan")] if plan else []),
         AIMessage(content="planned"),
     ]
     return Scripted(messages=iter(orchestrator)), Scripted(messages=iter(subagents))
+
+
+@pytest.fixture(autouse=True)
+def no_tracing_or_dotenv(monkeypatch):
+    """Tests never read the developer's .env and never send a trace."""
+    monkeypatch.setattr(live, "_load_env", lambda: None)
+    for name in ("LANGSMITH_API_KEY", "LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2", "LANGSMITH_PROJECT"):
+        monkeypatch.delenv(name, raising=False)
 
 
 @pytest.fixture
@@ -54,9 +77,9 @@ def live_mode(tmp_path, monkeypatch):
     monkeypatch.setenv("AGENT_MODE", "live")
     monkeypatch.setattr(live, "SETTINGS", None)
 
-    def configure(req):
-        model, sub = script(req.sid)
-        monkeypatch.setattr(live, "SETTINGS", live.LiveSettings(model=model, subagent_model=sub,
+    def configure(req, **script_kwargs):
+        model, sub = script(req.sid, **script_kwargs)
+        monkeypatch.setattr(live, "SETTINGS", live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
                                                                 runs_dir=tmp_path))
     return configure
 
@@ -156,7 +179,7 @@ def test_server_drives_a_live_run_and_a_document(live_mode):
 def test_an_agent_failure_becomes_an_error_event(live_mode, tmp_path, monkeypatch):
     req = request()
     monkeypatch.setattr(live, "SETTINGS", live.LiveSettings(
-        model=Scripted(messages=iter([])), subagent_model=Scripted(messages=iter([])), runs_dir=tmp_path))
+        doors=stub_doors(), model=Scripted(messages=iter([])), subagent_model=Scripted(messages=iter([])), runs_dir=tmp_path))
     run_id = api.start_run(req)
     events = drain(run_id)
     assert events[-1].type == "error"
@@ -190,7 +213,7 @@ def test_parallel_tool_calls_do_not_lose_measures(tmp_path):
     from concurrent.futures import ThreadPoolExecutor
     req = request()
     model, sub = script(req.sid)
-    run = live.LiveRun("run_lock", req, live.LiveSettings(model=model, subagent_model=sub,
+    run = live.LiveRun("run_lock", req, live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
                                                           runs_dir=tmp_path))
     t = run.tools
     t["get_property_bundle"](req.sid)
@@ -275,3 +298,159 @@ def test_a_failed_call_is_retried_and_fill_template_is_never_memoized(tmp_path):
     t["fill_template"](*args)
     t["fill_template"](*args)
     assert run.memo_hits == 0
+
+
+def test_a_finished_live_run_is_adjusted_and_replanned(live_mode):
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    with pytest.raises(PatchError) as early:                       # paused, not finished
+        api.update_run(run_id, budget_usd=500.0)
+    assert early.value.code == "run_not_done"
+    api.answer(run_id, "q_service_amps", 100.0)
+    assert drain(run_id)[-1].type == "done"
+    before = api.get_run(run_id)
+    api.update_run(run_id, budget_usd=500.0, overrides={"occupancy.count": 5.0})
+    events = drain(run_id)
+    assert events[-1].type == "done" and events[-1].message == "Re-run complete"
+    after = api.get_run(run_id)
+    assert after.status == "done" and after.plan.budget_usd == 500.0 and after.request.overrides["occupancy.count"] == 5.0
+    assert next(a for a in after.building_model.assumptions if a.key == "occupancy.count").value.expected == 5.0
+    assert after.narrative_md == before.narrative_md
+    assert [q.id for q in after.questions] == [q.id for q in before.questions]            # the answered question is kept
+    with pytest.raises(PatchError) as bad:
+        api.update_run(run_id, overrides={"nope": 1.0})
+    assert bad.value.code == "unknown_assumption"
+    assert api.get_run(run_id).plan.budget_usd == 500.0                                    # a refused patch changes nothing
+
+
+# ---- tracing ----
+
+def test_tracing_is_off_without_a_key_and_on_with_one():
+    env = {}
+    assert live.configure_tracing(env) is False and env["LANGSMITH_TRACING"] == "false"
+    env = {"LANGSMITH_TRACING": "true"}                                   # asked for, but no key: off, no failure
+    assert live.configure_tracing(env) is False and env["LANGCHAIN_TRACING_V2"] == "false"
+    env = {"LANGSMITH_API_KEY": "k"}
+    assert live.configure_tracing(env) is True and env["LANGSMITH_TRACING"] == "true"
+    assert env["LANGSMITH_PROJECT"] == live.DEFAULT_PROJECT
+    env = {"LANGSMITH_API_KEY": "k", "LANGSMITH_PROJECT": "mine"}
+    assert live.configure_tracing(env) and env["LANGSMITH_PROJECT"] == "mine"
+    env = {"LANGSMITH_API_KEY": "k", "LANGSMITH_TRACING": "false"}
+    assert live.configure_tracing(env) is False
+
+
+def test_a_traced_run_names_itself_and_asks_for_its_first_trace_id_only(monkeypatch, tmp_path):
+    monkeypatch.setenv("LANGSMITH_API_KEY", "k")
+    live.configure_tracing()
+    req = request()
+    model, sub = script(req.sid)
+    run = live.LiveRun("run_traced", req, live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
+                                                            runs_dir=tmp_path))
+    assert run.tracing and run.config["run_name"] == "energy-audit"
+    assert run.config["metadata"]["sid"] == req.sid and f"sid:{req.sid}" in run.config["tags"]
+    first, second = run._segment_config(), run._segment_config()
+    assert first["run_id"] == run.trace_id and "run_id" not in second          # a resumed segment is its own trace
+    monkeypatch.setenv("LANGSMITH_API_KEY", "")
+
+
+def test_without_tracing_there_is_no_run_id_and_no_link(tmp_path):
+    req = request()
+    model, sub = script(req.sid)
+    run = live.LiveRun("run_plain", req, live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
+                                                           runs_dir=tmp_path))
+    assert not run.tracing and "run_id" not in run._segment_config() and run.trace_url() is None
+
+
+def test_a_live_run_completes_with_tracing_switched_off_and_keys_missing(live_mode):
+    req = request()
+    live_mode(req)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    assert drain(run_id)[-1].type == "done" and not run.tracing and os.environ["LANGSMITH_TRACING"] == "false"
+
+
+# ---- a failing tool and a plan the agent never built ----
+
+def test_a_failing_tool_becomes_a_run_event(live_mode):
+    req = request()
+    live_mode(req, bad_tool=True)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    events = drain(run_id)
+    errors = [e for e in events if e.type == "error"]
+    assert any("price_measure failed" in e.message and "call evaluate_measure" in e.message and e.stage == "S7"
+               for e in errors)
+    assert events[-1].type == "done" and any("price_measure failed" in w for w in api.get_run(run_id).warnings)
+
+
+def test_the_runtime_builds_the_plan_the_agent_did_not(live_mode):
+    req = request()
+    live_mode(req, plan=False)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    events = drain(run_id)
+    assert events[-1].type == "done"
+    fallback = [e for e in events if e.type == "fallback" and e.payload.get("fallback") == "plan_built_by_runtime"]
+    assert len(fallback) == 1 and fallback[0].stage == "S7"
+    result = api.get_run(run_id)
+    assert result.plan is not None and result.plan.selected and "plan.json" not in " ".join(result.warnings)
+    assert result.measures and run.files.missing() == []
+
+
+def test_a_traced_run_keeps_the_ids_that_find_its_trace(monkeypatch, tmp_path):
+    monkeypatch.setenv("LANGSMITH_API_KEY", "k")
+    monkeypatch.setenv("LANGSMITH_PROJECT", "proj")
+    live.configure_tracing()
+    req = request()
+    model, sub = script(req.sid)
+    run = live.LiveRun("run_ids", req, live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
+                                                         runs_dir=tmp_path))
+    monkeypatch.setattr(run, "_thread", type("T", (), {"start": lambda self: None})())      # no run, no network
+    run.start()
+    saved = json.loads((run.files.root / "trace.json").read_text())
+    assert saved["trace_id"] == str(run.trace_id) and saved["project"] == "proj" and saved["run_id"] == "run_ids"
+    assert "LANGSMITH_API_KEY" not in json.dumps(saved) and "k" != saved.get("key")
+    monkeypatch.setenv("LANGSMITH_API_KEY", "")
+
+
+# ---- the summary may not state a number no tool returned ----
+
+def _drive(live_mode, **script_kwargs):
+    req = request()
+    live_mode(req, **script_kwargs)
+    run_id = api.start_run(req)
+    run = live._RUNS[run_id]
+    wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
+    api.answer(run_id, "q_service_amps", 100.0)
+    return run_id, run, drain(run_id)
+
+
+def test_a_summary_with_an_invented_number_is_sent_back_once_and_then_passes(live_mode):
+    run_id, run, events = _drive(live_mode, final=("Savings are 98,765 dollars a year.", "Savings come from the plan."))
+    repair = [e for e in events if e.type == "fallback" and e.payload.get("fallback") == "narrative_repair"]
+    assert len(repair) == 1 and any("98,765" in p for p in repair[0].payload["problems"])
+
+    assert (run.files.root / "report.md").read_text() == "Savings come from the plan."
+    assert not any("check_narrative" in e.message for e in events if e.type == "error") and events[-1].type == "done"
+
+
+def test_a_summary_that_is_still_wrong_loses_the_offending_lines(live_mode):
+    run_id, run, events = _drive(live_mode, final=("Intro.\nSavings are 98,765 dollars a year.", "Intro.\nStill 98,765 dollars."))
+    text = (run.files.root / "report.md").read_text()
+    assert "98,765" not in text and "Intro." in text
+    assert any("check_narrative: removed 1 line" in e.message for e in events if e.type == "error")
+    assert any("removed 1 line" in w for w in api.get_run(run_id).warnings)
+
+
+def test_a_clean_summary_costs_no_extra_turn(live_mode):
+    run_id, run, events = _drive(live_mode, final=("The audit is complete.",))
+    assert not [e for e in events if e.payload.get("fallback") == "narrative_repair"]

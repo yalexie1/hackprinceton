@@ -1,0 +1,568 @@
+[
+ {
+  "id": "INC-01",
+  "name": "Federal energy efficient home improvement credit (26 U.S.C. 25C)",
+  "kind": "tax_credit",
+  "rule": "none",
+  "measure_ids": [
+   "ENV_ATTIC",
+   "ENV_WALL",
+   "ENV_AIRSEAL",
+   "WIN_REPLACE",
+   "HVAC_HP",
+   "DHW_HPWH"
+  ],
+  "sector": "residential",
+  "status": "expired",
+  "eligibility": "not_eligible",
+  "citation": "physics 04 INC-01: section 25C(i), no credit for property placed in service after 2025-12-31; Pub. L. 119-21 (139 Stat. 72), section 70505(a)",
+  "region": "US",
+  "date_checked": "2026-11-14",
+  "conditions": [],
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-02",
+  "name": "Federal residential clean energy credit (26 U.S.C. 25D)",
+  "kind": "tax_credit",
+  "rule": "none",
+  "measure_ids": [
+   "PV_ROOF"
+  ],
+  "sector": "residential",
+  "status": "expired",
+  "eligibility": "not_eligible",
+  "citation": "physics 04 INC-02: section 25D(h), no credit for expenditures made after 2025-12-31; Pub. L. 119-21 (139 Stat. 72), section 70506(a)",
+  "region": "US",
+  "date_checked": "2026-11-14",
+  "conditions": [],
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-03",
+  "name": "Federal energy efficient commercial buildings deduction (26 U.S.C. 179D)",
+  "kind": "tax_deduction",
+  "rule": "none",
+  "measure_ids": [
+   "LGT_LED",
+   "LGT_CTRL",
+   "HVAC_RTU",
+   "HVAC_ECON",
+   "ENV_ATTIC",
+   "ENV_WALL",
+   "ENV_AIRSEAL"
+  ],
+  "sector": "commercial",
+  "status": "expired",
+  "eligibility": "not_eligible",
+  "conditions": [
+   "only if construction began on or before 2026-06-30"
+  ],
+  "citation": "physics 04 INC-03: section 179D(i), no deduction for property whose construction begins after 2026-06-30; Pub. L. 119-21 (139 Stat. 72), section 70507",
+  "region": "US",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-05",
+  "name": "Federal clean electricity investment credit (26 U.S.C. 48E), business-owned solar",
+  "kind": "tax_credit",
+  "rule": "pct_cost",
+  "rate": 0.3,
+  "measure_ids": [
+   "PV_ROOF"
+  ],
+  "sector": "commercial",
+  "status": "verified",
+  "requires": [
+   "owner_is_business",
+   "pfe_compliant",
+   "placed_in_service_by_2027"
+  ],
+  "conditions": [
+   "placed in service by 2027-12-31",
+   "no material assistance from a prohibited foreign entity",
+   "owner is a taxpayer who can use the credit"
+  ],
+  "citation": "physics 04 INC-05: section 48E(a)(2)(A)(ii)(I), (b)(6), (e)(4)(A); Pub. L. 119-21 (139 Stat. 72), section 70513",
+  "region": "US",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-07a",
+  "name": "Federal home energy rebates (HEEHRA) through TECH Clean California",
+  "kind": "upfront_rebate",
+  "rule": "none",
+  "measure_ids": [
+   "HVAC_HP",
+   "DHW_HPWH"
+  ],
+  "sector": "residential",
+  "region": "CA",
+  "status": "expired",
+  "eligibility": "not_eligible",
+  "citation": "physics 04 INC-07: single-family funds fully reserved statewide as of 2026-02-24 (techcleanca.com/incentives)",
+  "date_checked": "2026-11-14",
+  "conditions": [],
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-07b",
+  "name": "Federal home energy rebates (HOMES and HEEHRA) in Texas",
+  "kind": "upfront_rebate",
+  "rule": "none",
+  "measure_ids": [
+   "HVAC_HP",
+   "DHW_HPWH"
+  ],
+  "sector": "residential",
+  "region": "TX",
+  "status": "unverified",
+  "eligibility": "needs_confirmation",
+  "conditions": [
+   "no official page was opened"
+  ],
+  "citation": "physics 04 INC-07: unverified [U]",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-10",
+  "name": "LADWP Consumer Rebate Program, cool roof",
+  "kind": "rebate_after_install",
+  "rule": "per_sqft_cool_roof",
+  "measure_ids": [
+   "ROOF_COOL"
+  ],
+  "sector": "residential",
+  "region": "LADWP",
+  "status": "verified",
+  "conditions": [
+   "low slope (2:12 or less): 3-year SRI 78 earns 0.20, 85 earns 0.60 USD/sq ft; steep slope: SRI 20 earns 0.20, 35 earns 0.60",
+   "CRRC-rated product",
+   "finalled building permit"
+  ],
+  "citation": "physics 04 INC-10; LADWP Consumer Rebate Program, https://www.ladwp.com/residential-services/assistance-programs/consumer-rebate-program",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": true
+ },
+ {
+  "id": "INC-11",
+  "name": "LADWP Consumer Rebate Program, ENERGY STAR windows",
+  "kind": "rebate_after_install",
+  "rule": "per_sqft_windows",
+  "rate": 2.0,
+  "measure_ids": [
+   "WIN_REPLACE"
+  ],
+  "sector": "residential",
+  "region": "LADWP",
+  "status": "verified",
+  "conditions": [
+   "U-factor 0.30 or less and SHGC 0.25 or less",
+   "no new construction, additions or ADUs"
+  ],
+  "citation": "physics 04 INC-11; LADWP Consumer Rebate Program, https://www.ladwp.com/residential-services/assistance-programs/consumer-rebate-program",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-13",
+  "name": "LADWP Consumer Rebate Program, heat pump HVAC",
+  "kind": "rebate_after_install",
+  "rule": "per_ton_tiers",
+  "tiers": [
+   [
+    15.2,
+    7.7,
+    1000
+   ],
+   [
+    16.0,
+    8.0,
+    1050
+   ],
+   [
+    16.9,
+    8.1,
+    1100
+   ],
+   [
+    17.8,
+    8.1,
+    1150
+   ],
+   [
+    18.7,
+    8.5,
+    1200
+   ],
+   [
+    19.6,
+    8.9,
+    1250
+   ]
+  ],
+  "tiers_ductless": [
+   [
+    15.2,
+    7.8,
+    1500
+   ],
+   [
+    16.0,
+    8.1,
+    1650
+   ],
+   [
+    16.9,
+    8.3,
+    1800
+   ],
+   [
+    17.8,
+    8.5,
+    1950
+   ],
+   [
+    18.7,
+    8.7,
+    2100
+   ],
+   [
+    19.6,
+    8.9,
+    2250
+   ],
+   [
+    20.5,
+    9.1,
+    2500
+   ]
+  ],
+  "measure_ids": [
+   "HVAC_HP"
+  ],
+  "sector": "residential",
+  "region": "LADWP",
+  "status": "verified",
+  "conditions": [
+   "minimum 7.7 HSPF2 and 15.2 SEER2 (strictly above the tier values below it)",
+   "installed on or after 2025-11-01",
+   "no new construction or ADUs"
+  ],
+  "citation": "physics 04 INC-13 and INC-14; LADWP Consumer Rebate Program, https://www.ladwp.com/residential-services/assistance-programs/consumer-rebate-program",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-15",
+  "name": "LADWP Consumer Rebate Program, ENERGY STAR heat pump water heater",
+  "kind": "rebate_after_install",
+  "rule": "per_unit_hpwh",
+  "bands": [
+   [
+    "30-55",
+    [
+     [
+      3.3,
+      1500
+     ],
+     [
+      3.5,
+      1750
+     ],
+     [
+      3.75,
+      2000
+     ]
+    ]
+   ],
+   [
+    "56-75",
+    [
+     [
+      3.3,
+      1750
+     ],
+     [
+      3.5,
+      2100
+     ],
+     [
+      3.75,
+      2250
+     ]
+    ]
+   ],
+   [
+    "76+",
+    [
+     [
+      3.3,
+      1950
+     ],
+     [
+      3.5,
+      2250
+     ],
+     [
+      3.75,
+      2500
+     ]
+    ]
+   ]
+  ],
+  "measure_ids": [
+   "DHW_HPWH"
+  ],
+  "sector": "residential",
+  "region": "LADWP",
+  "status": "verified",
+  "conditions": [
+   "UEF 3.3 or more and 30 gal or more",
+   "pre-existing gas water heater on the application"
+  ],
+  "citation": "physics 04 INC-15; LADWP Consumer Rebate Program, https://www.ladwp.com/residential-services/assistance-programs/consumer-rebate-program",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-17",
+  "name": "LADWP Attic Insulation Rebate Program (batt and roll only)",
+  "kind": "rebate_after_install",
+  "rule": "per_sqft_attic",
+  "measure_ids": [
+   "ENV_ATTIC"
+  ],
+  "sector": "residential",
+  "region": "LADWP",
+  "status": "verified",
+  "conditions": [
+   "0.50 USD/sq ft when the installed insulation is above R-19, 0.30 at R-19 or below (a batt or roll product)",
+   "installed on or after 2025-09-01",
+   "finalled LADBS permit; before and after photos"
+  ],
+  "citation": "physics 04 INC-17, https://www.ladwp.com/residential-services/programs-and-rebates-residential/attic-insulation-rebate-program",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": true
+ },
+ {
+  "id": "INC-17x",
+  "name": "LADWP Attic Insulation Rebate Program, 'Launch Special Extended' extra",
+  "kind": "rebate_after_install",
+  "rule": "per_sqft_attic_extra",
+  "rate": 0.25,
+  "measure_ids": [
+   "ENV_ATTIC"
+  ],
+  "sector": "residential",
+  "region": "LADWP",
+  "status": "unverified",
+  "conditions": [
+   "no end date is stated for the extra 0.25 USD/sq ft"
+  ],
+  "citation": "physics 04 INC-17: treat the extra 0.25 as unverified",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "unit": null,
+  "user_confirm": true
+ },
+ {
+  "id": "INC-18",
+  "name": "LADWP Business Offerings for Sustainable Solutions (BOSS)",
+  "kind": "rebate_after_install",
+  "rule": "per_kwh",
+  "measure_ids": [
+   "HVAC_RTU",
+   "HVAC_ECON",
+   "ENV_ATTIC",
+   "ENV_WALL",
+   "ENV_AIRSEAL",
+   "PLUG_MGMT",
+   "CTRL_TSTAT"
+  ],
+  "rates": {
+   "HVAC_RTU": 0.6,
+   "HVAC_ECON": 0.6,
+   "CTRL_TSTAT": 0.6,
+   "PLUG_MGMT": 0.3,
+   "ENV_ATTIC": 0.65,
+   "ENV_WALL": 0.65,
+   "ENV_AIRSEAL": 0.65
+  },
+  "sector": "commercial",
+  "region": "LADWP",
+  "status": "verified",
+  "eligibility": "needs_confirmation",
+  "conditions": [
+   "LADWP pre-installation verification and pre-approval before any installation",
+   "must exceed California Energy Code minimums",
+   "complete within 12 months of approval",
+   "envelope paid at the rate of the affected HVAC system, 0.30 to 0.65 USD/kWh; the top rate is the high"
+  ],
+  "citation": "physics 04 INC-18, https://www.ladwp.com/commercial-services/programs-and-rebates-commercial/business-offerings-sustainable-solutions-boss",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": true
+ },
+ {
+  "id": "INC-19",
+  "name": "LADWP Commercial Lighting Incentive Program (CLIP)",
+  "kind": "rebate_after_install",
+  "rule": "per_kwh",
+  "measure_ids": [
+   "LGT_LED",
+   "LGT_CTRL"
+  ],
+  "rates": {
+   "LGT_LED": 0.4,
+   "LGT_CTRL": 0.3
+  },
+  "sector": "commercial",
+  "region": "LADWP",
+  "status": "verified",
+  "eligibility": "needs_confirmation",
+  "conditions": [
+   "monthly demand (Facilities Charge) above 200 kW",
+   "DLC-listed products; LADWP approval before purchase",
+   "at least 25 percent energy savings",
+   "high is the LADWP Preferred fixture rate 0.40 or the networked controls rate 0.30 USD/kWh"
+  ],
+  "citation": "physics 04 INC-19, https://www.ladwp.com/commercial-services/programs-and-rebates-commercial/commercial-lighting-incentive-program",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": true
+ },
+ {
+  "id": "INC-30",
+  "name": "CenterPoint residential HVAC replacement incentive",
+  "kind": "upfront_rebate",
+  "rule": "fixed",
+  "rate": 200.0,
+  "measure_ids": [
+   "HVAC_HP"
+  ],
+  "sector": "residential",
+  "region": "CenterPoint",
+  "status": "verified",
+  "conditions": [
+   "through a participating contractor, applied to the installation invoice",
+   "equipment from 15.2 SEER2",
+   "only the 200 USD floor is verified"
+  ],
+  "citation": "physics 04 INC-30; CenterPoint Energy Houston Electric 2026 Energy Efficiency Plan and Report, PUC of Texas Project No. 59166",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-31",
+  "name": "CenterPoint Residential Solar Program",
+  "kind": "upfront_rebate",
+  "rule": "per_kw_dc",
+  "rate": 135.0,
+  "cap": 15.0,
+  "measure_ids": [
+   "PV_ROOF"
+  ],
+  "sector": "residential",
+  "region": "CenterPoint",
+  "status": "verified",
+  "conditions": [
+   "existing single-family home in the Houston Electric territory",
+   "through a participating service provider",
+   "interconnection agreement",
+   "capped at 15 kW DC"
+  ],
+  "citation": "physics 04 INC-31; https://www.centerpointenergy.com/en-us/savings-solutions/energy-efficiency/solar-energy",
+  "date_checked": "2026-11-14",
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-32",
+  "name": "CenterPoint Commercial Standard Offer Program",
+  "kind": "rebate_after_install",
+  "rule": "none",
+  "measure_ids": [
+   "LGT_LED",
+   "LGT_CTRL",
+   "HVAC_RTU",
+   "HVAC_ECON",
+   "PV_ROOF"
+  ],
+  "sector": "commercial",
+  "region": "CenterPoint",
+  "status": "unverified",
+  "eligibility": "needs_confirmation",
+  "conditions": [
+   "program verified, per-kW and per-kWh rates are in workbooks that were not opened"
+  ],
+  "citation": "physics 04 INC-32; CenterPoint Energy Houston Electric 2026 Energy Efficiency Plan and Report, PUC of Texas Project No. 59166",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ },
+ {
+  "id": "INC-33",
+  "name": "CenterPoint smart thermostat discounts",
+  "kind": "upfront_rebate",
+  "rule": "none",
+  "measure_ids": [
+   "CTRL_TSTAT"
+  ],
+  "sector": "any",
+  "region": "CenterPoint",
+  "status": "unverified",
+  "eligibility": "needs_confirmation",
+  "conditions": [
+   "amount not stated in the documents opened"
+  ],
+  "citation": "physics 04 INC-33",
+  "date_checked": "2026-11-14",
+  "cap": null,
+  "rate": null,
+  "unit": null,
+  "user_confirm": false
+ }
+]

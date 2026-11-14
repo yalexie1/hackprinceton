@@ -214,8 +214,11 @@ def test_tower_needs_the_storey_count_to_be_caught():
 def test_a_fallback_note_is_raised_when_the_rise_is_not_believable():
     _, notes = vx.get_vexcel_data_with_notes(
         "POINT(0 0)", stories=17, get=_getter(200, OFFICE))
-    fallback = [n for n in notes if n.status == "fallback"]
-    assert fallback and "numStoriesAboveGrade" in fallback[0].detail
+    # By `what`, not by position: D16 also records which capture and structure it
+    # chose, and that record is a `fallback` too whenever there was a choice to make.
+    height = [n for n in notes if n.what == "roof-characteristics.height"]
+    assert height and height[0].status == "fallback"
+    assert "numStoriesAboveGrade" in height[0].detail
 
 
 def test_a_real_height_is_accepted():

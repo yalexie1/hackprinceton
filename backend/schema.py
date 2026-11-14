@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.7"
+SCHEMA_VERSION = "0.3.8"
 
 # ---------- primitives ----------
 
@@ -583,6 +583,7 @@ class RunRequest(BaseModel):
     bills: Optional[UtilityBills] = None
     overrides: dict[str, Union[float, str, bool]] = {}   # assumption key -> value
     desks_requested: Optional[int] = None
+    mode: Optional[Literal["agent", "analysis"]] = None   # "analysis": live data and the analysis door on this request, no agent narration (about 10 s); None: the server default (AGENT_MODE)
 
 class Choice(BaseModel):
     label: str
@@ -617,7 +618,7 @@ class RunResult(BaseModel):
     warnings: list[str] = []
     data_source: Optional[Literal["live", "example"]] = None   # what the analysis ran on: live sponsor data, or the
                                                 # committed example bundle; a replayed recording keeps the value it was recorded with
-    served_by: Optional[Literal["live", "replay"]] = None      # how this result reached the client
+    served_by: Optional[Literal["live", "replay", "analysis"]] = None   # how this result reached the client; "analysis" = computed now, no agent
 
 DocType = Literal["retrofit_contract_residential", "retrofit_contract_commercial",
                   "solar_installation_agreement", "bid_package_rfp",

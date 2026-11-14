@@ -405,6 +405,7 @@ _SIM_FORMULAS = ("ZON-01", "ZON-04", "ENV-03", "INF-01", "HVAC-01", "LGT-03", "T
 
 _FAST: contextvars.ContextVar[bool] = contextvars.ContextVar("fast_simulation", default=False)
 _PV_BUDGET: contextvars.ContextVar[Optional[float]] = contextvars.ContextVar("pv_budget", default=None)
+_PV_FRACTION: contextvars.ContextVar[float] = contextvars.ContextVar("pv_fraction", default=1.0)
 _NO_WIND_M_S = 1.0     # the weather file has no wind column: a light breeze is assumed for the cell temperature
 
 
@@ -498,6 +499,11 @@ def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: Building
     """The PV_ROOF card for the A16 engine: the design (A14) and its value (A19). The budget is what
     the plan has left; evaluated alone there is none, and the roof or the consumption stops the fill."""
     design = _design(bundle, model, before, _PV_BUDGET.get())
+    fraction = _PV_FRACTION.get()
+    if fraction < 1.0 and design.panels:
+        # a smaller array: the first panels of the fill order (best yield first), by capping the cost at k panels
+        k = max(1, round(len(design.panels) * fraction))
+        design = _design(bundle, model, before, _pv_installed_cost(bundle, k * (design.module_w or Module().watts)))
     existing = (build_parametric_roof(bundle.vexcel, model.north_offset_deg.expected,
                                       state=bundle.summary.state).existing_solar if bundle.vexcel else False)
     hourly = None
@@ -668,19 +674,23 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
            if engine.flow_of(summary) in entry.flows
            and (m in engine.REGISTRY.plugins or _measure(summary.sid, m) is not None)]
 
-    def evaluate(measure_id, state):
+    def evaluate(measure_id, state, size=None):
+        """`size` is for solar only (SPEC 6.5 step 4): ("fraction", f) is that share of the design the roof and
+        the load allow; ("budget", usd) is the largest design that costs no more; None is the whole design."""
         full = wanted is not None and (measure_id, state.applied) in wanted
-        budget_left = max(0.0, request.budget_usd - state.spent)
         # the result depends on the building, the role and desks asked for, whether ranges are wanted,
-        # and (for solar only) the budget still left: a round that changed nothing reuses the last one
+        # and (for solar only) its size: a round that changed nothing reuses the last one
         key = (bundle.summary.sid, bundle.climate.weather_path, measure_id, state.key, request.role,
-               request.desks_requested, full, round(budget_left, 2) if measure_id == "PV_ROOF" else None)
+               request.desks_requested, full, (size[0], round(size[1], 2)) if size else None)
         if key in _EVAL_CACHE:
             return _EVAL_CACHE[key]
-        tokens = (_PV_BUDGET.set(budget_left), _FAST.set(not full))
+        budget = round(size[1], 2) if size and size[0] == "budget" else None
+        fraction = size[1] if size and size[0] == "fraction" else 1.0
+        tokens = (_PV_BUDGET.set(budget), _FAST.set(not full), _PV_FRACTION.set(fraction))
         try:
             found = evaluate_measure(bundle, state.model, measure_id, request.role, request.desks_requested)
         finally:
+            _PV_FRACTION.reset(tokens[2])
             _FAST.reset(tokens[1])
             _PV_BUDGET.reset(tokens[0])
         priced = price_measure(bundle, found)
@@ -704,7 +714,8 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
             _FAST.reset(token)
 
     return select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy,
-                       price_group=_price_group(bundle, model))
+                       price_group=_price_group(bundle, model),
+                       min_pv_kw=2.0 if engine.flow_of(summary) == "home" else 10.0)
 
 
 @_with_state

@@ -736,6 +736,7 @@ SVF = (1 / pi) * integral over the sky hemisphere of V(w) * max(0, n . w) dOmega
     ~ (1 / pi) * sum over directions j of V_j * max(0, n . w_j) * dOmega_j
 w_j = (cos(el_j) sin(az_j), cos(el_j) cos(az_j), sin(el_j)),   dOmega_j = cos(el_j) * d_el * d_az
 S_d = SVF / ( (1 + cos(beta)) / 2 )
+(implementation: divide the numerical SVF by the open-sky value computed on the same grid, so an unobstructed panel gets exactly 1 rather than about 0.999)
 ```
 
 **Symbols.** `w` unit direction in the sky (elevation `el` > 0, azimuth `az`); `V` = 1 if a ray from the panel centre along `w` hits nothing, else 0; `n` panel normal; `dOmega` solid angle of the cell (sr); `SVF` sky view factor of the obstructed panel (dimensionless); `S_d` diffuse shading factor, 1 when nothing is in the way.

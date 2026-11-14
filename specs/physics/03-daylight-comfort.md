@@ -287,7 +287,7 @@ Primary: BR 209 and BS 8206-2 as quoted in S4: "df = T A_w theta / (A (1 - R^2))
 
 Worked example (R0): `0.68 * 0.9 * 2.4 * 90 / (104 * (1 - 0.4654^2)) = 1.62 %`.
 
-Use and limit: this is not a second computation of DAY-01. On R0 the mean of DAY-01 over a 0.25 m grid of the work plane is 2.48 % (median 1.10 %, range 0.62 to 19.2 %). The grid mean conserves flux (80.4 % of the sky lumens that enter land on the work plane inside the room, check 2 of DAY-03), so the two methods differ by a factor of about 1.5 on this room. Use `ADF` only as a coarse guard: flag the room if the grid mean of DAY-01 is outside 0.5 to 2.0 times `ADF`.
+Use and limit: this is not a second computation of DAY-01. On R0 the mean of DAY-01 over the interior nodes of a 0.25 m grid of the work plane is 2.48 % (cell centres give 2.54 %) (median 1.10 %, range 0.62 to 19.2 %). The grid mean conserves flux (80.4 % of the sky lumens that enter land on the work plane inside the room, check 2 of DAY-03), so the two methods differ by a factor of about 1.5 on this room. Use `ADF` only as a coarse guard: flag the room if the grid mean of DAY-01 is outside 0.5 to 2.0 times `ADF`.
 
 Tool: `average_daylight_factor(room, windows, reflectances, tau, m, theta_deg) -> percent`.
 
@@ -765,7 +765,7 @@ For every occupied hour:
 2. `T_gi(t)` per window from CMF-04 with `T_out(t)`.
 3. `t_r(t)` from CMF-05, other surfaces at `t_a(t)`.
 4. `dMRT(t)` from CMF-07; add to `t_r(t)`.
-5. PMV and PPD from CMF-01 and CMF-02 with `comfort.met`, `comfort.air_speed_m_s`, `comfort.rh_percent`, and clothing `comfort.clo_heating` when the zone is heating in that hour (or `T_out < 15` if the zone model gives no mode), else `comfort.clo_cooling`.
+5. PMV and PPD from CMF-01 and CMF-02 with `comfort.met`, `comfort.air_speed_m_s`, `comfort.rh_percent`, and clothing `comfort.clo_heating` when the zone is heating in that hour (or `T_out < 15` if the zone model gives no mode), else `comfort.clo_cooling`. In hours when the zone is neither heating nor cooling (mode off), the clothing follows the outdoor-temperature rule, `T_out < 15` gives `comfort.clo_heating`.
 
 ```
 comfort_ppd = (1 / N_occ) * sum over occupied hours of PPD(t)
@@ -855,7 +855,7 @@ score = w_d s_d + w_g s_g + w_c s_c                        w_d, w_g, w_c = 0.4, 
 - All sub-scores and the score run from 0 to 1. `DA_300` from DAY-09, `glare_risk` from GLR-05, `comfort_ppd` from CMF-08.
 - A desk is not recommended, whatever its score, if `dt_pr >= 10 K` (CMF-06) or if it breaks the clearance rules of SPEC 6.4.
 
-The weights, `G_MAX` and `PPD_MAX` are design choices that live in `backend/config.py`. Only the 5 % floor of PPD is physics (CMF-02). The score ranks positions inside one building; it is not a rating and must not be compared across buildings.
+The weights, `G_MAX` and `PPD_MAX` are design choices that belong in `backend/config.py` (until the Analysis wiring package moves them there, they are module constants in the daylight and layout packages). Only the 5 % floor of PPD is physics (CMF-02). The score ranks positions inside one building; it is not a rating and must not be compared across buildings.
 
 Worked example:
 

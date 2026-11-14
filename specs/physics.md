@@ -90,6 +90,8 @@ What that does not cover:
 | Roof pitch by roof shape rests on one lidar study; gable and hip share a range (`ROOF-03`) | tilt is a range, and with the unconfirmed ridge direction it is the main spread in the solar yield |
 | Most useful lives (`COST-02`) | flagged placeholders; five are sourced |
 | Rent uplift (`VAL-02`) | a stub; value uplift has no rent component |
+| Installed cost of an electrical service upgrade, the `added_cost_usd` on an `electrical.service` flag of `likely_upgrade` | an estimate carried as a range, 2,250 / 3,000 / 4,500 USD (the COST-00 range rule around 3,000), with the flag's message saying it is not sourced. When the signal is only grounded outlets, 0 / 1,500 / 4,500 |
+| Hours of a home thermostat setback (`DEF-08`) | nights 22:00 to 06:00 and weekdays 08:00 to 18:00, this project's judgment; only used when a home has a setback, so baselines are unaffected |
 | Fire-code roof setbacks: the residential code section for the house and Houston's local adoption | setback values flagged unverified (physics 01 section 8) |
 
 ## 8. Open items that cross files

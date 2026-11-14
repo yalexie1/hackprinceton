@@ -112,7 +112,7 @@ What is data and what is an assumption:
 | Outlets: two-prong, three-prong, GFCI; main panel if visible | panoramas | wiring-age cue, service flag |
 | Roof: roof outline and usable area, trees | Vexcel ortho and obliques via SAM 3, label `roof` | roof masks. Obstruction counts and existing solar come from Vexcel's precomputed `roof-objects` and `solar` attributes, not from SAM 3 |
 
-Outlet type and wall material are cues, not proof. They move an assumption's range and confidence; they never set a hard fact. The items that decide solar installation are service panel capacity and roof structure, so those are reported as `likely_ok`, `likely_upgrade`, or `unknown`.
+Outlet type and wall material are cues, not proof. They move an assumption's range and confidence; they never set a hard fact. The items that decide solar installation are service panel capacity and roof structure, so those are reported as `likely_ok`, `likely_upgrade`, or `unknown`. A fourth value, `blocked`, is for a cue that rules a measure out on site rather than adding cost, for example a water heater in a closet too small for a heat pump unit (`dhw.space`, which blocks `DHW_HPWH`). Each `likely_upgrade` carries `added_cost_usd` as a range.
 
 ### 5.3 When the agent asks the user
 
@@ -206,9 +206,9 @@ Limits the physics spec puts on this table (`specs/physics/02-thermal-systems.md
 
 ### 6.4 Desk placement (office flow, `LAYOUT`)
 
-1. Candidate desk positions on a 0.5 m grid inside rooms classed as work areas, at least 0.6 m from walls and clear of door swings.
+1. Candidate desk positions on a 0.5 m grid inside rooms classed as work areas, at least 0.6 m from walls and clear of door swings. Office scans carry no room labels, so an unlabelled room counts as a work area; a room whose label names a bathroom, kitchen, closet, hall or stair does not. The door clearance is each door opening widened by the door width plus 0.6 m, kept clear under both readings of `Opening.relative_center` while the measuring vertex is unconfirmed (physics.md section 8).
 2. For each candidate: daylight availability, glare risk for a seated viewer, and thermal comfort near glazing (`physics.md`, daylight, glare and comfort modules).
-3. Score and choose the top N positions with a minimum spacing, N from the user or from area per person.
+3. Score and choose the top N positions with a minimum spacing of 2.0 m (a design choice, not physics), N from the user, else from `Systems.occupants`, else from work area at 8 m² per desk. No desk is recommended where the radiant asymmetry from glazing reaches 10 K (physics 03, CMF).
 4. Savings come from lighting energy displaced where daylight targets are met, and are reported like any other measure, with zero cost. They are claimed in full only where automatic daylight control exists or `LGT_CTRL` is in the plan. Without it, moving a desk saves energy only if people switch the lights off, so the saving is shown as a potential range from zero to the automatic-control figure; the midpoint used as expected has no published source and is flagged as an assumption (`specs/physics/03-daylight-comfort.md`, LCT-02).
 
 The home flow uses the same engine for a home-office desk or reading spot.

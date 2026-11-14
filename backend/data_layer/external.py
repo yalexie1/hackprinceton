@@ -75,7 +75,15 @@ def _default_get(url: str, params: dict) -> dict:
 # ---------- weather ----------
 
 def weather_path(sid: str) -> str:
-    return f"data/cache/{sid}/weather/typical_year_hourly.csv"
+    """Where the hourly CSV lives, as the string `ClimateSite.weather_path` carries.
+
+    Routed through D4's cache root so `DATA_LAYER_CACHE_DIR` actually redirects it -
+    the hard-coded `data/cache/...` meant a temporary cache still had 8,760 rows
+    written into the real one. `cache.relative` keeps the value repo-relative in the
+    default case, so the contract field is unchanged, and `get_asset` resolves an
+    absolute path too, with its containment check following the same root.
+    """
+    return cache.relative(cache.cache_root() / sid / "weather" / "typical_year_hourly.csv")
 
 
 def hourly_csv(payload: dict) -> str:
@@ -174,7 +182,8 @@ def get_climate_site(
     if write:
         # Atomic: a plain `write_text` interrupted part way leaves 8,760 rows of
         # half a CSV that the next run happily reads as a complete year.
-        cache.atomic_write_path(_ROOT / rel, hourly_csv(payload).encode())
+        target = Path(rel) if Path(rel).is_absolute() else _ROOT / rel
+        cache.atomic_write_path(target, hourly_csv(payload).encode())
     notes.append(FetchRecord(
         layer="weather", what="open-meteo/archive",
         status="ok" if rows >= 8760 else "fallback",

@@ -53,7 +53,15 @@ from . import cache, index
 
 _ROOT = Path(__file__).resolve().parents[2]
 _EXAMPLES = _ROOT / "specs" / "examples"
-_CACHE = _ROOT / "data" / "cache"
+#: Overridden by tests via `monkeypatch.setattr(api, "_CACHE", tmp_path)`. `None`
+#: means "ask D4", which honours `DATA_LAYER_CACHE_DIR` - without that, a runbook or
+#: a test asking for a temporary cache still wrote bundles and weather files into the
+#: real one, which is how a test asserting a cache file's *absence* came to fail.
+_CACHE: Optional[Path] = None
+
+
+def _cache_dir() -> Path:
+    return _CACHE if _CACHE is not None else cache.cache_root()
 
 #: The calendar year fetched for the hourly weather file. One real year, not a TMY -
 #: see D9. Pinned so a bundle is reproducible.
@@ -202,7 +210,7 @@ def scans_for_property(sid: str) -> list[PropertySummary]:
 
 
 def _bundle_cache_path(sid: str) -> Path:
-    return _CACHE / sid / "bundle.json"
+    return _cache_dir() / sid / "bundle.json"
 
 
 def _fixture_bundle(sid: str) -> PropertyBundle:
@@ -543,8 +551,8 @@ def get_asset(path: str) -> bytes:
     raises `FileNotFoundError` - the server should answer that with 404.
     """
     target = (_ROOT / path).resolve() if not Path(path).is_absolute() else Path(path).resolve()
-    cache = _CACHE.resolve()
-    if not target.is_relative_to(cache):
+    cache_root = _cache_dir().resolve()
+    if not target.is_relative_to(cache_root):
         raise ValueError(f"path outside the cache directory: {path}")
     if not target.is_file():
         raise FileNotFoundError(f"not cached: {path}")

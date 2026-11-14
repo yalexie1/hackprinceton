@@ -85,8 +85,11 @@ you need it (read_run_file):
      If it returned none, ask nothing.
   6. You: write report.md last, only from the run files. Read /run/plan.json, /run/measures.json and
      /run/baseline.json with read_run_file, then write a short plain summary of the property, the baseline,
-     the selected measures with cost and saving, what is financeable, and what was skipped and why. Say whether the model was calibrated to the bills (baseline.json: calibrated_to_bills; copy the fit figures
-     from its calibration) or that the savings are uncalibrated estimates when it was not. Copy each
+     the selected measures with cost and saving, what is financeable, and what was skipped and why. Say the order
+     the plan follows (operations, then load reduction, then equipment, then solar last), and when solar is
+     skipped, shrunk or only financeable say why (not cost-effective, or no budget left). Say whether the model
+     was calibrated to the bills (baseline.json: calibrated_to_bills; copy the fit figures from its calibration)
+     or that the savings are uncalibrated estimates when it was not. Copy each
      figure from those files with the same digits and units. Then run check_report on the draft; if it lists
      a number, replace it with the value from the file or delete the sentence, and check again.
   7. reviewer: last. It reads plan.json and report.md in its own context, runs check_report and compares the

@@ -132,17 +132,34 @@ def test_every_measure_in_the_plan_lists_formula_ids_and_is_accounted_for(flavor
     assert plan.selected[0].remaining_budget_usd <= plan.budget_usd
 
 
-def test_the_house_plan_keeps_the_examples_solar_design_on_the_real_physics():
+def test_the_house_plan_follows_the_consultant_rule_on_the_real_physics():
+    from backend.analysis.finance.plan import STEP_OF
     bundle, request = load("house")
     plan = api.build_plan(bundle, model_of(bundle, request), request)
-    ids = [i.measure.measure_id for i in plan.selected]
-    paid = [i for i in ids if i != "LAYOUT"]                                    # the zero-cost desk layout comes first
-    assert paid[:2] == ["PV_ROOF", "LGT_LED"]                                   # the example's picks, in its order
-    pv = next(i.measure for i in plan.selected if i.measure.measure_id == "PV_ROOF")
-    assert pv.solar.system_kw_dc == 2.15 and pv.solar.panel_count == 5          # sized to the budget, as in the example
-    assert pv.savings.cost_usd.expected == pytest.approx(942.08, rel=0.2)
+    steps = [STEP_OF.get(i.measure.measure_id, 2) for i in plan.selected]
+    assert steps == sorted(steps) and plan.selected                              # operations, then load, then equipment, then solar
     assert plan.selected[-1].cumulative_upfront_usd <= plan.budget_usd
-    assert {"ENV_ATTIC", "HVAC_HP"} <= {m.measure_id for m in plan.financeable}   # the example's financeable pair
+    for i in plan.selected:                                                      # every pick breaks even
+        f = i.measure.finance
+        assert f.net_upfront_usd.expected <= 0 or f.sir is None or f.sir >= 1.0, i.measure.measure_id
+    for m in plan.financeable:                                                   # and so does everything offered for financing
+        assert m.finance.sir is None or m.finance.sir >= 1.0, m.measure_id
+    skipped = {s.measure_id: s for s in plan.skipped}
+    for s in skipped.values():
+        if s.reason == "not_cost_effective":
+            assert s.measure_id not in {m.measure_id for m in plan.financeable} and "SIR" in s.detail
+    ids = {i.measure.measure_id for i in plan.selected}
+    assert "PV_ROOF" in ids | {m.measure_id for m in plan.financeable} | set(skipped)     # solar is accounted for, last
+
+
+def test_with_a_large_budget_solar_is_sized_last_to_the_best_npv_and_the_rest_comes_first():
+    bundle, request = load("house")
+    big = request.model_copy(update={"budget_usd": 60_000.0})
+    plan = api.build_plan(bundle, model_of(bundle, request), big)
+    ids = [i.measure.measure_id for i in plan.selected]
+    assert ids[-1] == "PV_ROOF"                                                  # generation comes last
+    pv = plan.selected[-1].measure
+    assert pv.solar.system_kw_dc >= 2.0 and pv.finance.sir >= 1.0
 
 
 def test_a_tenant_never_gets_an_owner_only_measure():
@@ -181,7 +198,8 @@ def test_without_market_data_the_plan_has_no_uplift():
 
 
 def test_a_home_carries_its_uplift_on_owned_rooftop_solar_only():
-    bundle, plan = plan_of("house")
+    bundle, request = load("house")
+    plan = api.build_plan(bundle, model_of(bundle, request), request.model_copy(update={"budget_usd": 60_000.0}))
     assert plan.value_uplift is None
     pv = next(i.measure for i in plan.selected if i.measure.measure_id == "PV_ROOF")
     assert pv.value_uplift.method == "VAL-03" and pv.value_uplift.value_usd.low == 0.0

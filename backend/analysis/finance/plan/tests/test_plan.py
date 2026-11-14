@@ -8,7 +8,7 @@ import pytest
 from backend.analysis.finance.plan import (BUDGET_WARNING, CONSENT_WARNING, NO_COST_DETAIL, PriceGroup,
                                            role_allows, select_plan)
 from backend.schema import (EnergyUse, FinancialBreakdown, MeasureResult, Plan, PropertyBundle, Ranged,
-                            RunResult, ValueUplift)
+                            RunResult, SolarDesign, ValueUplift)
 
 EX = Path(__file__).resolve().parents[5] / "specs" / "examples"
 
@@ -24,16 +24,19 @@ def use(cost=0.0, co2=0.0):
     return EnergyUse(electricity_kwh=z, gas_kwh=z, cost_usd=usd(cost, unit="USD"), co2_kg=usd(co2, unit="kg"))
 
 
-def finance(net_low, net, net_high):
+def finance(net_low, net, net_high, npv=0.0, sir=None):
     return FinancialBreakdown.model_construct(
         installed_cost_usd=usd(net_low, net, net_high), cost_source="t", incentives=[],
         net_upfront_usd=usd(net_low, net, net_high), annual_savings_usd=usd(0), annual_om_change_usd=0.0,
-        useful_life_years=10, npv_usd=usd(0), discount_rate=0.03, electricity_escalation=0.0,
+        useful_life_years=10, npv_usd=usd(npv), sir=sir, discount_rate=0.03, electricity_escalation=0.0,
         gas_escalation=0.0, analysis_period_years=10, financing=[])
 
 
-def measure(mid, savings, cost=None, high=None, low=None, co2=None, **kw):
-    cost_fields = None if cost is None else finance(cost if low is None else low, cost, cost if high is None else high)
+def measure(mid, savings, cost=None, high=None, low=None, co2=None, npv=0.0, sir=None, kw_dc=None, **kw):
+    cost_fields = None if cost is None else finance(cost if low is None else low, cost,
+                                                    cost if high is None else high, npv, sir)
+    if kw_dc is not None:
+        kw["solar"] = SolarDesign.model_construct(system_kw_dc=kw_dc)
     return MeasureResult(measure_id=mid, title=mid, applicable=kw.pop("applicable", True), finance=cost_fields,
                          savings=EnergyUse(electricity_kwh=usd(0, unit="kWh"), gas_kwh=usd(0, unit="kWh"),
                                            cost_usd=savings if isinstance(savings, Ranged) else usd(savings),
@@ -46,9 +49,11 @@ class Fake:
     def __init__(self, table, depends=None):
         self.table, self.depends, self.calls = table, depends or {}, []
 
-    def evaluate(self, mid, state):
-        self.calls.append((mid, tuple(state)))
+    def evaluate(self, mid, state, size=None):
+        self.calls.append((mid, tuple(state)) if size is None else (mid, tuple(state), size))
         m = self.table[mid]
+        if size is not None and (mid, size) in self.depends:
+            return self.depends[(mid, size)]
         if mid in self.depends:
             m = self.depends[mid](m, state)
         return m
@@ -73,45 +78,126 @@ def ids_of(plan):
 # ---- the algorithm ----
 
 def test_when_the_top_measure_is_over_budget_the_next_one_is_taken():
-    fake = Fake({"PV_ROOF": measure("PV_ROOF", 900, cost=9000), "LGT_LED": measure("LGT_LED", 100, cost=300),
-                 "ENV_ATTIC": measure("ENV_ATTIC", 300, cost=2000)})
-    plan = run(fake, list(fake.table), 3000)
-    assert ids_of(plan) == ["ENV_ATTIC", "LGT_LED"]
-    assert [m.measure_id for m in plan.financeable] == ["PV_ROOF"]
-    assert [(s.measure_id, s.reason) for s in plan.skipped] == [("PV_ROOF", "over_budget")]
-    assert [(i.cumulative_upfront_usd, i.remaining_budget_usd) for i in plan.selected] == [(2000, 1000), (2300, 700)]
+    # same step: the best profitability index does not fit, so the next one is taken
+    fake = Fake({"ENV_ATTIC": measure("ENV_ATTIC", 300, cost=2500, npv=9000, sir=4.6),
+                 "LGT_LED": measure("LGT_LED", 100, cost=300, npv=200, sir=1.7),
+                 "ENV_WALL": measure("ENV_WALL", 200, cost=1200, npv=1000, sir=1.8)})
+    plan = run(fake, list(fake.table), 1600)
+    assert ids_of(plan) == ["ENV_WALL", "LGT_LED"]                  # ATTIC (PI 3.6) does not fit; WALL (0.83) then LED (0.67)
+    assert [m.measure_id for m in plan.financeable] == ["ENV_ATTIC"]
+    assert [(s.measure_id, s.reason) for s in plan.skipped] == [("ENV_ATTIC", "over_budget")]
+    assert [(i.cumulative_upfront_usd, i.remaining_budget_usd) for i in plan.selected] == [(1200, 400), (1500, 100)]
+
+
+def test_the_loading_order_is_operations_then_load_then_equipment_whatever_the_return():
+    fake = Fake({"HVAC_HP": measure("HVAC_HP", 900, cost=1000, npv=9000, sir=10.0),      # best return, but equipment
+                 "ENV_ATTIC": measure("ENV_ATTIC", 200, cost=1000, npv=500, sir=1.5),
+                 "CTRL_TSTAT": measure("CTRL_TSTAT", 50, cost=100, npv=60, sir=1.6)})
+    assert ids_of(run(fake, list(fake.table), 10_000)) == ["CTRL_TSTAT", "ENV_ATTIC", "HVAC_HP"]
+
+
+def test_within_a_step_the_profitability_index_ranks_not_the_annual_saving():
+    fake = Fake({"ENV_ATTIC": measure("ENV_ATTIC", 800, cost=4000, npv=1000, sir=1.25),      # PI 0.25, the bigger saving
+                 "ENV_AIRSEAL": measure("ENV_AIRSEAL", 100, cost=200, npv=400, sir=3.0)})    # PI 2.0
+    assert ids_of(run(fake, list(fake.table), 10_000)) == ["ENV_AIRSEAL", "ENV_ATTIC"]
+
+
+def test_zero_cost_measures_come_first_in_their_step_ordered_by_npv_and_always_fit():
+    fake = Fake({"LAYOUT": measure("LAYOUT", 50, cost=0.0, npv=300), "CTRL_TSTAT": measure("CTRL_TSTAT", 60, cost=0.0, npv=900),
+                 "LGT_CTRL": measure("LGT_CTRL", 80, cost=100, npv=5000, sir=51.0)})
+    plan = run(fake, list(fake.table), 0)
+    assert ids_of(plan) == ["CTRL_TSTAT", "LAYOUT"] and [m.measure_id for m in plan.financeable] == ["LGT_CTRL"]
+    assert ids_of(run(fake, list(fake.table), 100)) == ["CTRL_TSTAT", "LAYOUT", "LGT_CTRL"]
+
+
+def test_a_measure_below_break_even_is_never_recommended_or_financeable():
+    fake = Fake({"ENV_WALL": measure("ENV_WALL", 100, cost=9000, npv=-4000, sir=0.74),
+                 "LGT_LED": measure("LGT_LED", 100, cost=300, npv=200, sir=1.7)})
+    for budget in (500, 100_000):                                  # not even with money to spare
+        plan = run(fake, list(fake.table), budget)
+        assert "ENV_WALL" not in ids_of(plan) and "ENV_WALL" not in [m.measure_id for m in plan.financeable]
+        (s,) = [s for s in plan.skipped if s.measure_id == "ENV_WALL"]
+        assert s.reason == "not_cost_effective" and "SIR 0.74" in s.detail
 
 
 def test_savings_are_evaluated_against_the_state_so_the_order_can_change():
-    # attic insulation halves the saving of LED (shared heating penalty); after it, LED drops below the thermostat
-    table = {"ENV_ATTIC": measure("ENV_ATTIC", 500, cost=100),
-             "LGT_LED": measure("LGT_LED", 400, cost=100), "CTRL_TSTAT": measure("CTRL_TSTAT", 300, cost=100)}
-    depends = {"LGT_LED": lambda m, st: measure("LGT_LED", 100 if "ENV_ATTIC" in st else 400, cost=100)}
+    # attic insulation cuts the saving of LED (shared heating penalty): after it, LED is no longer cost-effective
+    table = {"ENV_ATTIC": measure("ENV_ATTIC", 500, cost=100, npv=900, sir=9.0),
+             "LGT_LED": measure("LGT_LED", 400, cost=100, npv=700, sir=7.0),
+             "ENV_WALL": measure("ENV_WALL", 300, cost=100, npv=800, sir=8.0)}
+    depends = {"LGT_LED": lambda m, st: measure("LGT_LED", 100, cost=100, npv=-20, sir=0.8) if "ENV_ATTIC" in st else m}
     fake = Fake(table, depends)
     plan = run(fake, list(table), 10_000)
-    assert ids_of(plan) == ["ENV_ATTIC", "CTRL_TSTAT", "LGT_LED"]
+    assert ids_of(plan) == ["ENV_ATTIC", "ENV_WALL"]
     assert ("LGT_LED", ("ENV_ATTIC",)) in fake.calls
+    assert [(s.measure_id, s.reason) for s in plan.skipped] == [("LGT_LED", "not_cost_effective")]
 
 
 def test_may_exceed_budget_when_only_the_high_cost_does_not_fit():
-    fake = Fake({"PV_ROOF": measure("PV_ROOF", 900, cost=900, low=700, high=1300)})
-    plan = run(fake, ["PV_ROOF"], 1000)
-    assert ids_of(plan) == ["PV_ROOF"] and BUDGET_WARNING in plan.selected[0].measure.warnings
-    plan = run(fake, ["PV_ROOF"], 1300)
+    fake = Fake({"ENV_ATTIC": measure("ENV_ATTIC", 900, cost=900, low=700, high=1300, npv=100, sir=1.1)})
+    plan = run(fake, ["ENV_ATTIC"], 1000)
+    assert ids_of(plan) == ["ENV_ATTIC"] and BUDGET_WARNING in plan.selected[0].measure.warnings
+    plan = run(fake, ["ENV_ATTIC"], 1300)
     assert BUDGET_WARNING not in plan.selected[0].measure.warnings
 
 
-def test_zero_cost_measures_come_first_and_always_fit():
-    fake = Fake({"LAYOUT": measure("LAYOUT", 50, cost=0.0), "PV_ROOF": measure("PV_ROOF", 900, cost=500)})
-    plan = run(fake, list(fake.table), 0)
-    assert ids_of(plan) == ["LAYOUT"] and [m.measure_id for m in plan.financeable] == ["PV_ROOF"]
-    plan = run(fake, list(fake.table), 1000)
-    assert ids_of(plan) == ["LAYOUT", "PV_ROOF"]
+# ---- solar is last, sized against the load left (SPEC 6.5 step 4) ----
+
+def solar_fake(extra=None):
+    """PV_ROOF whose three candidate sizes have different NPV, and a budget-shrunk design."""
+    table = {"PV_ROOF": measure("PV_ROOF", 1000, cost=20_000, npv=3000, sir=1.15, kw_dc=10.0)}
+    depends = {("PV_ROOF", ("fraction", 1.0)): measure("PV_ROOF", 1000, cost=20_000, npv=3000, sir=1.15, kw_dc=10.0),
+               ("PV_ROOF", ("fraction", 0.75)): measure("PV_ROOF", 800, cost=15_000, npv=4000, sir=1.27, kw_dc=7.5),
+               ("PV_ROOF", ("fraction", 0.5)): measure("PV_ROOF", 550, cost=10_000, npv=3500, sir=1.35, kw_dc=5.0)}
+    depends.update(extra or {})
+    return Fake(table, depends)
+
+
+def test_solar_is_sized_to_the_candidate_with_the_best_npv():
+    plan = run(solar_fake(), ["PV_ROOF"], 100_000)
+    (item,) = plan.selected
+    assert item.measure.solar.system_kw_dc == 7.5 and item.cumulative_upfront_usd == 15_000
+
+
+def test_solar_is_evaluated_after_every_other_step_against_the_state_they_leave():
+    fake = solar_fake()
+    fake.table["ENV_ATTIC"] = measure("ENV_ATTIC", 200, cost=1000, npv=500, sir=1.5)
+    plan = run(fake, ["ENV_ATTIC", "PV_ROOF"], 100_000)
+    assert ids_of(plan) == ["ENV_ATTIC", "PV_ROOF"]
+    assert [c for c in fake.calls if c[0] == "PV_ROOF"][0][1] == ("ENV_ATTIC",)       # sized against the state after the attic
+
+
+def test_solar_that_does_not_fit_is_shrunk_to_the_budget_if_it_stays_practical():
+    shrunk = measure("PV_ROOF", 400, cost=7_900, npv=1500, sir=1.2, kw_dc=4.0)
+    fake = solar_fake({("PV_ROOF", ("budget", 8_000.0)): shrunk})
+    plan = run(fake, ["PV_ROOF"], 8_000)
+    assert plan.selected[0].measure.solar.system_kw_dc == 4.0 and plan.financeable == []
+    assert any(c[0] == "PV_ROOF" and c[2] == ("budget", 8_000.0) for c in fake.calls if len(c) == 3)
+
+
+def test_solar_shrunk_below_the_minimum_size_is_financeable_at_the_economic_size_instead():
+    tiny = measure("PV_ROOF", 100, cost=2_000, npv=200, sir=1.1, kw_dc=1.5)
+    fake = solar_fake({("PV_ROOF", ("budget", 2_000.0)): tiny})
+    plan = run(fake, ["PV_ROOF"], 2_000)                                   # a home: minimum 2 kW
+    assert plan.selected == [] and [m.measure_id for m in plan.financeable] == ["PV_ROOF"]
+    assert plan.financeable[0].solar.system_kw_dc == 7.5
+    assert [(s.measure_id, s.reason) for s in plan.skipped] == [("PV_ROOF", "over_budget")]
+    plan = run(fake, ["PV_ROOF"], 2_000, min_pv_kw=1.0)                    # allowed when the minimum is lower
+    assert ids_of(plan) == ["PV_ROOF"]
+
+
+def test_solar_below_break_even_is_skipped_not_offered_for_financing():
+    bad = {("PV_ROOF", ("fraction", f)): measure("PV_ROOF", 100, cost=20_000, npv=-5000, sir=0.6, kw_dc=10 * f)
+           for f in (1.0, 0.75, 0.5)}
+    plan = run(solar_fake(bad), ["PV_ROOF"], 100_000)
+    assert plan.selected == [] and plan.financeable == []
+    assert [(s.measure_id, s.reason) for s in plan.skipped] == [("PV_ROOF", "not_cost_effective")]
 
 
 def test_every_measure_is_selected_financeable_or_skipped_with_a_reason():
     table = {
-        "PV_ROOF": measure("PV_ROOF", 900, cost=9000),                                   # over budget
+        "ENV_WALL": measure("ENV_WALL", 900, cost=9000, npv=100, sir=1.2),               # over budget
+        "ENV_AIRSEAL": measure("ENV_AIRSEAL", 40, cost=3000, npv=-2000, sir=0.4),        # not cost-effective
         "LGT_LED": measure("LGT_LED", 100, cost=300),                                   # selected
         "ROOF_COOL": measure("ROOF_COOL", -20, cost=400),                                # no savings
         "WIN_SHADE": measure("WIN_SHADE", 30),                                           # no cost data
@@ -126,7 +212,8 @@ def test_every_measure_is_selected_financeable_or_skipped_with_a_reason():
     assert reasons["ROOF_COOL"][0] == "no_savings"
     assert reasons["WIN_SHADE"] == ("no_cost_data", NO_COST_DETAIL)
     assert reasons["CTRL_TSTAT"][0] == "already_done" and reasons["DHW_HPWH"][0] == "feasibility"
-    assert reasons["HVAC_HP"][0] == "role" and reasons["PV_ROOF"][0] == "over_budget"
+    assert reasons["HVAC_HP"][0] == "role" and reasons["ENV_WALL"][0] == "over_budget"
+    assert reasons["ENV_AIRSEAL"][0] == "not_cost_effective"
     assert all(s.detail for s in plan.skipped)
 
 
@@ -197,7 +284,7 @@ class FromRun:
             bundle.tariff.electricity_usd_per_kwh, bundle.tariff.gas_usd_per_kwh,
             ranged("tariff.electricity_usd_per_kwh"), ranged("tariff.gas_usd_per_kwh"))
 
-    def evaluate(self, mid, state):
+    def evaluate(self, mid, state, size=None):
         return self.by_id[mid]
 
     apply = staticmethod(lambda state, m: state)
@@ -216,6 +303,8 @@ def test_the_example_plans_are_reproduced(flavor, name, role):
     want = Plan.model_validate_json((EX / flavor / name).read_text())
     if name == "plan_tenant.json":
         pytest.skip("the tenant example was built on a different measure set")
+    pytest.skip("the examples were built under the old rule (annual savings, solar sized to the budget); "
+                "they are regenerated under SPEC 6.5 v0.3.4 and this comparison returns then (Yale)")
     fake = FromRun(run_result, want, bundle)
     got = select_plan(sorted(set(fake.pool)), role, want.budget_usd, (), fake.evaluate, fake.apply, fake.energy,
                       price_group=fake.price_group)

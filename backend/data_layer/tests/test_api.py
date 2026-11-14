@@ -135,3 +135,71 @@ def test_no_network_imports():
     src = (Path(api.__file__)).read_text()
     for forbidden in ("requests.", "httpx.", "urllib.request", "socket."):
         assert forbidden not in src, f"{forbidden} present in the D5 stub"
+
+
+# ---------- live assembly, D5 live (issue #104) ----------
+
+def test_offline_is_the_default_and_says_so():
+    """Six modules import this door and the suite must stay offline, so `live`
+    defaults off and the bundle records that it was replayed."""
+    bundle = api.get_property_bundle(SIDS[0])
+    replayed = [r for r in bundle.provenance
+                if r.status == "fallback" and "specs/examples" in (r.detail or "")]
+    assert replayed, "a fixture replay must be labelled as one"
+
+
+def test_a_cached_live_bundle_never_leaks_into_the_offline_path(tmp_path, monkeypatch):
+    """Regression guard. The cache is for the live path only: if the offline path
+    read it, a machine that had once assembled live data would silently test against
+    that instead of the fixtures."""
+    monkeypatch.setattr(api, "_CACHE", tmp_path)
+    sid = SIDS[0]
+    fake = api.get_property_bundle(sid)
+    fake.summary.name = "CACHED LIVE VALUE"
+    target = tmp_path / sid
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "bundle.json").write_text(fake.model_dump_json())
+
+    offline = api.get_property_bundle(sid, live=False)
+    assert offline.summary.name != "CACHED LIVE VALUE"
+    # ...but the live path does serve it, which is SPEC 14's "second call from cache"
+    assert api.get_property_bundle(sid, live=True).summary.name == "CACHED LIVE VALUE"
+
+
+def test_env_var_selects_the_live_path(monkeypatch, tmp_path):
+    monkeypatch.setattr(api, "_CACHE", tmp_path)
+    monkeypatch.setenv("DATA_LAYER_LIVE", "1")
+    sid = SIDS[0]
+    seeded = api.get_property_bundle(sid, live=False)
+    seeded.summary.name = "FROM CACHE"
+    (tmp_path / sid).mkdir(parents=True, exist_ok=True)
+    (tmp_path / sid / "bundle.json").write_text(seeded.model_dump_json())
+    # DATA_LAYER_LIVE=1 means the cache is consulted without passing live=True
+    assert api.get_property_bundle(sid).summary.name == "FROM CACHE"
+
+
+def test_refresh_bypasses_the_cache(monkeypatch, tmp_path):
+    monkeypatch.setattr(api, "_CACHE", tmp_path)
+    sid = SIDS[0]
+    seeded = api.get_property_bundle(sid, live=False)
+    seeded.summary.name = "STALE"
+    (tmp_path / sid).mkdir(parents=True, exist_ok=True)
+    (tmp_path / sid / "bundle.json").write_text(seeded.model_dump_json())
+    assert api.get_property_bundle(sid, live=True).summary.name == "STALE"
+    calls = []
+    monkeypatch.setattr(api, "_assemble", lambda s: (calls.append(s), seeded)[1])
+    api.get_property_bundle(sid, live=True, refresh=True)
+    assert calls == [sid], "refresh must re-assemble rather than read the cache"
+
+
+def test_incomplete_bundle_carries_its_provenance():
+    from backend.schema import FetchRecord
+    notes = [FetchRecord(layer="tariff", what="eia/retail-sales", status="missing")]
+    err = api.IncompleteBundle("no tariff", notes)
+    assert err.provenance == notes
+    assert isinstance(err, RuntimeError)
+
+
+def test_use_type_mapping_covers_the_golden_properties():
+    assert api._USE_TYPE_BY_COSTAR["Office"] == "office"
+    assert api._USE_TYPE_BY_COSTAR["Detached"] == "single_family"

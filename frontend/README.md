@@ -1,6 +1,6 @@
 # Evergreen frontend
 
-Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.7**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
+Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.8**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
 
 ## Run
 
@@ -10,7 +10,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and two office examples from `specs/examples/`, followed by two frontend-owned UI sandboxes with three budget scenarios each. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
+Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and two office examples from `specs/examples/`. Invented UI stress fixtures are retained for development checks but are not offered in the property picker. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
 
 ## Readable interface
 
@@ -29,16 +29,16 @@ The renderer loads lazily when visible, pauses rendering offscreen/in background
 ## Demo walkthrough
 
 1. Select **5836 La Mirada Ave**, use its saved budget and role, and start the demo audit. This is the team's shared golden house example.
-2. Watch the shared event sequence, including a recoverable tool failure and an electrical-panel question. Choose an answer to resume the saved scenario. Demo answers do not recompute estimates.
+2. Watch the shared event sequence. Browser replay advances at 70 ms per event; “Show next question or result” fast-forwards without skipping a question. Choose an answer when asked to resume the saved scenario. Demo answers do not recompute estimates.
 3. Open the plan. Expand solar to see cost ranges, payback, NPV, life, incentives, and evidence. Review the explicit high-cost budget warning.
 4. Open **Solar & roof** and **Assumptions**. A property without desk candidates shows an empty state rather than invented layout data.
 5. In **Documents**, enter illustrative party names, select measures, approve drafting, and export the Markdown preview. Missing terms remain highlighted. Demo documents are unverified interface previews.
 6. Return to Properties and run the office marked **Shared contract example** at its saved budget and role. Inspect workspace candidates, financing eligibility and its stated reasons, and the separate property-value estimate. Shared example identity and budgets follow the team's imported files.
-7. For the budget-change demo, use the **Silver Lake house** or **Westside workspace** UI sandbox and switch between **$5,000**, **$15,000**, and **$30,000**. These are saved snapshots, not a browser physics calculation.
+7. For the judge presentation, follow [the Culver-first walkthrough](JUDGE_WALKTHROUGH.md). Review the returned plan and warnings after a budget change. Example replay retains its saved selection; recorded re-planning depends on the backend capability.
 
 ## Live integration
 
-The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Connect API**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure. The server controls `AGENT_MODE=replay|live`; connecting does not itself turn on live analysis. Replay returns saved examples, including their original measure selection, even when PATCH changes the request budget.
+The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Connect API**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure. The server controls `AGENT_MODE=replay|live`; connecting does not itself turn on live analysis. Example replay returns its original measure selection even when PATCH changes the request budget. Recorded-run re-planning is owned by the server; review returned warnings and the audit trail rather than assuming a fresh model run.
 
 Optional configuration goes in the **repository root `.env`** (Vite's envDir is the repo root):
 
@@ -61,14 +61,14 @@ Production builds use same-origin `/api` unless `VITE_API_BASE_URL` is set at bu
 - Run headers distinguish `data_source` (live/example/unknown property inputs) from `served_by` (live/replay/unknown delivery). A recording of live property data says “Live property data · Saved replay”; absent provenance is unknown and never implies live data. Connecting to the API alone does not establish either value.
 - The SSE endpoint emits JSON `RunEvent` data, either default or named events. Comments, CRLF, fragmented UTF-8, multiline data, and multiple events per chunk are supported. The server replays history from the beginning: the frontend retains a per-run cursor and skips consumed events on reconnect. An active run pauses on a new question, done, or non-recoverable error. If the authoritative run is already complete, it drains the finite history to its end so earlier questions/done events do not hide appended G11 re-plan events. Recoverable errors stay in the stream. It fetches the final run and reconnects after an answer/update. Transport failures expose a reconnect button for the same run. Unknown future event types are ignored.
 - Questions may be embedded directly in `event.payload` or under `event.payload.question`; the subsequent `RunResult.questions` is authoritative.
-- Structured todo events show backend progress. Approval questions show document/state/scope context and preserve boolean answers.
+- Structured todo events show their backend statuses only at that point in the stream. Once later activity arrives, their checklists collapse as historical snapshots; they do not remain frozen as current progress. Approval questions show document/state/scope context and preserve boolean answers.
 - Budget and assumption changes are sent to the backend. The UI never recomputes energy or financial results. All displayed estimate ranges come from the returned payloads.
 - Public data-quality warnings arrive through `RunResult.warnings`, `BaselineResult.warnings`, fallback/error events, and measure warnings. Fallback detail uses the backend's `fallback`, `layer`, `status`, `what` and `detail` fields. Long warnings expand in full. A `re-run:` warning identifies the earlier narrative as outdated.
 - Live role selection supports owner-occupier, landlord, and tenant. Optional utility history requires twelve non-negative monthly values, in kWh (gas as kWh thermal), with an optional first billing month. Office runs accept a requested desk count. Calibration shows per-fuel before/after bias and fit error, failed tolerances and warnings; an absent summary is explicitly uncalibrated.
 - Plans follow the backend's operations/load-reduction/equipment/solar order and distinguish `not_cost_effective` from budget exclusions. No browser economics or sizing replaces the selected marginal results.
 - `GET /api/runs/{id}/roof` supplies georeferenced planes, panels and detections. Missing/null ortho metadata or failed imagery leaves the supplied geometry visible. Parcel-bound overlays are labelled approximate; detection boxes are not treated as masks or summed footprint area. Workspace defaults to recommended positions and offers a precise position picker.
-- `GET /api/templates` always receives both state and property segment. Documents offers only returned types; `template_not_available` is an availability notice. Parties use the legal engine's `owner_names`/`contractor_name` fields, and both supported blank formats are highlighted. C-PACE scope retains selected marginal sizing and clearly labels additional financing-review measures. Template availability is not eligibility.
-- Narrative remains plain text. Documents render Markdown headings, tables and emphasis without executing HTML or loading external images; internal template comments are hidden, missing terms are highlighted, and the exported source is preserved. Parties and selected measures require explicit approval before drafting.
+- `GET /api/templates` always receives both state and property segment. Documents offers only returned types; `template_not_available` is an availability notice. Parties use the legal engine's `owner_names`/`contractor_name` fields. Connected drafts also accept eight optional verified fields for owner/contractor addresses, licence number, phone/cancellation email, agreed dates and contractor bid price. Missing values remain visible; estimates never fill the quoted price. Both supported blank formats are highlighted. C-PACE scope retains selected marginal sizing and clearly labels additional financing-review measures. Template availability is not eligibility.
+- Narratives and documents render safe Markdown headings, tables and emphasis without executing HTML or loading external images; internal template comments are hidden, missing terms are highlighted, and the exported source is preserved. Parties and selected measures require explicit approval before drafting.
 
 ### Matterport
 
@@ -86,7 +86,7 @@ SDK behavior on sponsor models remains unverified until configured browser SDK c
 
 1. The public roof route supplies aerial bounds and detections. A real workspace floorplan background still needs a public floorplan route; candidate positions use the supplied layout geometry.
 2. Window/roof anchors and SDK sweep identity need validation on the two real golden properties.
-3. Shared run results and event sequences are discovered under `specs/examples/*/` (currently `house`, `office`, and `office_houston`), without editing or copying the spec files. Additional frontend-owned sandboxes live in `frontend/fixtures/`. Both sources validate against the current Pydantic contract. Shared examples have one saved budget each; arbitrary budget and role changes require the live backend.
+3. Shared run results and event sequences are discovered under `specs/examples/*/` (currently `house`, `office`, and `office_houston`), without editing or copying the spec files. Additional frontend-owned stress fixtures live in `frontend/fixtures/`, outside the default property picker. Both sources validate against the current Pydantic contract. Shared examples have one saved budget each; arbitrary budget and role changes require the live backend.
 4. The financial breakdown and legal checklist depend on the analysis/legal owners. This frontend supplies no production pricing, physics, incentive rules, or statutory contract language.
 
 ## Checks

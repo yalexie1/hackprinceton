@@ -29,7 +29,8 @@ const fixtures = [
   property: PropertySummary;
   runs: Record<string, RunResult>;
 }[];
-export const demoProperties = fixtures.map((f) => f.property);
+// Invented UI stress fixtures remain available to tests, outside the property picker.
+export const demoProperties = sharedRuns.map((run) => run.property);
 export function demoShowcaseRun() {
   return demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
 }
@@ -49,6 +50,7 @@ export function demoRun(sid: string, budget: number): RunResult {
       "Choose one of the saved demo budgets. Custom budgets are available in live mode.",
     );
   const result = structuredClone(run);
+  result.served_by = "replay";
   if (!result.warnings.some((warning) => /illustrative/i.test(warning)))
     result.warnings.unshift(
       "Illustrative shared contract example; not a live building analysis.",

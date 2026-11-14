@@ -17,7 +17,7 @@ import type { EnergyPart, EnergyPoint } from "../lib/energy-explorer";
 import type { RunResult } from "../lib/types";
 import EnergyOverlay from "./EnergyOverlay";
 
-const rooms: {
+const homeRooms: {
   id: HouseRoom;
   name: string;
   title: string;
@@ -49,6 +49,32 @@ const rooms: {
     icon: "03",
   },
 ];
+const officeRooms = [
+  {
+    id: "living" as const,
+    name: "Work area",
+    title: "A more comfortable workday.",
+    detail:
+      "Explore the concept work area. Lighting, windows and operating schedules affect energy use and comfort.",
+    icon: "01",
+  },
+  {
+    id: "bedroom" as const,
+    name: "Upper floor",
+    title: "Look inside the building envelope.",
+    detail:
+      "Inspect the upper floor of this concept office. The actual scan and audit determine which spaces and upgrades are available.",
+    icon: "02",
+  },
+  {
+    id: "roof" as const,
+    name: "Roof & solar",
+    title: "Explore the roof’s potential.",
+    detail:
+      "This is a concept roof. Open Solar & roof for the property’s analyzed roof geometry, imagery and solar findings.",
+    icon: "03",
+  },
+];
 
 export default function HouseViewer({
   compact = false,
@@ -71,6 +97,7 @@ export default function HouseViewer({
   const [status, setStatus] = useState<"loading" | "ready" | "unavailable">(
     "loading",
   );
+  const rooms = office ? officeRooms : homeRooms;
   const selected = rooms.find((r) => r.id === room);
   const current = useRef({ mode, rotating });
   current.current = { mode, rotating };
@@ -147,7 +174,11 @@ export default function HouseViewer({
           <div className="explorer-caption">
             <span className="status-dot" />
             <span>
-              {run?.plan ? "YOUR BUILDING, REIMAGINED" : "THE EVERGREEN HOUSE"}
+              {run?.plan
+                ? "YOUR BUILDING, REIMAGINED"
+                : office
+                  ? "THE EVERGREEN OFFICE"
+                  : "THE EVERGREEN HOUSE"}
               <small>
                 {run?.plan
                   ? "EXPLORE THE ENERGY UPGRADES"
@@ -155,7 +186,7 @@ export default function HouseViewer({
               </small>
             </span>
           </div>
-          <div className="view-switch" role="group" aria-label="House view">
+          <div className="view-switch" role="group" aria-label="Building view">
             {(
               [
                 ["exterior", "Exterior", Box],
@@ -183,7 +214,7 @@ export default function HouseViewer({
         aria-label={
           compact
             ? `Architectural preview of an illustrative ${office ? "office" : "house"}`
-            : `Interactive 3D house in ${mode} view. Use the view, room, rotate and zoom buttons to explore.`
+            : `Interactive concept ${office ? "office" : "house"} in ${mode} view. Use the view, room, rotate and zoom buttons to explore.`
         }
       />
       {status === "loading" && (

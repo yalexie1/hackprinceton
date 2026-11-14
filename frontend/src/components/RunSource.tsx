@@ -19,9 +19,11 @@ export default function RunSource({ run }: { run: RunResult }) {
         <span>
           {delivery === "replay"
             ? "Saved replay"
-            : delivery === "live"
-              ? "Live run"
-              : "Delivery mode unknown"}
+            : delivery === "analysis"
+              ? "Computed analysis"
+              : delivery === "live"
+                ? "Live run"
+                : "Delivery mode unknown"}
         </span>
       </div>
       <p>
@@ -30,7 +32,9 @@ export default function RunSource({ run }: { run: RunResult }) {
           : source === "live"
             ? delivery === "replay"
               ? "A recorded analysis of live property data. Viewing it does not run a fresh analysis."
-              : "This analysis uses live property data, as reported by the analysis service."
+              : delivery === "analysis"
+                ? "Computed for this request using live property data, your budget and your role. No agent narration is used."
+                : "This analysis uses live property data, as reported by the analysis service."
             : "Property-data provenance has not been reported for this run."}
       </p>
     </section>

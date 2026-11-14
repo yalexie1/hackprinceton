@@ -55,6 +55,8 @@ import Documents from "./components/Documents";
 import Warnings, { AuditNarrative } from "./components/Warnings";
 import Calibration from "./components/Calibration";
 import RunSource from "./components/RunSource";
+import AuditTasks from "./components/AuditTasks";
+import { replayBatch } from "./lib/audit-replay";
 type View =
   | "find"
   | "setup"
@@ -262,36 +264,42 @@ export default function App() {
     setFirstMonth("");
     setDesks("");
   }
-  function pumpDemo() {
+  function pumpDemo(fast = false) {
+    if (timer.current) clearTimeout(timer.current);
     const current = epoch.current;
-    timer.current = setTimeout(() => {
-      if (current !== epoch.current) return;
-      const event = replay.current[step.current++];
-      if (!event) return;
-      setEvents((previous) => [...previous, event]);
-      if (event.type === "question") {
-        const q = (event.payload.question ||
-          event.payload) as unknown as Question;
-        const pending = q.id && q.choices ? q : demoQuestion;
-        setQuestion(pending);
-        setBusy(false);
-        setRun(
-          (previous) =>
-            previous && {
-              ...previous,
-              status: "waiting_for_user",
-              questions: [pending],
-            },
-        );
-        return;
-      }
-      if (event.type === "done") {
-        setRun(savedRun.current);
-        setBusy(false);
-        return;
-      }
-      pumpDemo();
-    }, 300);
+    timer.current = setTimeout(
+      () => {
+        if (current !== epoch.current) return;
+        const { batch, next } = replayBatch(replay.current, step.current, fast);
+        step.current = next;
+        const event = batch.at(-1);
+        if (!event) return;
+        setEvents((previous) => [...previous, ...batch]);
+        if (event.type === "question") {
+          const q = (event.payload.question ||
+            event.payload) as unknown as Question;
+          const pending = q.id && q.choices ? q : demoQuestion;
+          setQuestion(pending);
+          setBusy(false);
+          setRun(
+            (previous) =>
+              previous && {
+                ...previous,
+                status: "waiting_for_user",
+                questions: [pending],
+              },
+          );
+          return;
+        }
+        if (event.type === "done") {
+          setRun(savedRun.current);
+          setBusy(false);
+          return;
+        }
+        pumpDemo();
+      },
+      fast ? 0 : 70,
+    );
   }
   async function watch(id: string, current: number) {
     const abort = new AbortController();
@@ -924,6 +932,14 @@ export default function App() {
                             : "Disconnected"}
                     </span>
                   </div>
+                  {demo && busy && !question && (
+                    <button
+                      className="secondary-button"
+                      onClick={() => pumpDemo(true)}
+                    >
+                      Show next question or result <ArrowRight size={16} />
+                    </button>
+                  )}
                   <div
                     className="event-list"
                     aria-live="polite"
@@ -953,7 +969,9 @@ export default function App() {
                                   "Audit update",
                               )}
                           </p>
-                          {event.type === "todo" &&
+                          {!done &&
+                            i === events.length - 1 &&
+                            event.type === "todo" &&
                             typeof event.payload.done === "number" &&
                             typeof event.payload.total === "number" &&
                             event.payload.total > 0 && (
@@ -970,28 +988,13 @@ export default function App() {
                                 <p>{event.payload.detail}</p>
                               </details>
                             )}
-                          {event.type === "todo" &&
-                            Array.isArray(event.payload.todos) && (
-                              <ul className="event-todos">
-                                {event.payload.todos.map((raw, i) => {
-                                  const task = raw as {
-                                    content?: unknown;
-                                    status?: unknown;
-                                  };
-                                  return (
-                                    <li key={i}>
-                                      <span className="status-dot" />
-                                      {String(task.content || "Audit task")}
-                                      <small>
-                                        {String(
-                                          task.status || "pending",
-                                        ).replaceAll("_", " ")}
-                                      </small>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            )}
+                          {event.type === "todo" && (
+                            <AuditTasks
+                              event={event}
+                              finished={done}
+                              archived={i < events.length - 1}
+                            />
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1223,15 +1226,19 @@ export default function App() {
                           disabled={busy}
                         >
                           <RotateCcw size={14} />
-                          Update plan
+                          {run.served_by === "replay"
+                            ? "Update budget"
+                            : "Update plan"}
                         </button>
                       )}
                       <small>
                         {demo
                           ? budgets.length === 1
-                            ? "This shared example has one saved budget. Use a UI sandbox to compare budgets, or connect to live mode."
+                            ? "This example has one saved budget. A live analysis is needed to compare a different budget."
                             : "Switch between saved budget scenarios."
-                          : "Changing your budget reruns the backend analysis."}
+                          : run.served_by === "replay"
+                            ? "Budget changes go to the API. Review the returned plan and warnings; a saved replay may keep its recorded selection."
+                            : "Changing your budget reruns the backend analysis."}
                       </small>
                     </form>
                     <p className="budget-rule">

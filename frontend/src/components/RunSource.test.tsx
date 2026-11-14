@@ -6,6 +6,13 @@ import type { RunResult } from "../lib/types";
 import house from "../../../specs/examples/house/run_result.json";
 
 describe("run provenance", () => {
+  it("distinguishes computed analysis from both agent runs and recorded playback", () => {
+    const html = render("live", "analysis");
+    expect(html).toContain("Computed analysis");
+    expect(html).toContain("your budget and your role");
+    expect(html).not.toContain("Saved replay");
+    expect(html).not.toContain("Live run");
+  });
   function render(
     data_source: RunResult["data_source"],
     served_by: RunResult["served_by"],

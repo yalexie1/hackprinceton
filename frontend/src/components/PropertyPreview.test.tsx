@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { demoProperties } from "../lib/fixtures";
 import PropertyPreview, { PropertyPreviewImage } from "./PropertyPreview";
 import { propertyObliques } from "../lib/property-imagery";
+import { propertyViews } from "./PropertyViews";
 
 describe("property-specific imagery", () => {
   it("can use a connected listing’s reported coordinates without marking them as a verified scan", () => {
@@ -31,22 +32,37 @@ describe("property-specific imagery", () => {
     }
     expect(images.join("")).toContain("scan location");
   });
-  it("prefers an actual side-angle photo and does not put a north-up pin on it", () => {
-    const html = renderToStaticMarkup(
+  it("offers an actual side-angle photo, and carries no north-up pin on it", () => {
+    // This test used to assert the card *preferred* the side angle. The map is now the default
+    // view by product decision - it is the one view every locatable property has and it settles
+    // the grid in a single request - so the side angle is a click away rather than first. What
+    // has not changed, and is what this test defends: the photo is offered, it is credited to
+    // Vexcel, and the north-up pin belongs to the basemap only and must never be drawn over a
+    // survey photograph, whose centre is not the property's location.
+    const obliques = propertyObliques({
+      "oblique-south": "data/cache/vexcel-image/house/south.jpg",
+    });
+    const side = propertyViews(demoProperties[0], {
+      obliques,
+      ortho: null,
+    }).find((view) => view.kind === "oblique");
+    expect(side?.url).toBe("/api/assets/data/cache/vexcel-image/house/south.jpg");
+    expect(side?.caption).toBe("Side-angle aerial · south view");
+    expect(side?.credit).toBe("Vexcel aerial imagery");
+
+    // With no basemap location there is nothing to default to, so the photo renders - and then
+    // it must come with no pin.
+    const photoOnly = renderToStaticMarkup(
       <PropertyPreviewImage
-        property={demoProperties[0]}
-        obliques={propertyObliques({
-          "oblique-south": "data/cache/vexcel-image/house/south.jpg",
-        })}
+        property={{ ...demoProperties[0], sid: "unknown" }}
+        obliques={obliques}
       />,
     );
-    expect(html).toContain(
+    expect(photoOnly).toContain(
       "/api/assets/data/cache/vexcel-image/house/south.jpg",
     );
-    expect(html).toContain("Side-angle aerial · south view");
-    expect(html).toContain("Vexcel aerial imagery");
-    expect(html).not.toContain("property-location-pin");
-    expect(html).not.toContain("MapServer/export?");
+    expect(photoOnly).not.toContain("property-location-pin");
+    expect(photoOnly).not.toContain("MapServer/export?");
   });
   it("does not substitute a generic model or invented location when a property is unverified", () => {
     const html = renderToStaticMarkup(

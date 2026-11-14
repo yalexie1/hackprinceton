@@ -1,0 +1,3 @@
+# Legal drafting lane dependencies. Owned by the holder of package L0.
+pydantic>=2.7
+pytest>=8

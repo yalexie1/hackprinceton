@@ -2,7 +2,7 @@
 
 Owner: @Sri-SriPod (agent lane). Code: `backend/legal/`. Statutory research: `specs/legal/california.md` and `specs/legal/texas.md` (owner @yalexie1).
 
-Status: **draft v0.1, 2026-11-14.** Document 1 (California residential retrofit contract) is written in full. Documents 2 to 6 are listed with their purpose only and come next.
+Status: **draft v0.2, 2026-11-14.** Document 1 (California residential retrofit contract, Part A) and document 1T (Texas residential retrofit contract, Part B) are written in full. Documents 2 to 6 are listed with their purpose only and come next.
 
 > **Every generated document is a draft for attorney review, not legal advice.** Nothing in this file is legal advice either. The statute summaries below were read from unofficial mirrors of the California codes because the official site refused automated access (see the verification log). Before any document is signed, a California-licensed attorney must check it against the official text.
 
@@ -31,12 +31,14 @@ Used verbatim as `DocumentDraft.disclaimer` and printed at the top and bottom of
 | # | `DocType` | States | Status in this file |
 |---|---|---|---|
 | 1 | `retrofit_contract_residential` | CA | **written (section 4)** |
-| 1T | `retrofit_contract_residential` | TX | to do |
+| 1T | `retrofit_contract_residential` | TX | **written (Part B, sections 10 to 14)** |
 | 2 | `retrofit_contract_commercial` | CA, TX | to do |
 | 3 | `solar_installation_agreement` | CA, TX | to do. In CA, residential solar is also a home improvement (B&P §7151) and needs the §7169 solar disclosure on top of everything in document 1 |
 | 4 | `bid_package_rfp` | CA, TX | to do |
 | 5 | `energy_savings_guarantee` | CA, TX | to do. Addendum to 1 or 2 |
 | 6 | `cpace_package` | CA, TX, commercial only | to do. Gated on `FinancialBreakdown.sir` |
+
+# Part A. Document 1: California residential retrofit contract
 
 ## 3. Document 1, California: purpose and routing
 
@@ -64,8 +66,11 @@ The order below follows B&P §7159(c) and (d). The statute does not prescribe an
 **First-page block** (B&P §7159(c)(3)(B); Civ. Code §1689.7(b); type no smaller than the body)
 
 - Date the buyer signed: {{buyer_signature_date}}
-- Contractor: {{contractor_name}}, {{contractor_business_address}}, telephone {{contractor_phone}}
-- Notices of cancellation may be sent to the contractor at the address above or by email to {{contractor_cancellation_email}}.
+- The Notice of Cancellation may be sent to the contractor at the following address or email address: {{contractor_name}}, {{contractor_business_address}}, {{contractor_cancellation_email}}
+- Telephone number to call for help locating and filling out the Notice of Cancellation: {{contractor_phone}}
+
+<!-- order is fixed: the "may be sent" sentence must immediately precede the name, address and email (B&P §7159(c)(3)(B)(ii), CA-HIC-04) -->
+
 
 <!-- fmt: 10pt bold heading -->
 ### Home Improvement
@@ -122,7 +127,7 @@ Owner wants to reduce the energy use and energy cost of the home at the Property
 <!-- fmt: 10pt bold heading -->
 ### Approximate Start Date
 
-**4.8 Start.** {{stat_ca_commencement_statement}} Approximate start date: **{{start_date}}**.
+**4.8 Start.** Work is substantially commenced on the first day Contractor or its subcontractors perform physical work at the Property under Schedule A. Obtaining permits, ordering materials and delivering materials to the Property are not, on their own, commencement of work. Approximate start date: **{{start_date}}**.
 
 <!-- fmt: 10pt bold heading -->
 ### Approximate Completion Date
@@ -136,6 +141,7 @@ Owner wants to reduce the energy use and energy cost of the home at the Property
 - Schedule B: Progress payment stages (repeated from 4.6)
 - Schedule C: Energy analysis summary (for information, not binding)
 - Notice of Cancellation, in duplicate
+- Change Order form (blank; each completed change order repeats the subcontractor disclaimer if 4.11 is "Yes")
 - {{additional_incorporated_documents}}
 
 <!-- fmt: 10pt bold heading -->
@@ -145,7 +151,7 @@ Owner wants to reduce the energy use and energy cost of the home at the Property
 
 **4.10 Change orders.** A change to the work, the price or the dates is part of this contract only if it is written and signed by Owner and Contractor before the changed work starts. Each change order will state the scope of the change, the amount added to or subtracted from the Contract Price, and the effect on the progress payments and the completion date. {{subcontractor_disclaimer_on_change_orders}}
 
-{{stat_ca_extra_work_notice}}
+**Notice about extra work and change orders.** (A) You, the Owner, may not require Contractor to do extra work or change-order work unless you give written authorization before that work starts. (B) Extra work or a change order is not enforceable against you unless, before the work it covers starts, the change order states in writing (i) the scope of the work it covers, (ii) the amount added to or subtracted from the contract, and (iii) the effect it will have on the progress payments or the completion date. (C) If Contractor does not meet these requirements, Contractor may still be able to recover payment for work performed under legal or equitable remedies designed to prevent unjust enrichment.
 
 **4.11 Subcontractors.** Will Contractor use subcontractors on this project? {{subcontractor_yes_box}} Yes {{subcontractor_no_box}} No
 
@@ -196,11 +202,14 @@ Owner wants to reduce the energy use and energy cost of the home at the Property
 {{stat_ca_cslb_notice}}
 
 <!-- fmt: placed in close proximity to the signatures -->
-{{stat_ca_bond_notice}}
+**Performance and payment bond.** You, the {{owner_role_text}}, have the right to require Contractor to have a performance and payment bond.
 
 <!-- fmt: 12pt bold, immediately next to the buyer's signature, signed and dated by the buyer -->
-#### {{cancel_title}}
 {{stat_ca_right_to_cancel_notice}}
+<!-- the statutory block begins with its own title line ("Three-Day Right to Cancel" / "Five-Day Right to Cancel"); do not add a second heading -->
+<!-- omit this notice and the form if the contract was negotiated at the contractor's place of business (B&P §7159(e)(6)(A)); field negotiated_at_contractor_premises -->
+<!-- if attached rather than printed here, print stat_ca_right_to_cancel_attached_checkbox instead (CA-HIC-34) -->
+
 
 **Signatures**
 
@@ -323,22 +332,21 @@ Sources: **user** = `DocumentRequest.fields[name]`; a dotted path = a contract t
 | `sales_language` | user | no | default English. If not English: check `CA-R-15` fails with "contract must be in the language of the sales presentation; English draft only" |
 | `contractor_equipment_specs` | user | no | map `measure_id` → make, model, rating |
 | `contractor_signatory_name`, `contractor_signatory_title`, `contractor_signature_date` | user | yes | |
-| `cancel_title` | gen from `buyer_is_senior` | yes | "Three-Day Right to Cancel" or "Five-Day Right to Cancel" |
+| `cancel_title` | gen from `buyer_is_senior` | yes | "Three-Day Right to Cancel" or "Five-Day Right to Cancel"; used only in the signature line, the notice block carries its own title |
+| `negotiated_at_contractor_premises` | user | no | yes/no, default no. Yes → the cancel notice and Notice of Cancellation are omitted (B&P §7159(e)(6)(A)) and `CA-R-14` passes with that note |
+| `signing_method` | user | no | `paper` (default) or `electronic`; drives CA-R-29 |
 | `schedule_a_rows` | `Plan.selected[].measure`, `MeasureResult` | yes | 4.B |
 | `progress_payment_table` | gen | yes | 4.B |
 | `schedule_c_table` | `MeasureResult.finance` (`FinancialBreakdown`: `installed_cost_usd`, `cost_source`, `annual_savings_usd`, `simple_payback_years`, `incentives[]` with `status`) and `Plan.total_*` | yes | every figure shown as low / expected / high; incentives with `status` ≠ `verified` labelled "not confirmed" |
 | `stat_ca_entitled_to_copy` | stat | yes | B&P §7159(d)(4) |
 | `stat_ca_downpayment_cap` | stat | yes | B&P §7159(d)(8). Omitted if `contractor_bond_exempt` |
 | `stat_ca_progress_payment_notice` | stat | yes | B&P §7159(d)(9). Omitted if `contractor_bond_exempt` |
-| `stat_ca_commencement_statement` | stat | yes | B&P §7159(d)(10) |
 | `stat_ca_change_order_note` | stat | yes | B&P §7159(d)(13) |
-| `stat_ca_extra_work_notice` | stat | yes | B&P §7159(e)(3) |
 | `stat_ca_subcontractor_disclaimer_if_yes` | stat | if yes | B&P §7159(c)(7)(B) |
 | `stat_ca_cgl_statement` | stat, selected by `cgl_option` | yes | B&P §7159(e)(1) |
 | `stat_ca_workers_comp_statement` | stat, selected by `wc_option` | yes | B&P §7159(e)(2) |
 | `stat_ca_mechanics_lien_warning` | stat | yes | B&P §7159(e)(4). Omitted if `contractor_bond_exempt` |
 | `stat_ca_cslb_notice` | stat | yes | B&P §7159(e)(5), §7030(b) |
-| `stat_ca_bond_notice` | stat | yes | B&P §7159(c)(6) |
 | `stat_ca_right_to_cancel_notice` | stat, three- or five-day | yes | B&P §7159(e)(6); Civ. Code §1689.7(a)(4) |
 | `stat_ca_notice_of_cancellation_form` | stat | yes | B&P §7159(e)(6). Not Civ. Code §1689.7(c), which excludes §7151.2 contracts |
 | `stat_ca_arbitration_heading`, `stat_ca_arbitration_notice` | stat | if arbitration | B&P §7191 |
@@ -347,64 +355,61 @@ Sources: **user** = `DocumentRequest.fields[name]`; a dotted path = a contract t
 ## 6. Statutory checks (document 1, CA)
 
 Each row becomes one `StatutoryCheck`. Field mapping:
-- `requirement_id`: the statute file's requirement id (for example `CA-HIC-07`, `CA-CXL-01` in `specs/legal/california.md`). One check row may cover several statute ids; it then emits one `StatutoryCheck` per id, each with the same `satisfied` result. Until that file lands, `requirement_id` is the `CA-R-nn` id below.
+- `requirement_id`: each id in the last column (ids in `specs/legal/california.md`). A row with several ids emits one `StatutoryCheck` per id, each with the same `satisfied` result. A row with no statute id (CA-R-27) uses its `CA-R-nn` id.
 - `requirement`: the text in the Requirement column, prefixed with this file's `CA-R-nn` id.
-- `citation`: the statute section, as below. `satisfied` and `note` as below.
+- `citation`: the citation in `california.md` for that id (more precise than the summary column here). `satisfied` and `note` as below.
 
-Once `specs/legal/california.md` lands, a column mapping each `CA-R-nn` to its statute ids is added here, and the statute summaries in section 7 are trimmed to a pointer.
-
-| ID | Requirement | Citation | `satisfied` when |
-|---|---|---|---|
-| CA-R-00 | Contract is a home improvement contract over $500 and not a conforming service-and-repair contract | B&P §§7151.2, 7159(a)(2), 7159(b), 7159.10 | price > 500; else `true` with note that a simpler form may apply |
-| CA-R-01 | Contractor name, business address, licence number | B&P §§7159(d)(1), 7030.5 | all three filled |
-| CA-R-02 | Licensed for the whole of the work (an unlicensed contractor cannot sue for payment and may have to repay) | B&P §7031 | always `false`, note "verify licence on the CSLB site"; software cannot verify |
-| CA-R-03 | First page: buyer signature date, contractor name, address, email for cancellation, phone | B&P §7159(c)(3)(B); Civ. Code §1689.7(b) | first-page block present and filled |
-| CA-R-04 | "Home Improvement" heading, at least 10-point bold | B&P §7159(d)(3), (c)(2) | heading present; type size → export |
-| CA-R-05 | Statement that the buyer is entitled to a completely filled-in copy signed by both before work starts, 12-point bold | B&P §7159(d)(4), (c)(3)(A) | `stat_` text present |
-| CA-R-06 | Contract price in dollars and cents; finance charge set out separately | B&P §§7159(d)(5)-(6), 7159.5(a)(1)-(2) | price filled; finance charge separate if any |
-| CA-R-07 | Description of project, significant materials, equipment, under the statutory heading | B&P §7159(d)(7) | Schedule A non-empty |
-| CA-R-08 | Down payment ≤ lesser of $1,000 or 10% of the price; statutory statement in 12-point bold (unless bonded) | B&P §§7159(d)(8), 7159.5(a)(3), (a)(8) | numeric check passes and statement present, or bond exemption claimed |
-| CA-R-09 | Progress payments in dollars and cents, tied to work or materials, sum to the price | B&P §§7159(d)(9), 7159.5(a)(4) | sum check |
-| CA-R-10 | No payment beyond the value of work done or materials delivered; statutory statement in 12-point bold | B&P §§7159(d)(9), 7159.5(a)(5) | every stage names completed work; statement present |
-| CA-R-11 | Approximate start and completion dates, with the statutory commencement statement | B&P §7159(d)(10)-(11) | both dates filled |
-| CA-R-12 | Change orders in writing and signed before the work, stating scope, price change and effect on payments or completion; statutory note and notice | B&P §§7159(c)(5), (d)(13), (e)(3), 7159.6 | clause 4.10 and `stat_` texts present |
-| CA-R-13 | Lien release on each payment | B&P §§7159(c)(4), 7159.5(a)(6) | clause 4.7 present |
-| CA-R-14 | Three-day (five-day for a buyer 65 or older) right to cancel, 12-point bold, next to buyer signature, signed and dated; Notice of Cancellation in duplicate, detachable | B&P §7159(c)(3)(A), (e)(6); Civ. Code §§1689.5(f), 1689.6(a)(2), 1689.7(a)(4) | `buyer_is_senior` answered, notice and form present; placement → export |
-| CA-R-15 | Contract in the language principally used in the sales presentation | Civ. Code §1689.7(a)(4) | `sales_language` is English or blank |
-| CA-R-16 | CGL and workers' compensation statements | B&P §7159(e)(1)-(2) | options chosen |
-| CA-R-17 | Mechanics lien warning (unless bonded) | B&P §§7159(e)(4), 7159.5(a)(8) | `stat_` text present or bond exemption |
-| CA-R-18 | CSLB information notice, 12-point | B&P §§7159(e)(5), 7030(b) | `stat_` text present |
-| CA-R-19 | Notice of the right to require a performance and payment bond, near the signatures | B&P §7159(c)(6) | `stat_` text present before signatures |
-| CA-R-20 | Subcontractor yes/no; disclaimer if yes, also on each change order | B&P §7159(c)(7) | box answered; disclaimer present if yes |
-| CA-R-21 | Solar is not in this contract (needs the solar disclosure) | B&P §§7151, 7169 | `PV_ROOF` not in scope |
-| CA-R-22 | No security interest in the home for a contract of $5,000 or less, other than a mechanics lien | B&P §7159.2(a) | clause 4.20 present (we take none at any price, which also keeps the §7159.1 18-point warning out of scope) |
-| CA-R-23 | Financing-contingent contract: no work or delivery until loan agreed, accepted and rescission period passed | B&P §7163 | clause 4.13 present if `financing_contingent = yes`; `true` with note otherwise |
-| CA-R-24 | Arbitration clause titled and noticed as the statute requires, if included | B&P §7191 | `arbitration = no`, or heading and notice present in place |
-| CA-R-25 | No indemnity for the other party's sole negligence or wilful misconduct | Civ. Code §2782(a) | clause 4.19 present |
-| CA-R-26 | Retention, if any, released within 45 days of completion | Civ. Code §8812 | `retention_percent` = 0, or retention block present |
-| CA-R-27 | Every `stat_` placeholder filled from the verbatim statute file | this file 1.1 | no `stat_` blanks |
+| ID | Requirement | Citation | `satisfied` when | california.md ids |
+|---|---|---|---|---|
+| CA-R-00 | Contract is a home improvement contract over $500 and not a conforming service-and-repair contract | B&P §§7151.2, 7159(a)(2), 7159(b), 7159.10 | price > 500; else `true` with note that a simpler form may apply | CA-HIC-00a, -00b, -00c |
+| CA-R-01 | Contractor name, business address, licence number | B&P §§7159(d)(1), 7030.5 | all three filled | CA-HIC-05, CA-LIC-03 |
+| CA-R-02 | Licensed for the whole of the work (an unlicensed contractor cannot sue for payment and may have to repay) | B&P §7031 | always `false`, note "verify licence on the CSLB site"; software cannot verify | CA-LIC-02 |
+| CA-R-03 | First page: buyer signature date, contractor name, address, email for cancellation, phone | B&P §7159(c)(3)(B); Civ. Code §1689.7(b) | first-page block present and filled | CA-HIC-04 |
+| CA-R-04 | "Home Improvement" heading, at least 10-point bold | B&P §7159(d)(3), (c)(2) | heading present; type size → export | CA-HIC-01, -07 |
+| CA-R-05 | Statement that the buyer is entitled to a completely filled-in copy signed by both before work starts, 12-point bold | B&P §7159(d)(4), (c)(3)(A) | `stat_` text present | CA-HIC-03, -08 |
+| CA-R-06 | Contract price in dollars and cents; finance charge set out separately | B&P §§7159(d)(5)-(6), 7159.5(a)(1)-(2) | price filled; finance charge separate if any | CA-HIC-09, -10 |
+| CA-R-07 | Description of project, significant materials, equipment, under the statutory heading | B&P §7159(d)(7) | Schedule A non-empty | CA-HIC-11 |
+| CA-R-08 | Down payment ≤ lesser of $1,000 or 10% of the price; statutory statement in 12-point bold (unless bonded) | B&P §§7159(d)(8), 7159.5(a)(3), (a)(8) | numeric check passes and statement present, or bond exemption claimed | CA-HIC-12, -13, -28 |
+| CA-R-09 | Progress payments in dollars and cents, tied to work or materials, sum to the price | B&P §§7159(d)(9), 7159.5(a)(4) | sum check | CA-HIC-14 |
+| CA-R-10 | No payment beyond the value of work done or materials delivered; statutory statement in 12-point bold | B&P §§7159(d)(9), 7159.5(a)(5) | every stage names completed work; statement present | CA-HIC-15 |
+| CA-R-11 | Approximate start and completion dates, with a statement of what is substantial commencement (wording free) | B&P §7159(d)(10)-(11) | both dates filled; clause 4.8 present | CA-HIC-16, -17 |
+| CA-R-12 | Change orders in writing and signed before the work, stating scope, price change and effect on payments or completion; statutory note, and a notice covering (e)(3)(A), (B)(i)-(iii) and (C) (wording free) | B&P §§7159(c)(5), (d)(13), (e)(3), 7159.6 | clause 4.10, `stat_ca_change_order_note`, and the drafted notice with all five points present; change order form listed | CA-HIC-02, -19, -20, -21, -31 |
+| CA-R-13 | Lien release on each payment | B&P §§7159(c)(4), 7159.5(a)(6) | clause 4.7 present | CA-HIC-22, -23 |
+| CA-R-14 | Three-day (five-day for a buyer 65 or older) right to cancel, 12-point bold, next to buyer signature, signed and dated; Notice of Cancellation in duplicate, detachable | B&P §7159(c)(3)(A), (e)(6); Civ. Code §§1689.5(f), 1689.6(a)(2), 1689.7(a)(4) | `buyer_is_senior` answered, notice and form present; placement → export | CA-HIC-00d, -34, -35, CA-CXL-01 |
+| CA-R-15 | Contract in the language principally used in the sales presentation | Civ. Code §1689.7(a)(4) | `sales_language` is English or blank | CA-CXL-06 |
+| CA-R-16 | CGL and workers' compensation statements | B&P §7159(e)(1)-(2) | options chosen | CA-HIC-29, -30 |
+| CA-R-17 | Mechanics lien warning (unless bonded) | B&P §§7159(e)(4), 7159.5(a)(8) | `stat_` text present or bond exemption | CA-HIC-32 |
+| CA-R-18 | CSLB information notice, 12-point | B&P §§7159(e)(5), 7030(b) | `stat_` text present | CA-HIC-33 |
+| CA-R-19 | Notice of the right to require a performance and payment bond, near the signatures | B&P §7159(c)(6) | drafted bond sentence present, immediately before the signature table | CA-HIC-24 |
+| CA-R-20 | Subcontractor yes/no; disclaimer if yes, also on each change order | B&P §7159(c)(7) | box answered; disclaimer present if yes | CA-HIC-25 |
+| CA-R-21 | Solar is not in this contract (needs the solar disclosure) | B&P §§7151, 7169 | `PV_ROOF` not in scope | CA-HIC-00a |
+| CA-R-22 | No security interest in the home for a contract of $5,000 or less, other than a mechanics lien | B&P §7159.2(a) | clause 4.20 present (we take none at any price, which also keeps the §7159.1 18-point warning out of scope) | CA-FIN-02, -03 |
+| CA-R-23 | Financing-contingent contract: no work or delivery until loan agreed, accepted and rescission period passed | B&P §7163 | clause 4.13 present if `financing_contingent = yes`; `true` with note otherwise | CA-FIN-01 |
+| CA-R-24 | Arbitration clause titled and noticed as the statute requires, if included | B&P §7191 | `arbitration = no`, or heading and notice present in place | CA-ARB-01, -02 |
+| CA-R-25 | No indemnity for the other party's sole negligence or wilful misconduct | Civ. Code §2782(a) | clause 4.19 present | CA-IND-01 |
+| CA-R-26 | Retention, if any, released within 45 days of completion | Civ. Code §8812 | `retention_percent` = 0, or retention block present | CA-PAY-04 |
+| CA-R-27 | Every `stat_` placeholder filled from the verbatim statute file | this file 1.1 | no `stat_` blanks | (project rule) |
+| CA-R-28 | Contractor tells the buyer orally, at signing, of the right to cancel and that cancellation must be in writing | Civ. Code §1689.7(f) | always `false`, note "procedural duty at signing; software cannot confirm" | CA-CXL-04 |
+| CA-R-29 | Notices that must be separately signed or initialled (cancel notice, arbitration) are outside the electronic-signature statute; plan for wet signatures on those parts unless counsel advises otherwise | Civ. Code §1633.3(b)(4) | always `false` when `signing_method = electronic`, else `true` | CA-ESIG-02 |
 
 ## 7. California facts this design depends on
 
-Short form. The authoritative statements belong in `specs/legal/california.md`. Items marked **(differs from HANDOFF.md 7)** correct the first-pass notes.
+The authoritative statements, with official-text verification, are in `specs/legal/california.md` (Tier L, read on leginfo). This file cites them by id (section 6) and no longer restates them. Outcome of the cross-check between this file's first pass (two unofficial mirrors) and that file:
 
-- B&P §7159 currently shows its last amendment as Stats. 2020, ch. 312 (SB 1474), effective 2021-01-01, which added the five-day senior right. **(differs from HANDOFF.md 7, which says "last amended effective 2026-01-01")**
-- §7159 lists the required items in (c), (d) and (e) but prescribes no order for them, only placement: first page (c)(3)(B), bond notice near signatures (c)(6), cancel notice next to the buyer's signature (e)(6).
-- Bond exemption, §7159.5(a)(8): a contractor with an approved performance and payment bond (or equivalent or joint control) is exempt from the down-payment cap, the progress-payment rules and the mechanics lien warning.
-- Civ. Code §1632 (translation of contracts negotiated in Spanish, Chinese, Tagalog, Vietnamese or Korean) **does not cover** home improvement contracts under B&P §§7151.2 and 7159 (§1632(g)(2)). The language duty for this contract comes instead from Civ. Code §1689.7(a)(4). **(not in HANDOFF.md 7)**
-- Civ. Code §8811 (5% retention cap, contracts from 2026-01-01) **does not apply** to a residential project that is not mixed-use and is four stories or fewer (§8811(b)(3)). **(HANDOFF.md 7 lists it without this exception)**
-- Civ. Code §8800: 30 days to pay after a payment request applies "unless otherwise agreed in writing", so clause 4.7 may set its own period.
-- Civ. Code §2782(c)(3): the active-negligence rule for private owners does not apply to a homeowner improving their own single-family home; §2782(a) (sole negligence, wilful misconduct) still applies.
-- B&P §7125 (workers' compensation certificate on file) is a licensing rule, not contract content, and is in force until 2028-01-01. **(HANDOFF.md 7 says it could not be retrieved)**
-- Civ. Code §1689.7(a)(1) and (c) (10-point statement, Notice of Cancellation form) **exclude** contracts under B&P §§7151.2 and 7159.10. For a home improvement contract the duties come from §1689.7(a)(4) (language, 12-point bold statement next to the signature), §1689.7(b) (first-page details, no exclusion) and B&P §7159(e)(6) (title, notice, form). The title "Three-Day Right to Cancel" is in §7159(e)(6), not in §1689.7.
-- Civ. Code §1689.6(a)(2): for a §7151.2 contract the cancellation period runs from the buyer's **receipt of a signed and dated copy**, not from signing.
-- Civ. Code §1689.13 emergency waiver: a separate statement, dated and signed by the buyer, describing the emergency and expressly waiving the right to cancel. It does **not** require the buyer's handwriting or "own words". **(differs from HANDOFF.md 7)**
-- B&P §7163(a)(3): the federal rescission condition applies "if applicable".
+| Point | Outcome |
+|---|---|
+| B&P §7159 last amendment | **This file was wrong.** Official text: Stats. 2025 ch. 585 (SB 517), effective 2026-01-01. The FindLaw credit line (Stats. 2020) is stale; its text already has the 2025 additions. HANDOFF.md 7 was right. |
+| Title "Three-Day Right to Cancel" | In B&P §7159(e)(6) **and** Civ. Code §1689.7(a)(4)(A) (the statement begins with it). The §1689.7(a)(1) and (c) exclusion of §7151.2 contracts is confirmed. |
+| Civ. Code §1689.13 waiver: no "own words" requirement | confirmed |
+| Civ. Code §8811 retention cap: residential exception (b)(3) | confirmed |
+| Civ. Code §1632 excludes home improvement contracts (g)(2) | confirmed |
+| B&P §7125 operative until 2028-01-01 | confirmed; a successor version continues the duty after that date |
+| Three `stat_` notices have no statutory wording (commencement, extra-work notice, bond notice) | per california.md 2.5; now drafted in clauses 4.8, the extra-work notice after 4.10, and the bond sentence before signatures, with content checks |
 
 ## 8. Unverified, needs attorney check
 
-1. **All statute text** in this file was read from unofficial mirrors (california.public.law and FindLaw, both stating currency at 2026-01-01). The official site `leginfo.legislature.ca.gov` refused automated access. An attorney or a human with a browser must confirm each cited section against the official text.
-2. **Legislation effective after 2026-01-01** is not reflected in either mirror.
+1. Every requirement this document relies on is now verified against official text in `specs/legal/california.md`, except the rows that file marks Tier M or lists in its section 8. Those items, and that file's attorney list, apply here.
+2. The drafted wording of the three notices without statutory text (clause 4.8, extra-work notice, bond sentence) should be reviewed by counsel.
 3. Whether **B&P §7169 solar disclosure** rules have changed; not re-read this session (document 3).
 4. **Energy code verification** (Title 24 Part 6 and any third-party field verification) per measure, referenced in clause 4.5; not researched.
 5. **Federal lead-safe renovation rule** for pre-1978 homes, referenced in the `pre_1978_lead_notice_block`; not researched.
@@ -417,13 +422,13 @@ Short form. The authoritative statements belong in `specs/legal/california.md`. 
 
 ## 9. Verification log
 
-Protocol from `specs/handoff-plan.md`: pass 1 written from the opened source, pass 2 a separate re-read after drafting. "public.law" = california.public.law; "FindLaw" = codes.findlaw.com. Neither is an official source.
+Protocol from `specs/handoff-plan.md`: pass 1 written from the opened source, pass 2 a separate re-read after drafting. "public.law" = california.public.law; "FindLaw" = codes.findlaw.com. Neither is an official source. From 2026-11-14 the official-text verification of record is `specs/legal/california.md` section 10; this log keeps the first-pass history.
 
 | Section | Pass 1 (date, source) | Pass 2 (date, source) | Result |
 |---|---|---|---|
 | leginfo.legislature.ca.gov (any) | 2026-11-14, HTTP 403 to automated fetch | | not reachable; see 8.1 |
 | law.justia.com (any) | 2026-11-14, HTTP 403 | | not reachable |
-| B&P §7159 | 2026-11-14 public.law | 2026-11-14 FindLaw | confirmed; last amendment Stats. 2020 ch. 312 per FindLaw |
+| B&P §7159 | 2026-11-14 public.law | 2026-11-14 FindLaw | text confirmed. **Amendment date corrected** after california.md (official text): Stats. 2025 ch. 585, eff. 2026-01-01; FindLaw credit line stale |
 | B&P §7151.2 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed; no price threshold (the $500 is in §7159(b)) |
 | B&P §7159.10 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed |
 | B&P §7159.5 | 2026-11-14 public.law | 2026-11-14 FindLaw | confirmed; bond must be registrar-approved; lien-release duty not exempted |
@@ -440,10 +445,303 @@ Protocol from `specs/handoff-plan.md`: pass 1 written from the opened source, pa
 | B&P §7125 | 2026-11-14 public.law | 2026-11-14 FindLaw | confirmed; operative until 2028-01-01 |
 | Civ. §1689.5 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed; senior = 65 or older |
 | Civ. §1689.6 | 2026-11-14 public.law | 2026-11-14 FindLaw | confirmed |
-| Civ. §1689.7 | 2026-11-14 FindLaw | 2026-11-14 public.law | **corrected**: (a)(1) and (c) exclude §7151.2 contracts; no title in this section. Form and title now cited to B&P §7159(e)(6) |
+| Civ. §1689.7 | 2026-11-14 FindLaw | 2026-11-14 public.law | **corrected**: (a)(1) and (c) exclude §7151.2 contracts. Title: public.law reading (no title) was wrong; official text (california.md) has it in (a)(4)(A) |
 | Civ. §1689.13 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed; no "own words" or handwriting requirement |
 | Civ. §1632 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed exclusion at (g)(2); scope of its trailing clause unclear, see 8 |
 | Civ. §8800 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed |
 | Civ. §8811 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed; residential exception (b)(3) |
 | Civ. §8812 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed |
 | Civ. §2782 | 2026-11-14 FindLaw | 2026-11-14 public.law | confirmed (a) and (c)(3) |
+
+---
+
+# Part B. Document 1T: Texas residential retrofit contract
+
+Statute source: `specs/legal/texas.md` (owner @yalexie1, official text, V2). This part cites its ids (`TX-ALL-nn`, `TX-RC-nn`, `U-nn`) and does not restate the law. Rules 1.1 (drafting) and 1.2 (disclaimer) apply unchanged.
+
+## 10. Document 1T: purpose, regimes and routing
+
+**Purpose.** A contract between the owner (or a tenant with the owner's written consent) of a Texas home and a contractor for the energy measures the plan selected, for a property in Houston (Harris County).
+
+**When it applies.** `doc_type = retrofit_contract_residential`, `state = "TX"`, `PropertySummary.segment = "residential"`, and the dwelling is a single-family house, townhouse, duplex, triplex or quadruplex, or a condominium or co-op unit. A building of five or more units uses the commercial contract (document 2).
+
+**Measure routing.** Same as document 1 (section 3): `PV_ROOF` goes to the solar agreement (document 3; in Texas that agreement carries the residential solar disclosure, the 24-hour brochure rule and a five-business-day cancellation, `specs/legal/texas.md` section 3), `LAYOUT` is dropped, everything else goes to Schedule A.
+
+**Four legal regimes switch on and off.** The generator decides each from the inputs below and prints a "Regimes" table on the review screen (not in the contract) so the user can see why a clause is in or out. When an input is blank, the default is the one that adds protections, and the draft says so.
+
+| Regime | On when | Default if unknown | texas.md ids | Effect on the draft |
+|---|---|---|---|---|
+| **Homestead** | `is_homestead = yes` | **on** if `RunRequest.role = owner_occupier`; off for `landlord`, `tenant` | TX-RC-10 to -19, -50 | homestead warning; spouse signature; three-day constitutional rescission clause; execution at a lender, attorney or title office; filing with the county clerk; five-day credit wait if financed; construction account over $5,000 |
+| **Residence (Prop. Code ch. 53 subch. K)** | owner-occupied 1-4 family dwelling (`RunRequest.role = owner_occupier`) | on for `owner_occupier` | TX-RC-20 to -28 | pre-signing disclosure statement (separate document); subcontractor and supplier list with notice; disbursement statement with each payment request; bills-paid affidavit at final payment; no conveyance clause |
+| **Home solicitation (Bus. & Com. Code ch. 601)** | `negotiated_at_contractor_premises = no` and not (`consumer_initiated = yes` and every trade in scope is HVAC, electrical or plumbing licence-holder work) | **on** | TX-RC-06, -0B, -30 to -34 | three-business-day cancellation statement next to the buyer's signature; Notice of Cancellation form in duplicate; oral notice at signing |
+| **Residential Construction Liability Act (Prop. Code ch. 27)** | any residence in the ch. 27 sense, owner-occupied or rented | **on** for every document 1T | TX-RC-60, -61 | 10-point bold ch. 27 notice; dispute clause keeps the 60-day notice and inspection right |
+
+**Trades and licences.** Each measure in Schedule A maps to the Texas licence it needs. The draft names the licensed company for each trade, prints its licence number and, where the rule requires, the verbatim TDLR statement. Envelope work needs no state licence (TX-RC-07, unverified U-01).
+
+| Measures | Trade | Licence field | Statement | texas.md ids |
+|---|---|---|---|---|
+| `HVAC_HP`, `HVAC_RTU`, `HVAC_ECON`, `HVAC_DUCT`, `CTRL_TSTAT` | air conditioning and refrigeration | `hvac_contractor_license_no`, `hvac_license_class` (A or B), plus a representation that the licence holder is assigned to the company full time | `stat_tx_tdlr_acr_statement` | TX-RC-03 to -05, -09, -0A |
+| `LGT_LED` and `LGT_CTRL` when they rewire fixtures or add controls, `PLUG_MGMT` when hard-wired, any measure with a `Flag` `electrical.service` of `likely_upgrade` | electrical | `electrical_contractor_license_no` | `stat_tx_tdlr_electrical_statement` | TX-RC-01, -02, -08, -0A |
+| `DHW_HPWH` | plumbing (and electrical if a new circuit is needed: the electrical row also applies) | `plumbing_contractor_license_no` | none prescribed | TX-RC-0B |
+| `ENV_ATTIC`, `ENV_WALL`, `ENV_AIRSEAL`, `WIN_*`, `ROOF_COOL` | no state licence found | none | none | TX-RC-07 (U-01) |
+
+If one company holds every licence needed, the contractor fields are filled once. If not, Schedule A names the subcontractor for each trade and the subcontractor list (11.D) carries it.
+
+## 11. Document 1T: template
+
+```text
+<!-- doc: retrofit_contract_residential / TX / template v0.1 -->
+```
+
+> {{disclaimer}}
+
+### RESIDENTIAL ENERGY RETROFIT CONTRACT
+
+**Date of this contract:** {{contract_date}}
+
+<!-- homestead only; fmt: 10pt bold, boxed, conspicuous (TX-RC-17, TX-ALL-05) -->
+{{stat_tx_homestead_warning}}
+
+**11.1 Parties.** This contract is between {{owner_names}} ("Owner"), of {{owner_mailing_address}}, and {{contractor_name}} ("Contractor"), of {{contractor_business_address}}, telephone {{contractor_phone}}. {{spouse_party_block}} {{tenant_consent_block}}
+
+The work will be done at {{property_address}}, {{property_city}}, Texas, in {{property_county}} County ("the Property"). {{legal_description_block}}
+
+**11.2 Licences.** Contractor and the licensed companies named in Schedule A will do work that Texas licenses only under these licences:
+
+{{trade_licence_table}}
+
+{{stat_tx_tdlr_electrical_statement}}
+
+{{stat_tx_tdlr_acr_statement}}
+
+Each company that performs licensed work represents that it holds, and will hold for the whole of the work, the licence shown, and, for air conditioning and refrigeration work, that a licence holder is assigned to it full time both on the date of this contract and while the work is done. On request, each will give Owner the name of its liability insurer, its policy number, and its insurance agent's name, address and telephone number.
+
+**11.3 What this contract is for.** Owner wants to reduce the energy use and energy cost of the home. Contractor will install the improvements in Schedule A. They were chosen with the help of a software energy analysis of the Property (Schedule C).
+
+**11.4 The energy analysis is Owner's document, and its numbers are estimates.** For this contract the energy analysis in Schedule C is a document Owner provides to Contractor. Contractor does not warrant that it is accurate, adequate or suitable. If Contractor knows, or with ordinary diligence should know, of an error in it that affects the work, Contractor will tell Owner in writing within a reasonable time and before doing the affected work. The savings figures in Schedule C are estimates from a computer model, shown as low, expected and high values with the assumptions behind them. They are not a promise by Contractor. Only a separate signed Energy Savings Guarantee can promise a level of savings.
+
+**11.5 Scope of work.** Contractor will perform the work in **Schedule A**: for each improvement, the work, where in the home it will be done, the significant materials and equipment (make, model or minimum rated performance), the licensed company doing it, and the result that shows it is complete. Substitutions of equal or better rated performance need Owner's written approval in a change order.
+
+**11.6 Permits, codes and inspections.** Contractor will obtain every permit the work requires, do the work to the codes the permitting authority enforces, and arrange the required inspections. Permit fees are included in the Contract Price. *[Which City of Houston permits and code editions apply is unverified, texas.md U-10.]*
+
+**11.7 Contract Price.** Owner will pay Contractor **${{contract_price_usd}}** for all labor, materials, equipment, permits and other costs of the work in Schedule A, including Contractor's profit. {{deposit_block}}
+
+**11.8 Payments.** Contractor will be paid in the stages in **Schedule B**. Each stage is payable only after the work or delivery it describes is done.
+
+(a) *Payment requests.* For each stage Contractor will give Owner a written payment request naming the stage completed{{disbursement_statement_clause}}.
+
+(b) *When Owner pays.* Owner will pay each proper request, less the retainage in (c) and any amount withheld under (d), within {{payment_due_days}} days after receiving it. A late payment bears interest at 1.5 percent per month from the day after it was due.
+
+(c) *Retainage.* Owner will hold back 10 percent of each payment, and will keep it until the 31st day after the work is complete. "Complete" means all the work in Schedule A, including extras and change orders, is actually finished; warranty or repair work does not count. If no valid claim has been made against the retained funds by then, Owner will pay the retainage to Contractor on that day.
+
+(d) *Disputed work.* If Owner disputes in good faith that a stage is complete or properly done, Owner will tell Contractor in writing what is disputed and why, pay the rest of the request on time, and may withhold no more than 110 percent of the disputed amount.
+
+(e) *Final payment.* Before final payment, Contractor will give Owner (1) an affidavit that Contractor has paid in full every person who furnished labor or materials for the work or, if not, the name, address and telephone number of each person not paid in full and the amount owed, and (2) a release of lien rights for the work, and copies of releases from each subcontractor and supplier on the list in Schedule D.
+
+**11.9 Payments are trust funds.** Money Owner pays under this contract is held in trust for the people who furnish labor and materials for the work, and Owner is also a beneficiary. Contractor will use it to pay them. {{construction_account_clause}}
+
+**11.10 Start and completion.** Work is substantially commenced on the first day Contractor or a company named in Schedule A performs physical work at the Property. Approximate start date: **{{start_date}}**. Approximate completion date: **{{completion_date}}**. Contractor will not deliver materials or start work before {{earliest_start_rule}}.
+
+**11.11 Changes.** A change to the work, the price or the dates is part of this contract only if it is written and signed by Owner and Contractor before the changed work starts. Each change order states the scope of the change, the amount added or subtracted, and the effect on the payment stages and completion date. Owner may not require extra work without a signed change order. Contractor may decline Owner-directed extra work that is not covered by a signed change order.
+
+**11.12 Subcontractors and suppliers.** {{subcontractor_list_clause}}
+
+**11.13 Hand-over.** At completion Contractor will give Owner: copies of all permits and final inspection records; manufacturer warranties, registered in Owner's name where the manufacturer allows; operating and maintenance instructions; and the model and serial number of each major piece of equipment.
+
+**11.14 Workmanship warranty.** Contractor warrants that the work will be done in a good and workmanlike manner and will be free of defects in workmanship for {{workmanship_warranty_years}} year(s) after completion. Contractor will repair a defect in its workmanship that appears in that period at no charge, within a reasonable time after Owner's written notice. Manufacturer warranties on materials and equipment pass to Owner and are in addition to this warranty. *[Which law governs warranties in a mixed goods-and-services contract, and whether implied warranties can be limited, is unverified, texas.md U-12. This clause therefore adds a warranty and limits none.]*
+
+**11.15 Existing conditions and hazardous materials.** If Contractor finds a condition that could not reasonably have been seen before work began and that changes the work (for example hidden damage, or material that may contain asbestos or lead paint), Contractor will stop work on the affected area, tell Owner in writing, and not continue that part until a change order is signed. {{pre_1978_lead_notice_block}}
+
+**11.16 Site, clean-up and access.** Owner will give Contractor reasonable access to the Property during {{work_hours}}. Contractor will protect floors, furnishings and landscaping in the work areas, keep the site reasonably clean each day, and remove its debris at completion.
+
+**11.17 Insurance and responsibility for harm.** Each company named in Schedule A will carry general liability insurance of at least the amounts in Schedule A for the length of the work, and workers' compensation insurance or the election Texas law allows. Each party is responsible for harm caused by its own negligence or that of the people it brings to the Property. Nothing in this contract makes a party responsible for harm caused by the other party's negligence.
+
+**11.18 No transfer of the Property.** Contractor does not require Owner to convey the Property, or any interest in it, to Contractor or anyone connected with Contractor as a condition of doing the work.
+
+**11.19 Owner's rights to cancel.** {{cancellation_rights_summary}}
+
+**11.20 Disputes.** Owner and Contractor will first try to settle any dispute by talking in good faith for at least 15 days after one gives the other written notice of it. Nothing in this clause shortens or waives any notice period or right Texas law gives Owner, including the construction-defect procedure in the notice below and the 60-day notice before a consumer protection lawsuit. {{arbitration_block_tx}}
+
+**11.21 Law and place.** Texas law governs this contract. Any lawsuit or arbitration about it will be in {{property_county}} County, Texas.
+
+**11.22 Electronic signing.** Owner and Contractor agree that they may sign and deliver this contract electronically, except where the homestead rules in this contract require signing in person at a stated office. Either party may instead ask for a paper copy to sign. Each electronic copy will be one Owner can save and print.
+
+**11.23 Whole agreement.** This contract, its schedules, the Notice of Cancellation and signed change orders are the whole agreement about the work. If a schedule conflicts with the body, the body controls.
+
+<!-- fmt: 10pt bold, boxed (TX-RC-60) -->
+{{stat_tx_rcla_notice}}
+
+{{homestead_rescission_block}}
+
+**Signatures**
+
+{{execution_place_block}}
+
+| | Owner | {{spouse_column_header}} | Contractor |
+|---|---|---|---|
+| Name | {{owner_names}} | {{owner_spouse_name}} | {{contractor_signatory_name}}, {{contractor_signatory_title}} |
+| Signature | | | |
+| Date | | | |
+
+<!-- home solicitation only; fmt: 10pt bold, immediately next to the buyer's signature space (TX-RC-31) -->
+{{stat_tx_cancel_statement}}
+
+---
+
+**Notice of Cancellation** (home solicitation only; attached in duplicate, easily detachable, 10-point bold; TX-RC-32)
+
+{{stat_tx_notice_of_cancellation_form}}
+
+---
+
+**Schedule A: Scope of work, licensed companies and insurance.** One row per measure: improvement, location, work, significant materials and equipment, company doing it and its licence, completion test (as in 4.B), and that company's general liability limits (not lower than the minimums in TX-RC-0A for electrical and HVAC work).
+
+{{schedule_a_rows}}
+
+**Schedule B: Payment stages.** Stage, work or delivery completed, gross amount, retainage held (10 percent), net amount payable. Final row: retainage release on the 31st day after completion.
+
+{{progress_payment_table}}
+
+**Schedule C: Energy analysis summary (Owner's document; estimates, not promises).** As in document 1.
+
+{{schedule_c_table}}
+
+**Schedule D: Subcontractor and supplier list** (residence regime only; delivered before construction starts and updated within 15 days of any change; TX-RC-22)
+
+{{subcontractor_supplier_rows}}
+
+<!-- fmt: 10pt bold, conspicuous -->
+{{stat_tx_sub_list_notice}}
+
+**Separate pre-signing document (residence regime): Disclosure statement** (TX-RC-20). Delivered to Owner before Owner signs this contract, with a receipt line for Owner's signature and date:
+
+{{stat_tx_53255_disclosure}}
+
+> {{disclaimer}}
+
+### 11.A Conditional blocks
+
+| Block | Included when | Content |
+|---|---|---|
+| `spouse_party_block` | homestead and `owner_married = yes` | "{{owner_spouse_name}}, Owner's spouse, joins in this contract." (TX-RC-11) |
+| `spouse_column_header` | as above | "Owner's spouse"; otherwise the column is removed. If homestead and `owner_married` is blank, the column stays with a blank and TX-R-10 fails |
+| `tenant_consent_block` | `RunRequest.role = tenant` | "Owner of record {{property_owner_of_record}} has consented in writing to this work; the consent is attached." The draft also warns that Texas homestead and lien rules then concern the owner of record, not the tenant |
+| `legal_description_block` | homestead | "Legal description: {{legal_description}}." Needed because the contract is filed with the county clerk (TX-RC-16). Never filled from data layers |
+| `trade_licence_table` | always | one row per trade in scope (section 10): trade, company, licence type and number, TDLR or TSBPE. Blank licence numbers are visible blanks |
+| `stat_tx_tdlr_electrical_statement` | electrical trade in scope | verbatim (TX-RC-08). Also printed under the electrical company's name in Schedule A |
+| `stat_tx_tdlr_acr_statement` | HVAC trade in scope | verbatim (TX-RC-09). Also printed under the HVAC company's name in Schedule A |
+| `deposit_block` | `deposit_usd` > 0 | "Owner will pay a deposit of ${{deposit_usd}} on {{deposit_due_rule}}. The deposit is credited to the first payment stage." Under home solicitation, `deposit_due_rule` is fixed to "the day after the cancellation period ends" (text: generated). *No Texas statute found here caps a residential deposit; the TX-RC-70 disaster rule bars any payment before work if it applies.* |
+| `disbursement_statement_clause` | residence regime | ", together with a disbursement statement naming each subcontractor and supplier Contractor intends to pay from the requested funds, with their addresses, in the form in Schedule B" (TX-RC-24). Delivery: with the request, by hand or first-class mail, or by email if Owner agrees here: {{owner_agrees_email_delivery}} |
+| `payment_due_days` | always | user; default 35 (TX-RC-42). For a single-family residence the user may choose any number up to 60 (TX-RC-45). Generator rejects > 35 for other dwellings and > 60 for single-family |
+| `construction_account_clause` | homestead and price > $5,000 | "Contractor will deposit all payments under this contract in an account at {{construction_account_bank}} that the bank's statements call a construction account, and will keep the records of that account the law requires until at least the first anniversary of completion." (TX-RC-50) |
+| `earliest_start_rule` | always | the latest of: the end of the home solicitation cancellation period (if that regime is on); the end of the homestead three-day rescission period (if homestead); the date the contract is filed with the county clerk (if homestead); delivery of the Schedule D list (if residence). Rendered as words, e.g. "the end of the cancellation periods in clause 11.19 and the filing of this contract with the {{property_county}} County Clerk" (TX-RC-15, -16, -22) |
+| `subcontractor_list_clause` | residence regime | "Before construction starts, Contractor will give Owner the list in Schedule D of each subcontractor and supplier, with name, address and telephone number, and will give Owner an updated list within 15 days after one is added or removed." Owner waiver (TX-RC-23) is **not** offered by default; if `owner_waives_sub_list = yes`, print `stat_tx_sub_list_waiver` as a separate signed page. Outside the residence regime: "Contractor will tell Owner the names of its subcontractors on request." |
+| `pre_1978_lead_notice_block` | as in document 1 | same text; federal rule unverified (section 8 item 5) |
+| `cancellation_rights_summary` | always | built from the regimes on: (1) homestead: "Owner may rescind this contract without penalty or charge within three days after it is signed by all parties; see the rescission notice below." (2) home solicitation: "Owner may cancel this transaction until midnight of the third business day after it is signed; see the notice next to Owner's signature and the attached Notice of Cancellation." (3) If both are on: "These are two separate rights with separate deadlines. Owner may use either." with both dates computed (`homestead_rescind_by`, `solicitation_cancel_by`). (4) If neither: "Texas law does not give Owner a cancellation period for this contract." |
+| `homestead_rescission_block` | homestead | **Owner's right to rescind (homestead).** "Owner may rescind this contract without penalty or charge within three days after it has been signed by all parties, by written notice to Contractor at the address in clause 11.1. Last day to rescind: {{homestead_rescind_by}}." (TX-RC-13; substance mandated, wording ours). If `immediate_health_safety_repair = yes`, add: "Owner acknowledges in writing that the work is necessary to complete immediate repairs to conditions that materially affect the health or safety of the Owner or a person residing in the home, and that the three-day period therefore does not apply." with a separate owner signature line, and TX-R-13 notes it |
+| `execution_place_block` | homestead | "Signed by Owner {{and_spouse}} at the office of {{execution_office_name_and_address}}, which is the office of a third-party lender making credit available for this work, an attorney at law, or a title company." (TX-RC-14). If financed: "Owner applied in writing for credit for this work on {{credit_application_date}}; this contract is signed on or after the fifth day after that date." (TX-RC-12). Remote signing not offered (U-02) |
+| `arbitration_block_tx` | `arbitration = yes` | "Any dispute not settled under this clause will be decided by binding arbitration before {{arbitration_provider}}, seated in {{property_county}} County, Texas, under its rules for residential construction disputes. Arbitration does not start until any notice period required by law has run." If homestead, the whole sentence is 10-point bold (TX-RC-19). Default `arbitration = no`: "If the dispute is not settled, either party may go to court." |
+| `stat_tx_cancel_statement`, `stat_tx_notice_of_cancellation_form` | home solicitation | verbatim (TX-RC-31, -32), with `(name of merchant)`, `(address of merchant's place of business)`, `(enter date of transaction)` and `(date)` filled; deadline = `solicitation_cancel_by`. Language of the oral sales presentation (`sales_language`); English drafts only, so TX-R-31 fails if it is not English |
+
+### 11.B Dates the generator computes
+
+- `contract_date`: date all parties sign (user; blank by default).
+- `solicitation_cancel_by`: midnight of the third business day after `contract_date` (TX-RC-30). Business day: Texas law's definition was not extracted into texas.md; the generator counts Monday to Saturday excluding federal holidays and **marks the date "check before signing"** (section 13, item T4).
+- `homestead_rescind_by`: three days after execution by all parties (TX-RC-13). Calendar days are assumed; marked "check" (section 13, item T5).
+- `retainage_release_date`: 31st day after `completion_date` as actually achieved; Schedule B shows it as a rule, not a date.
+
+## 12. Document 1T: placeholders and checks
+
+### 12.1 Placeholders (in addition to the shared ones in section 5)
+
+Shared from section 5 with the same meaning: `disclaimer`, `state_name` ("Texas"), `owner_names`, `owner_mailing_address`, `contractor_name`, `contractor_business_address`, `contractor_phone`, `property_address`, `property_city`, `contract_price_usd`, `stage_amounts_usd`, `start_date`, `completion_date`, `workmanship_warranty_years`, `work_hours`, `arbitration`, `arbitration_provider`, `sales_language`, `negotiated_at_contractor_premises`, `signing_method`, `contractor_signatory_name`, `contractor_signatory_title`, `schedule_a_rows`, `progress_payment_table`, `schedule_c_table`, `contractor_equipment_specs`. `contractor_license_number` is not used in Texas (licences are per trade).
+
+| Placeholder | Source | Req | Rule |
+|---|---|---|---|
+| `property_county` | user; default "Harris" when `PropertySummary.city` is Houston | yes | |
+| `is_homestead` | user; default from `RunRequest.role` (section 10) | yes | |
+| `owner_married` | user | if homestead | yes/no |
+| `owner_spouse_name` | user | if married | name in texas.md |
+| `property_owner_of_record` | user | if tenant | |
+| `legal_description` | user | if homestead | name in texas.md; never from data layers |
+| `consumer_initiated` | user | no | yes/no; default no |
+| `hvac_contractor_license_no`, `hvac_license_class` | user | if HVAC in scope | names in texas.md |
+| `electrical_contractor_license_no` | user | if electrical in scope | name in texas.md |
+| `plumbing_contractor_license_no` | user | if plumbing in scope | name in texas.md |
+| `trade_companies` | user | if a trade is done by another company | map trade → company name, address, licence |
+| `deposit_usd`, `deposit_due_rule` | user | no | see 11.A |
+| `payment_due_days` | user | no | 11.A |
+| `owner_agrees_email_delivery` | user | no | yes/no, default no |
+| `construction_account_bank` | user | if homestead and price > 5,000 | name in texas.md |
+| `owner_waives_sub_list` | user | no | default no |
+| `subcontractor_supplier_rows` | user | if residence | name, address, phone per row; blank rows if unknown |
+| `immediate_health_safety_repair` | user | no | default no |
+| `financed`, `credit_application_date` | user | if homestead and financed | |
+| `execution_office_name_and_address` | user | if homestead | name in texas.md |
+| `and_spouse` | gen | | " and Owner's spouse" or empty |
+| `homestead_rescind_by`, `solicitation_cancel_by`, `contract_date` | gen / user | | 11.B |
+| `stat_tx_homestead_warning` | stat, texas.md TX-RC-17 | if homestead | verbatim |
+| `stat_tx_tdlr_electrical_statement` | stat, TX-RC-08 | if electrical | verbatim |
+| `stat_tx_tdlr_acr_statement` | stat, TX-RC-09 | if HVAC | verbatim. It differs from the electrical statement: the electrical one ends "512-463-6599; website: www.tdlr.texas.gov", this one "512-463-6599, www.tdlr.texas.gov". Copy each exactly |
+| `stat_tx_rcla_notice` | stat, TX-RC-60 | yes | verbatim ("substantially similar") |
+| `stat_tx_cancel_statement` | stat, TX-RC-31 | if home solicitation | verbatim |
+| `stat_tx_notice_of_cancellation_form` | stat, TX-RC-32 | if home solicitation | verbatim, filled; in duplicate |
+| `stat_tx_sub_list_notice` | stat, TX-RC-22 | if residence | verbatim |
+| `stat_tx_sub_list_waiver` | stat, TX-RC-23 | if waived | verbatim |
+| `stat_tx_53255_disclosure` | stat, **not yet in texas.md** | if residence | texas.md gives only the first and last sentences and the headings and says to copy the full text from the official §53.255(b). Until an anchor with the full text exists, the draft shows a blank and TX-R-20 fails |
+
+### 12.2 Statutory checks (document 1T)
+
+Same field mapping as section 6, with `texas.md` ids. Rows whose regime is off emit `satisfied = true` with note "not applicable: <regime> off".
+
+| ID | Requirement | `satisfied` when | texas.md ids |
+|---|---|---|---|
+| TX-R-01 | Licensed company, licence number and verbatim TDLR statement for each electrical and HVAC trade in scope; HVAC licence assigned full time | licence numbers filled and statements present; always adds note "verify licences on the TDLR and TSBPE sites" | TX-RC-01, -02, -04, -05, -08, -09 |
+| TX-R-02 | Plumbing licence for water heater work | filled if `DHW_HPWH` in scope | TX-RC-0B |
+| TX-R-03 | Insurance at or above statutory minimums for electrical and HVAC | Schedule A limits ≥ minimums | TX-RC-0A |
+| TX-R-04 | Envelope work: no state licence assumed | always `false` with note "unverified, U-01" | TX-RC-07 |
+| TX-R-10 | Homestead: written contract signed before work, by both spouses if married | homestead off, or contract present and spouse block resolved | TX-RC-10, -11, -15 |
+| TX-R-12 | Homestead, financed: signed no earlier than the fifth day after the credit application | not financed, or date check passes | TX-RC-12 |
+| TX-R-13 | Homestead: three-day rescission clause | block present | TX-RC-13 |
+| TX-R-14 | Homestead: signed at a lender, attorney or title office | office filled; note U-02 | TX-RC-14 |
+| TX-R-16 | Homestead: filed with the county clerk | always `false` with note "filing is a post-signing step" | TX-RC-16 |
+| TX-R-17 | Homestead warning, 10-point bold | `stat_` present; size → export | TX-RC-17 |
+| TX-R-18 | Residential Construction Commission registration items | always `false`, note "treated as inapplicable pending attorney check (U-03)" | TX-RC-18 |
+| TX-R-19 | Homestead arbitration clause in 10-point bold | no arbitration, or bold markup present | TX-RC-19 |
+| TX-R-20 | Pre-signing disclosure statement delivered before Owner signs | `stat_tx_53255_disclosure` filled; always adds note "delivery before signing is a procedural step" | TX-RC-20, -21 |
+| TX-R-22 | Subcontractor and supplier list with notice; updates within 15 days | Schedule D and notice present | TX-RC-22, -23 |
+| TX-R-24 | Disbursement statement with each payment request | clause present | TX-RC-24 |
+| TX-R-25 | Bills-paid affidavit as a condition of final payment | clause 11.8(e) present | TX-RC-25 |
+| TX-R-26 | No required conveyance of the property | clause 11.18 present | TX-RC-26 |
+| TX-R-30 | Home solicitation: three-business-day cancellation statement next to the buyer's signature, 10-point bold | `stat_` present; placement → export | TX-RC-30, -31 |
+| TX-R-31 | Same language as the oral sales presentation | `sales_language` English or blank | TX-RC-31 |
+| TX-R-32 | Notice of Cancellation in duplicate, detachable, 10-point bold, with name, address, date and deadline filled (missing items make the contract void) | form present and all four fields filled | TX-RC-32 |
+| TX-R-34 | Oral notice of the right to cancel at signing; no waiver or confession of judgment; refund within 10 business days | always `false` for the oral notice (procedural); clause text contains no waiver | TX-RC-34 |
+| TX-R-40 | 10 percent retainage held until 30 days after completion | clause 11.8(c) and Schedule B retainage column | TX-RC-40, -41 |
+| TX-R-42 | Owner pays within 35 days (up to 60 for single-family by agreement); 1.5 percent monthly interest; dispute withholding capped at 110 percent | `payment_due_days` within the limit; clause 11.8(b), (d) present | TX-RC-42 to -45 |
+| TX-R-48 | Change orders in writing and signed before work | clause 11.11 present | TX-RC-48 |
+| TX-R-49 | Trust-fund statement; construction account for homestead over $5,000; no assignment of trust funds | clause 11.9 present; bank filled when required | TX-RC-49 to -51 |
+| TX-R-60 | Ch. 27 notice in 10-point bold; dispute clause does not shorten ch. 27 | `stat_` present; clause 11.20 present | TX-RC-60, -61 |
+| TX-R-62 | Indemnity: ch. 151 does not reach single-family residential; clause 11.17 limits each party to its own negligence anyway | clause present | TX-RC-62 |
+| TX-R-64 | Contractor does not warrant the owner-provided analysis and must disclose known errors | clause 11.4 present; note U-05 | TX-RC-64 |
+| TX-R-70 | Disaster remediation rules | `false` only if `disaster_remediation = yes` and the ch. 58 notice is absent; this template does not support disaster work, so the generator refuses when it is yes | TX-RC-70 |
+| TX-R-80 | Savings shown only as labelled estimates with basis; no DTPA waiver; dispute clause keeps the 60-day DTPA notice | clause 11.4, Schedule C labels, clause 11.20 present; no waiver text | TX-ALL-06, -09, -10, -11 |
+| TX-R-81 | Texas law and venue in the county of the property | clause 11.21 present | TX-ALL-12 |
+| TX-R-82 | Electronic signing consent with a paper path; savable, printable copies; format rules kept | clause 11.22 present; homestead → in person | TX-ALL-01 to -03, -05 |
+| TX-R-83 | Every `stat_tx_` placeholder filled verbatim | no `stat_tx_` blanks | (project rule) |
+
+## 13. Document 1T: unverified, needs attorney check
+
+All of `specs/legal/texas.md` section 7 applies. In particular U-01 (no general contractor licence), U-02 (remote signing of a homestead contract), U-03 (commission registration items), U-05 (the analysis as owner-provided design documents), U-07 (whether each retrofit measure is "construct or repair" a residence), U-10 (Houston permits and codes), U-12 (warranties) and U-19 (federal rules). Items specific to this template:
+
+- **T1.** Whether a homestead contract that will **not** support a lien on the homestead (for example a small job paid in full on completion) still has to meet the constitutional execution-place and filing formalities. This template applies them to every homestead contract, which is safe for the owner but heavy for small jobs.
+- **T2.** No Texas statute was found here capping a residential deposit outside disaster work. Not a negative finding from a survey; counsel to confirm.
+- **T3.** The trade-to-measure mapping in section 10 (for example whether LED retrofits without new wiring, or a smart thermostat, are licensed electrical or HVAC work).
+- **T4.** Business-day counting for the ch. 601 deadline (Saturdays and holidays). Not extracted into texas.md.
+- **T5.** Whether "three days after execution" in the homestead rescission rule is calendar or business days, and from which signature.
+- **T6.** The full §53.255(b) disclosure text must be copied from the official source into an anchor before any residence-regime draft is usable (TX-R-20).
+- **T7.** Interaction of the ch. 601 cancellation with consumer-initiated work when the scope mixes licensed trades with unlicensed envelope work.
+
+## 14. Document 1T: verification
+
+No statute was read for Part B by this file's author. Every legal statement in Part B comes from `specs/legal/texas.md` (official text, two passes, V2 rows only; its section 8 is the log) and is cited by id. On 2026-11-14 every `TX-ALL`, `TX-RC` and `U-` id cited in sections 10 to 13 was matched by script against the ids defined in texas.md: no missing ids. The two TDLR statements and the other quoted notices are not reproduced here; they are inserted from texas.md.

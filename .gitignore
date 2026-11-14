@@ -13,6 +13,8 @@ CLAUDE.local.md
 mp_out/
 data/cache/
 data/fixtures/
+# live and recorded demo runs (data/runs/), derived from sponsor data
+data/runs/
 
 # Python bytecode and test caches
 __pycache__/

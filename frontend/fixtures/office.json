@@ -18,7 +18,7 @@
   },
   "runs": {
     "5000": {
-      "schema_version": "0.1.0",
+      "schema_version": "0.2.0",
       "run_id": "demo-office-5000",
       "status": "done",
       "request": {
@@ -43,7 +43,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.1.0",
+        "schema_version": "0.2.0",
         "sid": "demo-office",
         "north_offset_deg": {
           "low": 0.0,
@@ -2422,7 +2422,7 @@
       ]
     },
     "15000": {
-      "schema_version": "0.1.0",
+      "schema_version": "0.2.0",
       "run_id": "demo-office-15000",
       "status": "done",
       "request": {
@@ -2447,7 +2447,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.1.0",
+        "schema_version": "0.2.0",
         "sid": "demo-office",
         "north_offset_deg": {
           "low": 0.0,
@@ -4826,7 +4826,7 @@
       ]
     },
     "30000": {
-      "schema_version": "0.1.0",
+      "schema_version": "0.2.0",
       "run_id": "demo-office-30000",
       "status": "done",
       "request": {
@@ -4851,7 +4851,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.1.0",
+        "schema_version": "0.2.0",
         "sid": "demo-office",
         "north_offset_deg": {
           "low": 0.0,

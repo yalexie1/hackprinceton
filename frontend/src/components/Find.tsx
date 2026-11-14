@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { PropertySummary } from "../lib/types";
 import BuildingArt from "./BuildingArt";
+import { fixtureSource } from "../lib/fixtures";
 export default function Find({
   properties,
   query,
@@ -130,6 +131,9 @@ export default function Find({
                 <span>{p.pano_count} panoramas</span>
                 <span>{p.has_splat ? "Aerial splat" : "Interior scan"}</span>
               </div>
+              {demo && (
+                <small className="fixture-source">{fixtureSource(p.sid)}</small>
+              )}
               <span className="property-action">
                 Explore this property <ArrowRight size={14} />
               </span>

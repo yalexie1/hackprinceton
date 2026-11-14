@@ -1,5 +1,9 @@
 import house from "../../fixtures/house.json";
 import office from "../../fixtures/office.json";
+import sharedHouse from "../../../specs/examples/house/run_result.json";
+import sharedOffice from "../../../specs/examples/office/run_result.json";
+import sharedHouseEvents from "../../../specs/examples/house/run_events.json";
+import sharedOfficeEvents from "../../../specs/examples/office/run_events.json";
 import type {
   DocumentDraft,
   DocumentRequest,
@@ -8,7 +12,15 @@ import type {
   RunResult,
 } from "./types";
 export const budgets = [5000, 15000, 30000] as const;
-const fixtures = [house, office] as unknown as {
+const sharedRuns = [sharedHouse, sharedOffice] as unknown as RunResult[];
+const fixtures = [
+  ...sharedRuns.map((run) => ({
+    property: run.property,
+    runs: { [String(run.request.budget_usd)]: run },
+  })),
+  house,
+  office,
+] as unknown as {
   property: PropertySummary;
   runs: Record<string, RunResult>;
 }[];
@@ -26,9 +38,14 @@ export function demoRun(sid: string, budget: number): RunResult {
   const run = fixture?.runs[String(budget)];
   if (!run)
     throw new Error(
-      "Choose one of the three saved demo budgets. Custom budgets are available in live mode.",
+      "Choose one of the saved demo budgets. Custom budgets are available in live mode.",
     );
-  return structuredClone(run);
+  const result = structuredClone(run);
+  if (!result.warnings.some((warning) => /illustrative/i.test(warning)))
+    result.warnings.unshift(
+      "Illustrative shared contract example; not a live building analysis.",
+    );
+  return result;
 }
 export const demoQuestion = {
   id: "demo-insulation",
@@ -92,6 +109,20 @@ export const demoStages: RunEvent[] = [
     payload: {},
   },
 ];
+export function demoEvents(sid: string): RunEvent[] {
+  const shared =
+    sid === sharedHouse.property.sid
+      ? sharedHouseEvents
+      : sid === sharedOffice.property.sid
+        ? sharedOfficeEvents
+        : null;
+  return structuredClone((shared || demoStages) as RunEvent[]);
+}
+export function fixtureSource(sid: string) {
+  return sharedRuns.some((run) => run.property.sid === sid)
+    ? "Shared contract example"
+    : "UI sandbox · 3 budget scenarios";
+}
 export function demoDraft(body: DocumentRequest): DocumentDraft {
   const names: Record<string, string> = {
     retrofit_contract_residential: "Residential retrofit agreement",

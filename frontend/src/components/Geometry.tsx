@@ -14,8 +14,13 @@ export default function Geometry({
   const solar = run.measures.find((m) => m.solar)?.solar;
   const desks = run.measures.find((m) => m.layout)?.layout;
   const roofs = run.building_model?.roof_planes || [];
-  const [selected, setSelected] = useState(0);
   const candidates = desks?.candidates || [];
+  const [selected, setSelected] = useState(() =>
+    Math.max(
+      0,
+      candidates.findIndex((candidate) => candidate.recommended),
+    ),
+  );
   const roofPolys = roofs.map((r) => polygon(r.polygon_wkt));
   const panelPolys = solar?.panels.map((p) => polygon(p.polygon_wkt)) || [];
   const points = layout
@@ -159,11 +164,7 @@ export default function Geometry({
                   stroke="#91acb2"
                   strokeWidth="1.5"
                 >
-                  <title>
-                    Panel {i + 1}: {number(solar!.panels[i].annual_kwh)} kWh /
-                    year, shading loss{" "}
-                    {number(solar!.panels[i].shading_loss_fraction * 100, 1)}%
-                  </title>
+                  <title>{`Panel ${i + 1}: ${number(solar!.panels[i].annual_kwh)} kWh / year, shading loss ${number(solar!.panels[i].shading_loss_fraction * 100, 1)}%`}</title>
                 </polygon>
               ))}
             </>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { budgets, demoProperties, demoRun } from "./fixtures";
+import { demoBudgets, demoEvents, demoProperties, demoRun } from "./fixtures";
 import { polygon } from "./format";
 import { resolveSweep } from "../components/Tour";
 describe("demo fixtures", () => {
@@ -20,15 +20,14 @@ describe("demo fixtures", () => {
       }
     }
     for (const p of demoProperties)
-      for (const budget of budgets) check(demoRun(p.sid, budget));
+      for (const budget of demoBudgets(p.sid)) check(demoRun(p.sid, budget));
   });
   it("provides house and office plans for every saved budget without exceeding the expected cash cap", () => {
-    expect(demoProperties.map((p) => p.segment)).toEqual([
-      "residential",
-      "commercial",
-    ]);
+    expect(new Set(demoProperties.map((p) => p.segment))).toEqual(
+      new Set(["residential", "commercial"]),
+    );
     for (const p of demoProperties)
-      for (const budget of budgets) {
+      for (const budget of demoBudgets(p.sid)) {
         const run = demoRun(p.sid, budget);
         const plan = run.plan!;
         expect(plan.total_upfront_usd.expected).toBeLessThanOrEqual(budget);
@@ -37,19 +36,36 @@ describe("demo fixtures", () => {
             (total, i) => total + i.measure.finance!.net_upfront_usd.expected,
             0,
           ),
-        ).toBe(plan.total_upfront_usd.expected);
+        ).toBeCloseTo(plan.total_upfront_usd.expected, 2);
         expect(
           plan.selected.reduce(
             (total, i) =>
               total + i.measure.finance!.annual_savings_usd.expected,
             0,
           ),
-        ).toBe(plan.total_annual_savings_usd.expected);
-        expect(plan.selected[0].measure.finance!.net_upfront_usd.expected).toBe(
-          0,
-        );
-        expect(run.warnings.join(" ")).toMatch(/Illustrative/);
+        ).toBeCloseTo(plan.total_annual_savings_usd.expected, 2);
+        if (
+          plan.selected.some(
+            (item) => item.measure.finance!.net_upfront_usd.expected === 0,
+          )
+        )
+          expect(
+            plan.selected[0].measure.finance!.net_upfront_usd.expected,
+          ).toBe(0);
+        expect(run.schema_version).toBe("0.2.0");
+        expect(run.warnings.join(" ")).toMatch(/illustrative/i);
       }
+  });
+  it("loads the shared golden house and office with their actual event and request shapes", () => {
+    const house = demoRun("zvKHR9DHNjJ", 14000);
+    const office = demoRun("HjEyXryhRLk", 3500);
+    expect(office.request.role).toBe("landlord");
+    expect(office.plan!.value_uplift).toBeTruthy();
+    expect(house.property.costar_listing_id).toBe("235967170");
+    const event = demoEvents(house.property.sid).find(
+      (e) => e.type === "question",
+    )!;
+    expect(event.payload.question).toEqual(house.questions[0]);
   });
   it("rejects custom demo budgets instead of inventing an analysis result", () => {
     expect(() => demoRun("demo-house", 12345)).toThrow("saved demo budgets");

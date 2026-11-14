@@ -3,6 +3,32 @@ import { api, request, sseParser, streamRun } from "./api";
 import type { RunEvent } from "./types";
 afterEach(() => vi.unstubAllGlobals());
 describe("audit event transport", () => {
+  it("ignores unknown additive event types while preserving subsequent known events", () => {
+    const events: RunEvent[] = [];
+    const parse = sseParser((e) => events.push(e));
+    parse(
+      'data: {"type":"future_progress","payload":{}}\n\ndata: {"type":"done","payload":{}}\n\n',
+    );
+    expect(events.map((e) => e.type)).toEqual(["done"]);
+  });
+  it("keeps following the stream after a recoverable tool error", async () => {
+    const body = new ReadableStream({
+      start(c) {
+        c.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"error","message":"Temporary imagery failure","payload":{"recoverable":true}}\n\n',
+          ),
+        );
+        c.enqueue(
+          new TextEncoder().encode('data: {"type":"done","payload":{}}\n\n'),
+        );
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body)));
+    const events: RunEvent[] = [];
+    await streamRun("1", (e) => events.push(e), new AbortController().signal);
+    expect(events.map((e) => e.type)).toEqual(["error", "done"]);
+  });
   it("handles split CRLF boundaries, comments, named events, and multiline JSON", () => {
     const events: RunEvent[] = [];
     const parse = sseParser((e) => events.push(e));
@@ -78,19 +104,17 @@ describe("backend contract", () => {
   it("shows structured backend errors", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            JSON.stringify({
-              error: {
-                code: "NO_COVERAGE",
-                message: "Property is outside coverage",
-              },
-            }),
-            { status: 422 },
-          ),
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: {
+              code: "NO_COVERAGE",
+              message: "Property is outside coverage",
+            },
+          }),
+          { status: 422 },
         ),
+      ),
     );
     await expect(request("/runs")).rejects.toThrow(
       "Property is outside coverage",

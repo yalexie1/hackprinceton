@@ -7,6 +7,17 @@ import type {
   RunResult,
 } from "./types";
 const base = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const eventTypes = new Set([
+  "stage_started",
+  "stage_done",
+  "todo",
+  "tool_call",
+  "fallback",
+  "question",
+  "partial_result",
+  "error",
+  "done",
+]);
 export async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -85,6 +96,7 @@ export function sseParser(onEvent: (event: RunEvent) => void) {
         .find((line) => line.startsWith("event:"))
         ?.slice(6)
         .trim();
+      if (!eventTypes.has(parsed.type || eventType)) continue;
       onEvent({
         ...parsed,
         type: parsed.type || eventType,
@@ -113,7 +125,7 @@ export async function streamRun(
     if (
       event.type === "done" ||
       event.type === "question" ||
-      event.type === "error"
+      (event.type === "error" && event.payload.recoverable !== true)
     )
       terminal = true;
   });

@@ -1,4 +1,4 @@
-// Browser contract mirrors specs/SPEC.md section 9 (schema 0.1.0).
+// Browser contract mirrors specs/SPEC.md section 9 (schema 0.2.0).
 export interface Ranged {
   low: number;
   expected: number;
@@ -20,6 +20,9 @@ export interface PropertySummary {
   state?: "CA" | "TX" | null;
   lat?: number | null;
   lon?: number | null;
+  costar_property_id?: string | null;
+  costar_listing_id?: string | null;
+  costar_residential_listing_id?: string | null;
   has_splat: boolean;
   has_defurnished: boolean;
   pano_count: number;
@@ -54,6 +57,7 @@ export interface FinancingScenario {
   financed_usd: number;
   rate?: number | null;
   term_years?: number | null;
+  program_sir?: number | null;
   annual_payment_usd: number;
   net_cashflow_year1_usd: Ranged;
   notes: string[];
@@ -146,6 +150,13 @@ export interface Plan {
   total_annual_savings_usd: Ranged;
   total_co2_kg: Ranged;
   baseline_after: EnergyUse;
+  value_uplift?: {
+    value_usd: Ranged;
+    method: string;
+    cap_rate?: Ranged | null;
+    comp_count: number;
+    notes: string[];
+  } | null;
 }
 export type Role = "owner_occupier" | "landlord" | "tenant";
 export interface RunRequest {
@@ -243,6 +254,7 @@ export interface DocumentDraft {
   markdown: string;
   unfilled_placeholders: string[];
   statutory_checks: {
+    requirement_id?: string | null;
     requirement: string;
     citation: string;
     satisfied: boolean;

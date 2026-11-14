@@ -13,6 +13,17 @@ export default defineConfig(({ mode }) => {
       ),
     },
     envDir: root,
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("/node_modules/")) return "vendor";
+            if (id.includes("/fixtures/") || id.includes("/specs/examples/"))
+              return "examples";
+          },
+        },
+      },
+    },
     server: {
       proxy: {
         "/api": {

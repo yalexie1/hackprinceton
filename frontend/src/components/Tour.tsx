@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Box, Expand, Info, LocateFixed } from "lucide-react";
 import BuildingArt from "./BuildingArt";
-import type { Anchor, MeasureResult } from "../lib/types";
+import type { Anchor, MeasureResult, Plan } from "../lib/types";
 interface Sdk {
   Mattertag: {
     add: (tags: unknown[]) => Promise<string[]>;
@@ -34,12 +34,14 @@ export default function Tour({
   office,
   demo,
   measures,
+  plan,
   focus,
 }: {
   sid: string;
   office: boolean;
   demo: boolean;
   measures: MeasureResult[];
+  plan?: Plan | null;
   focus?: string;
 }) {
   const iframe = useRef<HTMLIFrameElement>(null);
@@ -49,6 +51,7 @@ export default function Tour({
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [tagVersion, setTagVersion] = useState(0);
   const key = __MATTERPORT_SDK_KEY__;
   useEffect(() => {
     if (demo || !loaded || !key || !iframe.current) return;
@@ -87,15 +90,17 @@ export default function Tour({
     if (!ready || !connected) return;
     let cancelled = false;
     let created: string[] = [];
-    const pinned = measures.flatMap((measure) =>
-      measure.anchors
-        .filter((anchor) =>
-          [anchor.x, anchor.y, anchor.z].every(
-            (v) => typeof v === "number" && Number.isFinite(v),
-          ),
-        )
-        .map((anchor) => ({ measure, anchor })),
+    const pinned = (plan?.selected.map((item) => item.measure) || []).flatMap(
+      (measure) =>
+        measure.anchors
+          .filter((anchor) =>
+            [anchor.x, anchor.y, anchor.z].every(
+              (v) => typeof v === "number" && Number.isFinite(v),
+            ),
+          )
+          .map((anchor) => ({ measure, anchor })),
     );
+    if (!pinned.length) return;
     void connected.Mattertag.add(
       pinned.map(({ measure, anchor }) => ({
         label: measure.title,
@@ -114,6 +119,7 @@ export default function Tour({
         tags.current = Object.fromEntries(
           ids.map((id, i) => [pinned[i].measure.measure_id, id]),
         );
+        setTagVersion((version) => version + 1);
       })
       .catch(() => {
         if (!cancelled)
@@ -127,7 +133,7 @@ export default function Tour({
       if (created.length)
         void connected.Mattertag.remove(...created).catch(() => undefined);
     };
-  }, [ready, measures]);
+  }, [ready, plan]);
   useEffect(() => {
     const connected = sdk.current;
     const measure = measures.find((m) => m.measure_id === focus);
@@ -142,11 +148,13 @@ export default function Tour({
         : null;
     if (!navigation)
       setNotice("No verified tour location is available for this measure.");
-    else
+    else {
+      setNotice("");
       void navigation.catch(() =>
         setNotice("This evidence location is unavailable in the tour."),
       );
-  }, [focus, measures, ready]);
+    }
+  }, [focus, measures, ready, tagVersion]);
   return (
     <section className="tour-card" aria-label="Building explorer">
       <div className="card-heading">

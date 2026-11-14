@@ -37,6 +37,7 @@ import type {
 import { api, streamRun } from "./lib/api";
 import {
   demoBudgets,
+  demoEvents,
   demoProperties,
   demoQuestion,
   demoRun,
@@ -107,6 +108,7 @@ export default function App() {
   const epoch = useRef(0);
   const savedRun = useRef<RunResult | null>(null);
   const step = useRef(0);
+  const replay = useRef<RunEvent[]>(demoStages);
   useEffect(() => {
     if (!help) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -198,13 +200,15 @@ export default function App() {
       setConnecting(true);
       try {
         const health = await api.health();
-        if (health.schema_version !== "0.1.0")
+        if (health.schema_version !== "0.2.0")
           throw new Error(
-            `Backend schema ${health.schema_version} differs from this frontend’s 0.1.0 contract. Update the frontend adapter before connecting.`,
+            `Backend schema ${health.schema_version} differs from this frontend’s 0.2.0 contract. Update the frontend adapter before connecting.`,
           );
-      } catch {
+      } catch (e) {
         setError(
-          "Could not connect to the compatible backend at /api/health. Start the FastAPI server on port 8000, or configure VITE_API_BASE_URL. Demo mode remains available.",
+          e instanceof Error && e.message.startsWith("Backend schema")
+            ? e.message
+            : "Could not connect to the compatible backend at /api/health. Start the FastAPI server on port 8000, or configure VITE_API_BASE_URL. Demo mode remains available.",
         );
         setConnecting(false);
         return;
@@ -241,8 +245,8 @@ export default function App() {
     setBusy(false);
     setError("");
     setView("setup");
-    setRole("owner_occupier");
     const options = demoBudgets(p.sid);
+    setRole(demo ? demoRun(p.sid, options[0]).request.role : "owner_occupier");
     setBudget(demo ? (options.includes(15000) ? 15000 : options[0]) : 15000);
     setElectricBills("");
     setGasBills("");
@@ -251,18 +255,21 @@ export default function App() {
     const current = epoch.current;
     timer.current = setTimeout(() => {
       if (current !== epoch.current) return;
-      const event = demoStages[step.current++];
+      const event = replay.current[step.current++];
       if (!event) return;
       setEvents((previous) => [...previous, event]);
       if (event.type === "question") {
-        setQuestion(demoQuestion);
+        const q = (event.payload.question ||
+          event.payload) as unknown as Question;
+        const pending = q.id && q.choices ? q : demoQuestion;
+        setQuestion(pending);
         setBusy(false);
         setRun(
           (previous) =>
             previous && {
               ...previous,
               status: "waiting_for_user",
-              questions: [demoQuestion],
+              questions: [pending],
             },
         );
         return;
@@ -273,7 +280,7 @@ export default function App() {
         return;
       }
       pumpDemo();
-    }, 600);
+    }, 300);
   }
   async function watch(id: string, current: number) {
     const abort = new AbortController();
@@ -289,7 +296,7 @@ export default function App() {
               event.payload) as unknown as Question;
             if (q.id && q.choices) setQuestion(q);
           }
-          if (event.type === "error")
+          if (event.type === "error" && event.payload.recoverable !== true)
             setError(event.message || "The audit reported an error.");
         },
         abort.signal,
@@ -354,6 +361,7 @@ export default function App() {
       if (demo) {
         const result = demoRun(property.sid, budget);
         savedRun.current = result;
+        replay.current = demoEvents(property.sid);
         setRun({
           ...result,
           status: "running",
@@ -369,7 +377,7 @@ export default function App() {
         const { run_id } = await api.start(request);
         if (current !== epoch.current) return;
         setRun({
-          schema_version: "0.1.0",
+          schema_version: "0.2.0",
           run_id,
           status: "running",
           request,
@@ -607,7 +615,7 @@ export default function App() {
             {demo ? "DEMO WORKSPACE" : "LIVE WORKSPACE"}
             <span>
               {demo
-                ? "Illustrative properties and saved results. No live building analysis."
+                ? "Example scenarios and saved results. No live building analysis."
                 : "Connected to the team’s building analysis API."}
             </span>
             <button
@@ -721,7 +729,7 @@ export default function App() {
                     )}
                     <small>
                       {demo
-                        ? "Three saved budget scenarios are available in demo mode."
+                        ? "Saved budget scenarios are available in demo mode."
                         : "A hard cap on expected upfront cash. Later tax benefits do not reduce this cap."}
                     </small>
                   </label>
@@ -738,7 +746,7 @@ export default function App() {
                     </select>
                     <small>
                       {demo
-                        ? "This saved scenario represents an owner-occupier. All roles are available in live mode."
+                        ? "The saved example fixes this role. All roles are available in live mode."
                         : "Recommendations reflect the changes you’re authorized to make."}
                     </small>
                   </label>
@@ -856,7 +864,8 @@ export default function App() {
                     {events.map((event, i) => (
                       <div className={`event ${event.type}`} key={i}>
                         <span className="event-dot">
-                          {event.type === "fallback" ? (
+                          {event.type === "fallback" ||
+                          event.type === "error" ? (
                             <Info size={14} />
                           ) : event.type === "question" ? (
                             <CircleHelp size={14} />
@@ -870,6 +879,28 @@ export default function App() {
                               event.type.replaceAll("_", " ")}
                           </small>
                           <p>{event.message}</p>
+                          {event.type === "todo" &&
+                            Array.isArray(event.payload.todos) && (
+                              <ul className="event-todos">
+                                {event.payload.todos.map((raw, i) => {
+                                  const task = raw as {
+                                    content?: unknown;
+                                    status?: unknown;
+                                  };
+                                  return (
+                                    <li key={i}>
+                                      <span className="status-dot" />
+                                      {String(task.content || "Audit task")}
+                                      <small>
+                                        {String(
+                                          task.status || "pending",
+                                        ).replaceAll("_", " ")}
+                                      </small>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
                         </div>
                       </div>
                     ))}
@@ -887,6 +918,12 @@ export default function App() {
                       <span className="eyebrow">A QUICK QUESTION</span>
                       <h3>{question.prompt}</h3>
                       <p>{question.impact_note}</p>
+                      {demo && (
+                        <p className="fineprint">
+                          Demo replay: your choice advances the saved scenario.
+                          Its estimates and original answers remain unchanged.
+                        </p>
+                      )}
                       <div>
                         {question.choices.map((choice, i) => (
                           <button
@@ -923,6 +960,7 @@ export default function App() {
                   office={!!office}
                   demo={demo}
                   measures={run.measures}
+                  plan={run.plan}
                 />
               </div>
             </>
@@ -1001,6 +1039,7 @@ export default function App() {
                     office={!!office}
                     demo={demo}
                     measures={run.measures}
+                    plan={run.plan}
                     focus={focus}
                   />
                   <section className="budget-card">
@@ -1021,6 +1060,7 @@ export default function App() {
                         {demo ? (
                           <select
                             value={budget}
+                            disabled={budgets.length === 1}
                             onChange={(e) => {
                               const b = Number(e.target.value);
                               setBudget(b);
@@ -1060,7 +1100,9 @@ export default function App() {
                       )}
                       <small>
                         {demo
-                          ? "Switch between saved budget scenarios."
+                          ? budgets.length === 1
+                            ? "This shared example has one saved budget. Use a UI sandbox to compare budgets, or connect to live mode."
+                            : "Switch between saved budget scenarios."
                           : "Changing your budget reruns the backend analysis."}
                       </small>
                     </form>
@@ -1071,9 +1113,17 @@ export default function App() {
                   </section>
                   <section className="insight-card">
                     <Sparkles size={19} />
-                    <span className="eyebrow">THE AUDIT’S TAKE</span>
+                    <span className="eyebrow">
+                      {demo ? "SAVED EXAMPLE REPORT" : "THE AUDIT’S TAKE"}
+                    </span>
+                    {demo && (
+                      <p className="fineprint">
+                        This report retains the original example’s answers.
+                        Replay choices do not change the saved analysis.
+                      </p>
+                    )}
                     <p>
-                      {run.narrative_md ||
+                      {run.narrative_md.replace(/^#{1,6}\s+/gm, "") ||
                         "Review the selected measures and their evidence before moving ahead."}
                     </p>
                     <button

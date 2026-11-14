@@ -8,8 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
-    "check:contract": "python3 scripts/check_contract.py",
-    "sync:fixtures": "python3 scripts/import_fixtures.py"
+    "check:contract": "python3 scripts/check_contract.py"
   },
   "dependencies": {
     "react": "^19.2.0",

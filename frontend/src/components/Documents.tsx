@@ -272,6 +272,9 @@ export default function Documents({
               >
                 {check.satisfied ? <Check size={16} /> : <Info size={16} />}
                 <span>
+                  {check.requirement_id && (
+                    <strong>{check.requirement_id} · </strong>
+                  )}
                   {check.requirement}
                   <small>
                     {check.citation}

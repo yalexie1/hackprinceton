@@ -234,6 +234,12 @@ export function MeasureCard({
                       {money(s.net_cashflow_year1_usd.expected)} (
                       {ranged(s.net_cashflow_year1_usd, true)})
                     </p>
+                    {s.program_sir != null && (
+                      <p>
+                        Program savings-to-investment ratio:{" "}
+                        {number(s.program_sir, 2)}
+                      </p>
+                    )}
                     {s.notes.map((note, j) => (
                       <small key={j}>{note}</small>
                     ))}
@@ -404,6 +410,31 @@ export default function PlanView({
           )}
         </div>
       </section>
+      {plan.value_uplift && (
+        <section className="value-uplift">
+          <span className="eyebrow">PROPERTY VALUE CONTEXT</span>
+          <h3>Estimated value uplift</h3>
+          <Range value={plan.value_uplift.value_usd} currency />
+          <p className="fineprint">
+            Shown separately from energy savings. Method{" "}
+            {plan.value_uplift.method} · {plan.value_uplift.comp_count}{" "}
+            comparable sales.
+          </p>
+          {plan.value_uplift.cap_rate && (
+            <p className="fineprint">
+              Capitalization rate:{" "}
+              {number(plan.value_uplift.cap_rate.expected * 100, 2)}% (
+              {number(plan.value_uplift.cap_rate.low * 100, 2)}–
+              {number(plan.value_uplift.cap_rate.high * 100, 2)}%).
+            </p>
+          )}
+          {plan.value_uplift.notes.map((note, i) => (
+            <p className="fineprint" key={i}>
+              {note}
+            </p>
+          ))}
+        </section>
+      )}
       <div className="next-step">
         <span className="next-icon">
           <Leaf size={23} />

@@ -52,7 +52,7 @@ export default function Assumptions({
                 </span>
                 <h3>{a.label}</h3>
               </div>
-              <button
+              {a.user_editable && <button
                 className="icon-button"
                 disabled={demo || !a.user_editable || busy}
                 aria-label={`Edit ${a.label}`}
@@ -64,7 +64,7 @@ export default function Assumptions({
                 onClick={() => begin(a)}
               >
                 <Pencil size={16} />
-              </button>
+              </button>}
             </div>
             <div className="assumption-body">
               <div>

@@ -10,6 +10,14 @@ import Documents from "./Documents";
 const house = demoRun("zvKHR9DHNjJ", 14000);
 const office = demoRun("HjEyXryhRLk", 3500);
 describe("shared contract screen compatibility", () => {
+  it("offers no edit control for a locked assumption", () => {
+    const run = structuredClone(house);
+    const assumption = run.building_model!.assumptions[0];
+    assumption.label = "Locked input"; assumption.user_editable = false;
+    const html = renderToStaticMarkup(<Assumptions run={run} demo={false} busy={false} onSave={() => {}}/>);
+    expect(html).toContain("Locked input");
+    expect(html).not.toContain('aria-label="Edit Locked input"');
+  });
   it("renders the real shared house and office plans, keeping optional property value separate", () => {
     const home = renderToStaticMarkup(
       <PlanView run={house} onFocus={() => {}} onDocuments={() => {}} />,

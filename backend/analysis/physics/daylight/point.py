@@ -389,10 +389,14 @@ def score_point(room: Room, surfaces: Sequence[Surface], x: float, y: float, sun
                                   np.where(sun_body[idx], p["comfort.body_exposed_fraction"], 0.0),
                                   p["comfort.shortwave_absorptivity"], p["comfort.floor_reflectance_solar"])
         t_r = t_r + sg["delta_mrt_k"]
+    cold = tout_o < C.CLO_SWITCH_T_OUT_C
     if mode is not None:
-        heating = np.asarray(mode)[idx] == "heating"
+        m = np.asarray(mode)[idx]
+        # CMF-08: heating clothing when the zone heats; when it neither heats nor cools (mode
+        # off), the outdoor-temperature rule decides
+        heating = np.where((m == "heating") | (m == "cooling"), m == "heating", cold)
     else:
-        heating = tout_o < C.CLO_SWITCH_T_OUT_C
+        heating = cold
     clo = np.where(heating, p["comfort.clo_heating"], p["comfort.clo_cooling"])
     if idx.size:
         res = pmv_ppd(ta_o, t_r, p["comfort.air_speed_m_s"], p["comfort.rh_percent"], p["comfort.met"], clo)

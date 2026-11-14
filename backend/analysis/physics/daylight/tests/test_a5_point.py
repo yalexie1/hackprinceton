@@ -202,3 +202,14 @@ def test_fixtures_score_every_room(folder, source):
         if ctx.windows:
             assert ctx.north_offset_deg == pytest.approx(m.north_offset_deg.expected, abs=0.05)
     assert seen == source
+
+
+def test_mode_off_clothing_follows_the_outdoor_temperature_rule():
+    # CMF-08: when the zone neither heats nor cools, T_out < 15 picks the heating clothing
+    room, fl, surfaces = box_room()
+    cold = synthetic_year(winter_t=-15.0)
+    theta = np.full(8760, 21.0)
+    by_rule = np.where(cold["t_out_c"] < 15, "heating", "cooling")
+    off = score_point(room, surfaces, 2.0, 2.0, cold, dict(theta_air_c=theta, mode=np.full(8760, "off")), floor=fl)
+    ruled = score_point(room, surfaces, 2.0, 2.0, cold, dict(theta_air_c=theta, mode=by_rule), floor=fl)
+    assert off["comfort_ppd"] == pytest.approx(ruled["comfort_ppd"])

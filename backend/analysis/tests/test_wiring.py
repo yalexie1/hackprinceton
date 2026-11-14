@@ -126,7 +126,6 @@ def test_every_measure_in_the_plan_lists_formula_ids_and_is_accounted_for(flavor
     accounted = {m.measure_id for m in measures} | {s.measure_id for s in plan.skipped}
     example = {m.measure_id for m in RunResult.model_validate_json((EX / flavor / "run_result.json").read_text()).measures}
     assert {m.measure_id for m in measures} <= accounted <= example       # nothing outside the example, nothing lost
-    assert plan.value_uplift is None                               # no value module yet (A30)
     assert plan.total_upfront_usd.expected == pytest.approx(sum(i.measure.finance.net_upfront_usd.expected for i in plan.selected), abs=0.02)
     assert plan.selected[0].remaining_budget_usd <= plan.budget_usd
 
@@ -149,3 +148,39 @@ def test_a_tenant_never_gets_an_owner_only_measure():
     plan = api.build_plan(bundle, model_of(bundle, request), tenant)
     chosen = {i.measure.measure_id for i in plan.selected} | {m.measure_id for m in plan.financeable}
     assert not chosen & {"PV_ROOF", "ENV_ATTIC", "HVAC_HP", "ROOF_COOL", "DHW_HPWH"}
+
+
+# ---- value uplift (A30) ----
+
+def plan_of(flavor):
+    bundle, request = load(flavor)
+    return bundle, api.build_plan(bundle, model_of(bundle, request), request)
+
+
+@pytest.mark.parametrize("flavor", ["office", "office_houston"])
+def test_an_office_plan_carries_the_capitalised_saving(flavor):
+    bundle, plan = plan_of(flavor)
+    u = plan.value_uplift
+    assert u is not None and u.method == "VAL-01" and u.comp_count == bundle.costar.market.comp_count
+    assert u.value_usd.low == 0.0 and u.value_usd.expected <= u.value_usd.high and u.cap_rate == bundle.costar.market.cap_rate
+    assert all(i.measure.value_uplift is None for i in plan.selected)
+    # shown beside the totals, never inside them
+    assert plan.total_annual_savings_usd.expected == pytest.approx(sum(i.measure.savings.cost_usd.expected for i in plan.selected), abs=0.02)
+
+
+def test_without_market_data_the_plan_has_no_uplift():
+    bundle, request = load("office")
+    bare = bundle.model_copy(update={"costar": bundle.costar.model_copy(update={"market": None})})
+    assert api.build_plan(bare, model_of(bare, request), request).value_uplift is None
+    few = bundle.costar.market.model_copy(update={"comp_count": 3})
+    few_bundle = bundle.model_copy(update={"costar": bundle.costar.model_copy(update={"market": few})})
+    assert api.build_plan(few_bundle, model_of(few_bundle, request), request).value_uplift is None
+
+
+def test_a_home_carries_its_uplift_on_owned_rooftop_solar_only():
+    bundle, plan = plan_of("house")
+    assert plan.value_uplift is None
+    pv = next(i.measure for i in plan.selected if i.measure.measure_id == "PV_ROOF")
+    assert pv.value_uplift.method == "VAL-03" and pv.value_uplift.value_usd.low == 0.0
+    assert pv.value_uplift.value_usd.high == pytest.approx(4000 * pv.solar.system_kw_dc)
+    assert all(i.measure.value_uplift is None for i in plan.selected if i.measure.measure_id != "PV_ROOF")

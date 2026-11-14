@@ -22,8 +22,10 @@ from typing import Optional
 from backend.analysis.finance.costs import NoCostData, cost_fields, incentives_for
 from backend.analysis.finance.economics import financial_breakdown
 from backend.analysis.finance.plan import select_plan
+from backend.analysis.finance.value import home_pv_uplift, plan_value_uplift
 from backend.analysis.model.geometry import build_geometry
-from backend.analysis.model.registry import build_registry, merge_assumptions, set_model_assumption
+from backend.analysis.model.registry import (build_registry, merge_assumptions, scanned_floor_area_m2,
+                                             set_model_assumption)
 from backend.analysis.solar.roof import build_parametric_roof
 from backend.schema import (Assumption, BaselineResult, BuildingModel, EnergyUse, FinancingScenario,
                             Flag, Incentive, LayoutResult, MeasureId, MeasureResult, Plan,
@@ -177,7 +179,8 @@ def lookup_incentives(measure_id: MeasureId, summary: PropertySummary) -> list[I
 
 
 def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
-    """REAL algorithm (A26, SPEC 6.5) over the stub engine's measures priced by A24 and A25.
+    """REAL algorithm (A26, SPEC 6.5) over the stub engine's measures priced by A24 and A25, with
+    the value uplift of A30.
     The state is the model plus the measures chosen so far; the stub engine does not yet change
     its savings with the state, and `baseline_after` is the baseline less the chosen savings."""
     columns = _HOME if model.systems.occupancy_schedule == "home" else _OFFICE
@@ -194,7 +197,32 @@ def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest
     def energy(state):
         return _after(baseline.annual, [m.savings for m in state[1]])
 
-    return select_plan(ids, request.role, request.budget_usd, (model, ()), evaluate, apply, energy)
+    plan = select_plan(ids, request.role, request.budget_usd, (model, ()), evaluate, apply, energy)
+    return _with_value_uplift(bundle, plan)
+
+
+def _with_value_uplift(bundle: PropertyBundle, plan: Plan) -> Plan:
+    """REAL (A30). A commercial or multifamily plan carries VAL-01 when the bundle has CoStar
+    market data (and the module has at least 10 comparables); a home carries VAL-03 on its owned
+    rooftop solar and nowhere else. Never added to a total and never used in the order."""
+    summary = bundle.summary
+    if summary.segment == "residential":
+        def with_pv(m: MeasureResult) -> MeasureResult:
+            if m.measure_id != "PV_ROOF" or m.solar is None or m.finance is None:
+                return m
+            return m.model_copy(update={"value_uplift": home_pv_uplift(
+                m.solar.system_kw_dc, m.finance.net_upfront_usd.expected)})
+        return plan.model_copy(update={
+            "selected": [i.model_copy(update={"measure": with_pv(i.measure)}) for i in plan.selected],
+            "financeable": [with_pv(m) for m in plan.financeable]})
+    if not plan.selected or bundle.costar is None:
+        return plan
+    om = sum(i.measure.finance.annual_om_change_usd for i in plan.selected if i.measure.finance)
+    saving = plan.total_annual_savings_usd
+    net = Ranged(low=round(saving.low - om, 2), expected=round(saving.expected - om, 2),
+                 high=round(saving.high - om, 2), unit="USD")
+    uplift = plan_value_uplift(bundle.costar.market, net, floor_area_m2=scanned_floor_area_m2(bundle))
+    return plan.model_copy(update={"value_uplift": uplift})
 
 
 def _after(base: EnergyUse, savings: list[EnergyUse]) -> EnergyUse:

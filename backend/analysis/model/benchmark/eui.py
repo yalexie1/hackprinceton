@@ -241,7 +241,7 @@ def benchmark_eui(electricity_kwh: float, gas_kwh: float, floor_area_m2: Optiona
             continue
         lo, hi = b.percentiles_kwh_m2[WARN_LOW], b.percentiles_kwh_m2[WARN_HIGH]
         side = "below" if b.verdict.endswith("low") else "above"
-        hint = _HINTS[(b.quantity, side)]
+        hint = _HINTS.get((btype, b.quantity, side)) or _HINTS[(b.quantity, side)]
         inside = ""
         if rng and b.quantity == "total" and rng[0] <= hi and rng[1] >= lo:
             inside = f" The model's own range ({rng[0]:.0f} to {rng[1]:.0f} kWh/m2) reaches into that band."
@@ -263,6 +263,16 @@ _HINTS = {
     ("electricity", "above"): "cooling, lighting or plug electricity may be too large",
     ("gas", "below"): "gas heating or water heating may be too small",
     ("gas", "above"): "gas heating or water heating may be too large, or the furnace efficiency too low",
+    # An office's modelled gas is a lower bound by construction, not a fault to look for: one zone
+    # per unit (physics 02, 5R1C), so the heat of the core, lights and equipment offsets the
+    # perimeter's heat loss; no office water heating (DHW-02 covers homes); and a suite in the
+    # middle of a building has no roof or ground floor, unlike the whole buildings CBECS surveys.
+    ("office", "gas", "below"): ("this office's gas is a lower bound. The model treats the space as one "
+                                 "zone, so the heat of the core, the lights and the equipment offsets the "
+                                 "perimeter's heat loss; it does not model office water heating; and a "
+                                 "suite with no roof or ground floor loses less heat than the whole "
+                                 "buildings surveyed. Gas savings in the plan are understated, and the "
+                                 "utility bills would calibrate it"),
 }
 
 

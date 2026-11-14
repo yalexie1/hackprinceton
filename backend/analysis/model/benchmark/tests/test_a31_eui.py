@@ -133,3 +133,19 @@ def test_golden_examples(folder):
     assert len(warnings) == n_warn and warnings == r.warnings
     if folder == "office_houston":      # gas 1.8 kBtu/ft2 sits below the 5th percentile of gas-using offices
         assert "Gas use intensity" in warnings[0] and "fewer than 50" in warnings[0]
+
+
+def test_office_low_gas_says_why_it_is_a_lower_bound():
+    """An office's modelled gas is low by construction (one zone, no office water heating, a suite
+    with no roof or ground): the warning says so instead of asking for a fault to be found."""
+    r = benchmark_eui(300_000, 500, 2300, "office", "3B", building_area_m2=8000)
+    gas = [w for w in r.warnings if w.startswith("Gas use intensity")]
+    assert len(gas) == 1
+    assert "lower bound" in gas[0] and "one zone" in gas[0] and "water heating" in gas[0]
+    assert "may be too small" not in gas[0]
+
+
+def test_home_low_gas_keeps_the_generic_hint():
+    r = benchmark_eui(6_000, 50, 150, "single_family", "3B")
+    gas = [w for w in r.warnings if w.startswith("Gas use intensity")]
+    assert gas and "gas heating or water heating may be too small" in gas[0]

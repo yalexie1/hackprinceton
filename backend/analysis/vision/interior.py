@@ -25,6 +25,8 @@ What is written, and the keys the rest of the lane reads (registry A10, geometry
 - Water heater: ``dhw.type``, ``dhw.fuel``.
 - Lighting: ``lighting.fixture_type``; for offices also ``lighting.lpd``, the DEF-10 row the
   fixture type selects. Homes take lighting energy from LGT-01, so no density is written.
+- Feasibility (A8, ``feasibility.py``): an optional ``feasibility`` section of the same reply
+  gives the ``electrical.service`` and ``dhw.space`` flags and the wall and outlet cues.
 
 The live model call is the one network exception of the lane (workplan 3.2). It is a function
 argument and is never exercised in tests; until sending sponsor imagery to an external provider
@@ -39,6 +41,8 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Optional
 
 from backend.schema import Assumption, EvidenceRef, Flag, Pano, PropertyBundle, Ranged, Room
+
+from . import feasibility as _feas
 
 AskModel = Callable[[list[bytes], str], str]   # (images, prompt) -> reply text
 GetBytes = Callable[[str], bytes]              # asset path -> bytes (data_layer.api.get_asset)
@@ -125,6 +129,7 @@ REPLY_SCHEMA: dict[str, Any] = {
                 "note": {"type": "string"},
             },
         },
+        "feasibility": _feas.SCHEMA,          # A8, optional: wall material, outlets, panel
     },
 }
 
@@ -180,7 +185,7 @@ Reply with ONE JSON object and nothing else (no prose, no code fence), with exac
     "fixture_count": integer | null,         // ceiling fixtures in view
     "confidence": number between 0 and 1,
     "note": short string
-  }}
+  }}""" + _feas.PROMPT_PART + """
 }}
 """
 
@@ -217,6 +222,7 @@ class PanoReading:
     hvac: Optional[Section] = None
     water_heater: Optional[Section] = None
     lighting: Optional[Section] = None
+    feasibility: Optional[Section] = None     # A8; optional in the reply
 
 
 _SECTION_FIELDS: dict[str, dict[str, Any]] = {
@@ -228,6 +234,7 @@ _SECTION_FIELDS: dict[str, dict[str, Any]] = {
     "lighting": {"fixture_type": FIXTURES, "fixture_count": "int"},
 }
 _REQUIRED = {"windows": ("visible",), "water_heater": ("visible",)}
+_OPTIONAL_FIELDS: dict[str, dict[str, Any]] = {"feasibility": _feas.FIELDS}
 
 
 def _json_object(text: Any) -> Optional[dict]:
@@ -275,7 +282,8 @@ def _section(name: str, raw: Any) -> Optional[Section]:
     if conf is None or not 0 <= conf <= 1:
         return None
     fields = {}
-    for k, spec in _SECTION_FIELDS[name].items():
+    specs = _SECTION_FIELDS.get(name) or _OPTIONAL_FIELDS[name]
+    for k, spec in specs.items():
         v = _field(raw.get(k), spec)
         if v is not None:
             fields[k] = v
@@ -290,7 +298,7 @@ def parse_reply(pano_id: str, text: Any) -> Optional[PanoReading]:
     """One model reply -> a reading, or None when the reply is not the JSON object asked for.
 
     A reply must be one JSON object (a surrounding code fence is tolerated) with the four
-    section keys. A section with a missing or out-of-range confidence is dropped; a field
+    section keys (the A8 ``feasibility`` section is optional). A section with a missing or out-of-range confidence is dropped; a field
     outside its vocabulary is dropped. Never raises.
     """
     try:
@@ -298,6 +306,7 @@ def parse_reply(pano_id: str, text: Any) -> Optional[PanoReading]:
         if obj is None or not all(k in obj for k in _SECTION_FIELDS):
             return None
         secs = {k: _section(k, obj[k]) for k in _SECTION_FIELDS}
+        secs.update({k: _section(k, obj[k]) for k in _OPTIONAL_FIELDS if k in obj})
         if not any(secs.values()):
             return None
         return PanoReading(pano_id=pano_id, **secs)
@@ -370,7 +379,7 @@ def _faces(pano: Pano) -> list[str]:
 @dataclass
 class VisionResult:
     assumptions: list[Assumption]
-    flags: list[Flag] = field(default_factory=list)          # A8 fills these
+    flags: list[Flag] = field(default_factory=list)          # A8 (feasibility.py)
     warnings: list[str] = field(default_factory=list)
     readings: dict[str, PanoReading] = field(default_factory=dict)
 
@@ -748,7 +757,7 @@ def assumptions_from_readings(bundle: PropertyBundle, readings: dict[str, PanoRe
 def read_interior(bundle: PropertyBundle, ask_model: Optional[AskModel],
                   get_bytes: Optional[GetBytes], *, max_panos: int = MAX_PANOS,
                   room_fallback: bool = False) -> VisionResult:
-    """Read the panoramas and return assumptions, flags (none until A8) and warnings.
+    """Read the panoramas and return assumptions, feasibility flags (A8) and warnings.
 
     ``ask_model`` None (the default until imagery may be sent out, SPEC 16) returns nothing:
     the lane then runs on vintage defaults.
@@ -761,10 +770,11 @@ def read_interior(bundle: PropertyBundle, ask_model: Optional[AskModel],
         read_all = len(selected) == sum(1 for p in bundle.matterport.panos if p.face_paths)
         assumptions = assumptions_from_readings(bundle, readings, read_all=read_all,
                                                 room_fallback=room_fallback)
+        feas_assumptions, flags = _feas.feasibility_from_readings(readings, building_kind(bundle))
     except Exception as exc:     # defensive: vision is optional, it must never stop a run
         return VisionResult([], [], [f"vision reading failed ({type(exc).__name__}); "
                                      f"vintage defaults apply"])
-    return VisionResult(assumptions, [], warnings, readings)
+    return VisionResult(assumptions + feas_assumptions, flags, warnings, readings)
 
 
 def observe_interior(bundle: PropertyBundle, ask_model: Optional[AskModel] = None,

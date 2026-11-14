@@ -19,6 +19,7 @@ import queue
 import time
 import threading
 import uuid
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Optional
@@ -288,9 +289,11 @@ class LiveRun:
             from langsmith import Client
             wait_for_all_tracers()
             client = Client()
-            for _ in range(5):
+            for _ in range(3):
                 try:
-                    return client.read_run(self.trace_id).url
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")      # read_run is being renamed; the old name works
+                        return client.read_run(self.trace_id).url
                 except Exception:
                     time.sleep(2)
         except Exception:
@@ -416,6 +419,12 @@ class LiveRun:
     # ---- threading ----
 
     def start(self) -> None:
+        if self.tracing:
+            # The key may be able to write traces but not read them back (then trace_url() is None),
+            # so the ids that find the trace are kept with the run. Private: data/runs is git-ignored.
+            (self.files.root / "trace.json").write_text(json.dumps({
+                "trace_id": str(self.trace_id), "project": os.environ.get("LANGSMITH_PROJECT"),
+                "run_id": self.run_id, "metadata_to_search": {"run_id": self.run_id, "sid": self.request.sid}}, indent=2))
         self._thread.start()
 
     def _publish(self, event: RunEvent) -> None:

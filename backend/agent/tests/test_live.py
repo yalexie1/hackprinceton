@@ -403,3 +403,19 @@ def test_the_runtime_builds_the_plan_the_agent_did_not(live_mode):
     result = api.get_run(run_id)
     assert result.plan is not None and result.plan.selected and "plan.json" not in " ".join(result.warnings)
     assert result.measures and run.files.missing() == []
+
+
+def test_a_traced_run_keeps_the_ids_that_find_its_trace(monkeypatch, tmp_path):
+    monkeypatch.setenv("LANGSMITH_API_KEY", "k")
+    monkeypatch.setenv("LANGSMITH_PROJECT", "proj")
+    live.configure_tracing()
+    req = request()
+    model, sub = script(req.sid)
+    run = live.LiveRun("run_ids", req, live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
+                                                         runs_dir=tmp_path))
+    monkeypatch.setattr(run, "_thread", type("T", (), {"start": lambda self: None})())      # no run, no network
+    run.start()
+    saved = json.loads((run.files.root / "trace.json").read_text())
+    assert saved["trace_id"] == str(run.trace_id) and saved["project"] == "proj" and saved["run_id"] == "run_ids"
+    assert "LANGSMITH_API_KEY" not in json.dumps(saved) and "k" != saved.get("key")
+    monkeypatch.setenv("LANGSMITH_API_KEY", "")

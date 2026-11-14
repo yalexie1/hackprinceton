@@ -61,7 +61,9 @@ Filters such as `roof-solar=true` and `roof-material=metal` work on the query, w
 ### Golden lots
 
 - House: `POINT(-118.3171 34.093491667)` (from the Matterport model's own `geocoordinates` — the authoritative source for a model's location).
-- Office: 9050 Emnora Ln, Houston (`PropertyId 354635`). Get its coordinates from `data-matterport`'s `geocoordinates` on `HjEyXryhRLk`, **not** by geocoding the address string.
+- Office: `POINT(-95.51538273549774 29.816116896197208)` = 9050 Emnora Ln, Houston (`PropertyId 354635`), from `geocoordinates` on `HjEyXryhRLk` — **not** by geocoding the address string. Verified `include=precomputed`: 1 structure, `footprint.area` 1,215.91 m², `ground-elevation.value` 26.5176, roof `gable`/`metal`, `condition.precise-value` 3.39, `tree-cover.percent` 1.0, `ac-unit.count` **0**, `skylight.count` 0, `solar.value` False.
+
+**`building-type.class` is populated for commercial, absent for residential** — `"commercial"` on the office lot, `None` on the house lot. Usable as a commercial cross-check; never a required field in the home flow.
 
 ## Contract
 
@@ -78,10 +80,12 @@ Write `data/fixtures/vexcel/` for both golden lots, plus one `404` (no parcel) c
 1. `property/extract?include=precomputed` parses into typed fields for both golden lots.
 2. The golden house reproduces `roof-characteristics.shape.value == "gable"`, `material.class == "shingle"`, `footprint.area ≈ 190.39`, `ac-unit.count == 2`, `chimney.count == 1`, `roof-vent.count == 5`.
 3. `primary-structure` selects the right structure on the 2-structure golden lot.
-4. `include=calculated` is used at most once per property and its result is cached.
-5. `404` yields an explicit `FetchRecord`, not an exception; `429` triggers exponential backoff.
-6. WKT is emitted longitude-first with `srid=4326`.
-7. Fixtures replay with the network off.
+4. Height comes from a single `include=precomputed,calculated` call, never from a separate `include=calculated` call; the result is cached per property.
+5. `roof-characteristics.height` is sanity-checked (reject < ~2 m for a standing building) and returned with a confidence flag, never as a bare fact.
+6. The office lot reproduces `shape.value == "gable"`, `material.class == "metal"`, `footprint.area ≈ 1215.91`, `building-type.class == "commercial"`.
+7. `404` yields an explicit `FetchRecord`, not an exception; `429` triggers exponential backoff.
+8. WKT is emitted longitude-first with `srid=4326`.
+9. Fixtures replay with the network off.
 
 ## Board protocol
 

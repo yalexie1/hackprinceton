@@ -68,8 +68,12 @@ Query shape that works:
 
 ### Golden models
 
-- House: `zvKHR9DHNjJ` ("5836 La Mirada Ave", Los Angeles).
-- Office suite: `HjEyXryhRLk` (CoStar `PropertyId 354635`, 9050 Emnora Ln, Houston).
+| Model | lat | lon | altitude | rotation (z, w) | angle | source |
+|---|---|---|---|---|---|---|
+| House `zvKHR9DHNjJ` | 34.093491667 | -118.3171 | 120.200 | 0.7289896, 0.6845248 | ≈93.7° | `processing` |
+| Office `HjEyXryhRLk` "Suite A - 2,000SF" | 29.816116896 | -95.515382735 | 25.039 | 0.6964351, 0.7176198 | ≈88.3° | `processing` |
+
+`GeoCoordinateSource` = `client` | `processing` | `unknown`. Both golden models are **`processing`** — derived during processing, not client-set. Return `source` so downstream can tell a derived georeference from a human-set one.
 
 ## Contract
 

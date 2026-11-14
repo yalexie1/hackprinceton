@@ -77,10 +77,40 @@ def points(wkt: Optional[str]) -> list[tuple[float, float]]:
     return list(zip(nums[0::2], nums[1::2]))
 
 
-def png_size(data: bytes) -> Optional[tuple[int, int]]:
-    if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+_SOF = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
+
+
+def image_size(data: bytes) -> Optional[tuple[int, int]]:
+    """(width, height) in pixels of a PNG (IHDR) or a JPEG (the first start-of-frame marker), else None.
+    The Vexcel extract endpoints return JPEG; older cached files are PNG."""
+    if len(data) >= 24 and data[:8] == b"\x89PNG\r\n\x1a\n" and data[12:16] == b"IHDR":
+        return struct.unpack(">II", data[16:24])
+    if len(data) < 4 or data[:2] != b"\xff\xd8":
         return None
-    return struct.unpack(">II", data[16:24])
+    i = 2
+    while i + 4 <= len(data):
+        if data[i] != 0xFF:                    # not at a marker: the stream is damaged
+            return None
+        marker = data[i + 1]
+        if marker == 0xFF:                     # fill byte
+            i += 1
+            continue
+        if marker in (0x01, *range(0xD0, 0xD8)):         # markers without a length
+            i += 2
+            continue
+        if marker in (0xD9, 0xDA):             # end of image / start of scan: no frame header found
+            return None
+        length = struct.unpack(">H", data[i + 2:i + 4])[0]
+        if marker in _SOF:
+            if i + 9 > len(data):
+                return None
+            height, width = struct.unpack(">HH", data[i + 5:i + 9])
+            return (width, height) if width and height else None
+        i += 2 + length
+    return None
+
+
+png_size = image_size                          # the old name, kept for callers
 
 
 def _box(wkt: Optional[str]) -> Optional[tuple[float, float, float, float]]:
@@ -118,7 +148,7 @@ def ortho_view(bundle: PropertyBundle, read_asset: Callable[[str], bytes]) -> Op
         return None
     size, available = None, False
     try:
-        size, available = png_size(read_asset(v.ortho_path)), True
+        size, available = image_size(read_asset(v.ortho_path)), True
     except Exception:                    # a missing file only costs the exact bounds
         pass
     if size:

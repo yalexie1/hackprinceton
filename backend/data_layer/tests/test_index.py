@@ -127,11 +127,23 @@ def test_ranking_is_total_and_nearest_first():
 def test_scans_for_property_lists_the_siblings_with_the_asked_one_first():
     """One building, several scans. The sibling sids differ per property, so this asserts
     the rule rather than the names: the asked-for scan leads, nothing is listed twice,
-    there is at least one sibling, and every scan belongs to the same CoStar property."""
+    there is at least one sibling, and every scan belongs to the same CoStar property.
+
+    Two scans are siblings because they share a `costar_property_id`, which only the kit
+    knows - so without the mirror a property is its own only scan and that is correct
+    behaviour, not a failure. The rules that hold either way are asserted either way;
+    only the sibling itself is skipped. Reported by @vinayak-sinha on a kit-less checkout.
+    """
     sid = golden_office()
     scans = api.scans_for_property(sid)
-    assert scans[0].sid == sid
+    assert scans, "a property is at least its own scan"
+    assert scans[0].sid == sid, "the asked-for scan leads"
     assert len(scans) == len({s.sid for s in scans}), "a scan is listed twice"
+
+    if not index.kit_available():
+        assert len(scans) == 1, "with no kit there is no sibling to find"
+        pytest.skip("no CoStar kit mirror: siblings come from the kit's costar_property_id")
+
     assert len(scans) > 1, f"{sid} should have sibling scans of the same building"
     expected_pid = KNOWN[sid][4]
     assert all(s.costar_property_id == expected_pid for s in scans)

@@ -2,7 +2,7 @@
 
 Two real hourly years, calendar year **2024**. These are not typical meteorological years. No sponsor data. Tests read these files and never fetch.
 
-* **Temperature, relative humidity and wind** come from **NOAA station observations**: Global Hourly (ISD), with GHCN-Daily for one gap (see below). Each file uses the station that the Data lane's TMYx rule picks for live runs (data spec 5.1f), so the examples and live runs share a climate (#322).
+* **Temperature, relative humidity and wind** come from **NOAA station observations**: Global Hourly (ISD), with GHCN-Daily for one gap (see below). Each file uses the station that the Data lane's TMYx rule picks for live runs (data spec 5.1f), so the examples and live runs share a climate (#325).
 * **Irradiance (GHI, DNI, DHI)** comes from the **Open-Meteo archive API**. It is byte-identical to the earlier Open-Meteo-only files.
 
 Rebuild both files with one command from the repository root. It downloads into a temporary folder, or into `--cache DIR`:
@@ -48,7 +48,7 @@ Time convention: `hour_end`. Irradiance is the mean over the hour that ends at t
 
 ### The Los Angeles gap: USC stops reporting on 2024-05-20
 
-NOAA has **no hourly observations from Downtown USC after 2024-05-20 14:47 UTC**: ISD, GHCNh and the METAR archive (Iowa Environmental Mesonet) all end there. GHCN-Daily still has USC's TMAX and TMIN for all 366 days. Decision (lead, #322): take USC's own hours through local 2024-05-19 23:00. **From local 2024-05-20 00:00 to the end of the year**, take a donor station's hourly series and **rescale its temperature day by day** (stamp date, local standard time). The rescale is linear, so the day's minimum and maximum equal USC's GHCN-Daily TMIN and TMAX: T = TMIN + (T_donor − min_day) · (TMAX − TMIN) / (max_day − min_day). The donor's own dew point and wind are kept, with Td capped at the rescaled T. RH is then computed from the rescaled T. Of the 8,784 hours, 3,360 come from USC and 5,424 from the donor.
+NOAA has **no hourly observations from Downtown USC after 2024-05-20 14:47 UTC**: ISD, GHCNh and the METAR archive (Iowa Environmental Mesonet) all end there. GHCN-Daily still has USC's TMAX and TMIN for all 366 days. Decision (lead, #325): take USC's own hours through local 2024-05-19 23:00. **From local 2024-05-20 00:00 to the end of the year**, take a donor station's hourly series and **rescale its temperature day by day** (stamp date, local standard time). The rescale is linear, so the day's minimum and maximum equal USC's GHCN-Daily TMIN and TMAX: T = TMIN + (T_donor − min_day) · (TMAX − TMIN) / (max_day − min_day). The donor's own dew point and wind are kept, with Td capped at the rescaled T. RH is then computed from the rescaled T. Of the 8,784 hours, 3,360 come from USC and 5,424 from the donor.
 
 The donor was chosen by validation. On 1 January to 19 May, where USC has its own hours, each candidate was rescaled to USC's daily extremes the same way and compared with USC's actual hourly reports (3,333 hours for temperature, 3,329 for dew point):
 
@@ -79,7 +79,7 @@ The small positive bias of the rescaled series is expected. GHCN-Daily extremes 
 
 USC reports little wind: many of its reports carry no valid speed, hence the 163 interpolated wind hours.
 
-## Before and after (#322)
+## Before and after (#325)
 
 Degree-days use NOAA's daily method: daily mean = (Tmax + Tmin)/2 of the day's hours by stamp date, base 65 °F, with 29 February dropped. The observed figures use the same method on GHCN-Daily TMAX/TMIN. "Mean" is the mean of the daily (Tmax + Tmin)/2; the hourly-mean figure is given in brackets.
 

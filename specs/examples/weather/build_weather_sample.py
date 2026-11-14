@@ -1,4 +1,4 @@
-"""Rebuild the two weather samples in this folder from NOAA station observations (#322).
+"""Rebuild the two weather samples in this folder from NOAA station observations (#325).
 
 Not a test, and nothing imports it. Run from the repository root:
 

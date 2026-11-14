@@ -104,5 +104,5 @@ def test_example_fixture_draft_is_checked_not_satisfied():
 
 def test_other_documents_return_nothing_yet():
     d = draft()
-    d.state = "TX"
+    d.doc_type = "retrofit_contract_commercial"          # the Texas residential contract has checks since L5
     assert check_document(d) == []

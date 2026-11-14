@@ -212,8 +212,8 @@ export default function Find({
           Otherwise, an overhead image shows geospatial context around a scan,
           street-address or reported listing location, not a surveyed property
           boundary. Imagery may predate current conditions and differ from the
-          capture used for roof measurements. Scan locations are
-          computed by Matterport, not surveyed.{" "}
+          capture used for roof measurements. Scan locations are computed by
+          Matterport, not surveyed.{" "}
           <a
             href="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer"
             target="_blank"

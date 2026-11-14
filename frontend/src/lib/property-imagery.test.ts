@@ -28,19 +28,30 @@ describe("cached side-angle aerial images", () => {
     expect(propertyObliques({})).toEqual([]);
   });
   it("shows a prepared facade direction first without starting an audit or upstream fetch", async () => {
-    const fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          sid: "house",
-          provider: "Vexcel",
-          preferred_direction: "west",
-          oblique_paths: {
-            "oblique-north": "data/cache/n.jpg",
-            "oblique-west": "data/cache/w.jpg",
-          },
-        }),
-      ),
-    );
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            sid: "house",
+            available: true,
+            oblique_paths: { south: "data/cache/canonical.jpg" },
+          }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            sid: "house",
+            provider: "Vexcel",
+            preferred_direction: "west",
+            oblique_paths: {
+              "oblique-north": "data/cache/n.jpg",
+              "oblique-west": "data/cache/w.jpg",
+            },
+          }),
+        ),
+      );
     vi.stubGlobal("fetch", fetch);
     const images = await loadPropertyObliques(
       "house",
@@ -50,15 +61,16 @@ describe("cached side-angle aerial images", () => {
       direction: "west",
       url: "/api/assets/data/cache/w.jpg",
     });
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(fetch.mock.calls[0][0]).toBe(
+    expect(images.at(-1)?.url).toBe("/api/assets/data/cache/canonical.jpg");
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[0][0]).toBe("/api/properties/house/preview");
+    expect(fetch.mock.calls[1][0]).toBe(
       "/api/assets/data/cache/frontend-property-imagery/house.json",
     );
   });
   it("uses the canonical preview if no prepared cache exists", async () => {
     const fetch = vi
       .fn()
-      .mockResolvedValueOnce(new Response("{}", { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -67,14 +79,15 @@ describe("cached side-angle aerial images", () => {
             oblique_paths: { north: "data/cache/office.jpg" },
           }),
         ),
-      );
+      )
+      .mockResolvedValueOnce(new Response("{}", { status: 404 }));
     vi.stubGlobal("fetch", fetch);
     expect(
       await loadPropertyObliques("office", new AbortController().signal),
     ).toEqual([
       { direction: "north", url: "/api/assets/data/cache/office.jpg" },
     ]);
-    expect(fetch.mock.calls[1][0]).toBe("/api/properties/office/preview");
+    expect(fetch.mock.calls[0][0]).toBe("/api/properties/office/preview");
   });
   it("rejects another property's photos and tolerates older backends without preview support", async () => {
     const fetch = vi

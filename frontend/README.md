@@ -93,8 +93,9 @@ SDK behavior on sponsor models remains unverified until configured browser SDK c
 
 ## Actual property thumbnails
 
-Property cards read prepared, private Vexcel photos through the existing asset API,
-then try the cached-only property preview endpoint. Missing photos fall back to a
+Property cards read the cached-only property preview endpoint. An optional private
+Vexcel photo manifest can override the crop and direction through the existing
+asset API, while keeping the canonical photos as fallbacks. Missing photos fall back to a
 clearly labeled overhead image. Browsing never fetches sponsor imagery or starts
 an analysis. A thumbnail is geographic context, not the capture used for roof
 measurements; those may have different dates.

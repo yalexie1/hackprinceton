@@ -32,11 +32,19 @@ export function propertyObliques(
   });
 }
 
-// Prepared photos preserve a deliberately chosen direction and display crop.
-// Otherwise use the canonical preview. Both paths only read cached assets;
-// neither starts an audit or an upstream image fetch.
+// Read the canonical preview first. An optional prepared crop can improve the
+// default photo while retaining canonical images as fallbacks. Both are cache
+// reads; neither starts an audit or an upstream image fetch.
 export async function loadPropertyObliques(sid: string, signal: AbortSignal) {
   if (signal.aborted) return [];
+  let canonical: PropertyOblique[] = [];
+  try {
+    const preview = await api.preview(sid, signal);
+    if (preview.sid === sid && preview.available)
+      canonical = propertyObliques(preview.oblique_paths || {});
+  } catch {
+    if (signal.aborted) return [];
+  }
   try {
     const manifest = await request<{
       sid: string;
@@ -52,17 +60,16 @@ export async function loadPropertyObliques(sid: string, signal: AbortSignal) {
         manifest.oblique_paths || {},
         manifest.preferred_direction,
       );
-      if (images.length) return images;
+      if (images.length)
+        return [
+          ...images,
+          ...canonical.filter(
+            (image) => !images.some((curated) => curated.url === image.url),
+          ),
+        ];
     }
   } catch {
     if (signal.aborted) return [];
   }
-  try {
-    const preview = await api.preview(sid, signal);
-    if (preview.sid === sid && preview.available)
-      return propertyObliques(preview.oblique_paths || {});
-  } catch {
-    /* The caller retains the clearly labeled overhead image. */
-  }
-  return [];
+  return canonical;
 }

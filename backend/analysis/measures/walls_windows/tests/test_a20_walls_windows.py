@@ -308,3 +308,26 @@ def test_engine_stacks_window_measures(registry):
     replaced = apply_measure(b, m, "WIN_REPLACE", registry)
     second = evaluate(b, replaced, "WIN_FILM", "landlord", fake_simulate, registry=registry)
     assert 0 < second.savings.electricity_kwh.expected < first.savings.electricity_kwh.expected
+
+
+@pytest.mark.parametrize("name", ["office", "office_houston"])
+@pytest.mark.parametrize("seen", ["interior_blinds", "curtains", "exterior_shade", "overhang"])
+def test_shading_seen_by_vision_makes_win_shade_already_done(name, seen):
+    m = with_assumption(model(name), "window.shading", seen)
+    out = WIN.shade_check(bundle(name), m)
+    assert out is not None and out[0] == "already_done", out
+    assert WIN.film_check(bundle(name), m) is None or WIN.film_check(bundle(name), m)[0] != "already_done"
+
+
+@pytest.mark.parametrize("seen", ["none", "unknown"])
+def test_no_shading_seen_leaves_win_shade_offered(seen):
+    m = with_assumption(model("office"), "window.shading", seen)
+    out = WIN.shade_check(bundle("office"), m)
+    assert out is None or out[0] != "already_done", out
+
+
+def test_tinted_film_seen_by_vision_makes_win_film_already_done_only():
+    m = with_assumption(model("office"), "window.shading", "tinted_film")
+    assert WIN.film_check(bundle("office"), m)[0] == "already_done"
+    shade = WIN.shade_check(bundle("office"), m)
+    assert shade is None or shade[0] != "already_done"

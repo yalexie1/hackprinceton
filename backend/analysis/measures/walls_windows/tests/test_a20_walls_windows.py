@@ -142,12 +142,88 @@ def test_window_measures_change_window_u_or_shgc_only(name, mid):
 
 
 def test_win_replace_targets_def03_and_is_then_done():
+    """The house is a home in zone 3B: SHGC 0.25 (R402.1.2, zones 0-3) and U-0.30 (1.70)."""
     b, m = bundle("house"), model("house")
     new = WIN.replace_change(b, m)
     for s in new.surfaces:
         if s.kind == "window":
-            assert (s.u_value.expected, s.shgc.expected) == (2.16, 0.44)
+            assert (s.u_value.expected, s.shgc.expected) == (1.70, 0.25)
     assert WIN.replace_check(b, new)[0] == "already_done"
+
+
+# ---------------------------------------------------------------- WIN_REPLACE glazing by climate
+
+def at(name: str, zone=None, lat=None, state="keep") -> PropertyBundle:
+    b = bundle(name)
+    climate = b.climate.model_copy(update={"climate_zone": zone, **({"lat": lat} if lat is not None else {})})
+    summary = b.summary if state == "keep" else b.summary.model_copy(update={"state": state})
+    return b.model_copy(update={"climate": climate, "summary": summary})
+
+
+def with_shgc(m: BuildingModel, shgc: float) -> BuildingModel:
+    out = m.model_copy(deep=True)
+    for s in out.surfaces:
+        if s.kind == "window":
+            s.shgc = Ranged(low=shgc, expected=shgc, high=shgc, unit="-")
+    return out
+
+
+def replaced_shgc(b: PropertyBundle, m: BuildingModel) -> set[float]:
+    new = WIN.replace_change(b, m)
+    return {s.shgc.expected for s in new.surfaces if s.kind == "window"}
+
+
+@pytest.mark.parametrize("zone", ["3B", "3B-CA", "2A", "Zone 3A", "1A", "0B"])
+def test_win_replace_zone_0_to_3_gets_low_shgc(zone):
+    b, m = at("office", zone), bare("office")
+    g = WIN.replacement_glazing(b)
+    assert (g.u, g.shgc, g.warning) == (2.16, 0.25, None)
+    assert replaced_shgc(b, m) == {0.25}
+    c = WIN.replace_describe(b, m, WIN.replace_change(b, m), None, {})
+    assert c.params["shgc_after"] == 0.25 and c.params["climate_zone"] == zone
+    assert any("R402.1.2" in (e.note or "") and "C402.4" in (e.note or "") for e in c.evidence)
+    assert "SHGC 0.25" in c.description
+
+
+@pytest.mark.parametrize("zone", ["4A", "5B", "7"])
+def test_win_replace_zone_4_and_above_keeps_def03(zone):
+    b, m = at("office", zone), bare("office")
+    g = WIN.replacement_glazing(b)
+    assert (g.u, g.shgc, g.warning) == (2.16, 0.44, None)
+    assert replaced_shgc(b, m) == {0.44}
+
+
+def test_win_replace_home_in_zone_3_gets_r402_u_value():
+    assert WIN.replacement_glazing(at("house", "3B")).u == 1.70
+    assert WIN.replacement_glazing(at("house", "2A")).u == 2.16
+    assert WIN.replacement_glazing(at("office", "3B")).u == 2.16
+
+
+def test_win_replace_missing_zone_south_of_36_in_ca_is_low_shgc_with_warning():
+    b, m = at("office", None, lat=34.05), bare("office")          # Los Angeles
+    g = WIN.replacement_glazing(b)
+    assert g.shgc == 0.25 and g.zone is None
+    assert g.warning and "no climate zone" in g.warning and "36" in g.warning
+    assert replaced_shgc(b, m) == {0.25}
+    c = WIN.replace_describe(b, m, WIN.replace_change(b, m), None, {})
+    assert g.warning in c.warnings
+
+
+@pytest.mark.parametrize("lat,state", [(37.8, "CA"), (34.05, None)])
+def test_win_replace_missing_zone_elsewhere_keeps_def03_with_warning(lat, state):
+    b = at("office", None, lat=lat, state=state)
+    g = WIN.replacement_glazing(b)
+    assert g.shgc == 0.44 and g.warning and "no climate zone" in g.warning
+
+
+@pytest.mark.parametrize("zone", ["3B", "5B"])
+def test_win_replace_never_raises_shgc(zone):
+    """A window already at 0.25 keeps 0.25, in a hot zone and in a cold one."""
+    b, m = at("office", zone), with_shgc(bare("office"), 0.25)
+    assert replaced_shgc(b, m) == {0.25}
+    c = WIN.replace_describe(b, m, WIN.replace_change(b, m), None, {})
+    if zone == "5B":
+        assert any("keep the present SHGC" in w for w in c.warnings)
 
 
 def test_film_and_screen_reproduce_win02_worked_example():

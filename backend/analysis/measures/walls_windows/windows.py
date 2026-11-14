@@ -1,5 +1,8 @@
 """WIN_REPLACE, WIN_FILM, WIN_SHADE (SPEC 6.2; physics 02 WIN-01, WIN-02, DEF-03).
 
+WIN_REPLACE installs DEF-03's double low-e glass with the SHGC of the site's IECC climate zone
+(physics 02 DEF-03, S18 IECC 2021 Tables R402.1.2 and C402.4), never above the present SHGC.
+
 Each measure changes only `u_value` or `shgc` of window surfaces. The zone model (A2) applies
 the baseline interior shading F_int = 0.70 to every window, every hour (WIN-02), and reads
 `Surface.shgc`. So a film or a shade is carried as an effective SHGC:
@@ -13,20 +16,34 @@ place of the interior factor" but whose numbers keep it.
 """
 from __future__ import annotations
 
+import re
+from dataclasses import dataclass
 from typing import Optional
 
 from backend.schema import (BaselineResult, BuildingModel, EvidenceRef, MeasureResult,
                             PropertyBundle, Ranged, Surface)
 
 from .common import (EPS, anchors_for, assumption, assumption_evidence, facing_list,
-                     from_vision, loss_surfaces, opening_evidence, scale, total_area)
+                     from_vision, is_home, loss_surfaces, opening_evidence, scale, total_area)
 
 # ---------------------------------------------------------------- constants (measure-local)
 
 # DEF-03: WIN_REPLACE installs "double, low-e, non-metal frame" by default (S17 Table 69).
 REPLACE_TYPE = "double_lowe_non_metal"
 REPLACE_U = 2.16           # W/m2K (0.38 Btu/(h ft2 F))
-REPLACE_SHGC = 0.44
+REPLACE_SHGC = 0.44        # IECC climate zones 4 and above, and an unknown zone off the CA/TX coast
+# DEF-03 replacement glazing by climate (S18, IECC 2021): prescriptive SHGC 0.25 in climate zones
+# 0 to 3, Table R402.1.2 (residential) and Table C402.4 (commercial, fixed, PF < 0.2, zones 2
+# and 3; zones 0-1 ask 0.23, not reached in CA or TX). Never above the window's present SHGC.
+REPLACE_SHGC_HOT = 0.25
+HOT_MAX_ZONE = 3           # thermal digit of the last "hot" IECC zone
+# R402.1.2 caps a home's fenestration at U-0.30 (1.70 W/m2K) in zone 3; the DEF-03 U-0.38 meets
+# R402.1.2 in zones 0-2 (U-0.50, U-0.40) and C402.4 in zones 0-3 (fixed U-0.50, 0.45, 0.42).
+REPLACE_U_HOME_ZONE3 = 1.70
+# With no climate zone in the bundle: CA and TX south of this latitude are IECC zones 0-3
+# (a fallback of this package; the zone maps put the 3/4 line near 36 N in both states).
+HOT_FALLBACK_LAT = 36.0
+_ZONE_DIGIT = re.compile(r"^\s*(?:ZONE)?\s*([0-8])")
 
 # WIN-02 (S13 citing the MulTEA manual; tier B, single-sourced): exterior coefficients.
 FILM_FACTOR = 0.70         # applied solar control film, C_ext
@@ -115,8 +132,61 @@ def _sun_side(model: BuildingModel) -> list[Surface]:
             if s.azimuth_deg is not None and lo - EPS <= s.azimuth_deg % 360.0 <= hi + EPS]
 
 
-def _to_replace(model: BuildingModel) -> list[Surface]:
-    return [s for s in _windows(model) if s.u_value.expected > REPLACE_U + EPS]
+@dataclass(frozen=True)
+class Glazing:
+    """What WIN_REPLACE installs at this site, and why."""
+    u: float
+    shgc: float                  # before the per-window cap at the present SHGC
+    zone: Optional[str]          # the IECC zone as given ("3B"), None when the bundle has none
+    basis: str                   # one sentence for the card's evidence
+    warning: Optional[str] = None
+
+
+def _zone_digit(code: Optional[str]) -> Optional[int]:
+    """Thermal digit of an IECC zone string ("3B", "3B-CA", "Zone 2A"), as A31 reads it."""
+    m = _ZONE_DIGIT.match((code or "").upper())
+    return int(m.group(1)) if m else None
+
+
+def replacement_glazing(bundle: PropertyBundle) -> Glazing:
+    """DEF-03 by climate (S18): SHGC 0.25 in IECC zones 0-3, else the DEF-03 0.44; U 2.16, or 1.70
+    for a home in zone 3. A missing zone counts as 0-3 only in CA or TX south of 36 N."""
+    code = bundle.climate.climate_zone if bundle.climate else None
+    digit = _zone_digit(code)
+    if digit is not None:
+        hot = digit <= HOT_MAX_ZONE
+        u = REPLACE_U_HOME_ZONE3 if (hot and digit == 3 and is_home(bundle)) else REPLACE_U
+        if hot:
+            basis = (f"IECC climate zone {code.strip()}: IECC 2021 prescriptive SHGC "
+                     f"{REPLACE_SHGC_HOT} in zones 0-3 (Tables R402.1.2 and C402.4)")
+            if u != REPLACE_U:
+                basis += f", and U-0.30 ({u} W/m2K) for a home in zone 3 (R402.1.2)"
+        else:
+            basis = f"IECC climate zone {code.strip()}: the DEF-03 double low-e glass"
+        return Glazing(u, REPLACE_SHGC_HOT if hot else REPLACE_SHGC, code.strip(), basis)
+    state = bundle.summary.state
+    lat = bundle.climate.lat if bundle.climate else bundle.summary.lat
+    if state in ("CA", "TX") and lat is not None and lat < HOT_FALLBACK_LAT:
+        return Glazing(REPLACE_U, REPLACE_SHGC_HOT, None,
+                       f"no climate zone; {state} south of {HOT_FALLBACK_LAT:g} N taken as IECC zones "
+                       f"0-3: SHGC {REPLACE_SHGC_HOT} (IECC 2021 Tables R402.1.2 and C402.4)",
+                       f"The bundle has no climate zone, so the site ({state}, latitude {lat:.1f}) is "
+                       f"taken as IECC zone 0 to 3 from its latitude (below {HOT_FALLBACK_LAT:g} N) and "
+                       f"the new glass is low-SHGC ({REPLACE_SHGC_HOT}).")
+    return Glazing(REPLACE_U, REPLACE_SHGC, None,
+                   "no climate zone: the DEF-03 double low-e glass",
+                   f"The bundle has no climate zone, so the new glass keeps the DEF-03 SHGC "
+                   f"{REPLACE_SHGC}; in IECC zones 0 to 3 a low-SHGC product ({REPLACE_SHGC_HOT}) "
+                   f"is the code choice.")
+
+
+def _new_shgc(s: Surface, g: Glazing) -> float:
+    """Never install glass with a higher SHGC than the window has now."""
+    return g.shgc if s.shgc is None else min(g.shgc, s.shgc.expected)
+
+
+def _to_replace(model: BuildingModel, u_after: float = REPLACE_U) -> list[Surface]:
+    return [s for s in _windows(model) if s.u_value.expected > u_after + EPS]
 
 
 def _set(model: BuildingModel, ids: set[str], **fields) -> BuildingModel:
@@ -161,43 +231,50 @@ REPLACE_FORMULA_IDS = ("DEF-03", "ENV-03", "WIN-01", "ZON-04", "EMI-01")
 def replace_check(bundle: PropertyBundle, model: BuildingModel) -> Optional[tuple[str, str]]:
     if not _windows(model):
         return ("feasibility", "The model has no window to replace.")
-    if not _to_replace(model):
+    u = replacement_glazing(bundle).u
+    if not _to_replace(model, u):
         return ("already_done", f"every window is already double low-e or better "
-                                f"(U {REPLACE_U} W/m2K or lower).")
+                                f"(U {u} W/m2K or lower).")
     return None
 
 
 def replace_change(bundle: PropertyBundle, model: BuildingModel) -> BuildingModel:
-    ids = {s.id for s in _to_replace(model)}
+    g = replacement_glazing(bundle)
+    ids = {s.id for s in _to_replace(model, g.u)}
     return _set(model, ids,
-                u_value=lambda s: Ranged(low=REPLACE_U, expected=REPLACE_U, high=REPLACE_U, unit=s.u_value.unit),
-                shgc=lambda s: Ranged(low=REPLACE_SHGC, expected=REPLACE_SHGC, high=REPLACE_SHGC,
+                u_value=lambda s: Ranged(low=g.u, expected=g.u, high=g.u, unit=s.u_value.unit),
+                shgc=lambda s: Ranged(low=_new_shgc(s, g), expected=_new_shgc(s, g), high=_new_shgc(s, g),
                                       unit=s.shgc.unit if s.shgc is not None else "-"))
 
 
 def replace_describe(bundle: PropertyBundle, model: BuildingModel, changed: BuildingModel,
                      before: BaselineResult, options: dict) -> MeasureResult:
-    wins = _to_replace(model)
+    g = replacement_glazing(bundle)
+    wins = _to_replace(model, g.u)
     area = total_area(wins)
     old_u = max(s.u_value.expected for s in wins)
     warnings = _common_warnings(wins)
-    lower = [s for s in wins if s.shgc is not None and s.shgc.expected < REPLACE_SHGC - EPS]
-    if lower:
-        warnings.append(f"The default new glass has SHGC {REPLACE_SHGC}, above the present "
-                        f"{min(s.shgc.expected for s in lower):g} on {_n(len(lower), 'window')}: solar gain "
-                        f"rises there. A lower-SHGC low-e product changes the result.")
-    warnings.append("New windows are the DEF-03 default, double low-e with a non-metal frame "
-                    f"(U {REPLACE_U}, SHGC {REPLACE_SHGC}); the rating of the product actually "
-                    "quoted replaces it.")
+    if g.warning:
+        warnings.append(g.warning)
+    kept = [s for s in wins if s.shgc is not None and s.shgc.expected < g.shgc - EPS]
+    if kept:
+        warnings.append(f"{_n(len(kept), 'window')} already {'has' if len(kept) == 1 else 'have'} SHGC "
+                        f"{min(s.shgc.expected for s in kept):g}, below the {g.shgc} of the new glass: "
+                        f"the new units keep the present SHGC there, so solar gain does not rise.")
+    low_e = "low-SHGC low-e" if g.shgc < REPLACE_SHGC else "low-e"
+    warnings.append(f"New windows are double {low_e} units with a non-metal frame (U {g.u}, SHGC {g.shgc}; "
+                    f"{g.basis}); the rating of the product actually quoted replaces it.")
     return MeasureResult(
         measure_id="WIN_REPLACE", title="Window replacement", applicable=True,
         description=(f"Replace {_n(len(wins), 'window')}, {area:g} m2 on the {facing_list(wins)} walls, "
-                     f"with double low-e units: U from {old_u:g} to {REPLACE_U} W/m2K."),
+                     f"with double {low_e} units: U from {old_u:g} to {g.u} W/m2K, SHGC {g.shgc}"
+                     f"{' or the present value where lower' if kept else ''}."),
         params={"glazing_area_m2": area, "window_surface_ids": [s.id for s in wins],
-                "window_type_after": REPLACE_TYPE, "u_after_w_m2k": REPLACE_U, "shgc_after": REPLACE_SHGC},
+                "window_type_after": REPLACE_TYPE, "u_after_w_m2k": g.u, "shgc_after": g.shgc,
+                "climate_zone": g.zone},
         anchors=anchors_for(bundle, wins, "windows" if len(wins) > 1 else "window"),
-        evidence=_evidence(model, wins, "DEF-03", f"{REPLACE_TYPE.replace('_', ' ')}: U {REPLACE_U}, "
-                                                  f"SHGC {REPLACE_SHGC} (S17 Table 69)"),
+        evidence=_evidence(model, wins, "DEF-03", f"{REPLACE_TYPE.replace('_', ' ')}: U {g.u}, "
+                                                  f"SHGC {g.shgc}; {g.basis}"),
         formula_ids=list(REPLACE_FORMULA_IDS), warnings=warnings)
 
 

@@ -681,6 +681,12 @@ stated acceptance.
 
 ### 4.5 Golden lots
 
+> **Superseded in part by 4.5a.** The per-structure numbers below are faithful
+> readings of `features[0]`, which is **not the building at the address** on either
+> office. The parcel-level findings (flat membrane roofs, `building-type.class`
+> unreliable) still hold. D16's figures are in 4.5a.
+
+
 - **House**: `POINT(-118.3171 34.093491667)`, from the model's own `geocoordinates`. 2 structures. [V] `primary-structure` True, `footprint.area` 190.39 m², `ground-elevation` 100.584, roof `gable`/`shingle`, `condition.precise-value` 4.53, `tree-cover` 4.0, `ac-unit.count` 2, `chimney.count` 1, `roof-vent.count` 5, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
 - **Office**: `POINT(-118.44311817454468 34.036533907520074)` = 11400 Olympic Blvd, LA 90064 (`PropertyId 246899`), from `geocoordinates` on `jfiEvosX974`. [V] 2026-11-14 — 1 structure, `primary-structure` True, `footprint.area` **2,207.43 m²**, `ground-elevation` 54.5592, roof **`flat`** / **`membrane`**, `condition.precise-value` 3.17, roof `tree-cover` 0.0, parcel `tree-cover` 5.0, `ac-unit.count` **0**, `skylight.count` 0, `solar.value` False, `building-type.class` **null**.
 
@@ -694,6 +700,88 @@ Two cautions carried over:
 
 - **`ac-unit.count` is 0 here too**, on a 17-storey Class A office built 1989. A tower of that vintage certainly has rooftop plant, so this is a **detection limit, not an absence** — the same lesson as §4.4, where SAM 3 missed a chimney that Vexcel's own attributes reported. `HVAC_RTU` and `HVAC_ECON` need evidence from elsewhere.
 - **`building-type.class` is null again.** It returned `"commercial"` on the old industrial lot and null on both the house and this office, so it is unreliable on both flows and must never be required.
+
+### 4.5a D16: one response holds several captures, and `features[0]` is the wrong one
+
+**A point query returns one feature per capture collection, and the first is not the
+newest.** [V] 2026-11-14. A single `POINT` returned **5** features on the golden
+house, **4** on the LA office and **6** on the Houston office. They are not
+neighbouring parcels: every feature's parcel ring contains the query point, and they
+are distinguished by `metadata.collection` and `metadata.ortho-date-estimate`
+(`us-ca-losangeles-2023`, `us-ca-losangeles-2025`, `us-ca-glendale-2024`, …). D3 kept
+`features[0]`, so the bundle modelled an arbitrary capture of an arbitrary structure.
+
+This was live on the demo path and nothing reported it. What changed:
+
+| property | `features[0]` | D16 chooses | corroboration |
+|---|---|---|---|
+| house | 190.4 m², **2** rooftop AC, imagery 2022-12 | 191.3 m², **0** rooftop AC, imagery 2025-12 | 5 captures of one house, areas within 1 % |
+| LA office | 2,207 m², a building the address point is **not inside**, 100 m from the georeference | **1,566 m²**, imagery 2025-12 | 17 storeys over 24,148 m² = a 1,420 m² plate, so 10 % |
+| Houston office | 4,320 m² | **1,104 m²**, imagery 2023-01 | a 944 m² plate (17 %); and D8's roof mask measured **1,064 m²** |
+
+**The Houston row is the one that settles it.** D8's SAM 3 mask is derived from imagery
+and knows about neither the plate nor the footprint. Against `features[0]` it measured
+**0.25** of the footprint — the number @yalexie1 built A12's flat-roof lower bound
+around in #242 — and against D16's structure it measures **0.96**. Two independent
+sources (the storey count and the mask) said the kept structure was wrong, in the same
+direction, on two different properties.
+
+**The rule, from the lead on the board 2026-11-14.** Candidates are every structure in
+every capture **whose footprint encloses the CoStar address point**; the one whose area
+is closest to the CoStar floor plate (`building_area_m2 / stories`) wins; everything
+within `PLATE_BAND` = 10 percentage points of the best ties, and the **newest capture**
+wins among those. `backend/data_layer/locate.py` carries it.
+
+- **The parcel is queried at the address point, not the georeference.** Measured over
+  the six kit properties whose two locators are furthest apart: **four returned a
+  different set of captures from the two points**, and at `9xZApYqePUx` (Piney Point
+  Offices II, 78 m apart) the structure enclosing the address is **absent from the
+  georeference query altogether**. A parcel extract costs 0.3–1.1 s. [V] 2026-11-14
+- **The plate separates buildings; the capture decides within a building.** Captures of
+  one building agree on area to about 1 %, so comparing them against the plate is
+  choosing on noise — that is what `PLATE_BAND` prevents. Captures of one building do
+  *not* agree on `ac-unit.count`: the house reads 2, 1, 1, 1, 0 across its five. Anyone
+  sizing an HVAC measure from one capture's count should know that.
+- **The right building beats a newer capture of the wrong one.** Houston's newest
+  capture (`us-tx-houston-2026`, imagery 2025-12-31) outlines 4,164 m² over the
+  address; a 2023 capture outlines 1,104 m². Every roof number downstream scales with
+  the footprint, while an older capture only ages the roof condition — so the plate
+  wins and the capture date is reported. The cost is real and visible: the chosen
+  Houston capture reports **no roof condition at all** (`parcel-source` `Real`
+  captures do not carry one), where the 4,320 m² structure reported 2.88.
+- **`primary-structure` does not reliably pick the building.** Right on the house,
+  wrong on both offices. `VexcelStructure.primary` now means "the building this bundle
+  is about": D16 puts the chosen structure first and makes it the only `primary` one,
+  which is what makes the choice reach A2, A11, A12, A14 and A19, since every consumer
+  reads it either as the first `primary` or by sorting on `not primary`. **No contract
+  change** — Vexcel's own flag stays readable at
+  `structure.attributes["primary-structure"]`.
+- **Captures with `metadata.is-ortho-image` false lose every tie.** The two in the
+  golden set gave 9,162 m² against a 1,420 m² plate and 3,802 m² against a 944 m² one,
+  both with no AC count and no roof condition.
+- **A warm cache was a trap.** The bundle cache is keyed on the sid, so a rule change
+  does not change the key: a demo laptop with a warm cache would have kept serving the
+  pre-D16 structure silently. Entries now carry `BUNDLE_RULE_VERSION` and an older
+  stamp is a miss.
+
+#### The open question this leaves: a tower against its podium
+
+At the LA office **two captures outline the same building 1.9x apart** — 2,938 m²
+(`us-ca-losangeles-2024`) and 1,566 m² (`us-ca-losangeles-2025`), centroids 9 m apart
+and 87 % nested — **and they disagree about rooftop solar** (2024 True, 2025 False).
+The plate picks the smaller, which is consistent with §4.3's finding that Vexcel
+outlines a podium rather than a tower. But D8's mask over the 2025 parcel measures
+**2,337 m², which is 1.49x the chosen footprint**, and A12 treats a flat-roof mask as a
+*lower bound*. So:
+
+- the storey count says the tower floor is ~1,420 m² → 1,566 m²;
+- the imagery says the contiguous roof is at least 2,337 m² → 2,938 m².
+
+Both can be true of a 17-storey tower on a podium deck, and panels on the podium with
+none on the tower explains the solar split exactly. **This lane does not resolve it.**
+It picks the building, records the disagreement (`property/extract:extent`, layer
+`vexcel`, status `fallback`) and surfaces it in the runbook. **Which extent A11 and A14
+should model is @yalexie1's call**, and it moves PV capacity by roughly 1.9x.
 
 ## 5. External data — D9
 
@@ -1194,3 +1282,9 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Office inventory in the kit | streamed all 3,339 records + CSV join | 2026-11-14 | 289 type-5 offices, **274 with models** (183 HOU, 90 LA) |
 | Openings: office vs residential | 12 + 12 live models | 2026-11-14 | office 2/12 any opening, **0 windows**; residential 12/12, 34 windows |
 | Edge-fraction origin, rotation sense | — | — | **[P] open — footprint registration cross-check** |
+| `property/extract` features per point | live, 3 golden points | 2026-11-14 | **5 / 4 / 6 features = one per capture collection**, every ring containing the point; `features[0]` is not the newest |
+| Capture sets from the two locators | live, 6 widest-apart kit properties | 2026-11-14 | **4 of 6 differ**; at `9xZApYqePUx` the address-enclosing structure is absent from the georeference query |
+| D16 choice, golden three | live after the change | 2026-11-14 | house 191.3 m² / LA 1,566.2 m² / Houston 1,104.5 m²; all three enclose the CoStar address point |
+| D8 mask against D16's footprint | live detection | 2026-11-14 | house **0.95**, Houston **0.96** (was 0.25 against `features[0]`), LA **1.49** → the podium question, §4.5a |
+| `ac-unit.count` across captures of one roof | live, golden house ×5 | 2026-11-14 | **2, 1, 1, 1, 0** — capture-dependent, so never quote one count as the building's |
+| LA office tower vs podium extent | live, 2 captures + mask | 2026-11-14 | **[P] open — 1,566 m² vs 2,938 m², 87 % nested, solar flag differs; @yalexie1 to decide which A11/A14 model** |

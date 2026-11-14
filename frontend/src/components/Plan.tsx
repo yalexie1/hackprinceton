@@ -372,8 +372,9 @@ export default function PlanView({
       {plan.total_upfront_usd.high > plan.budget_usd && (
         <p className="inline-note budget-warning">
           <Info size={15} />
-          The plan fits at expected costs. The upper estimate may exceed your
-          cash budget; confirm contractor pricing before proceeding.
+          {plan.total_upfront_usd.expected > plan.budget_usd
+            ? "The returned plan exceeds your cash budget at expected costs. Request a revised plan before proceeding."
+            : "The plan fits at expected costs. The upper estimate may exceed your cash budget; confirm contractor pricing before proceeding."}
         </p>
       )}
       <section className="recommendations">
@@ -401,7 +402,7 @@ export default function PlanView({
               onClick={() => setTab(t)}
             >
               {t === "selected"
-                ? "Within budget"
+                ? plan.total_upfront_usd.expected > plan.budget_usd ? "Selected upgrades" : "Within budget"
                 : t === "financeable"
                   ? "Beyond your budget"
                   : "Not selected"}

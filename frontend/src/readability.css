@@ -630,3 +630,13 @@ main svg text {
     top: -18px;
   }
 }
+
+/* Audit provenance can include long explanations of competing data sources. */
+.run-warnings { min-width: 0; }
+.run-warnings h3 { font-size: 20px; margin: 0 0 16px; }
+.run-warnings p, .warning-detail { overflow-wrap: anywhere; white-space: pre-wrap; }
+.warning-detail { padding: 16px 0; border-bottom: 1px solid #d6d6c6; }
+.warning-detail summary { cursor: pointer; font-size: 16px; line-height: 1.65; }
+.warning-detail summary svg { display: inline; vertical-align: middle; margin-right: 8px; }
+.warning-detail summary span { color: #315641; font-weight: 700; white-space: nowrap; }
+.warning-detail p { line-height: 1.75; }

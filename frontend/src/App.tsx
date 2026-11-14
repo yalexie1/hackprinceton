@@ -52,6 +52,7 @@ import PlanView from "./components/Plan";
 import Geometry from "./components/Geometry";
 import Assumptions from "./components/Assumptions";
 import Documents from "./components/Documents";
+import Warnings, { AuditNarrative } from "./components/Warnings";
 type View =
   | "find"
   | "setup"
@@ -110,6 +111,7 @@ export default function App() {
   const savedRun = useRef<RunResult | null>(null);
   const step = useRef(0);
   const replay = useRef<RunEvent[]>(demoStages);
+  const streamCursor = useRef({ id: "", count: 0 });
   useEffect(() => {
     if (!help) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -287,20 +289,27 @@ export default function App() {
     const abort = new AbortController();
     controller.current = abort;
     try {
+      const snapshot = await api.result(id);
+      if (current !== epoch.current || abort.signal.aborted) return;
+      const completed = snapshot.status === "done" || snapshot.status === "error";
+      if (streamCursor.current.id !== id)
+        streamCursor.current = { id, count: 0 };
       await streamRun(
         id,
         (event) => {
           if (current !== epoch.current) return;
+          streamCursor.current.count++;
           setEvents((previous) => [...previous, event]);
-          if (event.type === "question") {
+          if (event.type === "question" && !completed) {
             const q = (event.payload.question ||
               event.payload) as unknown as Question;
             if (q.id && q.choices) setQuestion(q);
           }
-          if (event.type === "error" && event.payload.recoverable !== true)
-            setError(event.message || "The audit reported an error.");
+          // Tool errors can be recoverable even without an explicit payload flag.
+          // The final RunResult status decides whether the audit failed.
         },
         abort.signal,
+        { afterEvents: streamCursor.current.count, followToEnd: completed },
       );
       if (current !== epoch.current) return;
       const result = await api.result(id);
@@ -463,7 +472,6 @@ export default function App() {
       if (current !== epoch.current) return;
       setRun({ ...run, status: "running", questions: [] });
       setQuestion(null);
-      setEvents([]);
       setView("audit");
       void watch(run.run_id, current);
     } catch (e) {
@@ -604,7 +612,7 @@ export default function App() {
                 onClick={() => void switchMode(false)}
                 disabled={connecting}
               >
-                {connecting ? "Connecting…" : "Live data"}
+                {connecting ? "Connecting…" : demo ? "Connect API" : "Connected"}
               </button>
             </div>
             <span className="avatar">VS</span>
@@ -613,7 +621,7 @@ export default function App() {
         <main>
           <div className={`mode-notice ${demo ? "" : "live"}`}>
             <span className="status-dot" />
-            {demo ? "DEMO WORKSPACE" : "LIVE WORKSPACE"}
+            {demo ? "DEMO WORKSPACE" : "CONNECTED WORKSPACE"}
             <span>
               {demo
                 ? "Example scenarios and saved results. No live building analysis."
@@ -1125,10 +1133,7 @@ export default function App() {
                         Replay choices do not change the saved analysis.
                       </p>
                     )}
-                    <p>
-                      {run.narrative_md.replace(/^#{1,6}\s+/gm, "") ||
-                        "Review the selected measures and their evidence before moving ahead."}
-                    </p>
+                    <AuditNarrative text={run.narrative_md} warnings={run.warnings} />
                     <button
                       className="text-button"
                       onClick={() => setView("assumptions")}
@@ -1177,16 +1182,7 @@ export default function App() {
                   )}
                 </aside>
               </div>
-              {run.warnings.length > 0 && (
-                <div className="run-warnings">
-                  {run.warnings.map((warning, i) => (
-                    <p key={i}>
-                      <Info size={14} />
-                      {warning}
-                    </p>
-                  ))}
-                </div>
-              )}
+              <Warnings warnings={[...run.warnings, ...events.filter((event) => event.type === "fallback" || event.type === "error").map((event) => event.message)]} />
             </>
           )}
           <footer className="app-footer">

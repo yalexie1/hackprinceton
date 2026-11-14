@@ -1,6 +1,6 @@
 # Evergreen frontend
 
-Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.1**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
+Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.3**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
 
 ## Run
 
@@ -34,7 +34,7 @@ The renderer loads lazily when visible, pauses rendering offscreen/in background
 
 ## Live integration
 
-The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Live data**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure.
+The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Connect API**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure. The server controls `AGENT_MODE=replay|live`; connecting does not itself turn on live analysis. Replay returns saved examples, including their original measure selection, even when PATCH changes the request budget.
 
 Optional configuration goes in the **repository root `.env`** (Vite's envDir is the repo root):
 
@@ -54,9 +54,10 @@ Production builds use same-origin `/api` unless `VITE_API_BASE_URL` is set at bu
 ### Backend expectations
 
 - Search, start/resume runs, questions, budget/assumption updates, and document routes follow SPEC section 10. Types consumed by the UI live in `src/lib/types.ts`.
-- The SSE endpoint emits JSON `RunEvent` data, either default or named events. Comments, CRLF, fragmented UTF-8, multiline data, and multiple events per chunk are supported. A `question`, `done`, or non-recoverable `error` ends the frontend listener; recoverable errors stay in the event stream. It fetches the final run and reconnects after an answer/update. Transport failures expose a reconnect button for the same run. Unknown future event types are ignored.
+- The SSE endpoint emits JSON `RunEvent` data, either default or named events. Comments, CRLF, fragmented UTF-8, multiline data, and multiple events per chunk are supported. The server replays history from the beginning: the frontend retains a per-run cursor and skips consumed events on reconnect. An active run pauses on a new question, done, or non-recoverable error. If the authoritative run is already complete, it drains the finite history to its end so earlier questions/done events do not hide appended G11 re-plan events. Recoverable errors stay in the stream. It fetches the final run and reconnects after an answer/update. Transport failures expose a reconnect button for the same run. Unknown future event types are ignored.
 - Questions may be embedded directly in `event.payload` or under `event.payload.question`; the subsequent `RunResult.questions` is authoritative.
 - Budget and assumption changes are sent to the backend. The UI never recomputes energy or financial results. All displayed estimate ranges come from the returned payloads.
+- Public data-quality warnings arrive through `RunResult.warnings`, fallback events, and measure warnings. Long warnings expand to show the full text, including competing roof outlines. A `re-run:` warning labels the earlier narrative outdated and folds it behind an explicit disclosure; current plan totals stay visible.
 - Live role selection supports owner-occupier, landlord, and tenant. Optional utility history requires twelve non-negative monthly values, in kWh (gas as kWh thermal).
 - Narrative and document text render as text, not executable HTML. Parties and selected measures require explicit approval before drafting.
 
@@ -70,7 +71,7 @@ Verified integration references:
 - [Coordinate systems and API/SDK conversion](https://developers.matterport.com/overview/concepts/)
 - [Mattertag add and session-only persistence](https://matterport.github.io/developer-docs/reference/mattertag/)
 
-SDK behavior on the sponsor models remains unverified until the local `.env` and real run payloads are available. `gh` is not authenticated in this environment; the connected GitHub integration can read the board.
+SDK behavior on sponsor models remains unverified until configured browser SDK credentials and real run payloads are available.
 
 ### Shared contract gaps to resolve with the owners
 
@@ -86,9 +87,15 @@ npm test
 npm run build
 # Uses an isolated ephemeral environment; requires uv.
 uv run --with 'pydantic>=2,<3' python scripts/check_contract.py
+# Starts and cleans up an isolated real FastAPI replay server, with no API keys.
+uv run --with-requirements scripts/integration-requirements.txt python scripts/check_integration.py
 ```
 
 `npm test` also renders the shared examples through the actual screen components to check optional fields, empty states, document gating, and separation of property value from energy savings. It covers SSE framing and termination, backend error handling, answer value preservation, fixture budget/totals, WKT parsing, and verified sweep matching. `check_contract.py` extracts the team's actual Pydantic block without editing it and validates every saved run, plus the shared property bundles, building models, documents, and event streams. When `backend/schema.py` exists, it checks that the actual backend schema agrees with the spec and validates against both. `scripts/make_fixtures.py` regenerates invented examples; it is not an analysis engine.
+
+`check_integration.py` exercises the actual TypeScript client against the actual FastAPI app: health/schema, search, run results and SSE, budget/assumption updates, full-history replay after PATCH, backend error envelopes, asset errors and document drafting for every discovered shared example. Replay does not pause for answers, so real waiting/resume behavior also has transport regression tests; sponsor-backed live/model verification belongs to the team end-to-end run.
+
+The approved `.github/workflows/frontend.yml` runs unit/screen tests, contract validation, replay integration and production build on PRs to main and changes on main/frontend affecting `frontend/`, `backend/` or `specs/`. It uses pinned action commits, Node 22.14.0 and Python 3.12.10, and requires no secrets or kit mirror. CI will flag schema/fixture drift as teammates land changes.
 
 ## Files
 

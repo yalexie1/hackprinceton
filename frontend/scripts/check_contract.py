@@ -14,6 +14,8 @@ source = re.search(r'```python\s*\n(.*?)```', block, re.S).group(1)
 module = types.ModuleType('team_contract')
 sys.modules[module.__name__] = module
 exec(compile(source, str(ROOT / 'specs/SPEC.md'), 'exec'), module.__dict__)
+browser_version = re.search(r'export const SCHEMA_VERSION = "([^"]+)"', (ROOT / 'frontend/src/lib/types.ts').read_text()).group(1)
+assert browser_version == module.SCHEMA_VERSION, f'Frontend {browser_version} differs from SPEC {module.SCHEMA_VERSION}'
 actual = None
 if (ROOT / 'backend/schema.py').exists():
     import importlib

@@ -110,6 +110,7 @@ export async function streamRun(
   id: string,
   onEvent: (event: RunEvent) => void,
   signal: AbortSignal,
+  options: { afterEvents?: number; followToEnd?: boolean } = {},
 ) {
   const response = await fetch(
     `${base}/api/runs/${encodeURIComponent(id)}/events`,
@@ -120,12 +121,17 @@ export async function streamRun(
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let terminal = false;
+  let seen = 0;
   const consume = sseParser((event) => {
+    // The server replays the full history on every connection. Earlier questions
+    // and done events must not terminate a resumed/replanned run.
+    if (terminal || seen++ < (options.afterEvents || 0)) return;
     onEvent(event);
     if (
-      event.type === "done" ||
-      event.type === "question" ||
-      (event.type === "error" && event.payload.recoverable !== true)
+      !options.followToEnd &&
+      (event.type === "done" ||
+        event.type === "question" ||
+        (event.type === "error" && event.payload.recoverable === false))
     )
       terminal = true;
   });

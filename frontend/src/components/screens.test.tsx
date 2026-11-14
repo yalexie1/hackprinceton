@@ -7,11 +7,32 @@ import Assumptions from "./Assumptions";
 import Geometry from "./Geometry";
 import Find from "./Find";
 import Documents from "./Documents";
+import Warnings, { AuditNarrative } from "./Warnings";
 import sharedHouse from "../../../specs/examples/house/run_result.json";
 import sharedOffice from "../../../specs/examples/office/run_result.json";
 const house = demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
 const office = demoRun(sharedOffice.property.sid, sharedOffice.request.budget_usd);
 describe("shared contract screen compatibility", () => {
+  it("does not claim an unchanged replay plan fits a lower requested budget", () => {
+    const run = structuredClone(house);
+    run.plan!.budget_usd = 0;
+    const html = renderToStaticMarkup(<PlanView run={run} onFocus={() => {}} onDocuments={() => {}} />);
+    expect(html).toContain("exceeds your cash budget at expected costs");
+    expect(html).not.toContain("The plan fits at expected costs");
+  });
+  it("keeps long provenance details expandable and de-duplicates repeated fallback warnings", () => {
+    const warning = `vexcel/property/extract:extent: ${"Both outlines and the decision remain visible. ".repeat(12)}END OF DETAIL`;
+    const html = renderToStaticMarkup(<Warnings warnings={[warning, warning]} />);
+    expect(html).toContain("<details");
+    expect(html).toContain("Read full note");
+    expect(html.split("END OF DETAIL")).toHaveLength(2);
+  });
+  it("marks an earlier narrative as outdated after a backend re-run warning", () => {
+    const html = renderToStaticMarkup(<AuditNarrative text="Earlier savings: $1000" warnings={["re-run: summary not regenerated"]} />);
+    expect(html).toContain("outdated numbers");
+    expect(html).toContain("<details");
+    expect(html).toContain("Earlier savings: $1000");
+  });
   it("offers no edit control for a locked assumption", () => {
     const run = structuredClone(house);
     const assumption = run.building_model!.assumptions[0];

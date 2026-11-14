@@ -1,5 +1,5 @@
-// Browser contract mirrors specs/SPEC.md section 9 (schema 0.3.1).
-export const SCHEMA_VERSION = "0.3.1";
+// Browser contract mirrors specs/SPEC.md section 9. Checked by check:contract.
+export const SCHEMA_VERSION = "0.3.3";
 export interface Ranged {
   low: number;
   expected: number;

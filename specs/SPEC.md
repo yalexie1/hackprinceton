@@ -1,6 +1,6 @@
 # Master spec
 
-Status: draft v0.3.5, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.6, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
@@ -13,6 +13,8 @@ v0.3.2 adds `VexcelDetection.mask_area_m2`: SAM 3 masks are nested fragments, so
 v0.3.3 adds `"place"` to `FetchRecord.layer`, for the incorporated-place lookup that names the electric utility and decides whether a property lies in a C-PACE program area.
 
 v0.3.4 adds `"not_cost_effective"` to `SkippedItem.reason`: the plan follows consultant practice (section 6.5), and a measure whose SIR is below 1 is never recommended or offered for financing.
+
+v0.3.6 adds `BaselineResult.warnings` (default empty), where the A31 benchmark checks (physics 02 BEN-01 to BEN-03) report a baseline outside the published range for its type and climate. Warnings, never silent changes.
 
 v0.3.5 adds bill calibration to the contract (A6, physics 04 MV-06): `FuelFit` and `CalibrationSummary`, `BuildingModel.calibration` and `BaselineResult.calibration`, and `UtilityBills.first_month`. The analysis door gains `calibrate_model`, which returns the calibrated model, so the measures and the plan run on it.
 
@@ -382,7 +384,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.5"
+SCHEMA_VERSION = "0.3.6"
 
 # ---------- primitives ----------
 
@@ -786,6 +788,7 @@ class BaselineResult(BaseModel):
     cooling_need_kwh: Optional[float] = None
     latent_cooling_kwh: float = 0.0
     hourly_path: Optional[str] = None          # cached hourly zone outputs, read by the desk-placement physics
+    warnings: list[str] = []                   # sanity checks on the result, e.g. the BEN-03 benchmark band (A31)
 
 MeasureId = Literal[
     "ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE",

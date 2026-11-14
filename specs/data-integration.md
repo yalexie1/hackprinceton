@@ -901,7 +901,8 @@ Checked live 2026-11-14. **Two of the sources `SPEC.md` and `handoff-plan.md` na
 
 | Need | Source | Key? | Status |
 |---|---|---|---|
-| Hourly irradiance (GHI, DNI, DHI), temperature, RH, wind | **Open-Meteo archive API** (`archive-api.open-meteo.com/v1/archive`) | none | [V] 200; units in `hourly_units`; timezone-aware; returns site `elevation` |
+| Hourly typical year, **primary** (#295, 5.1f) | **TMYx EPW**, climate.onebuilding.org, nearest representative station | none | [V] 200 on index and ZIPs; not redistributable |
+| Hourly irradiance (GHI, DNI, DHI), temperature, RH, wind, **fallback** | **Open-Meteo archive API** (`archive-api.open-meteo.com/v1/archive`) | none | [V] 200; units in `hourly_units`; timezone-aware; returns site `elevation` |
 | Annual PV yield + inter-annual uncertainty | **PVGIS v5_3 `PVcalc`** (EC Joint Research Centre) | none | [V] 200 on both golden lots |
 | PV reference implementation for unit tests | **pvlib 0.16.1** (local wheel) | n/a | [V] downloads |
 | Retail electricity price, **all three golden properties** | **EIA API v2** `electricity/retail-sales`, state average | free EIA key, `EIA_API_KEY` | [V] 200 for TX and CA, commercial and residential |
@@ -933,7 +934,7 @@ Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
 | `dhi_w_m2` | W/m² | `diffuse_radiation` |
 | `wind_m_s` | m/s (Open-Meteo returns km/h — convert, ×1000/3600) | `wind_speed_10m` |
 
-**What D9 writes is one real calendar year, not a TMY.** Building a true typical meteorological year needs multi-year statistics that are out of scope here, so `weather_source` names the exact year fetched and the inter-annual spread comes from PVGIS `SD_y` rather than being invented. A year short of 8,760 rows is reported as `FetchRecord{layer:"weather", status:"fallback"}` rather than passing silently.
+**Superseded by 5.1f (#295): the file is now a TMYx station typical year, with this Open-Meteo year as the fallback.** The format above is unchanged; a TMYx file has 8,760 rows, an Open-Meteo leap year 8,784. When the fallback is used it is one real calendar year, not a TMY, so `weather_source` names the exact year fetched and the inter-annual spread comes from PVGIS `SD_y` rather than being invented. A year short of 8,760 rows is reported as `FetchRecord{layer:"weather", status:"fallback"}` rather than passing silently.
 
 **`weather_time_convention` = `hour_end`.** [V] 2026-11-14, verified two independent ways on the golden house:
 
@@ -1126,6 +1127,120 @@ state average either way — and the record says which one answered.
 
 After the table, a cold live bundle is **0.4–0.6 s** with the gas price present.
 
+### 5.1f #295: the weather is a TMYx station typical year; Open-Meteo is the fallback
+
+**Decided by the lead (board, issue #1, "HANDOFF ... the weather source moves to typical-year station data"), built in `backend/data_layer/tmyx.py`.** Two analysis checks had found the house burning about twice the gas of a typical Los Angeles home (A6 bill calibration, physics 04 MV-06; A31 benchmark, physics 02 section 13). The cause is the weather: one real year (2024) of a reanalysis on a coarse grid. A consultant uses a typical-meteorological-year file from the nearest representative station, so the lane now does that. [V] 2026-11-14
+
+#### The numbers that decided it
+
+Degree-days by NOAA's method (daily mean = (Tmax + Tmin)/2, base 65 °F; °C-days at base 18.3 °C are the same figures ÷ 1.8), 29 February dropped. GHI is the annual horizontal sum. TMYx is the `2011-2025` window unless marked "full".
+
+| Site | Source | HDD °F·d (°C·d) | CDD °F·d (°C·d) | Mean T °F (°C) | GHI kWh/m² |
+|---|---|---|---|---|---|
+| **House** 34.0935, −118.3171 | Open-Meteo 2024 (grid 34.060, −118.350, 104 m) | **1,562** (868) | 1,135 (631) | **62.3** (16.8) | **1,927** |
+| | **TMYx Downtown USC 722874** (8.1 km, 55 m) | **928** (515) | 1,528 (849) | 65.6 (18.6) | 2,056 |
+| | TMYx Downtown USC, full record 1999–2024 | 1,185 (658) | 1,211 (673) | 63.9 (17.7) | 2,063 |
+| | TMYx Burbank 722880 (12.5 km, 236 m, valley) | 1,226 | 1,642 | 65.1 | 2,056 |
+| | NOAA normals 1991–2020, USC `USW00093134` | 1,005 (558) | 1,296 (720) | 65.8 (18.8) | — |
+| | Observed USC, mean of 2011–2024 / 2024 alone (GHCN-Daily) | 893 / **1,045** | 1,421 / 1,201 | 66.4 / **65.4** | — |
+| | PVGIS-ERA5 2005–2023 mean ± SD | — | — | — | 2,043 ± 44 |
+| **Culver Connect** 34.0308, −118.3889 | Open-Meteo 2024 (**the same grid cell as the house**) | 1,562 (868) | 1,135 (631) | 62.3 (16.8) | 1,927 |
+| | **TMYx Santa Monica AP 722885** (6.0 km, 53 m) | **1,286** (714) | 905 (503) | 62.9 (17.2) | 2,049 |
+| | TMYx LAX 722950 (10.3 km, 32 m) | 1,059 (588) | 863 (479) | 63.7 (17.6) | 2,055 |
+| | TMYx Downtown USC 722874 (9.1 km) | 928 | 1,528 | 65.6 | 2,056 |
+| | NOAA normals 1991–2020, Culver City COOP `USC00042214` (3.7 km) | 1,240 (689) | 795 (442) | 63.7 (17.6) | — |
+| | NOAA normals, Santa Monica `USW00093197` / LAX `USW00023174` | 1,388 / 1,214 | 613 / 720 | 62.8 / 63.6 | — |
+| | Observed Culver City, mean of 9 complete years 2011–2024 / 2024 | 1,164 / 1,326 | 865 / 640 | 64.2 / 63.1 | — |
+| | PVGIS-ERA5 2005–2023 | — | — | — | 2,043 ± 44 |
+| **Houston office** 29.7452, −95.4567 | Open-Meteo 2024 (grid 29.772, −95.436, 26 m) | 917 (509) | 3,431 (1,906) | 71.4 (21.9) | 1,746 |
+| | **TMYx Houston Hobby 722440** (20.7 km, 15 m) | **1,054** (585) | 3,670 (2,039) | 71.8 (22.1) | 1,695 |
+| | TMYx Houston Hobby, full record 1946–2025 | 1,198 | 3,085 | 69.6 | 1,702 |
+| | TMYx Bush Intercontinental 722430 (27.7 km) | 1,135 | 3,589 | 71.2 | 1,677 |
+| | NOAA normals 1991–2020, Hobby `USW00012918` / IAH `USW00012960` | 1,098 / 1,266 | 3,362 / 3,288 | 71.1 / 70.5 | — |
+| | Observed Hobby, mean of 2011–2024 / 2024 | 1,003 / 714 | 3,681 / 4,086 | 72.3 / 74.2 | — |
+| | PVGIS-ERA5 2005–2023 | — | — | — | 1,694 ± 67 |
+
+Sources: NOAA NCEI U.S. Climate Normals 1991–2020, annual/seasonal product (`ncei.noaa.gov/data/normals-annualseasonal/1991-2020/access/<station>.csv`, fields `ANN-HTDD-NORMAL`, `ANN-CLDD-NORMAL`, `ANN-TAVG-NORMAL`); GHCN-Daily `TMAX`/`TMIN` through the NCEI Access Data Service (`dataset=daily-summaries`), years with at least 350 days; PVGIS v5_3 `MRcalc` with `horirrad=1`; the TMYx and Open-Meteo figures computed from the files themselves.
+
+What the table says, plainly:
+
+1. **The bias is real but the issue's headline overstates it.** The "about 2,220 °F heating degree-days" is a degree-*hour* figure (the sum of hourly deficits ÷ 24 is 2,234), which is not comparable with NOAA's daily-mean method; and the Downtown USC 1991–2020 normal is **1,005**, not 1,150–1,300 (that range fits LAX and Culver City). Like for like, Open-Meteo 2024 gives the house **1,562** against **1,045** observed at USC in the same year (**+49 %**) and 1,005 normal (+55 %); in the degree-hours an hourly model actually integrates it is 2,234 against 1,307 for the USC TMYx (+71 %). The mean temperature is **3.1 °F colder** than the station in the same year. That is reanalysis bias, not an unusual year.
+2. **Open-Meteo puts the house and Culver Connect in one grid cell,** 8 km apart and on opposite sides of the marine-layer gradient. At Culver the bias is small (+18 % HDD against Culver City's 2024, −0.8 °F); at the house it is large.
+3. **Houston is near normal by luck.** Open-Meteo 2024 is about 2–3 °F colder than both Houston airports in 2024, but 2024 was a hot year there (Hobby observed 714 HDD), so the cold bias and the hot year cancel to within 20 % of normal.
+4. **Irradiance:** Open-Meteo 2024 is **−5.7 %** against PVGIS's 19-year mean in Los Angeles and **+3.1 %** in Houston (the issue said −6.3 % and +4.0 %). The TMYx files land within +0.7 % (USC), +0.3 % (Santa Monica) and +0.1 % (Hobby) of PVGIS. TMYx solar is ERA5 as well, so this agreement is not independent evidence.
+5. **The newest window is the right period.** The `2011-2025` TMYx reproduces its own stations' observed 2011–2024 means within −7 % to +6 % on HDD (USC 928 vs 893, Santa Monica 1,286 vs 1,259, LAX 1,059 vs 1,136, Hobby 1,054 vs 1,003, IAH 1,135 vs 1,186) and runs 4–13 % below the 1991–2020 normals, as a warming climate should. The full-record files run 0–18 % above the normals (USC +18 %, LAX +13 %, Hobby +9 %, IAH +7 %, Santa Monica 0 %).
+
+#### The station rule
+
+From the onebuilding Region 4 USA index (`sources/Region4_USA_TMYx_EPW_Processing_locations.kml`, about 16 MB, 13,355 placemarks; parsed once and cached by D4 under `onebuilding/`):
+
+1. **A long, current record:** the station's full record covers **≥ 25 years** and runs to **2020 or later**. This keeps first-order airport stations and drops heliports and short secondary records. At the Houston office it skips Houston-Dunn heliport (7.8 km, 18 years, a pad at 69 m) and Manchester (18.5 km, 14 years) for Hobby.
+2. **Similar ground:** where PVGIS reports a site elevation (its DEM, already fetched for the cross-check), the station is within **100 m** of it. That keeps a basin site off a valley station behind a ridge (Burbank at 236 m against the house at 102 m).
+3. **Then the nearest within 50 km.** Beyond that there is no station and the bundle falls back.
+4. **The newest 15-year window** of that station (`TMYx.2011-2025`), else its full-record file.
+
+The bundle's `climate_zone` is deliberately **not** used: the county-level IECC zone 3B covers both the marine strip and the basin, and matching on it would send Culver Connect to Downtown USC, whose CDD (1,528) is 77 % above Culver City's observed 865. Distance with the two filters picks Santa Monica, whose HDD is 10 % above Culver City's observed and whose CDD is within 5 %. Coastal distance is not modelled; LAX would fit Culver slightly better (HDD −9 %, CDD 0 %) but is farther, and the rule is not tuned to one site.
+
+| Site | Station chosen | Distance | Why not the nearer ones |
+|---|---|---|---|
+| House `zvKHR9DHNjJ` | Los Angeles Downtown USC 722874, `TMYx.2011-2025` | 8.1 km | it is the nearest |
+| Culver Connect `ZSPaQbkGcJJ` | Santa Monica AP 722885, `TMYx.2011-2025` | 6.0 km | it is the nearest |
+| Houston office `L3266YcPPvd` | Houston Hobby AP 722440, `TMYx.2011-2025` | 20.7 km | Dunn heliport and Manchester: records of 18 and 14 years |
+
+#### The file, the time convention, and a half-hour the release gets wrong
+
+The ZIP is downloaded once into `data/cache/<sid>/weather/` beside the CSV and replayed from there (a warm run takes 0.1 s, a cold one about 2 s with the index cached). The EPW is checked before use: one EPW in the ZIP, a `LOCATION` header whose WMO matches the index, exactly 8,760 rows, hours 1–24 in sequence, no 29 February, no more than 2 % missing temperature or GHI, temperature within −60…60 °C and GHI within 0…1,500 W/m². Missing values become blank cells, which the A1 reader interpolates.
+
+**Stamps.** EPW hours are hour-ending in local standard time, so EPW hour *h* of a day is written as `day + h hours`: hour 1 of 1 January is `01:00` and hour 24 of 31 December is the following 1 January `00:00`. A TMY mixes months from different years, so the stamps use a **nominal non-leap year whose 1 January is the weekday the file's `DATA PERIODS` names** (Sunday → 2017, which is also the year the A1 load calendar assumes). `weather_time_convention` is `hour_end`. `ClimateSite.timezone` is derived from the file's standard offset (Arizona and Hawaii by state), so it always agrees with the stamps.
+
+**The irradiance in the 2026 TMYx release runs half an hour late against that convention.** [V] 2026-11-14, two ways, at all eight stations downloaded (USC, Santa Monica, LAX, Burbank, Hobby, IAH, Sugar Land, Dunn):
+
+1. Weighting the centre of each hour (`h − 0.5`) by GHI over the year should land on mean solar noon, give or take the weather's morning/afternoon asymmetry. Open-Meteo's verified hour-ending files land **+0.15 h** (Los Angeles, morning marine layer) and **+0.03 h** (Houston) from it. The TMYx files land **+0.47 to +0.57 h**.
+2. Fitting each file against an hourly-averaged Ineichen clear sky (pvlib) on its clear days, the best-fitting centre of an hour's value is **60–65 minutes** before its stamp; hour-ending is 30. Open-Meteo fits at 30–40. The RMSE at the hour-ending assumption is twice the best fit (e.g. 69 against 36 W/m² at USC).
+
+The likely cause is ERA5's hour-ending accumulations being treated as instantaneous and sampled at the EPW hour's midpoint, the half-hour issue PVGIS documents for ERA5; the Ladybug forum has a report of OneBuilding files looking shifted, without a cause. Whatever the cause, it is measured, so **`tmyx.solar_offset_hours` measures every file**: an offset under 0.25 h is kept, one within 0.25 h of +0.5 h is realigned by averaging each hour with the next (the mean over `h−1…h` of values centred at `h−1` and `h`, wrapping at the year end so the annual sum is unchanged), and anything else is refused and the bundle falls back. After realignment the clear-sky fit lands at 35 minutes (house) and 30 (Houston). Temperatures are not shifted.
+
+#### Fallback and provenance
+
+Open-Meteo archive 2024 is used when no station qualifies, the index or the ZIP cannot be fetched, or the file fails a check. Every bundle says which:
+
+- **TMYx:** `FetchRecord{layer:"weather", what:"onebuilding/tmyx", status:"ok"}` with the EPW name, distance, station and site elevations, record period, the source year of each month, the measured solar offset and the shift applied, and any nearer stations skipped. `weather_source` names the station, WMO number, distance, window and record, e.g. `TMYx typical year (climate.onebuilding.org; NOAA ISD observations, ERA5 solar), station Los.Angeles.Downtown-USC.Campus WMO 722874, 8.1 km away, 2011-2025 (record 2011-2024); stamps on nominal year 2017`.
+- **Fallback:** the same `what` with `status:"fallback"` and the reason, `open-meteo/archive` with `status:"fallback"`, and a `weather_source` beginning `Open-Meteo archive, calendar year 2024 (one real year, not a TMY; fallback: <reason>)`.
+
+A caller that injects the JSON transport `get` without the byte transport `get_bytes` gets no TMYx attempt (recorded as a fallback), which keeps the suite offline. `BUNDLE_RULE_VERSION` is **3**, so every bundle cached before this misses and is rebuilt.
+
+#### Licence
+
+**Not redistributable, so nothing is committed.** climate.onebuilding.org states no open licence; every page carries "Copyright © 2014-2026 Climate.OneBuilding. All Rights Reserved." and asks to be cited as *Lawrie, Linda K., and Drury B. Crawley. 2026. Development of Global Typical Meteorological Years (TMYx). https://climate.onebuilding.org*. The inputs are NOAA ISD observations (U.S. government data, no restriction for U.S. stations) and ERA5 solar via Oikolab (Copernicus licence, free with attribution), but the assembled files carry the site's reservation. The ZIPs and CSVs therefore live only in the git-ignored `data/cache/`, and `specs/examples/weather/` keeps its Open-Meteo samples (CC BY 4.0). Anyone showing results should cite the TMYx source above.
+
+#### The effect on the three baselines
+
+`build_building_model` and `run_baseline` on each golden example bundle, with only `climate.weather_path` (and `timezone`) changed, then `check_baseline`. Nothing in the Analysis lane was changed or tuned. "Before" is Open-Meteo 2024 at the site.
+
+| | House before → after | Culver Connect before → after | Houston before → after |
+|---|---|---|---|
+| Electricity, kWh | 5,328 → 5,524 | 354,144 → 343,130 | 127,028 → 128,233 |
+| Gas, therms | **616 → 395** | 3,217 → 2,043 | 179 → 243 |
+| Heating (delivered), kWh | 14,988 → 8,738 | 94,287 → 59,862 | 5,232 → 7,113 |
+| Heating need, kWh | 10,136 → 5,909 | 75,430 → 47,889 | 4,186 → 5,691 |
+| Cooling (delivered), kWh | 1,216 → 1,411 | 45,168 → 34,839 | 32,281 → 33,713 |
+| EUI, kWh/m² | 285.0 → 208.4 | 194.0 → 174.3 | 147.2 → 150.7 |
+| A31 gas band | **92nd percentile, "high", 1 warning → 68th, "typical", no warning** | 30th → 20th, typical | below 5th "very low" → 6th "low"; the warning stays |
+| A31 total band | 83rd → 58th | 39th → 34th | 27th → 28th |
+
+Monthly gas, therms, January to December:
+
+| | |
+|---|---|
+| House before | 98, 89, 78, 61, 47, 24, 14, 13, 21, 30, 61, 82 |
+| House after | 72, 51, 55, 31, 25, 13, 8, 8, 8, 14, 39, 70 |
+| Culver before | 727, 623, 464, 321, 126, 11, 0, 0, 10, 31, 336, 567 |
+| Culver after | 461, 379, 286, 103, 71, 1, 0, 0, 1, 19, 262, 460 |
+| Houston before | 122, 22, 2, 0, 0, 0, 0, 0, 0, 0, 3, 29 |
+| Houston after | 73, 62, 2, 0, 0, 0, 0, 0, 0, 5, 13, 88 |
+
+The house's gas falls by 36 % and its A31 gas warning clears. At 395 therms it is still above the 300–350 a typical Los Angeles household uses, which is now a question for the house model rather than the weather. The Houston office's very low gas stays flagged; the weather is not its cause.
+
 ### 5.2 What is blocked, and the caveats
 
 - **`developer.nrel.gov` and `nsrdb.nrel.gov` both fail DNS resolution from this environment** (`curl: (6) Could not resolve host`). So **PVWatts v8 and NSRDB PSM3 are unusable here**, although `api.openei.org` — also NREL-operated — resolves fine. `handoff-plan.md` names PVWatts as a reference implementation for the test plan; use **pvlib locally** instead, with PVGIS as an independent cross-check. [V]
@@ -1178,6 +1293,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D13 | P2 | Portfolio screening by Vexcel filters — **done**, see 4.4b | `data-vexcel` | `backend/data_layer/screening.py` | `PropertySummary[]` |
 | D14 | P1 | Incorporated place, utility and PACE region — **done**, see 5.1d | `data-costar` | `backend/data_layer/places.py` | `Tariff.utility`, `in_pace_region` |
 | D15 | P1 | Gas price on the tariff — **done**, see 5.1e | `data-costar` | `backend/data_layer/external.py` | `Tariff.gas_usd_per_kwh` |
+| #295 | P1 | Typical-year station weather (TMYx), Open-Meteo fallback — see 5.1f | handoff from the lead | `backend/data_layer/tmyx.py`, `external.py` | `ClimateSite.weather_path`, `weather_source`, `timezone` |
 | D11 | — | this file | lane owner | `specs/data-integration.md` | — |
 
 **Critical path:** D0 (kit mirror) → D1 / D2 / D3 in parallel → D5 → D6. D4 can be stubbed from the contract and hardened later. D7–D10 come strictly after the walking skeleton.
@@ -1345,6 +1461,10 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | A28 region blocker cleared | live, all 7 priced Houston measures | 2026-11-14 | blocker gone for every one; eligibility then fails **SIR ≥ 1** (0.74, 0.25, 0.17) |
 | Golden tariff check on live data | `README.md:593` rule | 2026-11-14 | **passes live** for all three, where it previously only passed on fixtures |
 | EIA gas route discovered (D15) | `facet/process`, `facet/duoarea` | 2026-11-14 | `PRS` residential, `PCS` commercial; `SCA`/`STX`; **units `$/MCF`, not per therm** |
+| TMYx index and station choice (#295) | Region 4 USA KML, 13,355 placemarks | 2026-11-14 | house → USC 722874 8.1 km; Culver → Santa Monica 722885 6.0 km; Houston → Hobby 722440 20.7 km (Dunn heliport skipped) |
+| Open-Meteo bias at the house (#295) | 2024 file vs GHCN-Daily USC 2024 | 2026-11-14 | HDD65 1,562 vs 1,045 (**+49 %**), mean T −3.1 °F; the issue's 2,220 is a degree-hour figure |
+| TMYx irradiance timing (#295) | GHI centroid vs solar noon; clear-day fit vs pvlib Ineichen | 2026-11-14 | **+0.5 h late** at all 8 stations; realigned, fit then 30–35 min |
+| TMYx licence (#295) | site footer and home page | 2026-11-14 | "All Rights Reserved", no open licence: cache only, nothing committed |
 | Gas prices, all four | live, EIA annual 2025 | 2026-11-14 | CA 22.01/16.56, TX 19.42/10.98 $/MCF → 0.0724/0.0545/0.0639/0.0361 USD/kWh |
 | Gas route latency | same four calls | 2026-11-14 | **1 s, 14 s, 41 s, 66 s** plus 504s; heat-content series 504'd — hence the committed table |
 | Cold live bundle after D15 | all three golden | 2026-11-14 | **0.4–0.6 s** with gas present (44–76 s if the live gas route is waited on) |

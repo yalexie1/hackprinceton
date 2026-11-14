@@ -693,3 +693,21 @@ def test_a_door_that_cannot_report_its_weather_does_not_fail_the_run(tmp_path, m
     assert run._climate_notes(raw) == []
     monkeypatch.setattr(run.doors, "analysis", object(), raising=False)
     assert run._climate_notes(raw) == []
+
+
+def test_a_live_run_with_the_real_doors_uses_live_data_and_a_test_with_fake_doors_does_not(tmp_path, monkeypatch):
+    """Without DATA_LAYER_LIVE the data layer returns the example bundle, so a 'live' recording would be of the
+    fixtures. Real doors turn it on; fake doors (every test) leave the environment alone."""
+    monkeypatch.delenv("DATA_LAYER_LIVE", raising=False)
+    live.LiveRun("run_fake", request(), live.LiveSettings(runs_dir=tmp_path, doors=stub_doors()))
+    assert "DATA_LAYER_LIVE" not in os.environ
+    live.LiveRun("run_real", request(), live.LiveSettings(runs_dir=tmp_path))
+    assert os.environ["DATA_LAYER_LIVE"] == "1"
+    os.environ["DATA_LAYER_LIVE"] = "0"       # an explicit choice is kept (the conftest restores the variable)
+    live.LiveRun("run_real2", request(), live.LiveSettings(runs_dir=tmp_path))
+    assert os.environ["DATA_LAYER_LIVE"] == "0"
+
+
+def test_the_environment_keys_a_live_run_needs_are_picked_up_from_dotenv():
+    for key in ("ANTHROPIC_API_KEY", "EIA_API_KEY", "MATTERPORT_API_KEY", "MATTERPORT_API_TOKEN", "VEXCEL_API_KEY"):
+        assert key in live._ENV_KEYS

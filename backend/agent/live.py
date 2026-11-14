@@ -72,7 +72,9 @@ SETTINGS: Optional[LiveSettings] = None
 
 
 _ENV_KEYS = ("ANTHROPIC_API_KEY", "LANGSMITH_API_KEY", "LANGSMITH_PROJECT", "LANGSMITH_TRACING",
-             "LANGSMITH_ENDPOINT", "LANGSMITH_WORKSPACE_ID")
+             "LANGSMITH_ENDPOINT", "LANGSMITH_WORKSPACE_ID",
+             # the data layer reads these from the environment (it does not read .env itself)
+             "EIA_API_KEY", "MATTERPORT_API_KEY", "MATTERPORT_API_TOKEN", "MATTERPORT_SDK_KEY", "VEXCEL_API_KEY")
 DEFAULT_PROJECT = "energy-consultant"
 
 
@@ -160,6 +162,10 @@ def _approval_question(proposal: dict) -> Question:
 class LiveRun:
     def __init__(self, run_id: str, request: RunRequest, settings: LiveSettings):
         self.run_id, self.request = run_id, request
+        if settings.doors is None:
+            # A real live run uses live data. Without this flag the data layer hands back the example bundle
+            # (and says so only in a provenance record), so a "live" recording would be of the fixtures.
+            os.environ.setdefault("DATA_LAYER_LIVE", "1")
         self.store = RunStore(settings.runs_dir or DEFAULT_RUNS_DIR)
         self.files = self.store.files(run_id)
         self.doors = settings.doors or default_doors()

@@ -1425,7 +1425,7 @@ EF (the pre-2017 metric) and UEF are not identical; they are treated as equal he
 | office, occupied (06:00–22:00 weekdays, 06:00–18:00 Saturdays) | 21.0 °C | 24.0 °C | S11 Table B-13 |
 | office, unoccupied (other hours, Sundays and holidays) | 15.6 °C | 26.7 °C | S11 Table B-13 |
 
-Range ±1 K on each. `CTRL_TSTAT` for a home: a setback or setup schedule entered as hourly setpoints; its saving is the difference between two year runs (ZON-04). No default setback depth was sourced; it is a measure parameter.
+Range ±1 K on each. `CTRL_TSTAT` for a home: a setback or setup schedule entered as hourly setpoints; its saving is the difference between two year runs (ZON-04). No default setback depth was sourced; it is a measure parameter. No home setback hours were sourced either. The implementation uses this project's judgment, a common programmable-thermostat pattern: setback and setup apply at night from 22:00 to 06:00 every day and on weekdays from 08:00 to 18:00, and only when the home has a setback set (section 10, tier B).
 
 ### DEF-09 Schedules
 

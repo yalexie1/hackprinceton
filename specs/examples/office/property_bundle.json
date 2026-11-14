@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "summary": {
     "sid": "HjEyXryhRLk",
     "name": "Suite A - 2,000SF",
@@ -108,44 +108,7 @@
               "v01",
               "v02"
             ],
-            "openings": [
-              {
-                "id": "op_e01_1",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.4,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.125
-              },
-              {
-                "id": "op_e01_2",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.4,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.375
-              },
-              {
-                "id": "op_e01_3",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.4,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.625
-              },
-              {
-                "id": "op_e01_4",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.4,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.875
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e02",
@@ -155,17 +118,7 @@
               "v02",
               "v03"
             ],
-            "openings": [
-              {
-                "id": "op_e02_1",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.4,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e03",
@@ -175,17 +128,7 @@
               "v03",
               "v04"
             ],
-            "openings": [
-              {
-                "id": "op_e03_1",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.5,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e04",
@@ -195,17 +138,7 @@
               "v04",
               "v05"
             ],
-            "openings": [
-              {
-                "id": "op_e04_1",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.5,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e05",
@@ -215,17 +148,7 @@
               "v05",
               "v06"
             ],
-            "openings": [
-              {
-                "id": "op_e05_1",
-                "type": "window",
-                "label": null,
-                "width_m": 2.0,
-                "height_m": 1.5,
-                "lower_elevation_m": 0.9,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e06",
@@ -338,7 +261,7 @@
             "openings": [
               {
                 "id": "op_e13_1",
-                "type": "opening",
+                "type": "doorway",
                 "label": null,
                 "width_m": 1.8,
                 "height_m": 2.1,
@@ -407,6 +330,32 @@
           "e14",
           "e13",
           "e09"
+        ],
+        "polygon": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            8.4
+          ],
+          [
+            9.0,
+            8.4
+          ],
+          [
+            0.0,
+            8.4
+          ]
         ]
       },
       {
@@ -423,6 +372,24 @@
           "e03",
           "e12",
           "e10"
+        ],
+        "polygon": [
+          [
+            10.0,
+            0.0
+          ],
+          [
+            15.0,
+            0.0
+          ],
+          [
+            15.0,
+            5.0
+          ],
+          [
+            10.0,
+            5.0
+          ]
         ]
       },
       {
@@ -439,6 +406,24 @@
           "e04",
           "e15",
           "e11"
+        ],
+        "polygon": [
+          [
+            10.0,
+            5.0
+          ],
+          [
+            15.0,
+            5.0
+          ],
+          [
+            15.0,
+            8.4
+          ],
+          [
+            10.0,
+            8.4
+          ]
         ]
       },
       {
@@ -455,6 +440,24 @@
           "e16",
           "e07",
           "e08"
+        ],
+        "polygon": [
+          [
+            0.0,
+            8.4
+          ],
+          [
+            9.0,
+            8.4
+          ],
+          [
+            9.0,
+            12.4
+          ],
+          [
+            0.0,
+            12.4
+          ]
         ]
       },
       {
@@ -472,6 +475,28 @@
           "e05",
           "e06",
           "e16"
+        ],
+        "polygon": [
+          [
+            9.0,
+            8.4
+          ],
+          [
+            10.0,
+            8.4
+          ],
+          [
+            15.0,
+            8.4
+          ],
+          [
+            15.0,
+            12.4
+          ],
+          [
+            9.0,
+            12.4
+          ]
         ]
       }
     ],
@@ -645,9 +670,7 @@
     "listing_id": null,
     "residential_listing_id": null,
     "record_id": "354635",
-    "raw": {
-      "_note": "The kit record is deliberately not copied into this example: sponsor data must not be committed (SPEC.md section 3, item 6). A live bundle carries the commercial-property.jsonl record as found. Field names are in the kit's models/ and schemas/ folders; none are invented here."
-    },
+    "raw": {},
     "property_type": "Office",
     "property_type_code": 5,
     "year_built": 1984,
@@ -710,7 +733,7 @@
         "high": 250.0,
         "unit": "USD/m2/year"
       },
-      "comp_count": 6
+      "comp_count": 14
     }
   },
   "climate": {
@@ -719,16 +742,20 @@
     "timezone": "America/Chicago",
     "climate_zone": "2A",
     "weather_path": "data/cache/HjEyXryhRLk/weather/typical_year_hourly.csv",
-    "weather_source": "ILLUSTRATIVE: typical-year source to be chosen by the Data lane"
+    "weather_source": "Open-Meteo archive API: hourly GHI, DNI, DHI, temperature, relative humidity and wind. The cached file is not part of this example.",
+    "weather_time_convention": "hour_end",
+    "pvgis_annual_kwh_per_kw": 1236.02,
+    "pvgis_sd_fraction": 0.03879
   },
   "tariff": {
-    "utility": "ILLUSTRATIVE retail electricity provider and gas utility",
-    "electricity_usd_per_kwh": 0.11,
+    "utility": "Retail electric provider not known (CenterPoint Energy Houston Electric delivery area)",
+    "electricity_usd_per_kwh": 0.09,
     "gas_usd_per_kwh": 0.035,
     "export_usd_per_kwh": null,
-    "fixed_usd_per_month": 25.0,
-    "source": "ILLUSTRATIVE flat rates, not a retrieved tariff schedule",
-    "retrieved": "2026-11-13"
+    "export_regime": "none",
+    "fixed_usd_per_month": 0.0,
+    "source": "Electricity: published default, not a tariff. EIA Electric Power Monthly Table 5.6.A, Texas commercial average for August 2026 (physics 04 TAR-06; the residential default there comes from the PUC of Texas Power to Choose export). Gas: ILLUSTRATIVE, no source opened.",
+    "retrieved": "2026-11-14"
   },
   "provenance": [
     {
@@ -747,7 +774,7 @@
       "layer": "matterport",
       "what": "wall openings",
       "status": "ok",
-      "detail": "window, doorway and opening types present"
+      "detail": "five openings, all doorways; no window openings, so windows come from vision"
     },
     {
       "layer": "matterport",
@@ -759,7 +786,7 @@
       "layer": "matterport",
       "what": "aerial splat and drone photos",
       "status": "missing",
-      "detail": "no splat for this model; roof comes from Vexcel"
+      "detail": "no splat for this model; the roof comes from Vexcel"
     },
     {
       "layer": "matterport",
@@ -805,15 +832,15 @@
     },
     {
       "layer": "weather",
-      "what": "typical-year hourly file",
+      "what": "hourly weather (Open-Meteo archive) and the PVGIS annual cross-check",
       "status": "ok",
       "detail": null
     },
     {
       "layer": "tariff",
-      "what": "electricity and gas rates",
+      "what": "electricity price",
       "status": "fallback",
-      "detail": "no schedule retrieved; flat average rates used"
+      "detail": "no regulated retail tariff exists in the CenterPoint area; the published default of physics 04 TAR-06 is used until the user gives a bill"
     }
   ]
 }

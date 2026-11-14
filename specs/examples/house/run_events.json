@@ -59,11 +59,11 @@
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "No tariff schedule retrieved; using flat average rates",
+    "message": "MatterPak resources are unavailable; using the wall graph",
     "payload": {
-      "layer": "tariff",
-      "from": "utility tariff schedule",
-      "to": "flat average rates"
+      "layer": "matterport",
+      "from": "MatterPak mesh",
+      "to": "wall graph and room heights"
     }
   },
   {
@@ -103,11 +103,11 @@
   {
     "type": "fallback",
     "stage": "S4",
-    "message": "No window openings in the wall graph; using window sizes read by vision",
+    "message": "No window opening on the bedroom's walls; using the window read by vision for that room",
     "payload": {
       "layer": "matterport",
       "from": "measured window openings",
-      "to": "window count and size from vision, wider range"
+      "to": "window size from vision, wider range"
     }
   },
   {
@@ -132,9 +132,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 1368.4,
-        "expected": 1612.0,
-        "high": 1929.0,
+        "low": 1695.7,
+        "expected": 1912.0,
+        "high": 2197.11,
         "unit": "USD"
       }
     }
@@ -154,7 +154,7 @@
   {
     "type": "partial_result",
     "stage": "S6",
-    "message": "Finding: uninsulated attic",
+    "message": "Finding: thin attic insulation",
     "payload": {
       "kind": "finding",
       "measure_id": "ENV_ATTIC",
@@ -171,7 +171,7 @@
   {
     "type": "stage_done",
     "stage": "S6",
-    "message": "8 measures evaluated",
+    "message": "10 measures evaluated",
     "payload": {
       "artifact": "/run/measures.json"
     }
@@ -221,7 +221,7 @@
       "agent": "financier",
       "tool": "build_plan",
       "args": {
-        "budget_usd": 14000.0,
+        "budget_usd": 10000.0,
         "role": "owner_occupier"
       }
     }

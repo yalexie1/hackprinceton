@@ -2,8 +2,9 @@
   "doc_id": "doc_office_example_1",
   "doc_type": "cpace_package",
   "state": "TX",
-  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# C-PACE project summary\n\nProperty: 9050 Emnora Ln, Houston, TX (CoStar property id 354635). Application date: 2026-11-20.\n\nProperty owner: {{owner_legal_name}}. Legal description: {{property_legal_description}}.\n\n## 1. Qualified improvement\n\n- HVAC_RTU: High-efficiency packaged unit, useful life 18 years.\n\n## 2. Financing terms\n\nFinanced amount: $11,500. Term: 15 years. Rate: 6.5%. Annual assessment: $1,223. Capital provider: {{capital_provider_name}}.\n\n## 3. Savings test\n\nLife-cycle savings-to-investment ratio (discounted): 1.09. The programme's own SIR test is computed by the independent third-party reviewer: {{third_party_reviewer_name}}.\n\n## 4. Lien and lender consent\n\nThe assessment is a lien that runs with the property. Existing mortgage holder: {{mortgage_holder_name}}. Written consent: {{mortgage_holder_consent_date}}.\n",
+  "markdown": "**DRAFT FOR ATTORNEY REVIEW. NOT LEGAL ADVICE.**\n\n# C-PACE project summary\n\nProperty: 9050 Emnora Ln, Houston, TX (CoStar property id 354635). Application date: 2026-11-20. PACE region: {{pace_region}}.\n\nProperty owner: {{owner_legal_name}}. Legal description: {{property_legal_description}}.\n\n## 1. Qualified improvement\n\n- LGT_LED: LED retrofit of ceiling troffers, useful life 15 years.\n\n## 2. Financing terms\n\nFinanced amount: $15,600. Term: 15 years. Rate: 6.5%. Annual assessment: $1,659. Capital provider: {{capital_provider_name}}.\n\n## 3. Savings test\n\nProgram savings-to-investment ratio (undiscounted, over the term): 0.43. The program requires at least 1.0, so this project does not pass the screen as it stands. The independent third-party reviewer determines the official figure: {{third_party_reviewer_name}}.\n\nLife-cycle savings-to-investment ratio (discounted, a different measure): 0.549.\n\n## 4. Lien and lender consent\n\nThe assessment is a lien that runs with the property. Existing mortgage holder: {{mortgage_holder_name}}. Written consent: {{mortgage_holder_consent_date}}.\n",
   "unfilled_placeholders": [
+    "pace_region",
     "owner_legal_name",
     "property_legal_description",
     "capital_provider_name",
@@ -13,11 +14,25 @@
   ],
   "statutory_checks": [
     {
+      "requirement_id": "TX-PACE-01",
+      "requirement": "Eligible property: commercial, industrial, or residential with five or more units",
+      "citation": "Loc. Gov't Code section 399.002(5)",
+      "satisfied": true,
+      "note": "CoStar property type Office. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
+      "requirement_id": "TX-PACE-04",
+      "requirement": "Property lies in a designated PACE region",
+      "citation": "Loc. Gov't Code sections 399.006(a), 399.007, 399.008(a)",
+      "satisfied": false,
+      "note": "pace_region is blank: it is not confirmed that the address is inside the Houston city limits. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+    },
+    {
       "requirement_id": "TX-PACE-11",
       "requirement": "Assessment period does not exceed the useful life of the qualified project",
       "citation": "Loc. Gov't Code section 399.009(a)(8)",
       "satisfied": true,
-      "note": "Term 15 years, useful life 18 years. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "Term 15 years, useful life 15 years. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     },
     {
       "requirement_id": "TX-PACE-15",
@@ -45,7 +60,7 @@
       "requirement": "SIR of at least 1 over the life of the assessment, validated by the reviewer",
       "citation": "Texas PACE Authority Program Guide v4.3, Steps 2, 7, 8",
       "satisfied": false,
-      "note": "The draft shows the discounted life-cycle SIR, not the programme's simple-sum SIR over the assessment term; the reviewer has not validated it. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
+      "note": "The screen gives a program SIR of 0.43, below 1, and no reviewer has validated it. Requirement id and citation from specs/legal/texas.md section 6; the satisfied value is illustrative."
     }
   ],
   "disclaimer": "Draft for attorney review, not legal advice. Blanks are left where a party, legal description or date was not supplied."

@@ -1,8 +1,10 @@
 {
   "sid": "HjEyXryhRLk",
-  "budget_usd": 3500.0,
+  "budget_usd": 25000.0,
   "role": "landlord",
   "bills": null,
-  "overrides": {},
+  "overrides": {
+    "lighting.lamp_type": "fluorescent"
+  },
   "desks_requested": 4
 }

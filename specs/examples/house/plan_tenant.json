@@ -32,25 +32,31 @@
             "unit": "USD"
           },
           "co2_kg": {
-            "low": 102.69,
-            "expected": 128.36,
-            "high": 154.03,
+            "low": 64.73,
+            "expected": 80.91,
+            "high": 97.09,
+            "unit": "kg"
+          },
+          "co2_nonbaseload_kg": {
+            "low": 151.85,
+            "expected": 189.82,
+            "high": 227.78,
             "unit": "kg"
           }
         },
         "finance": {
           "installed_cost_usd": {
-            "low": 300.0,
-            "expected": 380.0,
-            "high": 494.0,
+            "low": 144.0,
+            "expected": 272.4,
+            "high": 408.6,
             "unit": "USD"
           },
-          "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+          "cost_source": "LBNL-2021 Table 13 (2019 USD), CPI-U adjusted to Oct 2026; physics 04 COST-01: 9.08 USD per lamp x 30",
           "incentives": [],
           "net_upfront_usd": {
-            "low": 300.0,
-            "expected": 380.0,
-            "high": 494.0,
+            "low": 144.0,
+            "expected": 272.4,
+            "high": 408.6,
             "unit": "USD"
           },
           "annual_savings_usd": {
@@ -60,26 +66,28 @@
             "unit": "USD"
           },
           "annual_om_change_usd": 0.0,
-          "useful_life_years": 15,
+          "useful_life_years": 10,
           "simple_payback_years": {
-            "low": 2.26,
-            "expected": 3.44,
-            "high": 5.59,
+            "low": 1.23,
+            "expected": 2.47,
+            "high": 3.85,
             "unit": "years"
           },
-          "discounted_payback_years": 3.7,
+          "discounted_payback_years": 2.7,
           "npv_usd": {
-            "low": 614.22,
-            "expected": 1005.28,
-            "high": 1362.34,
+            "low": 389.48,
+            "expected": 618.23,
+            "high": 842.97,
             "unit": "USD"
           },
-          "sir": 3.65,
-          "irr": 0.3131,
-          "discount_rate": 0.05,
-          "electricity_escalation": 0.03,
-          "gas_escalation": 0.02,
-          "analysis_period_years": 20,
+          "npv_sensitivity_usd": 463.36,
+          "sir": 3.27,
+          "irr": 0.3755,
+          "airr": 0.1596,
+          "discount_rate": 0.03,
+          "electricity_escalation": -0.0108,
+          "gas_escalation": -0.0174,
+          "analysis_period_years": 10,
           "financing": [
             {
               "kind": "cash",
@@ -89,13 +97,14 @@
               "term_years": null,
               "annual_payment_usd": 0.0,
               "net_cashflow_year1_usd": {
-                "low": -405.68,
-                "expected": -269.6,
-                "high": -167.52,
+                "low": 88.32,
+                "expected": 110.4,
+                "high": 132.48,
                 "unit": "USD"
               },
+              "program_sir": null,
               "notes": [
-                "Paid in full at installation."
+                "Paid in full at installation. First-year net cash flow is savings less the change in operation and maintenance; the investment is shown as net upfront cash (physics 04 ECO-12)."
               ]
             }
           ]
@@ -119,15 +128,19 @@
           }
         ],
         "formula_ids": [
-          "LGT",
-          "HVAC"
+          "LGT-01",
+          "LGT-03",
+          "ZON-04",
+          "ECO-07",
+          "EMI-01"
         ],
         "solar": null,
         "layout": null,
+        "value_uplift": null,
         "warnings": []
       },
-      "cumulative_upfront_usd": 380.0,
-      "remaining_budget_usd": 620.0
+      "cumulative_upfront_usd": 272.4,
+      "remaining_budget_usd": 727.6
     }
   ],
   "financeable": [],
@@ -161,12 +174,17 @@
       "measure_id": "CTRL_TSTAT",
       "reason": "already_done",
       "detail": "A smart thermostat is already installed (pano_01)."
+    },
+    {
+      "measure_id": "WIN_SHADE",
+      "reason": "no_cost_data",
+      "detail": "no verified cost; needs a quote"
     }
   ],
   "total_upfront_usd": {
-    "low": 300.0,
-    "expected": 380.0,
-    "high": 494.0,
+    "low": 144.0,
+    "expected": 272.4,
+    "high": 408.6,
     "unit": "USD"
   },
   "total_annual_savings_usd": {
@@ -176,36 +194,37 @@
     "unit": "USD"
   },
   "total_co2_kg": {
-    "low": 102.69,
-    "expected": 128.36,
-    "high": 154.03,
+    "low": 64.73,
+    "expected": 80.91,
+    "high": 97.09,
     "unit": "kg"
   },
   "baseline_after": {
     "electricity_kwh": {
-      "low": 2857.6,
-      "expected": 3548.0,
-      "high": 4438.4,
+      "low": 3962.78,
+      "expected": 4748.0,
+      "high": 5791.92,
       "unit": "kWh"
     },
     "gas_kwh": {
-      "low": 5792.0,
+      "low": 5799.98,
       "expected": 7240.0,
-      "high": 9048.0,
+      "high": 9040.02,
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 1235.92,
-      "expected": 1501.6,
-      "high": 1840.68,
+      "low": 1584.18,
+      "expected": 1801.6,
+      "high": 2087.56,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 1908.53,
-      "expected": 2374.84,
-      "high": 2966.31,
+      "low": 1935.65,
+      "expected": 2238.15,
+      "high": 2622.63,
       "unit": "kg"
-    }
+    },
+    "co2_nonbaseload_kg": null
   },
   "value_uplift": null
 }

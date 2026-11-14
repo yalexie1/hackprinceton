@@ -73,11 +73,11 @@
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "MatterPak is locked; using the wall graph",
+    "message": "No utility tariff for this address; using the published default price",
     "payload": {
-      "layer": "matterport",
-      "from": "MatterPak mesh",
-      "to": "wall graph and room heights"
+      "layer": "tariff",
+      "from": "utility tariff",
+      "to": "published default (TAR-06)"
     }
   },
   {
@@ -115,29 +115,43 @@
     "payload": {}
   },
   {
+    "type": "fallback",
+    "stage": "S4",
+    "message": "No window openings in the wall graph; using window sizes read by vision",
+    "payload": {
+      "layer": "matterport",
+      "from": "measured window openings",
+      "to": "window count and size from vision, wider range"
+    }
+  },
+  {
     "type": "question",
     "stage": "S4",
     "message": "One question before the model is final",
     "payload": {
       "question": {
-        "id": "q_lamp_type",
-        "assumption_key": "lighting.lamp_type",
-        "prompt": "What kind of lamps are in the ceiling light fixtures?",
+        "id": "q_hvac_system",
+        "assumption_key": "hvac.system_type",
+        "prompt": "What heats and cools this suite?",
         "choices": [
           {
-            "label": "Fluorescent tubes",
-            "value": "fluorescent"
+            "label": "A packaged unit on the roof",
+            "value": "rooftop_unit"
           },
           {
-            "label": "LED tubes or LED panels",
-            "value": "led"
+            "label": "A split system with a furnace",
+            "value": "central_ac_furnace"
+          },
+          {
+            "label": "The building's central plant",
+            "value": "central_plant"
           },
           {
             "label": "I don't know",
             "value": null
           }
         ],
-        "impact_note": "The panoramas cannot tell fluorescent from LED tubes. The answer decides whether the LED retrofit is in the plan."
+        "impact_note": "No rooftop unit is visible from the air. The answer decides whether unit replacement and an economizer are evaluated at all."
       }
     }
   },
@@ -163,9 +177,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 2595.85,
-        "expected": 3015.0,
-        "high": 3569.9,
+        "low": 2614.29,
+        "expected": 3078.2,
+        "high": 4611.33,
         "unit": "USD"
       }
     }
@@ -215,7 +229,7 @@
   {
     "type": "stage_done",
     "stage": "S6",
-    "message": "8 measures evaluated",
+    "message": "11 measures evaluated",
     "payload": {
       "artifact": "/run/measures.json"
     }
@@ -234,7 +248,7 @@
       "agent": "financier",
       "tool": "cpace_scenario",
       "args": {
-        "measure_id": "HVAC_RTU"
+        "measure_id": "LGT_LED"
       }
     }
   },

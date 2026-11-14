@@ -1,9 +1,9 @@
 {
   "annual": {
     "electricity_kwh": {
-      "low": 20060.0,
-      "expected": 23600.0,
-      "high": 28320.0,
+      "low": 27948.0,
+      "expected": 32880.0,
+      "high": 39456.0,
       "unit": "kWh"
     },
     "gas_kwh": {
@@ -13,39 +13,40 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 2595.85,
-      "expected": 3015.0,
-      "high": 3569.9,
+      "low": 2614.29,
+      "expected": 3078.2,
+      "high": 4611.33,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 7883.75,
-      "expected": 9347.4,
-      "high": 11278.42,
+      "low": 9947.26,
+      "expected": 11602.38,
+      "high": 13807.38,
       "unit": "kg"
-    }
+    },
+    "co2_nonbaseload_kg": null
   },
   "end_use_kwh": {
     "heating": 3400.0,
-    "cooling": 8200.0,
-    "fans": 2900.0,
-    "lighting": 6400.0,
-    "plug_loads": 5600.0,
-    "water_heating": 500.0
+    "cooling": 11100.0,
+    "water_heating": 500.0,
+    "lighting": 12300.0,
+    "plug": 8980.0,
+    "appliances": 0.0
   },
   "monthly_electricity_kwh": [
-    1478.1,
-    1379.5,
-    1576.6,
-    1773.7,
-    2167.8,
-    2463.5,
-    2660.5,
-    2709.8,
-    2364.9,
-    1970.8,
-    1576.6,
-    1478.2
+    2059.3,
+    1922.0,
+    2196.6,
+    2471.1,
+    3020.3,
+    3432.2,
+    3706.7,
+    3775.4,
+    3294.9,
+    2745.7,
+    2196.6,
+    2059.2
   ],
   "monthly_gas_kwh": [
     850.0,
@@ -63,5 +64,9 @@
   ],
   "peak_cooling_w": 21000.0,
   "peak_heating_w": 14000.0,
-  "calibrated_to_bills": false
+  "calibrated_to_bills": false,
+  "heating_need_kwh": 2720.0,
+  "cooling_need_kwh": 31500.0,
+  "latent_cooling_kwh": 4480.0,
+  "hourly_path": "data/cache/HjEyXryhRLk/analysis/baseline_hourly.csv"
 }

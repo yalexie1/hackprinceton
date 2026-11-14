@@ -137,6 +137,32 @@ def test_current_tenants_are_those_with_no_to_date():
 
 
 @needs_kit
+def test_vacant_and_no_data_are_distinct():
+    """@yalexie1's #230 models the `office_vacant` schedule when this returns records
+    but no sitting tenant, and falls back to defaults when it returns `None`. The two
+    must not collapse: doing so would quietly move every vacant office onto the
+    occupied defaults, changing ventilation, occupant gains and plug-load scaling with
+    no test failing.
+
+    Property 234004 is the vacant case on the real kit - 119 records, none sitting.
+    """
+    vacant = next((pid for pid, recs in d10.tenancies_by_property().items()
+                   if recs and all(r.get("toDate") for r in recs)), None)
+    assert vacant, "the kit no longer has a property with only historic tenancies"
+
+    data, notes = d10.occupancy_data(vacant)
+    assert data is not None, "records but no sitting tenant must NOT be None"
+    assert data.tenancies == [], "the vacant case must be an empty tenancy list"
+    assert data.employees_total is None and data.occupied_area_m2 is None
+    assert "of 119 on record" in notes[0].detail or "on record" in notes[0].detail
+
+    # ...and genuinely absent data stays None.
+    missing, missing_notes = d10.occupancy_data("999999999")
+    assert missing is None, "a property with no records must be None, not empty"
+    assert missing_notes[0].status == "missing"
+
+
+@needs_kit
 def test_occupied_area_is_a_plausible_share_of_the_building():
     """The check that caught nothing but would have caught a unit error: summing every
     tenancy ever recorded instead of the sitting ones gives a multiple of the building."""

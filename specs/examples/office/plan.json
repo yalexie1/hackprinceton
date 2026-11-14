@@ -3087,9 +3087,9 @@
     "unit": "USD"
   },
   "total_annual_savings_usd": {
-    "low": 20507.74,
+    "low": 19028.66,
     "expected": 21221.78,
-    "high": 21935.81,
+    "high": 23414.9,
     "unit": "USD"
   },
   "total_co2_kg": {
@@ -3129,7 +3129,7 @@
     "value_usd": {
       "low": 0.0,
       "expected": 163801.08,
-      "high": 473724.65,
+      "high": 508122.09,
       "unit": "USD"
     },
     "method": "VAL-01",

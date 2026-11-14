@@ -13175,9 +13175,9 @@
       "unit": "USD"
     },
     "total_annual_savings_usd": {
-      "low": 20507.74,
+      "low": 19028.66,
       "expected": 21221.78,
-      "high": 21935.81,
+      "high": 23414.9,
       "unit": "USD"
     },
     "total_co2_kg": {
@@ -13217,7 +13217,7 @@
       "value_usd": {
         "low": 0.0,
         "expected": 163801.08,
-        "high": 473724.65,
+        "high": 508122.09,
         "unit": "USD"
       },
       "method": "VAL-01",
@@ -13262,7 +13262,7 @@
       "impact_note": "The panoramas suggest units from 2006 to 2014. Their age sets the efficiency the replacement is measured against, and newer units would make replacing them poor value."
     }
   ],
-  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for the fourth-floor suite: 294,391 kWh of electricity and 74,449 kWh of gas a year, about $92,433 (range $72,448 to $107,244). Electricity is on LADWP with net metering, priced at the EIA California commercial average rather than a LADWP schedule; gas is priced at the EIA California commercial average too. Office hot water is not modelled. The 2024 renovation left LED lighting and interior blinds, so neither is proposed again.\n\nThe flat roof is the opportunity: about 2,567 m2 with three rooftop units on it. Filled to the suite's annual use, it would carry 190 kW. Within the $150,000 budget the plan selects desk placement and a 44.72 kW rooftop array sized to the money, for $149,812 upfront, saving about $21,222 a year (range $20,508 to $21,936). The array pays back in about 7.8 years on its own; the federal investment credit is not counted until its conditions are confirmed. The roof is mid-life, so a structural check and the roof's remaining life come before racking goes on.\n\nNothing else fits once the array has taken the budget. Financeable, in order of savings: lighting controls, rooftop unit replacement, roof insulation, window replacement, a cool roof, air sealing. C-PACE scenarios are shown for them, but they are hypothetical: no programme taking commercial applications in Los Angeles has been confirmed. For example, the lighting controls financed at $64,736 over 10 years would cost $9,005 a year. An assessment is a lien on the parcel until paid, collected with the property taxes. The economizer and a smart thermostat save nothing in the model and are skipped.\n\nAerial captures disagree about the roof: an older capture outlines a much larger roof than the structure that matches CoStar's floor plate, which the design uses. Both show no solar today.\n\nValue uplift: capitalised at the rates of 12 comparable sales, the plan's savings correspond to about $163,801 of property value (range $0 to $473,725). This is an estimate shown beside the totals; it is not added to the savings.\n",
+  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for the fourth-floor suite: 294,391 kWh of electricity and 74,449 kWh of gas a year, about $92,433 (range $72,448 to $107,244). Electricity is on LADWP with net metering, priced at the EIA California commercial average rather than a LADWP schedule; gas is priced at the EIA California commercial average too. Office hot water is not modelled. The 2024 renovation left LED lighting and interior blinds, so neither is proposed again.\n\nThe flat roof is the opportunity: about 2,567 m2 with three rooftop units on it. Filled to the suite's annual use, it would carry 190 kW. Within the $150,000 budget the plan selects desk placement and a 44.72 kW rooftop array sized to the money, for $149,812 upfront, saving about $21,222 a year (range $19,029 to $23,415). The array pays back in about 7.8 years on its own; the federal investment credit is not counted until its conditions are confirmed. The roof is mid-life, so a structural check and the roof's remaining life come before racking goes on.\n\nNothing else fits once the array has taken the budget. Financeable, in order of savings: lighting controls, rooftop unit replacement, roof insulation, window replacement, a cool roof, air sealing. C-PACE scenarios are shown for them, but they are hypothetical: no programme taking commercial applications in Los Angeles has been confirmed. For example, the lighting controls financed at $64,736 over 10 years would cost $9,005 a year. An assessment is a lien on the parcel until paid, collected with the property taxes. The economizer and a smart thermostat save nothing in the model and are skipped.\n\nAerial captures disagree about the roof: an older capture outlines a much larger roof than the structure that matches CoStar's floor plate, which the design uses. Both show no solar today.\n\nValue uplift: capitalised at the rates of 12 comparable sales, the plan's savings correspond to about $163,801 of property value (range $0 to $508,122). This is an estimate shown beside the totals; it is not added to the savings.\n",
   "warnings": [
     "PV_ROOF may exceed budget at the high end of its cost range.",
     "Aerial captures outline a larger roof at this property (4,568 m2 in 2022 imagery against the 2,566.5 m2 structure used); see the PV_ROOF warning.",

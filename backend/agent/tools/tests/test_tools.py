@@ -70,9 +70,9 @@ def make(tmp_path, doors=None):
     return build_tools(ctx), files
 
 
-def test_all_19_named_tools_exist(tmp_path):
+def test_all_20_named_tools_exist(tmp_path):
     tools, _ = make(tmp_path)
-    assert len(TOOL_NAMES) == 19 and set(tools) == set(TOOL_NAMES)
+    assert len(TOOL_NAMES) == 20 and set(tools) == set(TOOL_NAMES)
 
 
 def test_pipeline_returns_valid_json_and_writes_files(tmp_path):
@@ -194,3 +194,27 @@ def test_reader_tools_return_run_files_and_check_a_draft(tmp_path):
     clean = r["check_report"]("The property has no figures here.")
     assert clean == {"problems": []}
     assert r["check_report"]("It saves $987,654,321 a year.")["problems"]
+
+
+def test_calibrate_model_without_bills_changes_nothing_and_says_uncalibrated(tmp_path):
+    t, files = make(tmp_path)
+    t["get_property_bundle"](BUNDLE.summary.sid); t["build_building_model"]()
+    before = dict(files.d)
+    out = t["calibrate_model"]()
+    assert out["calibrated"] is False and "uncalibrated" in out["note"] and files.d == before
+
+
+def test_calibrate_model_with_bills_saves_the_calibrated_model(tmp_path):
+    from types import SimpleNamespace
+    from backend.schema import UtilityBills
+    doors = fake_doors()
+    calibrated = MODEL.model_copy(update={"calibration": SimpleNamespace(calibrated=True)})
+    calls = []
+    doors.analysis.calibrate_model = lambda b, m, bills: calls.append(bills) or calibrated
+    files = Files()
+    request = RUN.request.model_copy(update={"bills": UtilityBills(electricity_kwh=[100.0] * 12)})
+    ctx = ToolContext(request=request, files=files, doors=doors, run=lambda: RUN, asset_dir=tmp_path)
+    t = build_tools(ctx)
+    t["get_property_bundle"](BUNDLE.summary.sid); t["build_building_model"]()
+    out = t["calibrate_model"]()
+    assert calls and out["calibrated"] is True and "model.json" in files.d

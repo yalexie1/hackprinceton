@@ -1,10 +1,12 @@
 # Master spec
 
-Status: draft v0.3, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
+Status: draft v0.3.1, 2026-11-14. Owner: @yalexie1. Change by agreement on the board.
 
 v0.2 folds in five corrections the Data lane verified live on 2026-11-14 (`data-integration.md` section 7): direct CoStar join keys, the Matterport georeference, measured wall openings, CoStar occupancy and market data, and the real layout of the CoStar kit.
 
 v0.3 (contract 0.3.0) adds what the physics and legal specs needed, all additive: incentive eligibility and a rebate-after-install kind, real-rate and AIRR fields on the financial breakdown, the export regime on the tariff, a `published_default` source, a `no_cost_data` skip reason, the non-baseload CO2 figure, desk-score and layout detail, visible transmittance on windows, room polygons, and value uplift on the rooftop solar measure for homes.
+
+v0.3.1 adds `CostarData.parent_ids`: one Matterport scan can be attached to several CoStar records, so the alternatives travel with the bundle.
 
 Companion files:
 
@@ -341,7 +343,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.0"
+SCHEMA_VERSION = "0.3.1"
 
 # ---------- primitives ----------
 
@@ -553,6 +555,9 @@ class CostarData(BaseModel):
     property_id: Optional[str] = None          # PropertyId, commercial
     listing_id: Optional[str] = None           # ListingId, residential
     residential_listing_id: Optional[str] = None
+    parent_ids: list[str] = []                 # every PropertyId or ListingId this model is attached to; one
+                                               # scan can belong to several (307 model ids do); the ids above are
+                                               # the primary by the Data lane's documented rule
     record_id: str                             # `id` of the JSONL record
     raw: dict                                  # the record as found in the kit
     # normalised fields; names in the kit's models/ and schemas/ are authoritative

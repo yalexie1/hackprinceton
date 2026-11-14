@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.0"
+SCHEMA_VERSION = "0.3.1"
 
 # ---------- primitives ----------
 
@@ -214,6 +214,9 @@ class CostarData(BaseModel):
     property_id: Optional[str] = None          # PropertyId, commercial
     listing_id: Optional[str] = None           # ListingId, residential
     residential_listing_id: Optional[str] = None
+    parent_ids: list[str] = []                 # every PropertyId or ListingId this model is attached to; one
+                                               # scan can belong to several (307 model ids do); the ids above are
+                                               # the primary by the Data lane's documented rule
     record_id: str                             # `id` of the JSONL record
     raw: dict                                  # the record as found in the kit
     # normalised fields; names in the kit's models/ and schemas/ are authoritative

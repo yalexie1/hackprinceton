@@ -189,6 +189,32 @@ def _skip(design: Optional[SolarDesign], reason: str, flags: list[Flag]) -> Meas
                          not_applicable_reason=reason, flags=flags)
 
 
+# ---------------------------------------------------------------- system parameters (A4)
+
+def design_with_system_parameters(design: SolarDesign) -> SolarDesign:
+    """Fill the system parameters the layout leaves empty with the A4 values the yield used.
+
+    The layout (A14) places modules; the yield behind ``annual_kwh`` is A4's PV chain, which
+    assumes the DC/AC ratio, the PVWatts loss stack and, over the life, PV-07 degradation.
+    Finance reads ``degradation_rate`` (ECO-07): left empty it prices the array as if it never
+    degrades, which overstates life-cycle savings by several percent. A value already on the
+    design (e.g. a quoted product) is kept.
+    """
+    from backend.analysis.physics.pv import chain as _pv_chain
+    from backend.analysis.physics.pv import constants as _pv
+    upd: dict = {}
+    if design.dc_ac_ratio is None:
+        upd["dc_ac_ratio"] = _pv.DC_AC_RATIO
+    ratio = upd.get("dc_ac_ratio", design.dc_ac_ratio)
+    if design.inverter_kw_ac is None and design.system_kw_dc > 0 and ratio:
+        upd["inverter_kw_ac"] = round(design.system_kw_dc / ratio, 3)
+    if design.losses_percent is None:
+        upd["losses_percent"] = round(100 * _pv_chain.system_loss_fraction(), 4)
+    if design.degradation_rate is None:
+        upd["degradation_rate"] = _pv.DEGRADATION_RATE_EXPECTED
+    return design.model_copy(update=upd) if upd else design
+
+
 # ---------------------------------------------------------------- roof extent (D16)
 
 EXTENT_RECORD = "property/extract:extent"
@@ -382,9 +408,9 @@ def evaluate_pv(design: SolarDesign, baseline: BaselineResult, tariff: Tariff, *
         "export_value_usd": _r(*export_value, "USD").model_dump(),
         "egrid_subregion": sub,
     }
-    solar = design
+    solar = design_with_system_parameters(design)
     if fsc_source in ("hourly", "hourly_pv_monthly_load"):
-        solar = design.model_copy(update={"self_consumption_fraction": round(fsc0, 4)})
+        solar = solar.model_copy(update={"self_consumption_fraction": round(fsc0, 4)})
 
     if regime == "net_metering":
         how = "kWh are netted at the energy price over the year"

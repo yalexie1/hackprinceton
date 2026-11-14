@@ -32,13 +32,29 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -100%);
+  /* Two things were wrong. The marker was a filled 36px disc sitting on the centre of the map,
+     so it covered the one building it was pointing at. And the anchor was the disc's bottom
+     edge, while the glyph's point is 2 of its 24 units above its own box bottom - with 5px of
+     padding and a 2px border on top of that, the visible point sat about 7px above the place it
+     claimed to mark. Now it is the bare glyph, with a dark halo so it reads on a pale roof and
+     on asphalt alike, shifted down so the point itself lands on the location. */
+  transform: translate(-50%, -100%) translateY(1.8px);
   color: #fff;
-  background: #19543d;
-  border: 2px solid #fff;
+  filter: drop-shadow(0 0 2px #0e2419) drop-shadow(0 1px 3px #0e2419);
+  pointer-events: none;
+}
+/* The exact point, so a 22px glyph is never the only thing saying where the property is. */
+.property-location-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1.8px;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
   border-radius: 50%;
-  padding: 5px;
-  box-shadow: 0 2px 9px #0008;
+  background: #fff;
+  box-shadow: 0 0 2px #0e2419;
 }
 .property-map-north,
 .property-map-footer,
@@ -236,4 +252,19 @@
 /* The model fills the frame, so the north marker and the pin do not apply to it. */
 .property-geospatial > .property-model-frame ~ .property-map-north {
   display: none;
+}
+.property-model-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  background: #152b20;
+  color: #d8ebbd;
+  font-size: 15px;
+  text-align: center;
+  padding: 0 16px;
 }

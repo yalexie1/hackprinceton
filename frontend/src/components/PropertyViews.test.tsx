@@ -97,17 +97,39 @@ describe("the property view toggle", () => {
     expect(html).toContain("Location not verified yet");
   });
 
-  it("shows a side angle first and labels the direction", () => {
+  it("defaults to the map, because every locatable property has one and it settles in one request", () => {
     const html = renderToStaticMarkup(
       <PropertyViews
         property={demoProperties[0]}
         imagery={{ obliques, ortho }}
       />,
     );
-    expect(html).toContain("/api/assets/data/cache/vexcel-image/house/north.jpg");
-    expect(html).toContain("Side-angle aerial · north view");
-    expect(html).toContain("Vexcel aerial imagery");
-    expect(html).not.toContain("property-location-pin");
+    expect(html).toContain("MapServer/export?");
+    expect(html).toContain("Esri, Vantor");
+    expect(html).toContain("property-location-pin");
+    expect(
+      propertyViews(demoProperties[0], { obliques, ortho })[0]?.kind,
+    ).toBe("context");
+  });
+
+  it("labels each side angle by direction, and never pins the basemap marker on a photograph", () => {
+    const side = propertyViews(demoProperties[0], { obliques, ortho }).find(
+      (view) => view.kind === "oblique",
+    );
+    expect(side?.url).toBe(
+      "/api/assets/data/cache/vexcel-image/house/north.jpg",
+    );
+    expect(side?.caption).toBe("Side-angle aerial · north view");
+    expect(side?.credit).toBe("Vexcel aerial imagery");
+    // A survey photograph's centre is not the property's location, so the pin must not follow it.
+    const photoOnly = renderToStaticMarkup(
+      <PropertyViews
+        property={{ ...demoProperties[0], sid: "unknown" }}
+        imagery={{ obliques, ortho: null }}
+      />,
+    );
+    expect(photoOnly).toContain("Side-angle aerial");
+    expect(photoOnly).not.toContain("property-location-pin");
   });
 
   it("renders one tab per kind, not one per oblique direction", () => {
@@ -138,13 +160,26 @@ describe("the property view toggle", () => {
       "oblique-south": "../../.env",
       "oblique-east": "data/cache/ok.jpg",
     });
+    // Rendered with no basemap location, so the surviving photo is what gets drawn.
     const html = renderToStaticMarkup(
-      <PropertyViews property={demoProperties[0]} imagery={{ obliques: hostile, ortho: null }} />,
+      <PropertyViews
+        property={{ ...demoProperties[0], sid: "unknown" }}
+        imagery={{ obliques: hostile, ortho: null }}
+      />,
     );
     expect(html).not.toContain("vexcelgroup.com");
     expect(html).not.toContain("token=secret");
     expect(html).not.toContain(".env");
     expect(html).toContain("/api/assets/data/cache/ok.jpg");
+    // And the hostile paths are gone from the view list too, not merely unrendered.
+    const urls = propertyViews(demoProperties[0], {
+      obliques: hostile,
+      ortho: null,
+    })
+      .map((view) => view.url || "")
+      .join(" ");
+    expect(urls).not.toContain("vexcelgroup.com");
+    expect(urls).not.toContain(".env");
   });
 
   it("falls back to a location frame rather than an empty box when a property has no imagery at all", () => {

@@ -10,6 +10,10 @@
     />
     <title>Leto — Building intelligence</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- The 3D model tab opens a Matterport Showcase frame. Warming DNS and TLS here
+         takes that handshake off the click. No request is made until a tab is chosen. -->
+    <link rel="preconnect" href="https://my.matterport.com" crossorigin />
+    <link rel="dns-prefetch" href="https://my.matterport.com" />
   </head>
   <body>
     <div id="root"></div>

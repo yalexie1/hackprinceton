@@ -47,9 +47,13 @@ const ICONS: Record<ViewKind, typeof MapPin> = {
 };
 
 /**
- * The views a property can actually show, in the order a viewer benefits from: the side angle
- * first (it is the only one that shows a facade), then our own overhead survey, then the model,
- * and the basemap last because it is context rather than evidence.
+ * The views a property can actually show.
+ *
+ * **The map comes first, so it is the default.** It is the one view every locatable property has,
+ * it is the same picture for all of them, and it loads from a tile service in one request - so the
+ * grid settles immediately instead of twenty cards each waiting on their own survey crop. The
+ * evidence views sit one click away: the side angle (the only one that shows a facade), then our
+ * own overhead survey, then the model.
  */
 export function propertyViews(
   property: PropertySummary,
@@ -57,25 +61,6 @@ export function propertyViews(
   { allowListedLocation = false, hasModelKey = false } = {},
 ): PropertyView[] {
   const views: PropertyView[] = [];
-
-  for (const oblique of imagery.obliques)
-    views.push({
-      kind: "oblique",
-      label: "Side angle",
-      caption: `Side-angle aerial · ${oblique.direction} view`,
-      credit: "Vexcel aerial imagery",
-      url: oblique.url,
-      direction: oblique.direction,
-    });
-
-  if (imagery.ortho)
-    views.push({
-      kind: "ortho",
-      label: "Aerial",
-      caption: "Overhead survey · Vexcel orthophoto",
-      credit: "Vexcel aerial imagery",
-      url: imagery.ortho,
-    });
 
   const scanLocation = propertyLocation(property.sid);
   const location =
@@ -96,6 +81,25 @@ export function propertyViews(
       }`,
       credit: aerialAttribution,
       url: context,
+    });
+
+  for (const oblique of imagery.obliques)
+    views.push({
+      kind: "oblique",
+      label: "Side angle",
+      caption: `Side-angle aerial · ${oblique.direction} view`,
+      credit: "Vexcel aerial imagery",
+      url: oblique.url,
+      direction: oblique.direction,
+    });
+
+  if (imagery.ortho)
+    views.push({
+      kind: "ortho",
+      label: "Aerial",
+      caption: "Overhead survey · Vexcel orthophoto",
+      credit: "Vexcel aerial imagery",
+      url: imagery.ortho,
     });
 
   // The model goes last, and is never the default view. Two reasons, both learned the hard way:
@@ -194,6 +198,11 @@ export default function PropertyViews({
   const view = views[index];
   const obliques = views.filter((v) => v.kind === "oblique");
   const failed = useRef(new Set<string>());
+  // Reset when the viewer leaves the tab: the frame unmounts, so the next visit boots again.
+  const [modelReady, setModelReady] = useState(false);
+  useEffect(() => {
+    if (view?.kind !== "model") setModelReady(false);
+  }, [view?.kind]);
 
   if (!view)
     return (
@@ -215,19 +224,34 @@ export default function PropertyViews({
       className={`property-geospatial${view.kind === "oblique" ? " has-oblique" : ""}`}
     >
       {view.kind === "model" ? (
-        <iframe
-          className="property-model-frame"
-          title={`Interior scan of ${property.name}`}
-          loading="lazy"
-          allow="fullscreen; xr-spatial-tracking"
-          referrerPolicy="no-referrer"
-          src={`https://my.matterport.com/show?${new URLSearchParams({
-            m: property.sid,
-            play: "0",
-            title: "0",
-            ...(modelKey ? { applicationKey: modelKey } : {}),
-          })}`}
-        />
+        <>
+          {/* Showcase boots its own bundle, model metadata and first panorama after the document
+              loads, which is seconds on a cold profile - and because the frame only exists once
+              the tab is chosen, the viewer pays all of it at click time. An empty dark frame for
+              several seconds reads as broken, so say what is happening until it paints.
+              `loading="lazy"` was previously on this iframe and was actively harmful: the
+              element is created only when selected, so there is nothing to defer, and the
+              attribute just delayed the request behind the browser's lazy-load bookkeeping. */}
+          {!modelReady && (
+            <div className="property-model-loading">
+              <Box size={22} aria-hidden="true" />
+              <span>Loading the interior scan…</span>
+            </div>
+          )}
+          <iframe
+            className="property-model-frame"
+            title={`Interior scan of ${property.name}`}
+            allow="fullscreen; xr-spatial-tracking"
+            referrerPolicy="no-referrer"
+            onLoad={() => setModelReady(true)}
+            src={`https://my.matterport.com/show?${new URLSearchParams({
+              m: property.sid,
+              play: "0",
+              title: "0",
+              ...(modelKey ? { applicationKey: modelKey } : {}),
+            })}`}
+          />
+        </>
       ) : (
         <img
           key={view.url}

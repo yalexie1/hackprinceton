@@ -6,12 +6,14 @@ import {
   MapPin,
   Search,
   SlidersHorizontal,
+  ShieldCheck,
 } from "lucide-react";
 import type { PropertySummary } from "../lib/types";
-import BuildingArt from "./BuildingArt";
+import PropertyPreview from "./PropertyPreview";
 import HouseViewer from "./HouseViewer";
 import { fixtureSource, demoShowcaseRun } from "../lib/fixtures";
 import { useMemo } from "react";
+import { propertyReadiness, sortByReadiness } from "../lib/property-readiness";
 export default function Find({
   properties,
   query,
@@ -32,6 +34,10 @@ export default function Find({
   onSelect: (p: PropertySummary) => void;
 }) {
   const showcase = useMemo(() => demoShowcaseRun(), []);
+  const orderedProperties = useMemo(
+    () => sortByReadiness(properties),
+    [properties],
+  );
   return (
     <>
       <section className="find-hero">
@@ -104,8 +110,30 @@ export default function Find({
           </select>
         </label>
       </div>
+      <div className="property-order-note">
+        <ShieldCheck size={23} />
+        <div>
+          <strong>Most measured evidence first</strong>
+          <p>
+            Properties with more measured inputs come first. This is a guide to
+            audit readiness, not a guarantee of savings or accuracy.
+          </p>
+          <details>
+            <summary>How this order is determined</summary>
+            <p>
+              The reviewed order is the house, Culver, then Houston. The house
+              has measured walls and window openings. None of the three has
+              measured room outlines. Both offices rely on an aerial footprint
+              and image-based window estimates; Culver has more scan views
+              available. Unassessed properties follow the reviewed ones. Review
+              the actual audit’s assumptions, weather source and utility-bill
+              calibration before relying on an estimate.
+            </p>
+          </details>
+        </div>
+      </div>
       <div className="property-grid">
-        {properties.map((p, i) => (
+        {orderedProperties.map((p, i) => (
           <button
             className="property-card"
             key={p.sid}
@@ -113,7 +141,7 @@ export default function Find({
             onClick={() => onSelect(p)}
           >
             <div className="property-image" aria-hidden="true">
-              <BuildingArt compact office={p.segment === "commercial"} />
+              <PropertyPreview property={p} allowListedLocation={!demo} />
               <span className="property-type">
                 {p.segment === "commercial" ? (
                   <Building2 size={13} />
@@ -122,7 +150,9 @@ export default function Find({
                 )}{" "}
                 {p.use_type.replaceAll("_", " ")}
               </span>
-              <span className="property-index">0{i + 1}</span>
+              <span className="property-index">
+                {String(i + 1).padStart(2, "0")}
+              </span>
             </div>
             <div className="property-copy">
               <div>
@@ -148,9 +178,23 @@ export default function Find({
                 </span>
                 {p.pano_count > 0 && (
                   <span>
-                    {p.has_splat ? "3D aerial scan" : "Interior scan"}
+                    {p.has_splat ? "3D scan available" : "Interior scan"}
                   </span>
                 )}
+              </div>
+              <div className="property-readiness">
+                <strong>
+                  {propertyReadiness(p.sid)?.label ||
+                    "Evidence not assessed yet"}
+                </strong>
+                <p>
+                  {propertyReadiness(p.sid)?.evidence ||
+                    "This property has not had the same data-coverage review as the three demonstration properties."}
+                </p>
+                <span>
+                  {propertyReadiness(p.sid)?.limitation ||
+                    "An audit must establish which inputs are measured and which are estimated."}
+                </span>
               </div>
               {demo && (
                 <small className="fixture-source">{fixtureSource(p.sid)}</small>
@@ -162,6 +206,38 @@ export default function Find({
           </button>
         ))}
       </div>
+      {properties.length > 0 && (
+        <p className="property-imagery-note">
+          Side-angle aerial photos are shown when available from Vexcel.
+          Otherwise, an overhead image shows geospatial context around a scan,
+          street-address or reported listing location, not a surveyed property
+          boundary. Imagery may predate current conditions. Scan locations are
+          computed by Matterport, not surveyed.{" "}
+          <a
+            href="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Overhead imagery &amp; attribution
+          </a>
+          {" · "}
+          <a
+            href="https://github.com/yalexie1/hackprinceton/blob/main/specs/data-integration.md#32-geocoordinates--this-answers-the-specs-top-risk"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Scan-location sources
+          </a>
+          {" · "}
+          <a
+            href="https://github.com/yalexie1/hackprinceton/issues/1#issuecomment-6883308835"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Live scan-location verification
+          </a>
+        </p>
+      )}
       {!loading && properties.length === 0 && (
         <div className="empty-state">
           <Search />

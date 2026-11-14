@@ -40,6 +40,22 @@ export interface RoofView {
   panels: SolarDesign["panels"];
   panels_selected: boolean;
 }
+export interface PropertyPreview {
+  sid: string;
+  available: boolean;
+  origin: "cached_bundle" | "recorded_run" | null;
+  srid: number;
+  georeference: {
+    latitude: number;
+    longitude: number;
+    source: string | null;
+  } | null;
+  collection: string | null;
+  ortho: RoofView["ortho"];
+  footprint_wkt: string | null;
+  parcel_wkt: string | null;
+  oblique_paths: Record<string, string>;
+}
 export interface Ranged {
   low: number;
   expected: number;

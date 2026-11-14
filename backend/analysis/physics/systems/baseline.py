@@ -146,9 +146,10 @@ def _heating_setup(systems: Systems, tariff: Tariff):
         return "heat_pump", hspf, key, warn, ["HVAC-01", "HVAC-05"]
     fuel = systems.heating_fuel
     if fuel == "unknown":
-        fuel = "gas" if tariff.gas_usd_per_kwh is not None else "electricity"
-        warn.append(f"heating fuel unknown: {fuel} assumed (gas price {'present' if fuel == 'gas' else 'absent'} "
-                    "in the tariff)")
+        # A missing gas price means gas is unknown, not absent: keep the HVAC-00 gas default.
+        fuel = "gas"
+        warn.append("heating fuel unknown: gas assumed (HVAC-00)" + ("" if tariff.gas_usd_per_kwh is not None
+                    else "; the tariff has no gas price, so whether gas is at the site is unknown too"))
     if systems.heating_rating is not None and systems.heating_rating_metric == "AFUE":
         eff, key = systems.heating_rating, "hvac.heating_rating"
     else:
@@ -213,8 +214,8 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
     if kind == "home":
         dhw_fuel = systems.dhw_fuel
         if dhw_fuel == "unknown":
-            dhw_fuel = "gas" if tariff.gas_usd_per_kwh is not None else "electricity"
-            warnings.append(f"water heater fuel unknown: {dhw_fuel} assumed")
+            dhw_fuel = "gas"      # as for heating: a missing gas price is not "no gas"
+            warnings.append("water heater fuel unknown: gas assumed (DEF-07)")
         t_avg = float(t.mean())
         monthly_t = np.array([t[cal.month == m].mean() for m in range(1, 13) if np.any(cal.month == m)])
         _, first_hour, day_of_hour = np.unique(cal.day_index, return_index=True, return_inverse=True)
@@ -386,7 +387,8 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
     if heat_route in ("furnace",) or (kind == "home" and dhw_fuel == "gas"):
         ids += ["TAR-04", "EMI-02"]
     if gas_price is None and full["gas_kwh"] > 0:
-        warnings.append("the tariff has no gas price: gas use is not costed")
+        warnings.append(f"the tariff has no gas price: {full['gas_kwh']:.0f} kWh of gas a year is costed at 0, "
+                        "so the annual cost is understated")
 
     def rng(key, unit):
         lo, ex, hi = totals[key]

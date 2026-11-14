@@ -585,11 +585,15 @@ def vintage_defaults(bundle: PropertyBundle, facts: Iterable[Assumption] = ()) -
                               T.HOME_DSE_OUTSIDE, "-", 0.3))
             out.append(_a("hvac.duct_location", "Duct location", "attic", "vintage_default", 0.3,
                           [_table_ev("DEF-06", "ducted system, ducts assumed outside the conditioned space")]))
-        dfuel = "gas" if gas else "electricity"
+        # Same rule as the system type: no gas price is unknown gas, so the gas heater stays.
+        dfuel = "gas" if gas or eff_type == "central_ac_furnace" else "electricity"
         out.append(_a("dhw.type", "Water heater type", "storage", "vintage_default", 0.4,
                       [_table_ev("DEF-07", "unknown storage heater")]))
-        out.append(_a("dhw.fuel", "Water heater fuel", dfuel, "vintage_default", 0.4,
-                      [_table_ev("DEF-07", "gas at the site" if gas else "no gas at the site")]))
+        out.append(_a("dhw.fuel", "Water heater fuel", dfuel, "vintage_default", 0.4 if gas or dfuel != "gas" else 0.25,
+                      [_table_ev("DEF-07", "gas at the site" if gas else
+                                 "gas at the site unknown (no gas price in the tariff): gas assumed, at lower "
+                                 "confidence" if dfuel == "gas" else
+                                 f"gas at the site unknown and the system type {eff_type} is electric")]))
         out.append(_fixed("dhw.uef", "Water heater efficiency", T.DHW_UEF[dfuel], "-", 0.4))
         sp = T.SETPOINTS["home"]
         out.append(_a("setpoint.heating", "Heating setpoint", _spread_k(sp["heating"]), "vintage_default", 0.5,

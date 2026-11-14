@@ -235,14 +235,18 @@ def test_no_hvac_and_central_plant():
             > base.baseline.annual.electricity_kwh.high - base.baseline.annual.electricity_kwh.low)
 
 
-def test_unknown_fuels_follow_the_tariff_and_missing_gas_price_warns():
+def test_unknown_fuels_assume_gas_even_without_a_gas_price_and_warn():
+    # A missing gas price means gas is unknown, not absent (HVAC-00): the fuels must not turn electric.
     model, bundle = _fixture("house")
     s = model.systems.model_copy(update={"heating_fuel": "unknown", "dhw_fuel": "unknown"})
     r = _run("house", systems=s)[0]
     assert r.heating_route == "furnace" and r.baseline.annual.gas_kwh.expected > 0
     no_gas = bundle.tariff.model_copy(update={"gas_usd_per_kwh": None})
     r2 = _run("house", systems=s, tariff=no_gas)[0]
-    assert r2.heating_route == "resistance" and r2.baseline.annual.gas_kwh.expected == 0
+    assert r2.heating_route == "furnace"
+    assert r2.baseline.annual.gas_kwh.expected == pytest.approx(r.baseline.annual.gas_kwh.expected)
+    assert any("whether gas is at the site is unknown" in w for w in r2.warnings)
+    assert any("costed at 0" in w and "understated" in w for w in r2.warnings)
     r3 = _run("house", tariff=no_gas)[0]
     assert any("no gas price" in w for w in r3.warnings)
 

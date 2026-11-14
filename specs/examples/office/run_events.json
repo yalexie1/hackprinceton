@@ -135,6 +135,16 @@
     "payload": {}
   },
   {
+    "type": "fallback",
+    "stage": "S4",
+    "message": "No openings in the wall graph; using window sizes read by vision",
+    "payload": {
+      "layer": "matterport",
+      "from": "measured window openings",
+      "to": "window count and size from vision, wider range"
+    }
+  },
+  {
     "type": "question",
     "stage": "S4",
     "message": "One question before the model is final",
@@ -187,9 +197,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 72448.21,
-        "expected": 92432.9,
-        "high": 107243.81,
+        "low": 72481.14,
+        "expected": 92471.32,
+        "high": 107283.35,
         "unit": "USD"
       }
     }

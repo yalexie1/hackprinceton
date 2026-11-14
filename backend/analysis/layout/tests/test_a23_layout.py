@@ -197,12 +197,11 @@ def test_la_office_fixture_shape():
     assert card.applicable and card.title == fx["title"]
     assert len(lay.candidates) == len(fx["layout"]["candidates"]) == 24
     assert sum(d.recommended for d in lay.candidates) == fx["layout"]["desks_requested"] == 12
-    assert lay.window_source == fx["layout"]["window_source"] == "measured"
+    assert lay.window_source == fx["layout"]["window_source"] == "vision"     # no openings in the scan (#301)
     assert lay.control_type == fx["layout"]["control_type"] == "none"
     assert lay.target_lux == 300 and lay.setpoint_lux == 500 and lay.occupied_hours_per_year == 2600
     assert lay.score_weights == fx["layout"]["score_weights"]
-    for d in lay.candidates:                   # measured openings: no vision warning on a desk
-        assert "window geometry read from panoramas, not measured" not in d.warnings
+    assert any("read from panoramas" in w for w in card.warnings)   # vision windows: the card says so
     # LCT-02 with the saved fraction: zero cost, range from 0, k_m = 0.5 in the middle
     s = card.savings
     assert s.electricity_kwh.low == 0 and s.cost_usd.low == 0 and s.co2_kg.low == 0

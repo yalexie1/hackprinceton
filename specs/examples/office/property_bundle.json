@@ -208,35 +208,7 @@
               "v01",
               "v02"
             ],
-            "openings": [
-              {
-                "id": "op001",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1875
-              },
-              {
-                "id": "op002",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op003",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8125
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e02",
@@ -266,26 +238,7 @@
               "v10",
               "v01"
             ],
-            "openings": [
-              {
-                "id": "op004",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2917
-              },
-              {
-                "id": "op005",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7083
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e05",
@@ -295,35 +248,7 @@
               "v02",
               "v03"
             ],
-            "openings": [
-              {
-                "id": "op006",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1875
-              },
-              {
-                "id": "op007",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op008",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8125
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e06",
@@ -353,35 +278,7 @@
               "v03",
               "v04"
             ],
-            "openings": [
-              {
-                "id": "op009",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1875
-              },
-              {
-                "id": "op010",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op011",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8125
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e09",
@@ -411,26 +308,7 @@
               "v04",
               "v05"
             ],
-            "openings": [
-              {
-                "id": "op012",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.3214
-              },
-              {
-                "id": "op013",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.6786
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e12",
@@ -460,26 +338,7 @@
               "v05",
               "v06"
             ],
-            "openings": [
-              {
-                "id": "op014",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.3214
-              },
-              {
-                "id": "op015",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.6786
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e15",
@@ -509,35 +368,7 @@
               "v06",
               "v07"
             ],
-            "openings": [
-              {
-                "id": "op016",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1875
-              },
-              {
-                "id": "op017",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op018",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8125
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e18",
@@ -567,35 +398,7 @@
               "v07",
               "v08"
             ],
-            "openings": [
-              {
-                "id": "op019",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1875
-              },
-              {
-                "id": "op020",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op021",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8125
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e21",
@@ -625,35 +428,7 @@
               "v08",
               "v09"
             ],
-            "openings": [
-              {
-                "id": "op022",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1875
-              },
-              {
-                "id": "op023",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op024",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8125
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e24",
@@ -663,26 +438,7 @@
               "v09",
               "v18"
             ],
-            "openings": [
-              {
-                "id": "op025",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2917
-              },
-              {
-                "id": "op026",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7083
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e25",
@@ -722,107 +478,7 @@
               "v23",
               "v10"
             ],
-            "openings": [
-              {
-                "id": "op027",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.0536
-              },
-              {
-                "id": "op028",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1429
-              },
-              {
-                "id": "op029",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2321
-              },
-              {
-                "id": "op030",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.3214
-              },
-              {
-                "id": "op031",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.4107
-              },
-              {
-                "id": "op032",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op033",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5893
-              },
-              {
-                "id": "op034",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.6786
-              },
-              {
-                "id": "op035",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7679
-              },
-              {
-                "id": "op036",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8571
-              },
-              {
-                "id": "op037",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.9464
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e29",
@@ -882,17 +538,7 @@
               "v20",
               "v19"
             ],
-            "openings": [
-              {
-                "id": "op038",
-                "label": null,
-                "type": "doorway",
-                "width_m": 1.8,
-                "height_m": 2.4,
-                "lower_elevation_m": 0.0,
-                "relative_center": 0.5
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e35",
@@ -962,107 +608,7 @@
               "v18",
               "v28"
             ],
-            "openings": [
-              {
-                "id": "op039",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.0536
-              },
-              {
-                "id": "op040",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1429
-              },
-              {
-                "id": "op041",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2321
-              },
-              {
-                "id": "op042",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.3214
-              },
-              {
-                "id": "op043",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.4107
-              },
-              {
-                "id": "op044",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5
-              },
-              {
-                "id": "op045",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5893
-              },
-              {
-                "id": "op046",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.6786
-              },
-              {
-                "id": "op047",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7679
-              },
-              {
-                "id": "op048",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8571
-              },
-              {
-                "id": "op049",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.9464
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e42",
@@ -1092,62 +638,7 @@
               "v30",
               "v29"
             ],
-            "openings": [
-              {
-                "id": "op050",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1094
-              },
-              {
-                "id": "op051",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2656
-              },
-              {
-                "id": "op052",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.4219
-              },
-              {
-                "id": "op053",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5781
-              },
-              {
-                "id": "op054",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7344
-              },
-              {
-                "id": "op055",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8906
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e45",
@@ -1157,26 +648,7 @@
               "v29",
               "v23"
             ],
-            "openings": [
-              {
-                "id": "op056",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2917
-              },
-              {
-                "id": "op057",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7083
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e46",
@@ -1196,116 +668,7 @@
               "v31",
               "v30"
             ],
-            "openings": [
-              {
-                "id": "op058",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.0417
-              },
-              {
-                "id": "op059",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.125
-              },
-              {
-                "id": "op060",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2083
-              },
-              {
-                "id": "op061",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2917
-              },
-              {
-                "id": "op062",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.375
-              },
-              {
-                "id": "op063",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.4583
-              },
-              {
-                "id": "op064",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5417
-              },
-              {
-                "id": "op065",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.625
-              },
-              {
-                "id": "op066",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7083
-              },
-              {
-                "id": "op067",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7917
-              },
-              {
-                "id": "op068",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.875
-              },
-              {
-                "id": "op069",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.9583
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e48",
@@ -1315,26 +678,7 @@
               "v28",
               "v32"
             ],
-            "openings": [
-              {
-                "id": "op070",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2917
-              },
-              {
-                "id": "op071",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7083
-              }
-            ]
+            "openings": []
           },
           {
             "id": "e49",
@@ -1344,62 +688,7 @@
               "v32",
               "v31"
             ],
-            "openings": [
-              {
-                "id": "op072",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.1094
-              },
-              {
-                "id": "op073",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.2656
-              },
-              {
-                "id": "op074",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.4219
-              },
-              {
-                "id": "op075",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.5781
-              },
-              {
-                "id": "op076",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.7344
-              },
-              {
-                "id": "op077",
-                "label": null,
-                "type": "window",
-                "width_m": 1.8,
-                "height_m": 2.1,
-                "lower_elevation_m": 0.75,
-                "relative_center": 0.8906
-              }
-            ]
+            "openings": []
           }
         ]
       }
@@ -2458,7 +1747,7 @@
       "layer": "matterport",
       "what": "rooms, wall graph, panoramas (2k skybox)",
       "status": "ok",
-      "detail": "17 rooms on one floor, 339 panoramas (2k skybox); measured window and doorway openings"
+      "detail": "17 rooms on one floor, 339 panoramas (2k skybox); the wall graph has no window or door openings (as for every office scan sampled, data-integration 3.3)"
     },
     {
       "layer": "matterport",

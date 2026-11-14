@@ -44,7 +44,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 15.46,
+      "area_m2": 15.6934,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -68,11 +68,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e01_1",
+      "id": "surf_win_e01_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 11.1066,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -95,73 +95,7 @@
       },
       "parent_surface_id": "surf_wall_e01",
       "source_edge_id": "e01",
-      "source_opening_id": "op001",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e01_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e01",
-      "source_edge_id": "e01",
-      "source_opening_id": "op002",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e01_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e01",
-      "source_edge_id": "e01",
-      "source_opening_id": "op003",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -171,7 +105,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 12.54,
+      "area_m2": 11.77,
       "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -195,11 +129,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e04_1",
+      "id": "surf_win_e04_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 8.33,
       "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -222,40 +156,7 @@
       },
       "parent_surface_id": "surf_wall_e04",
       "source_edge_id": "e04",
-      "source_opening_id": "op004",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e04_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e04",
-      "source_edge_id": "e04",
-      "source_opening_id": "op005",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -265,7 +166,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 15.46,
+      "area_m2": 15.6934,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -289,11 +190,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e05_1",
+      "id": "surf_win_e05_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 11.1066,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -316,73 +217,7 @@
       },
       "parent_surface_id": "surf_wall_e05",
       "source_edge_id": "e05",
-      "source_opening_id": "op006",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e05_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e05",
-      "source_edge_id": "e05",
-      "source_opening_id": "op007",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e05_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e05",
-      "source_edge_id": "e05",
-      "source_opening_id": "op008",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -392,7 +227,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 15.46,
+      "area_m2": 15.6934,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -416,11 +251,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e08_1",
+      "id": "surf_win_e08_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 11.1066,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -443,73 +278,7 @@
       },
       "parent_surface_id": "surf_wall_e08",
       "source_edge_id": "e08",
-      "source_opening_id": "op009",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e08_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e08",
-      "source_edge_id": "e08",
-      "source_opening_id": "op010",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e08_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e08",
-      "source_edge_id": "e08",
-      "source_opening_id": "op011",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -519,7 +288,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 13.79,
+      "area_m2": 12.502,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -543,11 +312,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e11_1",
+      "id": "surf_win_e11_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 8.848,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -570,40 +339,7 @@
       },
       "parent_surface_id": "surf_wall_e11",
       "source_edge_id": "e11",
-      "source_opening_id": "op012",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e11_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e11",
-      "source_edge_id": "e11",
-      "source_opening_id": "op013",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -613,7 +349,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 13.79,
+      "area_m2": 12.502,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -637,11 +373,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e14_1",
+      "id": "surf_win_e14_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 8.848,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -664,40 +400,7 @@
       },
       "parent_surface_id": "surf_wall_e14",
       "source_edge_id": "e14",
-      "source_opening_id": "op014",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e14_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e14",
-      "source_edge_id": "e14",
-      "source_opening_id": "op015",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -707,7 +410,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 15.46,
+      "area_m2": 15.6934,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -731,11 +434,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e17_1",
+      "id": "surf_win_e17_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 11.1066,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -758,73 +461,7 @@
       },
       "parent_surface_id": "surf_wall_e17",
       "source_edge_id": "e17",
-      "source_opening_id": "op016",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e17_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e17",
-      "source_edge_id": "e17",
-      "source_opening_id": "op017",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e17_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e17",
-      "source_edge_id": "e17",
-      "source_opening_id": "op018",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -834,7 +471,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 15.46,
+      "area_m2": 15.6934,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -858,11 +495,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e20_1",
+      "id": "surf_win_e20_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 11.1066,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -885,73 +522,7 @@
       },
       "parent_surface_id": "surf_wall_e20",
       "source_edge_id": "e20",
-      "source_opening_id": "op019",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e20_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e20",
-      "source_edge_id": "e20",
-      "source_opening_id": "op020",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e20_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e20",
-      "source_edge_id": "e20",
-      "source_opening_id": "op021",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -961,7 +532,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 15.46,
+      "area_m2": 15.6934,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -985,11 +556,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e23_1",
+      "id": "surf_win_e23_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 11.1066,
       "azimuth_deg": 205.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1012,73 +583,7 @@
       },
       "parent_surface_id": "surf_wall_e23",
       "source_edge_id": "e23",
-      "source_opening_id": "op022",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e23_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e23",
-      "source_edge_id": "e23",
-      "source_opening_id": "op023",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e23_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 205.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e23",
-      "source_edge_id": "e23",
-      "source_opening_id": "op024",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -1088,7 +593,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 12.54,
+      "area_m2": 11.77,
       "azimuth_deg": 115.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1112,11 +617,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e24_1",
+      "id": "surf_win_e24_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 8.33,
       "azimuth_deg": 115.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1139,40 +644,7 @@
       },
       "parent_surface_id": "surf_wall_e24",
       "source_edge_id": "e24",
-      "source_opening_id": "op025",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e24_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e24",
-      "source_edge_id": "e24",
-      "source_opening_id": "op026",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -1182,7 +654,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 59.22,
+      "area_m2": 59.0259,
       "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1206,11 +678,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e28_1",
+      "id": "surf_win_e28_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 41.7741,
       "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1233,337 +705,7 @@
       },
       "parent_surface_id": "surf_wall_e28",
       "source_edge_id": "e28",
-      "source_opening_id": "op027",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op028",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op029",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_4",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op030",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_5",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op031",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_6",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op032",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_7",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op033",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_8",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op034",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_9",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op035",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_10",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op036",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e28_11",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e28",
-      "source_edge_id": "e28",
-      "source_opening_id": "op037",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -1596,7 +738,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "adjacent_conditioned",
-      "area_m2": 40.48,
+      "area_m2": 44.8,
       "azimuth_deg": 25.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1610,29 +752,6 @@
       "parent_surface_id": null,
       "source_edge_id": "e34",
       "source_opening_id": null,
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_door_e34_1",
-      "zone_id": "zone_suite",
-      "kind": "door",
-      "boundary": "adjacent_conditioned",
-      "area_m2": 4.32,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 2.0,
-        "expected": 2.8,
-        "high": 3.5,
-        "unit": "W/m2K"
-      },
-      "shgc": null,
-      "visible_transmittance": null,
-      "parent_surface_id": "surf_wall_e34",
-      "source_edge_id": "e34",
-      "source_opening_id": "op038",
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -1688,7 +807,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 59.22,
+      "area_m2": 59.0259,
       "azimuth_deg": 115.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1712,11 +831,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e41_1",
+      "id": "surf_win_e41_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 41.7741,
       "azimuth_deg": 115.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -1739,337 +858,7 @@
       },
       "parent_surface_id": "surf_wall_e41",
       "source_edge_id": "e41",
-      "source_opening_id": "op039",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op040",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op041",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_4",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op042",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_5",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op043",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_6",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op044",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_7",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op045",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_8",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op046",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_9",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op047",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_10",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op048",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e41_11",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e41",
-      "source_edge_id": "e41",
-      "source_opening_id": "op049",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -2079,7 +868,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 30.92,
+      "area_m2": 31.3868,
       "azimuth_deg": 25.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2103,11 +892,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e44_1",
+      "id": "surf_win_e44_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 22.2132,
       "azimuth_deg": 25.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2130,172 +919,7 @@
       },
       "parent_surface_id": "surf_wall_e44",
       "source_edge_id": "e44",
-      "source_opening_id": "op050",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e44_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e44",
-      "source_edge_id": "e44",
-      "source_opening_id": "op051",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e44_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e44",
-      "source_edge_id": "e44",
-      "source_opening_id": "op052",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e44_4",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e44",
-      "source_edge_id": "e44",
-      "source_opening_id": "op053",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e44_5",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e44",
-      "source_edge_id": "e44",
-      "source_opening_id": "op054",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e44_6",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e44",
-      "source_edge_id": "e44",
-      "source_opening_id": "op055",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -2305,7 +929,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 12.54,
+      "area_m2": 11.77,
       "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2329,11 +953,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e45_1",
+      "id": "surf_win_e45_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 8.33,
       "azimuth_deg": 295.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2356,40 +980,7 @@
       },
       "parent_surface_id": "surf_wall_e45",
       "source_edge_id": "e45",
-      "source_opening_id": "op056",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e45_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 295.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e45",
-      "source_edge_id": "e45",
-      "source_opening_id": "op057",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -2399,7 +990,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 55.14,
+      "area_m2": 58.8502,
       "azimuth_deg": 25.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2423,11 +1014,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e47_1",
+      "id": "surf_win_e47_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 41.6498,
       "azimuth_deg": 25.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2450,370 +1041,7 @@
       },
       "parent_surface_id": "surf_wall_e47",
       "source_edge_id": "e47",
-      "source_opening_id": "op058",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op059",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op060",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_4",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op061",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_5",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op062",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_6",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op063",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_7",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op064",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_8",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op065",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_9",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op066",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_10",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op067",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_11",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op068",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e47_12",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e47",
-      "source_edge_id": "e47",
-      "source_opening_id": "op069",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -2823,7 +1051,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 12.54,
+      "area_m2": 11.77,
       "azimuth_deg": 115.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2847,11 +1075,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e48_1",
+      "id": "surf_win_e48_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 8.33,
       "azimuth_deg": 115.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2874,40 +1102,7 @@
       },
       "parent_surface_id": "surf_wall_e48",
       "source_edge_id": "e48",
-      "source_opening_id": "op070",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e48_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 115.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e48",
-      "source_edge_id": "e48",
-      "source_opening_id": "op071",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -2917,7 +1112,7 @@
       "zone_id": "zone_suite",
       "kind": "wall",
       "boundary": "exterior",
-      "area_m2": 30.92,
+      "area_m2": 31.3868,
       "azimuth_deg": 25.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2941,11 +1136,11 @@
       "exposed_perimeter_m": null
     },
     {
-      "id": "surf_win_e49_1",
+      "id": "surf_win_e49_vision",
       "zone_id": "zone_suite",
       "kind": "window",
       "boundary": "exterior",
-      "area_m2": 3.78,
+      "area_m2": 22.2132,
       "azimuth_deg": 25.0,
       "tilt_deg": 90.0,
       "u_value": {
@@ -2968,172 +1163,7 @@
       },
       "parent_surface_id": "surf_wall_e49",
       "source_edge_id": "e49",
-      "source_opening_id": "op072",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e49_2",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e49",
-      "source_edge_id": "e49",
-      "source_opening_id": "op073",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e49_3",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e49",
-      "source_edge_id": "e49",
-      "source_opening_id": "op074",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e49_4",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e49",
-      "source_edge_id": "e49",
-      "source_opening_id": "op075",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e49_5",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e49",
-      "source_edge_id": "e49",
-      "source_opening_id": "op076",
-      "solar_absorptance": null,
-      "emittance": null,
-      "exposed_perimeter_m": null
-    },
-    {
-      "id": "surf_win_e49_6",
-      "zone_id": "zone_suite",
-      "kind": "window",
-      "boundary": "exterior",
-      "area_m2": 3.78,
-      "azimuth_deg": 25.0,
-      "tilt_deg": 90.0,
-      "u_value": {
-        "low": 4.32,
-        "expected": 4.32,
-        "high": 4.32,
-        "unit": "W/m2K"
-      },
-      "shgc": {
-        "low": 0.67,
-        "expected": 0.67,
-        "high": 0.67,
-        "unit": "-"
-      },
-      "visible_transmittance": {
-        "low": 0.4,
-        "expected": 0.68,
-        "high": 0.8,
-        "unit": "-"
-      },
-      "parent_surface_id": "surf_wall_e49",
-      "source_edge_id": "e49",
-      "source_opening_id": "op077",
+      "source_opening_id": null,
       "solar_absorptance": null,
       "emittance": null,
       "exposed_perimeter_m": null
@@ -3324,26 +1354,6 @@
           "kind": "vexcel_attr",
           "ref": "footprint.wkt",
           "note": "orientation of the primary structure's footprint"
-        }
-      ],
-      "user_editable": false
-    },
-    {
-      "key": "window.area_m2",
-      "label": "Window area from measured openings",
-      "value": {
-        "low": 272.916,
-        "expected": 287.28,
-        "high": 301.644,
-        "unit": "m2"
-      },
-      "source": "measured",
-      "confidence": 0.9,
-      "evidence": [
-        {
-          "kind": "matterport_field",
-          "ref": "floors.edges.openings",
-          "note": "76 openings of type window; plus or minus 5% (physics 02 DEF-03)"
         }
       ],
       "user_editable": false
@@ -3639,6 +1649,86 @@
       "user_editable": true
     },
     {
+      "key": "window.count",
+      "label": "Window count read from the panoramas",
+      "value": {
+        "low": 53.2,
+        "expected": 76.0,
+        "high": 98.8,
+        "unit": "count"
+      },
+      "source": "vision",
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_02",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_05",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_06",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "matterport_field",
+          "ref": "floors.edges.openings",
+          "note": "the scan has no window openings, so windows come from vision: plus or minus 30 percent (physics 02 DEF-03); panoramas of one room within 6 m of each other count once"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "window.area_m2",
+      "label": "Window area read from the panoramas",
+      "value": {
+        "low": 201.1,
+        "expected": 287.28,
+        "high": 373.46,
+        "unit": "m2"
+      },
+      "source": "vision",
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "kind": "pano",
+          "ref": "pano_01",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_02",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_05",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "pano",
+          "ref": "pano_06",
+          "note": "perimeter windows in view"
+        },
+        {
+          "kind": "matterport_field",
+          "ref": "floors.edges.openings",
+          "note": "the scan has no window openings, so windows come from vision: plus or minus 30 percent (physics 02 DEF-03); panoramas of one room within 6 m of each other count once"
+        }
+      ],
+      "user_editable": true
+    },
+    {
       "key": "window.type",
       "label": "Window type",
       "value": "double_clear_metal",
@@ -3739,6 +1829,26 @@
           "kind": "pano",
           "ref": "pano_02",
           "note": "16 fixtures in view"
+        }
+      ],
+      "user_editable": true
+    },
+    {
+      "key": "tariff.electricity_usd_per_kwh",
+      "label": "Electricity price (marginal, with riders and taxes)",
+      "value": {
+        "low": 0.2696,
+        "expected": 0.3002,
+        "high": 0.3308,
+        "unit": "USD/kWh"
+      },
+      "source": "published_default",
+      "confidence": 0.4,
+      "evidence": [
+        {
+          "kind": "default_table",
+          "ref": "TAR-06",
+          "note": "CA office market range 0.2696 / 0.3002 / 0.3308 USD/kWh applied relative to the tariff's 0.3002 (Electricity: EIA state average retail price, CA COM, 2026-08 (0.3002 USD/kWh), a state average and not the LADWP schedule (data-integration 5.1c). LADWP is the utility because the address is in the City of Los Angeles by the Census incorporated place (5.1d); under LADWP net energy metering the model nets kWh at the energy price, so there is no separate export price (physics 04 TAR-03). Gas: EIA state average delivered gas price, CA COM, 2025 (16.56 $/MCF, EIA N3020CA3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content), 0.054489 USD/kWh, a state average and not the SoCalGas schedule (data-integration 5.1e). Demand charges are not modelled (TAR-02).)"
         }
       ],
       "user_editable": true
@@ -4087,26 +2197,6 @@
         }
       ],
       "user_editable": true
-    },
-    {
-      "key": "tariff.electricity_usd_per_kwh",
-      "label": "Electricity price",
-      "value": {
-        "low": 0.2696,
-        "expected": 0.3002,
-        "high": 0.3308,
-        "unit": "USD/kWh"
-      },
-      "source": "published_default",
-      "confidence": 0.4,
-      "evidence": [
-        {
-          "kind": "default_table",
-          "ref": "data-integration 5.1c",
-          "note": "EIA California commercial average for August 2026, 30.02 cents; the range is symmetric, half-width 3.06 cents, the gap to the year-to-date average 26.96 cents in the same EIA tables (physics 04 TAR-06 check values)"
-        }
-      ],
-      "user_editable": true
     }
   ],
   "flags": [
@@ -4154,5 +2244,6 @@
         }
       ]
     }
-  ]
+  ],
+  "calibration": null
 }

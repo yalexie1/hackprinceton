@@ -218,7 +218,7 @@ def test_window_cards_validate(name, mid):
     assert set(c.params["window_surface_ids"]) <= {s.id for s in model(name).surfaces if s.kind == "window"}
     if mid in ("WIN_FILM", "WIN_SHADE"):
         assert WIN.NO_COST_WARNING in c.warnings
-    if name == "office_houston":             # windows read from panoramas (the LA office has openings)
+    if name in ("office", "office_houston"):  # windows read from panoramas (no office scan has openings)
         assert any("panoramas" in w for w in c.warnings)
 
 

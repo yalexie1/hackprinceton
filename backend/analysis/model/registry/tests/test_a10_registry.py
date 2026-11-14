@@ -396,3 +396,29 @@ def test_a_missing_gas_price_is_unknown_not_no_gas():
     assert without["hvac.heating_fuel"].value == "gas"
     assert without["dhw.fuel"].value == with_price["dhw.fuel"].value == "gas"
     assert without["dhw.fuel"].confidence < with_price["dhw.fuel"].confidence
+
+
+# ---------------------------------------------------------------- electricity price range (TAR-06)
+
+@pytest.mark.parametrize("name", FIXTURES)
+def test_the_price_range_matches_the_example_and_is_a_published_default(name):
+    a = by_key(build_registry(bundle(name)).assumptions)["tariff.electricity_usd_per_kwh"]
+    fx = by_key(model(name).assumptions)["tariff.electricity_usd_per_kwh"]
+    assert (a.value.low, a.value.expected, a.value.high) == (fx.value.low, fx.value.expected, fx.value.high)
+    assert a.source == "published_default" and a.evidence[0].ref == "TAR-06"
+
+
+def test_the_price_range_scales_with_a_real_tariff_and_needs_a_state():
+    b = bundle("house")
+    dear = b.model_copy(update={"tariff": b.tariff.model_copy(update={"electricity_usd_per_kwh": 0.40})})
+    v = by_key(build_registry(dear).assumptions)["tariff.electricity_usd_per_kwh"].value
+    assert v.expected == 0.40 and v.low == pytest.approx(0.40 * 0.2692 / 0.2975, abs=1e-4)
+    assert v.high == pytest.approx(0.40 * 0.3258 / 0.2975, abs=1e-4)
+    nostate = b.model_copy(update={"summary": b.summary.model_copy(update={"state": None})})
+    assert "tariff.electricity_usd_per_kwh" not in by_key(build_registry(nostate).assumptions)
+
+
+def test_a_user_price_replaces_the_range():
+    r = build_registry(bundle("house"), overrides={"tariff.electricity_usd_per_kwh": 0.31})
+    a = by_key(r.assumptions)["tariff.electricity_usd_per_kwh"]
+    assert a.source == "user" and a.value.expected == pytest.approx(0.31)

@@ -335,3 +335,17 @@ OFFICE_TYPE_TABLES = {
     "OFFICE_ROOF_ABOVE_DECK": OFFICE_ROOF_ABOVE_DECK, "OFFICE_ROOF_ATTIC": OFFICE_ROOF_ATTIC,
     "OFFICE_WINDOW_U": OFFICE_WINDOW_U,
 }
+
+# Electricity price range (physics 04 TAR-06; data-integration 5.1c), as (low, expected, high) USD/kWh.
+# California: the EIA state average (August 2026) with a symmetric half-width equal to its gap from
+# the year-to-date average in the same EIA tables (RES 32.58 vs 29.75, COM 26.96 vs 30.02 cents).
+# Texas: TAR-06 (Power to Choose CenterPoint plans for homes; EIA commercial averages for offices).
+# The registry applies the table's relative spread to the tariff's own price, so a real utility
+# tariff keeps its level and inherits the market's uncertainty.
+PRICE_RANGE_USD_PER_KWH = {
+    ("CA", "home"): (0.2692, 0.2975, 0.3258),
+    ("CA", "office"): (0.2696, 0.3002, 0.3308),
+    ("TX", "home"): (0.118, 0.133, 0.160),
+    ("TX", "office"): (0.086, 0.090, 0.133),
+}
+PRICE_RANGE_CONFIDENCE = 0.4     # a state or market average, not the customer's own bill

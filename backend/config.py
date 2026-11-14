@@ -30,3 +30,21 @@ CPACE_TERM_YEARS = None    # PLACEHOLDER: term in years, no source yet; never ab
 
 # ---- cache directory: the Data lane's cache (workplan 2.3) ----
 CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "cache"
+
+# ---- real energy price escalation: ECO-06 expected values ----
+# Equivalent constant real rate (percent per year) for the AS135-2025 reference projection,
+# base year 2026, d = 0.03, keyed (city, sector, fuel) -> {analysis period N: percent}.
+# California is census division Pacific (Los Angeles), Texas West South Central (Houston).
+# These five columns are all that was recorded; the full index tables were not copied into the
+# repo, so other N are interpolated (see finance/economics) and flagged.
+ESCALATION_REAL_PCT = {
+    ("los_angeles", "residential", "electricity"): {10: -1.08, 15: -0.62, 20: -0.36, 25: -0.18, 30: -0.05},
+    ("los_angeles", "residential", "gas"): {10: -1.74, 15: -1.08, 20: -0.70, 25: -0.47, 30: -0.33},
+    ("los_angeles", "commercial", "electricity"): {10: -1.59, 15: -1.16, 20: -0.92, 25: -0.75, 30: -0.62},
+    ("los_angeles", "commercial", "gas"): {10: -1.24, 15: -0.76, 20: -0.48, 25: -0.32, 30: -0.23},
+    ("houston", "residential", "electricity"): {10: 0.31, 15: 0.10, 20: 0.08, 25: 0.13, 30: 0.14},
+    ("houston", "residential", "gas"): {10: 0.34, 15: 0.50, 20: 0.55, 25: 0.56, 30: 0.55},
+    ("houston", "commercial", "electricity"): {10: 0.55, 15: 0.22, 20: 0.17, 25: 0.21, 30: 0.22},
+    ("houston", "commercial", "gas"): {10: 1.33, 15: 1.26, 20: 1.18, 25: 1.09, 30: 0.99},
+}
+ESCALATION_BAND = 0.010   # ECO-06 rule 2 [J]: low = expected - 1.0 percentage point, high = expected + 1.0

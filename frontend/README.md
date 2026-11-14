@@ -10,7 +10,9 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. The app starts in **Demo** with the shared golden house and two office examples from `specs/examples/`. Invented UI stress fixtures are retained for development checks but are not offered in the property picker. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
+Open http://localhost:5173 with the team's FastAPI server running on port 8000. The app connects automatically and checks the schema before loading properties. It only displays audits based on actual property records. Example-input or unverified results are rejected before their replay events can display sample savings.
+
+Private data is not included in a clone. Ask Srihaan for saved audits and Vignesha for the actual property cache through a direct laptop-to-laptop transfer. Install the cache with `python -m backend.data_layer.demo_transfer install /path/to/leto-demo-cache.tgz`; place owner-provided recordings in `data/runs/_demo/` using the owner's recording layout. Keep these files and `.env` out of Git. Run `python -m backend.data_layer.demo_transfer check` to inspect cache readiness. If no real audit is installed, the app explains that instead of substituting example numbers.
 
 ## Readable interface
 
@@ -20,27 +22,20 @@ App-owned text uses a 16px minimum, 18px body copy and dark shared text colors. 
 
 The welcome screen has a furnished Three.js house with exterior, cutaway, and exploded views. Drag to orbit, scroll/pinch to zoom, or use the labeled buttons for rotation, zoom, reset, and room focus. Selecting a room reveals its floor before moving the camera. The setup and demo audit screens include a smaller interactive explorer. Property-card previews render once, without animation or nested controls.
 
-The welcome house uses the shared house example's energy plan. Hover over highlighted systems or their anchored badges to inspect the proposed change, annual dollar/electricity/gas savings, avoided CO2, upfront cost, payback and caveats. Click/tap a badge or finding to keep its details open; Escape or the close button dismisses them. **Your plan** shows selected upgrades; **All findings** also explains additional and unavailable measures. Only the selected plan supplies the total savings. The demo audit explorer uses that run's results, including budget changes; selected marginal results take precedence over standalone estimates. Raycasting and projected badges follow the model as it rotates and its floors separate. All locations remain conceptual.
-
+The welcome house is an interactive educational guide with no sample financial results. The setup screen uses the selected property's actual imagery. After a real audit, the energy explorer can show upgrade costs, savings and caveats tied to that result. Selected marginal results take precedence over standalone estimates; only selected upgrades contribute to totals. All positions on the concept model remain illustrative.
 Geometry, material textures, furniture and lighting are generated locally. These are **illustrative concept models**, not scans or measurements of the selected properties. Live Matterport tours and evidence pins continue to use the real property SDK. No energy estimates are calculated by the 3D scene.
 
 The renderer loads lazily when visible, pauses rendering offscreen/in background tabs, respects reduced motion for camera/view transitions, and disposes GPU resources when unmounted. If WebGL is unavailable, a fallback keeps the rest of the app usable.
 
 ## Demo walkthrough
 
-1. Select **5836 La Mirada Ave**, use its saved budget and role, and start the demo audit. This is the team's shared golden house example.
-2. Watch the shared event sequence. Browser replay advances at 70 ms per event; “Show next question or result” fast-forwards without skipping a question. Choose an answer when asked to resume the saved scenario. Demo answers do not recompute estimates.
-3. Open the plan. Expand solar to see cost ranges, payback, NPV, life, incentives, and evidence. Review the explicit high-cost budget warning.
-4. Open **Solar & roof** and **Assumptions**. A property without desk candidates shows an empty state rather than invented layout data.
-5. In **Documents**, enter illustrative party names, select measures, approve drafting, and export the Markdown preview. Missing terms remain highlighted. Demo documents are unverified interface previews.
-6. Return to Properties and run the office marked **Shared contract example** at its saved budget and role. Inspect workspace candidates, financing eligibility and its stated reasons, and the separate property-value estimate. Shared example identity and budgets follow the team's imported files.
-7. For the judge presentation, follow [the Culver-first walkthrough](JUDGE_WALKTHROUGH.md). Review the returned plan and warnings after a budget change. Example replay retains its saved selection; recorded re-planning depends on the backend capability.
+Follow [the judge walkthrough](JUDGE_WALKTHROUGH.md). Use each saved audit's recorded budget and role, which are preselected on setup. Confirm **Based on this property's records · Saved property audit** before presenting a result. Costs remain estimates; contractor quotes, bill calibration and legal details still require confirmation.
 
 ## Live integration
 
-After connecting the API, choose **Real analysis (about 10 s)** under **Audit method** on the setup screen. The request sends `mode: "analysis"` with the current budget, role, desks and optional bills. The server assembles live property data and computes this request’s plan without agent narration; missing live-data access produces an error rather than an example fallback. Timing varies by property and cache state. **Server default** preserves the server’s recorded-demo or agent mode. The result’s source labels distinguish **Computed analysis**, **Saved replay** and **Live run**.
+Under **How would you like to build your plan?**, **Use the saved property audit** uses the server's configured mode (normally replay for the demo). **Calculate a new plan** sends `mode: "analysis"` with the budget, role, desks and optional bills. New analysis needs the actual property cache or live data credentials. Timing varies by property and cache state.
 
-The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Connect API**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure. The server controls `AGENT_MODE=replay|live`; connecting does not itself turn on live analysis. Example replay returns its original measure selection even when PATCH changes the request budget. Recorded-run re-planning is owned by the server; review returned warnings and the audit trail rather than assuming a fresh model run.
+The development server proxies `/api` to `http://127.0.0.1:8000`. The server controls `AGENT_MODE=replay|live`. Starting a saved audit does not recalculate it; review the returned warnings after changing its budget. Source labels distinguish a saved property audit from a new calculation. API failures and example-only results never fall back to browser fixtures.
 
 Optional configuration goes in the **repository root `.env`** (Vite's envDir is the repo root):
 

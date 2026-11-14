@@ -1582,3 +1582,43 @@ textarea {
   width: auto;
   margin-bottom: 4px;
 }
+
+/* Homeowner-first flow: no sample-number banner or developer mode controls. */
+.connection-state {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 16px;
+  color: #28553f;
+}
+.connection-state button {
+  border: 1px solid #b9cbbb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: #f6faf4;
+  color: #204b35;
+  font: inherit;
+  cursor: pointer;
+}
+.hero-data-note {
+  font-size: 18px;
+  line-height: 1.6;
+  margin: 18px 0 0;
+  color: #405747;
+}
+.setup-actual-photo {
+  position: relative;
+  height: 330px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.assumption-evidence {
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.assumption-evidence summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 600px) {
+  .connection-state { font-size: 16px; max-width: 205px; }
+  .setup-actual-photo { height: 280px; }
+}

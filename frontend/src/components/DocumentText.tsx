@@ -27,7 +27,17 @@ function highlightBlanks() {
               ? {
                   type: "missingTerm",
                   data: { hName: "mark" },
-                  children: [{ type: "text", value }],
+                  children: [
+                    {
+                      type: "text",
+                      value: `${value
+                        .replace(/^\{\{|\}\}$/g, "")
+                        .replace(/^\[\[BLANK:\s*|\]\]$/g, "")
+                        .split(",")[0]
+                        .replaceAll("_", " ")
+                        .trim()} — needs confirmation`,
+                    },
+                  ],
                 }
               : { type: "text", value },
           );

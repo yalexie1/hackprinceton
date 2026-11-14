@@ -9,19 +9,19 @@ export default function AuditMethodChoice({
 }) {
   return (
     <label>
-      Audit method
+      How would you like to build your plan?
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as AuditMethod)}
         aria-describedby="audit-method-detail"
       >
-        <option value="server">Server default</option>
-        <option value="analysis">Real analysis (about 10 s)</option>
+        <option value="server">Use the saved property audit</option>
+        <option value="analysis">Calculate a new plan</option>
       </select>
       <small id="audit-method-detail">
         {value === "analysis"
-          ? "Compute a plan from live property data using your budget, role and utility history. Requires the server’s live-data connection. Timing varies by property."
-          : "Use the server’s configured audit mode: a recorded demo or an agent run. Each result shows its data source and delivery mode."}
+          ? "Use the building records, your budget and any utility bills you add to calculate a plan. The property’s records must be available."
+          : "Open the property’s saved audit. If your budget has changed, the service checks the plan again. Example results are never used."}
       </small>
     </label>
   );

@@ -14,11 +14,44 @@ import {
   Wind,
 } from "lucide-react";
 import { useId, useState } from "react";
-import type { Assumption, MeasureResult, Ranged, RunResult } from "../lib/types";
+import type {
+  Assumption,
+  FinancingScenario,
+  MeasureResult,
+  Ranged,
+  RunResult,
+} from "../lib/types";
 import { SourceDrawer } from "./SourceDrawer";
 import { REASON_DETAIL, REASON_LABELS, measureName } from "./FindingReason";
 import { money, number, ranged } from "../lib/format";
 const reasonLabels = REASON_LABELS;
+export function FinancingTerms({
+  scenario: s,
+}: {
+  scenario: FinancingScenario;
+}) {
+  const complete = s.rate != null && s.term_years != null && s.term_years > 0;
+  return complete ? (
+    <>
+      <p>
+        {money(s.financed_usd)} financed · {number(s.rate! * 100, 2)}% interest
+        · {s.term_years} years · {money(s.annual_payment_usd)} yearly financing
+        payment
+      </p>
+      <p>
+        First-year savings after financing payments:{" "}
+        {money(s.net_cashflow_year1_usd.expected)} (
+        {ranged(s.net_cashflow_year1_usd, true)})
+      </p>
+    </>
+  ) : (
+    <p>
+      Loan terms still need confirmation. Payment and savings after loan
+      payments will be shown once an interest rate and repayment period are
+      available.
+    </p>
+  );
+}
 export function Range({
   value,
   currency = false,
@@ -34,10 +67,12 @@ export function Range({
         {currency ? money(value.expected) : number(value.expected, 2)}
         {suffix}
       </strong>
-      <small>
-        Estimated range: {ranged(value, currency)}
-        {suffix}
-      </small>
+      {value.low !== value.high && (
+        <small>
+          Estimated range: {ranged(value, currency)}
+          {suffix}
+        </small>
+      )}
     </span>
   );
 }
@@ -69,7 +104,9 @@ function SkippedItem({
   const [open, setOpen] = useState(false);
   const explain = REASON_DETAIL[item.reason];
   return (
-    <div className={`skipped-item reason-${item.reason} ${open ? "expanded" : ""}`}>
+    <div
+      className={`skipped-item reason-${item.reason} ${open ? "expanded" : ""}`}
+    >
       <button
         className="skipped-summary"
         onClick={() => setOpen(!open)}
@@ -83,13 +120,21 @@ function SkippedItem({
           {reasonLabels[item.reason] || item.reason.replaceAll("_", " ")}
         </strong>
       </button>
-      <p className="skipped-detail">{item.detail}</p>
+      <p className="skipped-detail">
+        {/\b(SIR|NPV|IRR)\b/.test(item.detail) && explain
+          ? explain.what.split(". ")[0] + "."
+          : item.detail}
+      </p>
       {open && explain && (
         <div className="skipped-explain">
           <h4>What this means</h4>
           <p>{explain.what}</p>
           <h4>What would change it</h4>
           <p>{explain.change}</p>
+          <details>
+            <summary>See the audit’s technical detail</summary>
+            <p>{item.detail}</p>
+          </details>
         </div>
       )}
       {open && !explain && (
@@ -185,7 +230,7 @@ export function MeasureCard({
                   <Range value={f.net_upfront_usd} currency />
                 </div>
                 <div>
-                  <span>Simple payback</span>
+                  <span>Time to earn back the cost</span>
                   {f.simple_payback_years ? (
                     <Range value={f.simple_payback_years} suffix=" yrs" />
                   ) : (
@@ -197,40 +242,46 @@ export function MeasureCard({
                   )}
                 </div>
                 <div>
-                  <span>Lifetime financial value (NPV)</span>
+                  <span>Estimated benefit over the upgrade’s life</span>
                   <Range value={f.npv_usd} currency />
-                </div>
-                <div>
-                  <span>Discounted payback</span>
-                  <strong>
-                    {f.discounted_payback_years == null
-                      ? "Not available"
-                      : `${number(f.discounted_payback_years, 1)} years`}
-                  </strong>
-                </div>
-                <div>
-                  <span>Useful life</span>
-                  <strong>{f.useful_life_years} years</strong>
-                </div>
-                <div>
-                  <span>Savings compared with cost (SIR)</span>
-                  <strong>
-                    {f.sir == null ? "Not available" : number(f.sir, 2)}
-                  </strong>
-                </div>
-                <div>
-                  <span>Internal rate of return (IRR)</span>
-                  <strong>
-                    {f.irr == null
-                      ? "Not available"
-                      : `${number(f.irr * 100, 1)}%`}
-                  </strong>
-                </div>
-                <div>
-                  <span>Yearly maintenance cost change</span>
-                  <strong>{money(f.annual_om_change_usd)}</strong>
+                  <small>Savings minus costs, in today’s dollars.</small>
                 </div>
               </div>
+              <details className="financial-guide">
+                <summary>Detailed return calculations</summary>
+                <div className="detail-grid">
+                  <div>
+                    <span>Discounted payback</span>
+                    <strong>
+                      {f.discounted_payback_years == null
+                        ? "Not available"
+                        : `${number(f.discounted_payback_years, 1)} years`}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Useful life</span>
+                    <strong>{f.useful_life_years} years</strong>
+                  </div>
+                  <div>
+                    <span>Savings compared with cost (SIR)</span>
+                    <strong>
+                      {f.sir == null ? "Not available" : number(f.sir, 2)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Internal rate of return (IRR)</span>
+                    <strong>
+                      {f.irr == null
+                        ? "Not available"
+                        : `${number(f.irr * 100, 1)}%`}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Yearly maintenance cost change</span>
+                    <strong>{money(f.annual_om_change_usd)}</strong>
+                  </div>
+                </div>
+              </details>
               <details className="financial-guide">
                 <summary>What do these financial terms mean?</summary>
                 <dl>
@@ -336,19 +387,7 @@ export function MeasureCard({
                       Financing is repaid through a property-tax assessment.
                       Availability and eligibility must be confirmed.
                     </p>
-                    <p>
-                      {money(s.financed_usd)} financed ·{" "}
-                      {s.rate == null
-                        ? "Rate unavailable"
-                        : `${number(s.rate * 100, 2)}%`}{" "}
-                      · {s.term_years ?? "—"} years ·{" "}
-                      {money(s.annual_payment_usd)} yearly financing payment
-                    </p>
-                    <p>
-                      First-year savings after financing payments:{" "}
-                      {money(s.net_cashflow_year1_usd.expected)} (
-                      {ranged(s.net_cashflow_year1_usd, true)})
-                    </p>
+                    <FinancingTerms scenario={s} />
                     {s.program_sir != null && (
                       <p>
                         Financing programme’s savings ratio:{" "}
@@ -462,7 +501,7 @@ export default function PlanView({
         <div className="metric featured">
           <span>
             <ArrowDownRight size={16} />
-            Annual savings
+            Save on energy bills
           </span>
           <Range value={plan.total_annual_savings_usd} currency />
           <small>estimated each year</small>
@@ -470,7 +509,7 @@ export default function PlanView({
         <div className="metric">
           <span>
             <Coins size={16} />
-            Upfront investment
+            Cost to get started
           </span>
           <Range value={plan.total_upfront_usd} currency />
           <small>of {money(plan.budget_usd)} cash budget</small>
@@ -478,10 +517,10 @@ export default function PlanView({
         <div className="metric">
           <span>
             <Leaf size={16} />
-            CO₂ avoided
+            Emissions reduced
           </span>
           <Range value={plan.total_co2_kg} suffix=" kg" />
-          <small>estimated each year</small>
+          <small>kilograms of carbon dioxide each year</small>
         </div>
       </div>
       {plan.total_upfront_usd.high > plan.budget_usd && (
@@ -501,10 +540,9 @@ export default function PlanView({
           <span className="count-pill">{plan.selected.length} upgrades</span>
         </div>
         <p className="section-description">
-          Improve operations first, then reduce loads, upgrade equipment and
-          size solar for the energy still needed. The backend ranks each step by
-          value for money. An upgrade must pass the savings-versus-cost test to
-          be recommended.
+          Start with the improvements that offer the best value for your budget.
+          Open any recommendation to see what it costs, what it could save, and
+          what needs checking before you hire a contractor.
         </p>
         <div
           className="tabs plan-tabs"

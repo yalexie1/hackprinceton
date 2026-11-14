@@ -61,8 +61,8 @@ export function UpgradeDetails({
             <strong>
               {finance
                 ? money(finance.annual_savings_usd.expected)
-                : "Not available"}
-              <small>/ yr</small>
+                : "Savings not estimated"}
+              {finance && <small>/ yr</small>}
             </strong>
             {finance && (
               <small>{ranged(finance.annual_savings_usd, true)} / yr</small>
@@ -77,20 +77,24 @@ export function UpgradeDetails({
             </strong>
             {finance && <small>{ranged(finance.net_upfront_usd, true)}</small>}
           </div>
-          <div>
-            <span>Electricity saved</span>
-            <strong>
-              {savings ? number(savings.electricity_kwh.expected) : "—"}
-              <small> kWh / yr</small>
-            </strong>
-          </div>
-          <div>
-            <span>CO₂ avoided</span>
-            <strong>
-              {savings ? number(savings.co2_kg.expected) : "—"}
-              <small> kg / yr</small>
-            </strong>
-          </div>
+          {savings && (
+            <div>
+              <span>Electricity saved</span>
+              <strong>
+                {number(savings.electricity_kwh.expected)}
+                <small> kWh / yr</small>
+              </strong>
+            </div>
+          )}
+          {savings && (
+            <div>
+              <span>CO₂ avoided</span>
+              <strong>
+                {number(savings.co2_kg.expected)}
+                <small> kg / yr</small>
+              </strong>
+            </div>
+          )}
           {savings && savings.gas_kwh.expected !== 0 && (
             <div>
               <span>Gas saved</span>

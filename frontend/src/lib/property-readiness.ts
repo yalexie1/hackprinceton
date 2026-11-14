@@ -5,25 +5,26 @@ import type { PropertySummary } from "./types";
 const readiness = {
   zvKHR9DHNjJ: {
     order: 1,
-    label: "Most measured inputs",
+    label: "More details measured directly",
     evidence: "Measured walls and window openings.",
     limitation:
-      "No measured room outlines. Utility bills and contractor pricing still need verification.",
+      "Room shapes still need checking. Add utility bills and confirm a contractor’s price before deciding.",
   },
   ZSPaQbkGcJJ: {
     order: 2,
-    label: "More estimated inputs",
+    label: "Some building details estimated",
     evidence:
-      "339 scan views. Walls use the aerial footprint; windows are estimated from images.",
-    limitation: "The live scan has no measured wall graph or room outlines.",
+      "Walls are estimated from the building’s aerial outline; windows from photos.",
+    limitation:
+      "Wall sizes and room shapes need checking before detailed design.",
   },
   L3266YcPPvd: {
     order: 3,
-    label: "More estimated inputs",
+    label: "Some building details estimated",
     evidence:
-      "88 scan views. Walls use the aerial footprint; windows are estimated from images.",
+      "Walls are estimated from the building’s aerial outline; windows from photos.",
     limitation:
-      "The live scan has no measured wall graph or room outlines. Check the audit’s weather-source note.",
+      "Wall sizes and room shapes need checking. Review the weather data used for the estimate.",
   },
 } as const;
 

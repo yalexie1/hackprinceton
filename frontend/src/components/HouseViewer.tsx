@@ -177,8 +177,8 @@ export default function HouseViewer({
               {run?.plan
                 ? "YOUR BUILDING, REIMAGINED"
                 : office
-                  ? "THE LETO OFFICE"
-                  : "THE LETO HOUSE"}
+                  ? "HOW OFFICE IMPROVEMENTS WORK"
+                  : "HOW HOME IMPROVEMENTS WORK"}
               <small>
                 {run?.plan
                   ? "EXPLORE THE ENERGY UPGRADES"
@@ -339,7 +339,10 @@ export default function HouseViewer({
               <MousePointer2 size={12} /> Drag to orbit <i /> Scroll or pinch to
               zoom
             </span>
-            <small>Illustrative model · not a property scan</small>
+            <small>
+              Interactive guide · your property’s actual images are shown
+              separately
+            </small>
           </div>
         </>
       )}

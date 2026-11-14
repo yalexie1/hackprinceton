@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import type { Assumption, MeasureResult } from "../lib/types";
+import { hasPlaceholderEvidence } from "../lib/real-audit";
 
 /**
  * Where a number on the page came from.
@@ -16,10 +17,33 @@ import type { Assumption, MeasureResult } from "../lib/types";
 
 /** Which spec a physics id lives in, from the prefix the backend uses. */
 const SPEC_OF: { prefix: string[]; spec: string }[] = [
-  { prefix: ["PV", "SOL", "IRR", "LAY", "ROOF", "SHD"], spec: "specs/physics/01-solar-pv.md" },
-  { prefix: ["ZON", "ENV", "INF", "HVAC", "LGT", "DHW", "DEF", "WIN", "BEN", "PLUG"], spec: "specs/physics/02-thermal-systems.md" },
-  { prefix: ["DAY", "GLR", "CMF", "LCT"], spec: "specs/physics/03-daylight-comfort.md" },
-  { prefix: ["COST", "ECO", "EMI", "TAR", "INC", "VAL", "MV", "UNC", "PACE"], spec: "specs/physics/04-economics-emissions-mv.md" },
+  {
+    prefix: ["PV", "SOL", "IRR", "LAY", "ROOF", "SHD"],
+    spec: "specs/physics/01-solar-pv.md",
+  },
+  {
+    prefix: [
+      "ZON",
+      "ENV",
+      "INF",
+      "HVAC",
+      "LGT",
+      "DHW",
+      "DEF",
+      "WIN",
+      "BEN",
+      "PLUG",
+    ],
+    spec: "specs/physics/02-thermal-systems.md",
+  },
+  {
+    prefix: ["DAY", "GLR", "CMF", "LCT"],
+    spec: "specs/physics/03-daylight-comfort.md",
+  },
+  {
+    prefix: ["COST", "ECO", "EMI", "TAR", "INC", "VAL", "MV", "UNC", "PACE"],
+    spec: "specs/physics/04-economics-emissions-mv.md",
+  },
 ];
 
 export function specFor(id: string): string | null {
@@ -35,11 +59,14 @@ export function groupFormulas(ids: string[]) {
     const spec = specFor(id) ?? "unattributed";
     groups.set(spec, [...(groups.get(spec) ?? []), id]);
   }
-  return [...groups.entries()].map(([spec, members]) => ({ spec, ids: members }));
+  return [...groups.entries()].map(([spec, members]) => ({
+    spec,
+    ids: members,
+  }));
 }
 
 const SOURCE_WORDS: Record<string, string> = {
-  user: "you told us",
+  user: "provided during the audit",
   measured: "measured in the scan",
   costar: "the CoStar record",
   vexcel: "the aerial survey",
@@ -70,7 +97,9 @@ export function SourceDrawer({
   const groups = groupFormulas(measure.formula_ids ?? []);
   const cost = measure.finance?.cost_source;
   const incentives = measure.finance?.incentives ?? [];
-  const used = assumptions.filter((a) => a.evidence?.length);
+  const used = assumptions.filter(
+    (a) => a.evidence?.length && !hasPlaceholderEvidence(a),
+  );
 
   return (
     <div className="source-drawer-backdrop" onClick={onClose}>
@@ -94,7 +123,13 @@ export function SourceDrawer({
 
         <section>
           <h4>The cost</h4>
-          {cost ? <p>{cost}</p> : <p className="fineprint">No cost source was recorded for this measure.</p>}
+          {cost ? (
+            <p>{cost}</p>
+          ) : (
+            <p className="fineprint">
+              No cost source was recorded for this measure.
+            </p>
+          )}
         </section>
 
         {incentives.length > 0 && (
@@ -107,7 +142,9 @@ export function SourceDrawer({
                   <small>
                     {" "}
                     — {i.status}
-                    {i.eligibility ? `, eligibility ${i.eligibility.replaceAll("_", " ")}` : ""}
+                    {i.eligibility
+                      ? `, eligibility ${i.eligibility.replaceAll("_", " ")}`
+                      : ""}
                   </small>
                 </li>
               ))}
@@ -118,7 +155,9 @@ export function SourceDrawer({
         <section>
           <h4>The physics</h4>
           {groups.length === 0 ? (
-            <p className="fineprint">No formula entries were recorded for this measure.</p>
+            <p className="fineprint">
+              No formula entries were recorded for this measure.
+            </p>
           ) : (
             <ul>
               {groups.map((g) => (
@@ -130,7 +169,8 @@ export function SourceDrawer({
             </ul>
           )}
           <p className="fineprint">
-            Each entry is a derivation in the spec, with its sources and the values it uses.
+            Each entry is a derivation in the spec, with its sources and the
+            values it uses.
           </p>
         </section>
 

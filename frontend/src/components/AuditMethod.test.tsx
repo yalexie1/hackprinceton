@@ -9,9 +9,9 @@ describe("audit method choice", () => {
       <AuditMethodChoice value="analysis" onChange={() => {}} />,
     );
     expect(html).toContain('value="analysis" selected=""');
-    expect(html).toContain("Real analysis (about 10 s)");
-    expect(html).toContain("Timing varies by property");
-    expect(html).toContain("Requires the server");
+    expect(html).toContain("Calculate a new plan");
+    expect(html).toContain("property’s records must be available");
+    expect(html).not.toContain("10 s");
     expect(html).toContain('aria-describedby="audit-method-detail"');
   });
   it("keeps server-default delivery honest when it can be either replay or an agent", () => {
@@ -19,6 +19,7 @@ describe("audit method choice", () => {
       <AuditMethodChoice value="server" onChange={() => {}} />,
     );
     expect(html).toContain('value="server" selected=""');
-    expect(html).toContain("a recorded demo or an agent run");
+    expect(html).toContain("Use the saved property audit");
+    expect(html).toContain("Example results are never used");
   });
 });

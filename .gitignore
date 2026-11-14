@@ -1,1 +1,14 @@
 .board/
+
+# secrets and local agent config
+.env
+.env.*
+!.env.example
+env.txt
+.DS_Store
+CLAUDE.local.md
+.claude/settings.local.json
+
+# downloaded sponsor data and caches (hackathon-only licence, never commit)
+mp_out/
+data/cache/

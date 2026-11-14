@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
-SCHEMA_VERSION = "0.3.2"
+SCHEMA_VERSION = "0.3.3"
 
 # ---------- primitives ----------
 
@@ -256,7 +256,7 @@ class Tariff(BaseModel):
     retrieved: str                             # ISO date
 
 class FetchRecord(BaseModel):
-    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff"]
+    layer: Literal["matterport", "vexcel", "costar", "weather", "tariff", "place"]   # place: incorporated-place and program-area lookups
     what: str
     status: Literal["ok", "missing", "locked", "error", "fallback"]
     detail: Optional[str] = None

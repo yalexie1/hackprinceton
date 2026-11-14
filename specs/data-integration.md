@@ -128,6 +128,15 @@ Live on the golden house: `latitude 34.093491666999995`, `longitude -118.3171`, 
 
 `SPEC.md` §16 lists "model frame may not be north-aligned" as the top risk, with registering the floor outline against the Vexcel footprint as the fallback and a wide `north_offset_deg` plus an ask-the-user prompt as the degraded path. **One field supersedes all of that.** Carry the full quaternion plus `translation`, `altitude` and `source`; `source` is the confidence signal. Footprint registration becomes a cross-check, not the primary method.
 
+**`GeoCoordinateSource` = `client` | `processing` | `unknown`.** [V] Both golden models report **`processing`** — the georeference was derived during processing, not set by a client. So `source` distinguishes a derived georeference from a human-set one; neither golden model is human-set, which is the honest confidence floor for the north angle. [V] 2026-11-14
+
+Verified georeferences: [V] 2026-11-14
+
+| Model | lat | lon | altitude | rotation (z, w) | angle about Z | source |
+|---|---|---|---|---|---|---|
+| House `zvKHR9DHNjJ` | 34.093491667 | -118.3171 | 120.200 | 0.7289896, 0.6845248 | **≈93.7°** | `processing` |
+| Office `HjEyXryhRLk` "Suite A - 2,000SF" | 29.816116896 | -95.515382735 | 25.039 | 0.6964351, 0.7176198 | **≈88.3°** | `processing` |
+
 `Mutation.patchModelGeoCoordinates` / `resetModelGeoCoordinates` / `updateModelAddress` / `addEdgeOpenings` / `patchEdgeOpening` / `removeEdgeOpenings` all exist. **This lane never calls a mutation** — the keys are shared and point at production sponsor data. [V]
 
 ### 3.3 `openings` — window and door geometry is measured
@@ -137,6 +146,13 @@ Live on the golden house: `latitude 34.093491666999995`, `longitude -118.3171`, 
 `Opening`: `id`, `type: OpeningType`, `label`, `width`, `height`, `lowerElevation`, `relativeCenter`, `metadata`, `layer`. [V] Verified live — real edges carry openings of `type: "doorway"`.
 
 `SPEC.md` §3.3 says the scan "does not give ... window type". **Wrong for geometry**: per-opening width, height and sill elevation are measured, so **window area and orientation are derivable** and belong in the building model as data. Glazing *performance* (U-value, SHGC) is still inferred — keep that distinction crisp, because §5.1's assumption registry currently treats the whole window as an assumption.
+
+**The enum values settle it.** [V] 2026-11-14
+
+- **`OpeningType` = `divider` | `doorway` | `opening` | `window`.** `window` is an explicit, first-class value — windows are *typed*, not merely "an opening we guess about".
+- **`EdgeType` = `invisible` | `wall`.** Only two values.
+
+That answers the open question in `HANDOFF.md` §4.1 ("what `edges.type` values exist besides `wall` — doors, windows, openings?"): **none.** Doors and windows are not edge types at all; they live in `Edge.openings` with their own `OpeningType`. Anything looking for windows on `edge.type` will find nothing. Also `Units = imperial | metric`, so always pass `units: metric` explicitly.
 
 Working query: `floors { id label edges { id type thickness openings { id type width height lowerElevation relativeCenter } } }`
 
@@ -195,11 +211,26 @@ Per structure (`features[0].properties.structures[i]`):
 | `defensible-space.zone1-4-{building,tree}` | 0/25/39/33, 29/28/17/14 | **cheap shading proxy before any ray casting** |
 | `building-type.class` | **`None`** | do not depend on it for the home flow |
 
-### 4.3 Roof height needs `include=calculated`
+### 4.3 Roof height: use `include=precomputed,calculated`, and distrust the value
 
 Under `include=precomputed`, **all of these are `None`**: `maximum-roof-height`, `eave-height`, `entrance-elevation`, `number-of-stories-below-eave`, `volume-below-eave`, `structure-score`, `condition.attic-habitable`. [V]
 
-So `include=calculated` is required for roof height and elevation, and it is slow. Treat it as a **per-property one-off, cached hard** — never a hot path. `include=footprint-wkt` also exists. Query filters such as `roof-solar=true` and `roof-material=metal` work, which is how P2 portfolio screening would run. [V] filters from the tutorial, [P] not yet exercised
+**`include=calculated` alone is not "precomputed plus heights".** It returns a *disjoint* two-key set per structure — `roof-characteristics.elevation` and `roof-characteristics.height` — plus four parcel keys, and nothing else. It carries **no `primary-structure` flag and no structure id**, so on a multi-structure parcel its results cannot be joined back to the precomputed structures at all. It is also **fast (~0.5 s), not slow** as the tutorial implies. [V] 2026-11-14
+
+**The fix: `include=precomputed,calculated` in one call.** Verified — 71,347 bytes, 92 keys on the primary structure, carrying `primary-structure`, `footprint.area`, `ground-elevation.value` **and** `roof-characteristics.{elevation,height}` together. Use this; never two separate calls. [V] 2026-11-14
+
+**`roof-characteristics.height` = roof elevation − ground elevation**, and it is only sometimes trustworthy: [V] 2026-11-14
+
+| Lot | ground-elevation | roof elevation | height | verdict |
+|---|---|---|---|---|
+| Office (1,215.9 m², metal gable) | 26.5176 | 30.456892 | **3.939292** | plausible single-storey height; arithmetic checks exactly |
+| House (190.4 m², shingle gable, 1 chimney) | 100.584 | 100.220123 | **0.363877** | **implausible** — roof reads *below* grade |
+
+The house value also **changed between calls** (`height` 0.4254 / elevation 100.1586 standalone, versus 0.3639 / 100.2201 combined), so it is not even stable. Treat `roof-characteristics.height` as a **signal that needs a sanity check** (reject anything under ~2 m for a standing building), not as building height.
+
+Consequence for the solar pipeline: **per-plane tilt cannot come from Vexcel height.** It must come from `roof-characteristics.shape.value` (`gable` on both golden lots) mapped through the roof-pitch-by-shape table in `physics.md` — which is exactly the fallback `SPEC.md` §16 describes. Treat the mesh-derived tilt path as P1 at best.
+
+`include=footprint-wkt` also exists. Query filters such as `roof-solar=true` and `roof-material=metal` work, which is how P2 portfolio screening would run. [V] filters from the tutorial, [P] not yet exercised
 
 ### 4.4 Imagery and detection — D8, not yet verified
 
@@ -207,10 +238,15 @@ So `include=calculated` is required for roof height and elevation, and it is slo
 
 ### 4.5 Golden lots
 
-- House: `POINT(-118.3171 34.093491667)` — taken from the Matterport model's own `geocoordinates`, which is the authoritative source for a model's location. [V]
-- Office: 9050 Emnora Ln, Houston (`PropertyId 354635`). Get coordinates from `geocoordinates` on `HjEyXryhRLk`, **not** by geocoding the address string. [P]
+- House: `POINT(-118.3171 34.093491667)` — taken from the Matterport model's own `geocoordinates`, the authoritative source for a model's location. 2 structures on the parcel. [V]
+- Office: `POINT(-95.51538273549774 29.816116896197208)` = 9050 Emnora Ln, Houston (`PropertyId 354635`), from `geocoordinates` on `HjEyXryhRLk` — **not** by geocoding the address string. [V] 2026-11-14
 
----
+Office lot, verified `include=precomputed`: 1 structure, `primary-structure` True, `footprint.area` 1,215.91 m², `ground-elevation.value` 26.5176, roof `shape.value` **gable** / `material.class` **metal**, `condition.precise-value` **3.39** (worse than the house's 4.53), `tree-cover.percent` 1.0, `roof-objects.ac-unit.count` **0**, `skylight.count` 0, `solar.value` False. [V] 2026-11-14
+
+Two things the analysis lane should know:
+
+- **`building-type.class` is populated for commercial, absent for residential.** It returns `"commercial"` on the office lot and `None` on the house lot. So it is usable as a commercial cross-check but must never be a required field in the home flow.
+- **`ac-unit.count` is 0 on the office.** `SPEC.md` §1 assumes the office flow evaluates rooftop units (`HVAC_RTU` is a P0 measure). Vexcel detects no rooftop unit on this building, so either the measure needs a different evidence source or the golden office needs re-picking. Raised for the analysis lane.
 
 ## 5. External data — D9, not started
 
@@ -232,7 +268,7 @@ One writer per path. Dependencies name **contract types only**, never another pa
 | D3 | P0 | Vexcel client | `data-vexcel` | `backend/data_layer/vexcel.py`, `data/fixtures/vexcel/` | `VexcelData` |
 | D4 | P0 | Cache + fetch records | `data-cache` | `backend/data_layer/cache.py` | `FetchRecord` |
 | D5 | P0 | The one public door | `data-api` | `backend/data_layer/api.py` | `PropertyBundle`, `PropertySummary` |
-| D6 | P0 | Golden fixtures | source agents | `data/fixtures/` | — |
+| D6 | P0 | Golden fixtures | each source agent, in its own subdirectory | `data/fixtures/costar/`, `/matterport/`, `/vexcel/` — **never the parent** | — |
 | D7 | P1 | Index + office selection | `data-costar` | `backend/data_layer/index.py` | `PropertySummary[]` |
 | D8 | P1 | Imagery + SAM 3 | `data-vexcel` | `backend/data_layer/imagery.py` | roof masks, ortho/oblique |
 | D9 | P1 | External data | `data-costar` | `backend/data_layer/external.py` | weather, tariffs, emissions |
@@ -301,7 +337,11 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Georeference live | live query, golden house | 2026-11-14 | quaternion z=0.72899 w=0.68452 → ≈93.7° |
 | Openings live | live query, golden house | 2026-11-14 | `type: "doorway"` on real edges |
 | Vexcel precomputed | live `property/extract`, golden lot | 2026-11-14 | 174 leaf paths; gable/shingle; heights `None` |
-| Vexcel `include=calculated` | — | — | **[P] not run** |
+| Vexcel `include=calculated` | live, both lots | 2026-11-14 | disjoint 2-key set, no `primary-structure`; fast not slow |
+| Vexcel `include=precomputed,calculated` | live, house lot | 2026-11-14 | **works** — 92 keys, both sets, join problem solved |
+| `roof-characteristics.height` semantics | arithmetic on both lots | 2026-11-14 | = roof − ground elevation; office 3.94 m plausible, house 0.36 m implausible and unstable |
 | `elements/detect` SAM 3 | — | — | **[P] not run (D8)** |
-| Office lot in Vexcel | — | — | **[P] not run** |
+| Office lot in Vexcel | live `property/extract` | 2026-11-14 | 1 structure; gable/metal; `building-type.class`=`commercial`; `ac-unit.count`=0 |
+| Office georeference | live query | 2026-11-14 | lat 29.8161169, lon -95.5153827, rotation ≈88.3°, source `processing` |
+| Matterport enums | GraphQL introspection | 2026-11-14 | `OpeningType` includes `window`; `EdgeType` only `invisible`/`wall` |
 | External data sources | — | — | **[P] not started (D9)** |

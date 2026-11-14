@@ -6,6 +6,18 @@ One pinned GitHub issue that every teammate's coding agent posts to. Agents tag 
 
 Full walkthrough with the templates and an FAQ: **[marvelous-relative-5de.notion.site/hack](https://marvelous-relative-5de.notion.site/hack)**
 
+## Running the demo (stage)
+
+Stage mode is replay: it serves the saved real runs instantly and never calls a model.
+
+    AGENT_MODE=replay uvicorn backend.server:app --port 8000
+
+- `AGENT_MODE=replay` is also the default; never set `live` on stage.
+- Recordings are in `data/runs/_demo/<sid>/` (git-ignored, per machine). A property with no recording falls back to the example in `specs/examples/`. Override the folder with `AGENT_DEMO_DIR`.
+- Make a recording with a live run (`AGENT_MODE=live`, needs `ANTHROPIC_API_KEY`, `EIA_API_KEY` and the mirrored CoStar kit): it is saved only when the run reaches `done` with a plan.
+- Before the demo: `python -m backend.data_layer.mirror --check` and `python -m backend.data_layer.demo_check`.
+- Frontend: `cd frontend && npm ci && npm run dev`, then open http://127.0.0.1:5173 (see `frontend/README.md`).
+
 ## How it works
 
 ```mermaid

@@ -57,6 +57,7 @@ import Calibration from "./components/Calibration";
 import RunSource from "./components/RunSource";
 import AuditTasks from "./components/AuditTasks";
 import { replayBatch } from "./lib/audit-replay";
+import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
 type View =
   | "find"
   | "setup"
@@ -97,6 +98,7 @@ export default function App() {
     useState<PropertySummary[]>(demoProperties);
   const [searching, setSearching] = useState(false);
   const [budget, setBudget] = useState(15000);
+  const [auditMethod, setAuditMethod] = useState<AuditMethod>("server");
   const [role, setRole] = useState<Role>("owner_occupier");
   const [electricBills, setElectricBills] = useState("");
   const [gasBills, setGasBills] = useState("");
@@ -388,6 +390,9 @@ export default function App() {
         sid: property.sid,
         budget_usd: budget,
         role,
+        ...(!demo && auditMethod === "analysis"
+          ? { mode: "analysis" as const }
+          : {}),
         ...(!demo && desks ? { desks_requested: Number(desks) } : {}),
         ...(electricity
           ? {
@@ -746,6 +751,12 @@ export default function App() {
                     </div>
                     <span className="step-label">01 / 03</span>
                   </div>
+                  {!demo && (
+                    <AuditMethodChoice
+                      value={auditMethod}
+                      onChange={setAuditMethod}
+                    />
+                  )}
                   <label>
                     Upfront cash budget
                     {demo ? (
@@ -875,13 +886,19 @@ export default function App() {
                     ) : (
                       <Sparkles size={17} />
                     )}{" "}
-                    {demo ? "Explore demo audit" : "Start energy audit"}
+                    {demo
+                      ? "Explore demo audit"
+                      : auditMethod === "analysis"
+                        ? "Compute real analysis"
+                        : "Start energy audit"}
                     <ArrowRight size={17} />
                   </button>
                   <p className="fineprint">
                     {demo
                       ? "A replay of an illustrative audit, including a sample question."
-                      : "You may be asked up to three questions if an uncertain input changes the plan."}
+                      : auditMethod === "analysis"
+                        ? "Computes your plan without agent narration. Review the returned assumptions and data-quality warnings."
+                        : "You may be asked up to three questions if an uncertain input changes the plan."}
                   </p>
                 </form>
               </div>

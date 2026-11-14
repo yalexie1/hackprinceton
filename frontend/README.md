@@ -38,6 +38,8 @@ The renderer loads lazily when visible, pauses rendering offscreen/in background
 
 ## Live integration
 
+After connecting the API, choose **Real analysis (about 10 s)** under **Audit method** on the setup screen. The request sends `mode: "analysis"` with the current budget, role, desks and optional bills. The server assembles live property data and computes this request’s plan without agent narration; missing live-data access produces an error rather than an example fallback. Timing varies by property and cache state. **Server default** preserves the server’s recorded-demo or agent mode. The result’s source labels distinguish **Computed analysis**, **Saved replay** and **Live run**.
+
 The development server proxies `/api` to `http://127.0.0.1:8000`. Start the team's FastAPI server, then choose **Connect API**. The app verifies `/api/health` and schema version before switching; it never silently substitutes demo estimates after an API failure. The server controls `AGENT_MODE=replay|live`; connecting does not itself turn on live analysis. Example replay returns its original measure selection even when PATCH changes the request budget. Recorded-run re-planning is owned by the server; review returned warnings and the audit trail rather than assuming a fresh model run.
 
 Optional configuration goes in the **repository root `.env`** (Vite's envDir is the repo root):

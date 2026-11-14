@@ -14,6 +14,29 @@ from backend.analysis.solar.shading.geometry import EARTH_RADIUS_M
 from backend.schema import BuildingModel, MeasureResult, PanelPlacement, Ranged, RoofPlane, VexcelDetection
 
 EX = Path(__file__).resolve().parents[5] / "specs" / "examples"
+
+# #330: the golden house's roof is now A11's parametric Vexcel roof, which carries no positioned
+# obstructions. The splat-fitted case these tests cover is rebuilt here from the same planes with the
+# two detections the hand-made example used to carry (a roof vent and a tree on the south plane).
+HOUSE_SPLAT_OBSTRUCTIONS = [
+    {"label": "roof vent", "confidence": 0.33, "image_id": "ortho-1",
+     "bbox_wkt": "POLYGON((-118.3172263 34.0935203, -118.3172263 34.0935242, -118.3172217 34.0935242, "
+                 "-118.3172217 34.0935203, -118.3172263 34.0935203))",
+     "pixel_bbox": [502, 724, 7, 7], "mask_png_path": None, "mask_wkt": None, "mask_area_m2": 0.1},
+    {"label": "tree", "confidence": 0.47, "image_id": "ortho-1",
+     "bbox_wkt": "POLYGON((-118.3172563 34.0934385, -118.3172563 34.0934770, -118.3172049 34.0934770, "
+                 "-118.3172049 34.0934385, -118.3172563 34.0934385))",
+     "pixel_bbox": [457, 809, 77, 69], "mask_png_path": None, "mask_wkt": None, "mask_area_m2": 11.8},
+]
+
+
+def house_splat_planes(model):
+    """The house planes as if fitted from the splat, with the vent and the tree on the south plane."""
+    out = []
+    for p in model.roof_planes:
+        obs = [VexcelDetection.model_validate(o) for o in HOUSE_SPLAT_OBSTRUCTIONS] if p.id == "plane_south" else []
+        out.append(p.model_copy(update={"geometry_source": "splat", "obstructions": obs}))
+    return out
 LON0, LAT0 = -118.0, 34.0
 EAVE_M = 3.0
 
@@ -153,6 +176,8 @@ def test_fixtures_run(flavor):
     pv = [MeasureResult.model_validate(m) for m in (measures if isinstance(measures, list) else measures["measures"])
           if m.get("solar")][0]
     panels = pv.solar.panels
+    if flavor == "house":
+        model = model.model_copy(update={"roof_planes": house_splat_planes(model)})
     zen, azi = np.array([60.0, 40.0, 60.0]), np.array([120.0, 180.0, 240.0])
     poa = {p.id: {"poa_beam": np.full(3, 500.0), "poa_sky_diffuse": np.full(3, 100.0),
                   "poa_sky_circumsolar": np.full(3, 30.0), "poa_ground": np.full(3, 5.0)}

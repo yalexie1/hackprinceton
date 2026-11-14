@@ -3,8 +3,8 @@
   "doc_type": "retrofit_contract_residential",
   "state": "CA",
   "measure_ids": [
-    "ENV_ATTIC",
-    "LGT_LED"
+    "LGT_LED",
+    "ENV_WALL"
   ],
   "fields": {
     "owner_name": "Alex Example (illustrative)",

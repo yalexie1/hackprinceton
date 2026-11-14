@@ -49,9 +49,8 @@ export default function Find({
           </div>
           <div className="hero-intro">
             <p>
-              Good decisions start with seeing the whole picture. Explore your
-              space, uncover its potential, and build a practical plan for a
-              better tomorrow.
+              See where your building uses energy, compare improvements and
+              understand what they could cost and save.
             </p>
             <a className="hero-property-link" href="#your-properties">
               Find your property <ArrowRight size={16} />
@@ -73,8 +72,8 @@ export default function Find({
       </section>
       <div className="section-heading find-heading" id="your-properties">
         <div>
-          <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
-          <h2>Spaces with possibility.</h2>
+          <span className="eyebrow">START WITH A PROPERTY</span>
+          <h2>Choose a home or office.</h2>
         </div>
         <span className="coverage">
           <span className="status-dot" />
@@ -143,11 +142,13 @@ export default function Find({
                 </span>
                 <span>
                   {p.pano_count
-                    ? `${p.pano_count} panoramas`
+                    ? `${p.pano_count} panoramic views`
                     : "Scan details pending"}
                 </span>
                 {p.pano_count > 0 && (
-                  <span>{p.has_splat ? "Aerial splat" : "Interior scan"}</span>
+                  <span>
+                    {p.has_splat ? "3D aerial scan" : "Interior scan"}
+                  </span>
                 )}
               </div>
               {demo && (

@@ -75,12 +75,14 @@ def test_house_measured_windows():
     living = next(r for r in b.matterport.rooms if r.id == "room_living")
     wins, src, north, warn = room_windows(living, fl, m.surfaces)
     assert src == "measured"
-    assert north == pytest.approx(m.north_offset_deg.expected, abs=1e-6)
+    assert north == pytest.approx(m.north_offset_deg.expected, abs=1e-4)     # A9 stores it to 4 decimals (#330)
     w = next(x for x in wins if x.id == "op_e01_1")
     assert w.centre == pytest.approx((0.2 * 5.04, 0.0))
     assert w.normal == pytest.approx((0.0, -1.0))
     assert (w.width_m, w.z1, w.z2) == pytest.approx((1.2, 0.9, 2.1))
-    assert w.azimuth_deg == pytest.approx(86.4, abs=1e-6)        # = Surface.azimuth_deg built by A9
+    surf = next(x for x in m.surfaces if x.id == "surf_win_e01_1")
+    assert w.azimuth_deg == pytest.approx(surf.azimuth_deg, abs=1e-6)   # = Surface.azimuth_deg built by A9
+    assert w.azimuth_deg == pytest.approx(86.4, abs=0.01)
     assert w.tau == (0.4, 0.68, 0.8) and w.surface_id == "surf_win_e01_1"
     assert {x.id for x in wins} == {"op_e01_1", "op_e13_1", "op_e13_2"}   # doorways are not glazing
     w2, *_ = room_windows(living, fl, m.surfaces, relative_center_from="second")

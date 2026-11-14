@@ -1,72 +1,81 @@
 {
   "annual": {
     "electricity_kwh": {
-      "low": 4420.0,
-      "expected": 5200.0,
-      "high": 6240.0,
+      "low": 4529.6,
+      "expected": 5362.73,
+      "high": 6756.36,
       "unit": "kWh"
     },
     "gas_kwh": {
-      "low": 5760.0,
-      "expected": 7200.0,
-      "high": 9000.0,
+      "low": 7390.31,
+      "expected": 13446.7,
+      "high": 19156.32,
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 1918.54,
-      "expected": 2212.44,
-      "high": 2579.01,
+      "low": 2146.07,
+      "expected": 2713.25,
+      "high": 3410.46,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 2016.99,
-      "expected": 2319.06,
-      "high": 2703.2,
+      "low": 2341.33,
+      "expected": 3482.93,
+      "high": 4641.95,
       "unit": "kg"
     },
-    "co2_nonbaseload_kg": null
+    "co2_nonbaseload_kg": {
+      "low": 3550.47,
+      "expected": 4775.11,
+      "high": 6147.05,
+      "unit": "kg"
+    }
   },
   "end_use_kwh": {
-    "heating": 4300.0,
-    "cooling": 1730.0,
-    "water_heating": 2900.0,
-    "lighting": 720.0,
-    "plug": 1750.0,
-    "appliances": 1000.0
+    "heating": 10495.3,
+    "cooling": 1249.9,
+    "water_heating": 2951.4,
+    "lighting": 812.6,
+    "plug": 1647.1,
+    "appliances": 1653.1
   },
   "monthly_electricity_kwh": [
-    353.5,
-    309.3,
-    324.1,
-    324.1,
-    383.0,
-    486.1,
-    618.7,
-    662.9,
-    589.2,
-    441.9,
-    338.8,
-    368.4
+    376.92,
+    328.21,
+    365.37,
+    373.2,
+    359.57,
+    463.4,
+    608.49,
+    650.62,
+    607.09,
+    473.24,
+    378.86,
+    377.74
   ],
   "monthly_gas_kwh": [
-    1159.3,
-    976.3,
-    793.2,
-    549.2,
-    366.1,
-    244.1,
-    244.1,
-    244.1,
-    244.1,
-    427.1,
-    793.2,
-    1159.2
+    1908.19,
+    1791.06,
+    1469.12,
+    1195.61,
+    961.82,
+    505.25,
+    293.68,
+    302.18,
+    485.42,
+    768.43,
+    1565.8,
+    2200.13
   ],
-  "peak_cooling_w": 5200.0,
-  "peak_heating_w": 6800.0,
+  "peak_cooling_w": 9588.99811324474,
+  "peak_heating_w": 5233.957898627328,
   "calibrated_to_bills": false,
-  "heating_need_kwh": 2907.9,
-  "cooling_need_kwh": 5414.6,
-  "latent_cooling_kwh": 300.0,
-  "hourly_path": "data/cache/zvKHR9DHNjJ/analysis/baseline_hourly.csv"
+  "calibration": null,
+  "heating_need_kwh": 7097.558800009897,
+  "cooling_need_kwh": 3862.5272543708356,
+  "latent_cooling_kwh": 240.4825309804966,
+  "hourly_path": null,
+  "warnings": [
+    "The site's own weather year is not on this machine (data/cache/zvKHR9DHNjJ/weather/typical_year_hourly.csv), so the example year typical_year_hourly.csv was used instead. Every energy figure here is for that year, not for the site's; expect them to move when the site file is present."
+  ]
 }

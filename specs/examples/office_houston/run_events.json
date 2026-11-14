@@ -63,31 +63,65 @@
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "No utility tariff for this address; using the published default price",
+    "message": "No splat: use the Vexcel roof.",
     "payload": {
-      "layer": "tariff",
-      "from": "utility tariff",
-      "to": "published default (TAR-06)"
+      "fallback": "no_splat"
     }
   },
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Gas priced at the EIA Texas state average, not a CenterPoint Energy schedule",
+    "message": "MatterPak locked: use the wall graph.",
     "payload": {
-      "layer": "tariff",
-      "from": "gas utility tariff",
-      "to": "EIA state average (TX COM, 2025)"
+      "fallback": "matterpak_locked"
     }
   },
   {
     "type": "fallback",
     "stage": "S2",
-    "message": "Aerial captures disagree on the roof extent; using the structure that matches the floor plate",
+    "message": "vexcel property/extract:extent (fallback): 4 other capture(s) outline what looks like the same building at 3,700 to 4,320 m2 against the chosen 1,104 m2 (up to 3.9x, largest from us-tx-houston-2024); the floor plate chose the smaller, which on a tower is the tower rather than the podium it stands on",
     "payload": {
+      "fallback": "provenance:vexcel",
       "layer": "vexcel",
-      "from": "3,700 to 4,320 m2 outlines (four other captures)",
-      "to": "1,104.5 m2 structure (us-tx-houston-2023)"
+      "what": "property/extract:extent",
+      "status": "fallback",
+      "detail": "4 other capture(s) outline what looks like the same building at 3,700 to 4,320 m2 against the chosen 1,104 m2 (up to 3.9x, largest from us-tx-houston-2024); the floor plate chose the smaller, which on a tower is the tower rather than the podium it stands on"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "vexcel oblique east and west (error): HTTP 429 after three retries; two of four obliques cached",
+    "payload": {
+      "fallback": "provenance:vexcel",
+      "layer": "vexcel",
+      "what": "oblique east and west",
+      "status": "error",
+      "detail": "HTTP 429 after three retries; two of four obliques cached"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "tariff electricity price (fallback): no regulated retail tariff exists in the CenterPoint area; the published default of physics 04 TAR-06 is used until the user gives a bill",
+    "payload": {
+      "fallback": "provenance:tariff",
+      "layer": "tariff",
+      "what": "electricity price",
+      "status": "fallback",
+      "detail": "no regulated retail tariff exists in the CenterPoint area; the published default of physics 04 TAR-06 is used until the user gives a bill"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "tariff eia/natural-gas-price (fallback): EIA state average delivered gas price, TX COM, 2025 (10.98 $/MCF, EIA N3020TX3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)",
+    "payload": {
+      "fallback": "provenance:tariff",
+      "layer": "tariff",
+      "what": "eia/natural-gas-price",
+      "status": "fallback",
+      "detail": "EIA state average delivered gas price, TX COM, 2025 (10.98 $/MCF, EIA N3020TX3, table at 1.037 MMBtu/MCF, +/-0.5% on the heat content)"
     }
   },
   {
@@ -105,10 +139,10 @@
   {
     "type": "error",
     "stage": "S3",
-    "message": "Vexcel returned 429 for two obliques; continuing without them",
+    "message": "One panorama could not be decoded; continuing without it",
     "payload": {
-      "code": "vexcel_rate_limited",
-      "message": "HTTP 429",
+      "code": "vision_image_error",
+      "message": "image decode failed",
       "recoverable": true
     }
   },
@@ -127,11 +161,9 @@
   {
     "type": "fallback",
     "stage": "S4",
-    "message": "No openings in the wall graph; using window sizes read by vision",
+    "message": "No window openings in the wall graph: use window sizes read by vision.",
     "payload": {
-      "layer": "matterport",
-      "from": "measured window openings",
-      "to": "window count and size from vision, wider range"
+      "fallback": "no_window_openings"
     }
   },
   {
@@ -149,6 +181,26 @@
     "payload": {}
   },
   {
+    "type": "tool_call",
+    "stage": "S5",
+    "message": "physicist: run_baseline",
+    "payload": {
+      "agent": "physicist",
+      "tool": "run_baseline",
+      "args": {
+        "sid": "L3266YcPPvd"
+      }
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S5",
+    "message": "The site's own weather year is not on this machine (data/cache/L3266YcPPvd/weather/typical_year_hourly.csv), so the example year typical_year_hourly_houston.csv was used instead. Every energy figure here is for that year, not for the site's; expect them to move when the site file is present.",
+    "payload": {
+      "fallback": "weather:example_year"
+    }
+  },
+  {
     "type": "partial_result",
     "stage": "S5",
     "message": "Baseline ready",
@@ -156,9 +208,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 11073.76,
-        "expected": 13069.16,
-        "high": 19670.63,
+        "low": 9963.16,
+        "expected": 12611.3,
+        "high": 18663.31,
         "unit": "USD"
       }
     }
@@ -193,40 +245,9 @@
     }
   },
   {
-    "type": "question",
-    "stage": "S6",
-    "message": "One question on the rooftop units",
-    "payload": {
-      "question": {
-        "id": "q_rtu_capacity",
-        "assumption_key": "hvac.rtu_capacity_tons",
-        "prompt": "How large are the rooftop units that serve this floor?",
-        "choices": [
-          {
-            "label": "About 20 tons together",
-            "value": 20.0
-          },
-          {
-            "label": "About 30 tons together",
-            "value": 30.0
-          },
-          {
-            "label": "About 40 tons together",
-            "value": 40.0
-          },
-          {
-            "label": "I don't know",
-            "value": null
-          }
-        ],
-        "impact_note": "Unit size sets the cost of replacement and the economizer saving; at the low end the economizer moves closer to the budget."
-      }
-    }
-  },
-  {
     "type": "stage_done",
     "stage": "S6",
-    "message": "12 measures evaluated",
+    "message": "14 measures evaluated",
     "payload": {
       "artifact": "/run/measures.json"
     }
@@ -245,7 +266,34 @@
       "agent": "financier",
       "tool": "cpace_scenario",
       "args": {
-        "measure_id": "HVAC_RTU"
+        "measure_id": "LGT_LED"
+      }
+    }
+  },
+  {
+    "type": "question",
+    "stage": "S7",
+    "message": "One question before the plan is final",
+    "payload": {
+      "question": {
+        "id": "q_lighting_lpd",
+        "assumption_key": "lighting.lpd",
+        "prompt": "What is the lighting power density?",
+        "choices": [
+          {
+            "label": "About 10.8 W/m2 (low)",
+            "value": 10.76
+          },
+          {
+            "label": "About 19.5 W/m2 (most likely)",
+            "value": 19.48
+          },
+          {
+            "label": "I don't know",
+            "value": null
+          }
+        ],
+        "impact_note": "Depending on this value the plan picks different measures; annual savings run from $37.8 to $3,999."
       }
     }
   },

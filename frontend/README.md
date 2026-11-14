@@ -12,6 +12,10 @@ npm run dev
 
 Open http://127.0.0.1:5173. The app starts in **Demo** with the shared golden house and two office examples from `specs/examples/`, followed by two frontend-owned UI sandboxes with three budget scenarios each. All energy and financial results are clearly marked as illustrative. No API keys, backend, or sponsor assets are needed for this mode.
 
+## Readable interface
+
+App-owned text uses a 16px minimum, 18px body copy and dark shared text colors. Plan categories use green for included upgrades, amber for options needing more budget and slate for other findings, with labels and icons so color is not the only cue. Category tabs support arrow keys, Home and End. Finance details include plain-language definitions; long reports use safe Markdown paragraphs/lists, and source notes remain available in full. Narrow layouts stack cards and keep form labels, property names and export buttons visible.
+
 ## Interactive architecture
 
 The welcome screen has a furnished Three.js house with exterior, cutaway, and exploded views. Drag to orbit, scroll/pinch to zoom, or use the labeled buttons for rotation, zoom, reset, and room focus. Selecting a room reveals its floor before moving the camera. The setup and demo audit screens include a smaller interactive explorer. Property-card previews render once, without animation or nested controls.

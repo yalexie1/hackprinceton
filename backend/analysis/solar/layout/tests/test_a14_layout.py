@@ -11,9 +11,32 @@ from shapely.geometry import Polygon
 
 from backend.analysis.solar.layout import (Candidate, greedy_fill, layout_pv, layout_pv_detailed,
                                            plane_excluded)
-from backend.schema import BuildingModel, Flag, Ranged, RoofPlane, SolarDesign
+from backend.schema import BuildingModel, Flag, Ranged, RoofPlane, SolarDesign, VexcelDetection
 
 EX = Path(__file__).resolve().parents[5] / "specs" / "examples"
+
+# #330: the golden house's roof is now A11's parametric Vexcel roof, which carries no positioned
+# obstructions. The splat-fitted case these tests cover is rebuilt here from the same planes with the
+# two detections the hand-made example used to carry (a roof vent and a tree on the south plane).
+HOUSE_SPLAT_OBSTRUCTIONS = [
+    {"label": "roof vent", "confidence": 0.33, "image_id": "ortho-1",
+     "bbox_wkt": "POLYGON((-118.3172263 34.0935203, -118.3172263 34.0935242, -118.3172217 34.0935242, "
+                 "-118.3172217 34.0935203, -118.3172263 34.0935203))",
+     "pixel_bbox": [502, 724, 7, 7], "mask_png_path": None, "mask_wkt": None, "mask_area_m2": 0.1},
+    {"label": "tree", "confidence": 0.47, "image_id": "ortho-1",
+     "bbox_wkt": "POLYGON((-118.3172563 34.0934385, -118.3172563 34.0934770, -118.3172049 34.0934770, "
+                 "-118.3172049 34.0934385, -118.3172563 34.0934385))",
+     "pixel_bbox": [457, 809, 77, 69], "mask_png_path": None, "mask_wkt": None, "mask_area_m2": 11.8},
+]
+
+
+def house_splat_planes(model):
+    """The house planes as if fitted from the splat, with the vent and the tree on the south plane."""
+    out = []
+    for p in model.roof_planes:
+        obs = [VexcelDetection.model_validate(o) for o in HOUSE_SPLAT_OBSTRUCTIONS] if p.id == "plane_south" else []
+        out.append(p.model_copy(update={"geometry_source": "splat", "obstructions": obs}))
+    return out
 FLAVORS = ["house", "office", "office_houston"]
 OK = Flag(key="electrical.service", status="likely_ok", message="")
 ROOF_OK = Flag(key="roof.structure", status="likely_ok", message="")
@@ -222,8 +245,10 @@ def test_fixture_house_budget_sized_like_the_plan():
 
 def test_house_obstructions_cut_out():
     model = BuildingModel.model_validate_json((EX / "house" / "building_model.json").read_text())
-    res = layout_pv_detailed(model.roof_planes, OK, ROOF_OK, const(1500.0))
-    south = next(p for p in model.roof_planes if p.id == "plane_south")
+    planes = house_splat_planes(model)
+    res = layout_pv_detailed(planes, OK, ROOF_OK, const(1500.0))
+    south = next(p for p in planes if p.id == "plane_south")
     vent = shapely_wkt.loads(next(o for o in south.obstructions if o.label == "roof vent").bbox_wkt)
+    assert any(p.plane_id == "plane_south" for p in res.design.panels)
     for p in res.design.panels:
         assert not shapely_wkt.loads(p.polygon_wkt).intersects(vent)

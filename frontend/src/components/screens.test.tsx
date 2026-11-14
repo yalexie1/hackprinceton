@@ -17,6 +17,48 @@ const office = demoRun(
   sharedOffice.request.budget_usd,
 );
 describe("shared contract screen compatibility", () => {
+  it("explains why desk placement is unavailable when the scan has no room outlines", () => {
+    const run = structuredClone(office);
+    const layout = run.measures.find(
+      (measure) => measure.measure_id === "LAYOUT",
+    )!;
+    layout.applicable = false;
+    layout.layout = null;
+    layout.not_applicable_reason = "The scan has no room outlines.";
+    const html = renderToStaticMarkup(<Geometry run={run} layout demo />);
+    expect(html).toContain("Desk placement cannot be assessed");
+    expect(html).toContain("The scan has no room outlines.");
+    expect(html).not.toContain("The analysis will provide");
+  });
+  it("separates additional-budget options from other exclusions without changing analysis data", () => {
+    const run = structuredClone(house);
+    run.measures.forEach((measure) => {
+      measure.applicable = true;
+    });
+    const option = run.measures[0];
+    run.plan!.financeable = [option];
+    run.plan!.skipped = [
+      {
+        measure_id: option.measure_id,
+        reason: "over_budget",
+        detail: "More cash needed",
+      },
+      {
+        measure_id: run.measures[1].measure_id,
+        reason: "not_cost_effective",
+        detail: "Fails cost test",
+      },
+    ];
+    const html = renderToStaticMarkup(
+      <PlanView run={run} onFocus={() => {}} onDocuments={() => {}} />,
+    );
+    expect(html).toContain('class="plan-tab financeable"');
+    expect(html).toContain('class="plan-tab skipped"');
+    expect(html).toContain("Needs more budget<span>1</span>");
+    expect(html).toContain("Other findings<span>1</span>");
+    expect(run.plan!.skipped).toHaveLength(2);
+    expect(html).toContain("aria-controls=");
+  });
   it("keeps selected marginal sizing in a C-PACE document scope", () => {
     const run = structuredClone(office);
     const selected = run.plan!.selected[0].measure;

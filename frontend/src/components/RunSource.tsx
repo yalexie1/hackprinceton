@@ -30,7 +30,7 @@ export default function RunSource({ run }: { run: RunResult }) {
           : source === "live"
             ? delivery === "replay"
               ? "A recorded analysis of live property data. Viewing it does not run a fresh analysis."
-              : "The backend identifies this analysis as using live property data."
+              : "This analysis uses live property data, as reported by the analysis service."
             : "Property-data provenance has not been reported for this run."}
       </p>
     </section>

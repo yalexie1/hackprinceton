@@ -303,8 +303,6 @@ def test_the_example_plans_are_reproduced(flavor, name, role):
     want = Plan.model_validate_json((EX / flavor / name).read_text())
     if name == "plan_tenant.json":
         pytest.skip("the tenant example was built on a different measure set")
-    pytest.skip("the examples were built under the old rule (annual savings, solar sized to the budget); "
-                "they are regenerated under SPEC 6.5 v0.3.4 and this comparison returns then (Yale)")
     fake = FromRun(run_result, want, bundle)
     got = select_plan(sorted(set(fake.pool)), role, want.budget_usd, (), fake.evaluate, fake.apply, fake.energy,
                       price_group=fake.price_group)

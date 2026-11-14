@@ -18,6 +18,16 @@ from backend.agent.fixtures import EXAMPLES, flavors
 from backend.schema import DocumentRequest, RunRequest, RunResult
 
 
+def _house_question():
+    """The first question of the house example, read from the file: the example is regenerated with the analysis
+    code, so its question ids are never hard-coded here."""
+    q = json.loads((EXAMPLES / "house" / "run_result.json").read_text())["questions"][0]
+    return q["id"], q["assumption_key"], [c["value"] for c in q["choices"] if c["value"] is not None]
+
+
+QID, QKEY, QVALS = _house_question()
+
+
 def stub_doors():
     """Data and legal from their lanes, analysis from the agent lane's fixture-backed stub: these tests
     are about the agent's plumbing, not about the physics, and run offline in a moment."""
@@ -110,8 +120,8 @@ def test_live_run_pauses_for_the_question_and_resumes_with_the_answer(live_mode)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
     paused = api.get_run(run_id)
-    assert paused.status == "waiting_for_user" and [q.id for q in paused.questions] == ["q_service_amps"]
-    api.answer(run_id, "q_service_amps", 200.0)
+    assert paused.status == "waiting_for_user" and [q.id for q in paused.questions] == [QID]
+    api.answer(run_id, QID, QVALS[-1])
     events = drain(run_id)
     assert events[-1].type == "done"
     assert {"stage_started", "stage_done", "todo", "tool_call", "question", "done"} <= {e.type for e in events}
@@ -119,7 +129,7 @@ def test_live_run_pauses_for_the_question_and_resumes_with_the_answer(live_mode)
     assert tools[0] == "get_property_bundle" and "set_assumption" in tools and "build_plan" in tools
     result = api.get_run(run_id)
     assert result.status == "done" and result.plan is not None and result.baseline is not None
-    assert assumption(result, "electrical.service_amps").value.expected == 200.0
+    assert assumption(result, QKEY).value.expected == QVALS[-1]
     RunResult.model_validate(result.model_dump(mode="json"))
     assert (run.files.root / "report.md").read_text() == "The audit is complete."
 
@@ -131,7 +141,7 @@ def test_resume_with_none_keeps_the_range(live_mode):
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
     before = json.loads((EXAMPLES / "house" / "building_model.json").read_text())
-    api.answer(run_id, "q_service_amps", None)          # "I don't know": Command(resume={"value": None})
+    api.answer(run_id, QID, None)          # "I don't know": Command(resume={"value": None})
     assert drain(run_id)[-1].type == "done"
     result = api.get_run(run_id)
     key = next(q for q in result.questions).assumption_key      # the asked question is kept
@@ -145,12 +155,12 @@ def test_answer_without_an_open_question_is_refused(live_mode):
     live_mode(req)
     run_id = api.start_run(req)
     with pytest.raises(LookupError):
-        api.answer(run_id, "q_service_amps", 100.0)
+        api.answer(run_id, QID, QVALS[0])
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
     with pytest.raises(LookupError):
         api.answer(run_id, "other", 100.0)
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     drain(run_id)
 
 
@@ -164,7 +174,7 @@ def test_server_drives_a_live_run_and_a_document(live_mode):
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
     assert client.get(f"/api/runs/{run_id}").json()["status"] == "waiting_for_user"
     assert client.post(f"/api/runs/{run_id}/answers",
-                       json={"question_id": "q_service_amps", "value": 150.0}).json() == {"ok": True}
+                       json={"question_id": QID, "value": QVALS[0]}).json() == {"ok": True}
     with client.stream("GET", f"/api/runs/{run_id}/events") as s:
         lines = [l for l in s.iter_lines() if l.startswith("data: ")]
     assert json.loads(lines[-1][6:])["type"] == "done"
@@ -309,7 +319,7 @@ def test_a_finished_live_run_is_adjusted_and_replanned(live_mode):
     with pytest.raises(PatchError) as early:                       # paused, not finished
         api.update_run(run_id, budget_usd=500.0)
     assert early.value.code == "run_not_done"
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     assert drain(run_id)[-1].type == "done"
     before = api.get_run(run_id)
     api.update_run(run_id, budget_usd=500.0, overrides={"occupancy.count": 5.0})
@@ -370,7 +380,7 @@ def test_a_live_run_completes_with_tracing_switched_off_and_keys_missing(live_mo
     run_id = api.start_run(req)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     assert drain(run_id)[-1].type == "done" and not run.tracing and os.environ["LANGSMITH_TRACING"] == "false"
 
 
@@ -382,7 +392,7 @@ def test_a_failing_tool_becomes_a_run_event(live_mode):
     run_id = api.start_run(req)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     events = drain(run_id)
     errors = [e for e in events if e.type == "error"]
     assert any("price_measure failed" in e.message and "call evaluate_measure" in e.message and e.stage == "S7"
@@ -396,7 +406,7 @@ def test_the_runtime_builds_the_plan_the_agent_did_not(live_mode):
     run_id = api.start_run(req)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     events = drain(run_id)
     assert events[-1].type == "done"
     fallback = [e for e in events if e.type == "fallback" and e.payload.get("fallback") == "plan_built_by_runtime"]
@@ -430,7 +440,7 @@ def _drive(live_mode, **script_kwargs):
     run_id = api.start_run(req)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     return run_id, run, drain(run_id)
 
 
@@ -464,7 +474,7 @@ def test_a_successful_live_run_is_recorded_and_replayed_offline(live_mode, monke
     run_id = api.start_run(req)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     live_events = drain(run_id)
     run._thread.join(timeout=30)
     saved = live.demo_dir() / req.sid
@@ -577,7 +587,7 @@ def test_an_answer_that_lands_in_the_window_still_resumes_the_run(live_mode, mon
         real_write_usage(self)
         if self.pending is not None and not answered:      # the client is this quick
             answered.append(self.pending[1].id)
-            self.answer(self.pending[1].id, 100.0)
+            self.answer(self.pending[1].id, QVALS[0])
 
     monkeypatch.setattr(live.LiveRun, "_write_usage", answer_inside_the_window)
 
@@ -586,7 +596,7 @@ def test_an_answer_that_lands_in_the_window_still_resumes_the_run(live_mode, mon
     run_id = api.start_run(req)
     events = drain(run_id)
 
-    assert answered == ["q_service_amps"], "the test did not actually hit the window"
+    assert answered == [QID], "the test did not actually hit the window"
     assert events[-1].type == "done", (
         f"the run ended on {events[-1].type!r}: the answer was dropped and the run closed "
         f"instead of resuming")
@@ -760,7 +770,7 @@ def test_a_recorded_live_run_never_contains_a_key_value(live_mode, tmp_path, mon
     run_id = api.start_run(req)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     events = drain(run_id)
     run._thread.join(timeout=30)
     text = json.dumps([e.model_dump(mode="json") for e in events]) + api.get_run(run_id).model_dump_json()
@@ -779,7 +789,7 @@ def test_a_replayed_recording_says_replay_and_keeps_where_its_data_came_from(liv
     run_id = api.start_run(req)
     run = live._RUNS[run_id]
     wait_for(lambda: any(e.type == "question" for e in run.events), "the question event")
-    api.answer(run_id, "q_service_amps", 100.0)
+    api.answer(run_id, QID, QVALS[0])
     drain(run_id)
     run._thread.join(timeout=30)
     recorded = api.get_run(run_id)

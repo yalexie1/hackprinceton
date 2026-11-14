@@ -109,10 +109,11 @@ def test_missing_inputs_are_not_checked(kwargs, words):
 
 
 # Where each golden example's baseline_result.json lands (reported in the PR; physics 02 BEN worked examples).
+# #330: the examples are the real analysis on the NOAA 2024 example year.
 GOLDEN = {
-    "house": ({"climate": "3B", "fuel": "gas", "size": "lt1000"}, 151.1, 31.6, 0),
-    "office": ({"climate": "warm", "fuel": "gas", "size": "50k_200k"}, 159.5, 29.5, 0),
-    "office_houston": ({"climate": "*", "fuel": "gas", "size": "50k_200k"}, 167.6, 36.0, 1),
+    "house": ({"climate": "3B", "fuel": "gas", "size": "lt1000"}, 229.3, 65.2, 0),
+    "office": ({"climate": "warm", "fuel": "gas", "size": "50k_200k"}, 134.2, 22.3, 1),   # floor 3: gas below the 5th percentile
+    "office_houston": ({"climate": "*", "fuel": "gas", "size": "50k_200k"}, 159.3, 32.3, 1),
 }
 
 
@@ -130,5 +131,5 @@ def test_golden_examples(folder):
     assert r.eui_kwh_m2 == pytest.approx(eui, abs=0.05)
     assert r.bands[0].percentile == pytest.approx(rank, abs=0.1) and r.bands[0].verdict == "typical"
     assert len(warnings) == n_warn and warnings == r.warnings
-    if folder == "office_houston":      # gas 3.18 kBtu/ft2 sits near the 8th percentile of gas-using offices
+    if folder == "office_houston":      # gas 1.8 kBtu/ft2 sits below the 5th percentile of gas-using offices
         assert "Gas use intensity" in warnings[0] and "fewer than 50" in warnings[0]

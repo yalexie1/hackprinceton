@@ -131,7 +131,10 @@ export function fixtureSource(sid: string) {
     ? "Shared contract example"
     : "UI sandbox · 3 budget scenarios";
 }
-export function demoDraft(body: DocumentRequest): DocumentDraft {
+export function demoDraft(
+  body: DocumentRequest,
+  run: RunResult,
+): DocumentDraft {
   const names: Record<string, string> = {
     retrofit_contract_residential: "Residential retrofit agreement",
     retrofit_contract_commercial: "Commercial retrofit agreement",
@@ -151,18 +154,52 @@ export function demoDraft(body: DocumentRequest): DocumentDraft {
     body.fields.contractor_name.trim() || "{{contractor_name}}";
   if (!body.fields.owner_names.trim()) blanks.push("owner_names");
   if (!body.fields.contractor_name.trim()) blanks.push("contractor_name");
+  const scope = body.measure_ids
+    .map(
+      (id) =>
+        run.plan?.selected.find((item) => item.measure.measure_id === id)
+          ?.measure.title ||
+        run.measures.find((measure) => measure.measure_id === id)?.title ||
+        id.replaceAll("_", " "),
+    )
+    .map((title) => `- ${title}`)
+    .join("\n");
   return {
     doc_id: "illustrative-draft",
     doc_type: body.doc_type,
     state: body.state,
-    markdown: `# ${names[body.doc_type]}\n\nILLUSTRATIVE PREVIEW — draft for attorney review, not legal advice.\nThis preview demonstrates the document interface. It is not a verified contract template.\n\n## Parties\nOwner: ${owner}\nContractor: ${contractor}\nContractor license: {{contractor_license}}\nJurisdiction: ${body.state}\n\n## Property\n{{property_legal_description}}\n\n## Proposed scope\nSelected measures: ${body.measure_ids.join(", ")}\nPricing, specifications, and permits require confirmation.\n\n## Schedule\nStart: {{start_date}}\nCompletion: {{completion_date}}\n\n## Review before execution\nConfirm the scope, payment schedule, cancellation notices, licensing, warranties, and jurisdiction-specific terms with qualified counsel. Estimated energy savings are not a performance guarantee.`,
+    markdown: `# ${names[body.doc_type]}
+
+ILLUSTRATIVE PREVIEW — draft for attorney review, not legal advice.
+This preview demonstrates the document interface. It is not a verified contract template.
+
+## Parties
+- Owner: ${owner}
+- Contractor: ${contractor}
+- Contractor license: {{contractor_license}}
+- Jurisdiction: ${body.state}
+
+## Property
+{{property_legal_description}}
+
+## Proposed scope
+${scope}
+
+Pricing, specifications, and permits require confirmation.
+
+## Schedule
+- Start: {{start_date}}
+- Completion: {{completion_date}}
+
+## Review before execution
+Confirm the scope, payment schedule, cancellation notices, licensing, warranties, and jurisdiction-specific terms with qualified counsel. Estimated energy savings are not a performance guarantee.`,
     unfilled_placeholders: blanks,
     statutory_checks: [
       {
         requirement: "State-specific contract terms require legal verification",
         citation: "Not verified in demo mode",
         satisfied: false,
-        note: "The backend legal lane will supply the reviewed template and statutory checks.",
+        note: "Use an API-connected run to request the available legal template and its review checklist.",
       },
     ],
     disclaimer:

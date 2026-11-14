@@ -151,7 +151,7 @@ export default function Documents({
       fields: { owner_names: owner, contractor_name: contractor },
     };
     try {
-      const result = demo ? demoDraft(body) : await api.draft(body);
+      const result = demo ? demoDraft(body, run) : await api.draft(body);
       if (current === version.current) setDraft(result);
     } catch (e) {
       if (
@@ -340,7 +340,7 @@ export default function Documents({
               Export Markdown
             </button>
           </div>
-          <DocumentText text={draft.disclaimer} compact />
+          <DocumentText text={draft.disclaimer} variant="notice" />
           <DocumentText text={draft.markdown} />
           <div className="document-checklist">
             <h3>Review checklist</h3>

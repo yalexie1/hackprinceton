@@ -88,6 +88,6 @@ describe("energy exploration", () => {
     );
     expect(html).toContain("NOT INCLUDED");
     expect(html).not.toContain("Estimated annual savings");
-    expect(html).toContain("Not added to your plan");
+    expect(html).toContain("not added to your plan’s totals");
   });
 });

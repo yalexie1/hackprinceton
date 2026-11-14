@@ -75,7 +75,7 @@ export default function Tour({
       } catch {
         if (!cancelled)
           setNotice(
-            "The tour can still be explored. Evidence pins need a valid SDK key with this domain allowed.",
+            "You can explore the tour, but evidence markers could not connect. The upgrade details remain available.",
           );
       }
     };
@@ -199,7 +199,7 @@ export default function Tour({
             ? "Interactive concept model · no measured geometry"
             : ready
               ? "Select a measure to explore its evidence"
-              : "Explore the tour · evidence controls connect with the SDK"}
+              : "Explore the tour. Evidence markers are not connected."}
         </span>
       </div>
       {notice && (

@@ -312,10 +312,12 @@ def test_a_registered_measure_runs_on_the_engine_and_the_rest_replay_the_example
     office, request = load("office")
     model = model_of(office, request)
     with without_plugin("LAYOUT"):                                                  # as if A23 had not landed
-        stubbed = api.evaluate_measure(office, model, "LAYOUT", request.role)
-        assert any("not registered yet" in w for w in stubbed.warnings)
+        missing = api.evaluate_measure(office, model, "LAYOUT", request.role)
+        # no evaluator: not applicable, and never another building's example card in its place
+        assert not missing.applicable and api.engine.skip_reason(missing) == "not_supported"
+        assert missing.savings is None or missing.savings.cost_usd.expected == 0
     real = api.evaluate_measure(office, model, "LAYOUT", request.role)
-    assert real.applicable and not any("not registered yet" in w for w in real.warnings)
+    assert real.applicable is (api.engine.skip_reason(real) is None) and not any("not registered yet" in w for w in real.warnings)
     ctrl = api.evaluate_measure(office, model, "LGT_CTRL", request.role)
     assert ctrl.applicable and ctrl.formula_ids and ctrl.savings.electricity_kwh.expected > 0
     attic = api.evaluate_measure(*load("house")[:1], model_of(*load("house")), "ENV_ATTIC", "owner_occupier")
@@ -332,7 +334,7 @@ def test_a_plugin_that_lands_replaces_the_example_by_itself():
                              params={"grid_m": 0.5}, formula_ids=["LAY-01"])
     with without_plugin("LAYOUT"):
         before = api.evaluate_measure(office, model, "LAYOUT", request.role)
-        assert any("not registered yet" in w for w in before.warnings)
+        assert not before.applicable and api.engine.skip_reason(before) == "not_supported"
         api.engine.register("LAYOUT", change=lambda b, m: m.model_copy(deep=True), describe=describe)
         out = api.evaluate_measure(office, model, "LAYOUT", request.role)
         assert not any("not registered yet" in w for w in out.warnings) and out.formula_ids[0] == "LAY-01"
@@ -347,7 +349,8 @@ def test_sensitivity_is_the_real_rule_once_the_core_plugins_are_registered(monke
     registry = api.engine.REGISTRY
     saved = registry.plugins.pop("HVAC_HP")                                           # as if a core package were missing
     try:
-        assert [q.id for q in api.sensitivity(bundle, model, request)] == ["q_service_amps"]    # the example's question
+        example = json.loads((EX / "house" / "run_result.json").read_text())["questions"]
+        assert [q.id for q in api.sensitivity(bundle, model, request)] == [q["id"] for q in example]    # the example's questions
         assert len(calls) == 1
     finally:
         registry.plugins["HVAC_HP"] = saved

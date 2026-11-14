@@ -15,6 +15,8 @@ Status: **in force**, **pending** (decided, not yet implemented), **proposed** (
 | Date | Decision | Where | Status |
 |---|---|---|---|
 | 2026-11-14 | **Plan rule follows consultant practice** (loading order: operational and zero-cost first, then efficiency, then generation; rank by cost-effectiveness; a measure must have SIR ≥ 1 to be recommended; solar sized last against the load left). Replaces "rank by annual dollar savings; solar sized to the budget left". | SPEC 6.5 and contract 0.3.4 (`not_cost_effective`) (#279); implementation in `finance/plan/` and `api._design` (Srihaan, A26), then the examples are regenerated | pending (code) |
+| 2026-11-14 | **Real-world benchmark checks**: each baseline's energy use intensity against CBECS 2018 (offices) or RECS 2020 (homes) for its type and climate, and solar yield against PVGIS; out-of-range results are warnings, never silent. | #285 | pending |
+| 2026-11-14 | **The electricity price always carries its market range** (TAR-06, data-integration 5.1c), applied relative to the tariff's own price; and **solar is priced with PV-07 degradation (0.5 %/yr) and the A4 inverter and losses**, never as an array that does not degrade. | #286 | pending |
 | 2026-11-14 | **Build A6 bill calibration now.** With bills, calibrate the baseline within each assumption's range to physics 04 MV-04 (monthly NMBE ±5 %, CV(RMSE) ≤ 15 %); without bills, results say they are uncalibrated. | #276, physics 04 MV | pending |
 | 2026-11-14 | **Roof: the floor plate decides the building and the extent.** Design roof = structure containing the CoStar address point; disagreements broken by `building_area_m2 / stories`; georeference as fallback; tower over podium designs on the tower; a larger outline is a `PV_ROOF` warning, never the design roof. Designing on the podium is not supported. | SPEC 6.3 step 3 (#262, #263); D16 #247; A19 #251; data-integration 4.5a (#264) | in force |
 | 2026-11-14 | **Roof mask check stays symmetric ±15 % for every roof.** The flat-roof 40 % floor (#242) was calibrated on wrong-building data and is reverted. | `solar/roof/masks.py` (#251) | in force |
@@ -47,6 +49,9 @@ Status: **in force**, **pending** (decided, not yet implemented), **proposed** (
 
 | Date | Decision | Where | Status |
 |---|---|---|---|
+| 2026-11-14 | **Write both office documents for the demo: L4 `retrofit_contract_commercial` (CA) and L6 `cpace_package` (CA, TX).** @vigjay drafts as a handoff into `backend/legal/`, @Sri-SriPod reviews; only from `specs/legal.md` and `specs/legal/*.md`, visible blanks where the spec has no text, Houston's failing SIR shown honestly. | board (Yale's Claude, 12:31 UTC) | pending |
+| 2026-11-14 | **Hold the demo recordings** until the SPEC 6.5 plan rule and A6 calibration land. | board | in force |
+| 2026-11-14 | **The legal door calls the real engine** (templates on disk, predicates run, un-templated requests refused with 404 `template_not_available`), and a silent `analysis_stub` fallback is reported in `RunResult.warnings`. | #274, PR #284 (Srihaan reviewing) | pending (merge) |
 | 2026-11-14 | **Demo machine: Srihaan's laptop.** Srihaan makes the three recordings (Culver, house, Houston) after the legal wiring and the example rebuild land. | board | pending |
 | 2026-11-14 | **Stage mode: `AGENT_MODE=replay` with recorded live runs**, never `live` on stage; the start command goes in the README. | board | pending |
 | 2026-11-14 | **vigjay: end-to-end verification first, then the legal wiring (#274, handoff from Srihaan's files), then the demo rehearsal and submission (F12)**; Vinayak records the video. | board | in progress |
@@ -59,6 +64,5 @@ Status: **in force**, **pending** (decided, not yet implemented), **proposed** (
 
 | Raised | Question | Where |
 |---|---|---|
-| 2026-11-14 | An office contract for demo step 6: only `templates/ca/retrofit_contract_residential.md` exists (L4 not written). Write it, or show only the house contract. | board |
 | 2026-11-14 | The roof-view route (ortho bounds plus detections), once Srihaan proposes it. | board |
 | 2026-11-14 | Whether a vacant suite is a valid audit target (physics 02 asks). | physics 02 |

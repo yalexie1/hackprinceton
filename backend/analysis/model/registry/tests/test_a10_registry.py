@@ -357,3 +357,5 @@ def test_a_missing_gas_price_is_unknown_not_no_gas():
     assert without["hvac.system_type"].value == with_price["hvac.system_type"].value == "central_ac_furnace"
     assert without["hvac.system_type"].confidence < with_price["hvac.system_type"].confidence
     assert without["hvac.heating_fuel"].value == "gas"
+    assert without["dhw.fuel"].value == with_price["dhw.fuel"].value == "gas"
+    assert without["dhw.fuel"].confidence < with_price["dhw.fuel"].confidence

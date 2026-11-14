@@ -28,3 +28,34 @@ def detect_fallbacks(bundle: PropertyBundle) -> list[RunEvent]:
                       "No window openings in the wall graph: use window sizes read by vision."))
     return [RunEvent(type="fallback", stage=stage, message=msg, payload={"fallback": key})
             for key, stage, msg in found]
+
+
+# The data lane's own account of what it could not get. `missing` and `locked` stay out: a layer
+# that does not exist for a property is not a degraded run, and the model is told about it through
+# the bundle itself. `fallback` and `error` mean a number in the result rests on a substitute.
+_REPORTED = ("fallback", "error")
+
+
+def provenance_fallbacks(bundle: PropertyBundle) -> list[RunEvent]:
+    """Every `FetchRecord` the data lane marked `fallback` or `error`, as a run event.
+
+    The bundle has carried these all along and nothing surfaced them, so a run could quietly rest
+    on a state average tariff or three obliques out of four. Pure, like `detect_fallbacks`, so the
+    live runtime and the replay path can both use it and agree.
+    """
+    out = []
+    for record in bundle.provenance:
+        if record.status not in _REPORTED:
+            continue
+        detail = f": {record.detail}" if record.detail else ""
+        out.append(RunEvent(
+            type="fallback", stage="ingest",
+            message=f"{record.layer} {record.what} ({record.status}){detail}",
+            payload={"fallback": f"provenance:{record.layer}", "layer": record.layer,
+                     "what": record.what, "status": record.status, "detail": record.detail}))
+    return out
+
+
+def provenance_warnings(bundle: PropertyBundle) -> list[str]:
+    """One line per reported `FetchRecord`, for `RunResult.warnings`."""
+    return [event.message for event in provenance_fallbacks(bundle)]

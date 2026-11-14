@@ -608,3 +608,47 @@ def test_an_answer_to_a_closed_run_is_an_error_not_a_silent_queue(live_mode):
     run.closed = False                      # let the run finish, so its worker thread is not left waiting
     api.answer(run_id, pending[1].id, None)
     assert drain(run_id)[-1].type == "done"
+
+
+# ---------- the data lane's provenance reaches the run (issue #319) ----------
+
+def test_a_bundle_fallback_becomes_a_run_event_and_a_warning(tmp_path):
+    """A live run used to say nothing when the tariff was a state average or an oblique 429ed:
+    the records were in the bundle and nothing read them. They must reach both the stream (so the
+    stage log shows them as they happen) and `RunResult.warnings` (so the frontend shows them)."""
+    from backend.schema import FetchRecord, PropertyBundle
+
+    run = live.LiveRun("run_prov", request(), live.LiveSettings(runs_dir=tmp_path))
+    bundle = PropertyBundle.model_validate_json(
+        (EXAMPLES / "house" / "property_bundle.json").read_text()).model_copy(update={"provenance": [
+            FetchRecord(layer="tariff", what="electricity price", status="fallback",
+                        detail="EIA state average, not a looked-up tariff"),
+            FetchRecord(layer="costar", what="listing", status="missing"),
+        ]})
+    run.files.write("bundle.json", bundle.model_dump(mode="json"))
+
+    emitted: list = []
+    run._emit = emitted.append          # `_emit` hands chunks to a loop that only exists mid-run
+    tool = run._instrument("get_property_bundle", lambda sid: {"sid": sid})
+    tool(sid=bundle.summary.sid)
+
+    reported = [e for e in emitted if getattr(e, "type", None) == "fallback"
+                and e.payload.get("status") == "fallback"]
+    assert len(reported) == 1 and "EIA state average" in reported[0].message
+    assert reported[0].payload["layer"] == "tariff" and reported[0].stage == "ingest"
+    assert any("EIA state average" in w for w in run._warnings)
+    assert not any(getattr(e, "payload", {}).get("what") == "listing" for e in emitted), \
+        "a missing record is not a degraded run"
+
+
+def test_the_same_bundle_read_twice_does_not_warn_twice(tmp_path):
+    """`get_property_bundle` is called again by later subagents and its result is memoised; the
+    warning must not be repeated once per call."""
+    run = live.LiveRun("run_prov2", request(), live.LiveSettings(runs_dir=tmp_path))
+    raw = json.loads((EXAMPLES / "office" / "property_bundle.json").read_text())
+    run.files.write("bundle.json", raw)
+    tool = run._instrument("get_property_bundle", lambda sid: {"sid": sid})
+    tool(sid=raw["summary"]["sid"])
+    once = list(run._warnings)
+    tool(sid=raw["summary"]["sid"])
+    assert run._warnings == once and once, "warnings are deduplicated, and there were some"

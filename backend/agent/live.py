@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Optional
 
 from backend.agent.ask import AskSession, make_ask_user
-from backend.agent.graph import build_auditor, detect_fallbacks
+from backend.agent.graph import build_auditor, detect_fallbacks, provenance_fallbacks, provenance_warnings
 from backend.agent.narrative import check_narrative, remove_unsupported
 from backend.agent.runtime.replan import PatchError, replan
 from backend.agent.runtime.runtime import DEFAULT_RUNS_DIR, RunStore, build_result, execute_run
@@ -268,8 +268,12 @@ class LiveRun:
             if name == "get_property_bundle" and isinstance(out, dict) and "error" not in out:
                 bundle = self.files.read_json("bundle.json")
                 if bundle:
-                    for ev in detect_fallbacks(PropertyBundle.model_validate(bundle)):
+                    parsed = PropertyBundle.model_validate(bundle)
+                    for ev in [*detect_fallbacks(parsed), *provenance_fallbacks(parsed)]:
                         self._emit(ev)
+                    for line in provenance_warnings(parsed):      # and into RunResult.warnings
+                        if line not in self._warnings:
+                            self._warnings.append(line)
             if name == "sensitivity" and isinstance(out, list):
                 self.session.feed([Question.model_validate(q) for q in out])
             return out

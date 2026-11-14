@@ -39,6 +39,7 @@ from backend.analysis import layout
 from backend.analysis.measures import engine
 from backend.analysis.measures.pv import evaluate_pv
 from backend.analysis.physics.climate import ClimateHours, Weather, load_climate, plane_irradiance, read_site_weather, read_weather
+from backend.analysis.physics.climate.weather import resolve_weather_path
 from backend.analysis.physics.daylight import (lighting_power_fraction, occupied_mask_from_stamps,
                                                prepare_room, score_point, sun_arrays)
 from backend.analysis.physics.pv import energy_range, pv_hourly_yield
@@ -46,6 +47,7 @@ from backend.analysis.physics.systems import (HourlyLoads, SystemsBaseline, cale
                                               egrid_subregion, internal_gains_hourly, systems_baseline)
 from backend.analysis.physics.zone import zone_loads
 from backend.analysis.solar.layout import Module, layout_pv
+from backend.analysis.model.benchmark.checks import check_baseline, check_pv
 from backend.analysis.model.geometry import build_geometry
 from backend.analysis.model.registry import (build_registry, merge_assumptions, scanned_floor_area_m2,
                                              set_model_assumption)
@@ -248,6 +250,16 @@ def _climate(bundle: PropertyBundle) -> tuple[ClimateHours, Weather, tuple[str, 
     return _CLIMATE_CACHE[key]
 
 
+def _weather_csv(bundle: PropertyBundle) -> Optional[str]:
+    """The weather file the model was actually run on, for a check that reads it again (A31).
+    Mirrors `_climate`: the site's cached file, or the example year of the state when it is absent.
+    None when neither is on disk, which the check reads as "no weather file"."""
+    for path in (resolve_weather_path(bundle.climate), _WEATHER_SAMPLES / _SAMPLE_FILE[bundle.summary.state]):
+        if path.is_file():
+            return str(path)
+    return None
+
+
 def _floor_area(model: BuildingModel) -> float:
     conditioned = [z.floor_area_m2 for z in model.zones if z.conditioned]
     return float(sum(conditioned) or sum(z.floor_area_m2 for z in model.zones))
@@ -379,7 +391,23 @@ def run_baseline(bundle: PropertyBundle, model: BuildingModel,
     if model.calibration is not None:
         result = result.model_copy(update={"calibrated_to_bills": model.calibration.calibrated,
                                            "calibration": model.calibration})
-    return result
+    return _benchmarked(bundle, model, result)
+
+
+def _benchmarked(bundle: PropertyBundle, model: BuildingModel, result: BaselineResult) -> BaselineResult:
+    """A31 (physics 02 BEN-01 to BEN-03): the baseline's energy use intensity against the homes of
+    RECS 2020 or the offices of CBECS 2018, in the closest cut with enough surveyed buildings.
+    A consultant's first sanity check on a model, and like PV-10 it may only add a warning.
+
+    One building in five really does sit outside the 10th-to-90th band, so a warning asks for a
+    look at the end uses it names; it is never evidence on its own that the model is wrong.
+    """
+    warnings, _ = check_baseline(result, _floor_area(model), bundle.summary.use_type,
+                                 bundle.climate.climate_zone,
+                                 building_area_m2=bundle.costar.building_area_m2 if bundle.costar else None)
+    if not warnings:
+        return result
+    return result.model_copy(update={"warnings": [*result.warnings, *warnings]})
 
 
 # ---------- S6 Measures ----------
@@ -535,8 +563,23 @@ def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: Building
         parts = [_plane_hourly(bundle, planes[pid].tilt_deg.expected, planes[pid].azimuth_deg) * k
                  for pid, k in kw.items() if pid in planes]
         hourly = sum(parts) if parts else None
-    return evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly, existing_solar=bool(existing),
-                       state=bundle.summary.state, provenance=bundle.provenance)
+    card = evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly,
+                       existing_solar=bool(existing), state=bundle.summary.state,
+                       provenance=bundle.provenance)
+    return _cross_checked_pv(bundle, model, card)
+
+
+def _cross_checked_pv(bundle: PropertyBundle, model: BuildingModel, card: MeasureResult) -> MeasureResult:
+    """A31 (physics 01 PV-10): the design's specific yield against PVGIS moved to this orientation.
+    A check, never a change - the only thing it may do to the card is add a warning. A card with no
+    panels is not cross-checked, because there is no yield to disagree about."""
+    if card.solar is None or not card.solar.panels:
+        return card
+    warnings, _ = check_pv(card.solar, model.roof_planes, bundle.climate,
+                           params=card.params, weather_csv=_weather_csv(bundle))
+    if not warnings:
+        return card
+    return card.model_copy(update={"warnings": [*card.warnings, *warnings]})
 
 
 _LIGHT_CONTROLS = ("continuous", "continuous_off", "stepped", "auto_on_off")

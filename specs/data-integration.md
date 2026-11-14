@@ -248,11 +248,46 @@ Two things the analysis lane should know:
 - **`building-type.class` is populated for commercial, absent for residential.** It returns `"commercial"` on the office lot and `None` on the house lot. So it is usable as a commercial cross-check but must never be a required field in the home flow.
 - **`ac-unit.count` is 0 on the office.** `SPEC.md` §1 assumes the office flow evaluates rooftop units (`HVAC_RTU` is a P0 measure). Vexcel detects no rooftop unit on this building, so either the measure needs a different evidence source or the golden office needs re-picking. Raised for the analysis lane.
 
-## 5. External data — D9, not started
+## 5. External data — D9
 
-Geocoding, TMY and live weather, utility tariffs, emission factors and measure cost data are all **[P] not started**. Each needs a source and a citation usable by `physics.md`. Emission factors are needed for the Los Angeles and Houston grid regions and for gas. Owner: D9.
+Checked live 2026-11-14. **Two of the sources `SPEC.md` and `handoff-plan.md` name are unreachable from this environment**, so the recommended set differs from the plan.
 
----
+### 5.1 What is verified reachable
+
+| Need | Source | Key? | Status |
+|---|---|---|---|
+| Hourly irradiance (GHI, DNI, DHI), temperature, RH, wind | **Open-Meteo archive API** (`archive-api.open-meteo.com/v1/archive`) | none | [V] 200; units in `hourly_units`; timezone-aware; returns site `elevation` |
+| Annual PV yield + inter-annual uncertainty | **PVGIS v5_3 `PVcalc`** (EC Joint Research Centre) | none | [V] 200 on both golden lots |
+| PV reference implementation for unit tests | **pvlib 0.16.1** (local wheel) | n/a | [V] downloads |
+| Utility tariff, Los Angeles | **NREL URDB** via `api.openei.org/utility_rates` | free NREL key (`DEMO_KEY` works for probing) | [V] returns LADWP, `eiaid` 11208 |
+
+Verified PVGIS output, 4 kWp, 14 % loss, tilt 20°, azimuth south:
+
+| Lot | `E_y` kWh/yr | `SD_y` | `H(i)_y` kWh/m² | radiation db |
+|---|---|---|---|---|
+| House (LA) | 7,016.92 | ±161.45 | — | PVGIS-ERA5, 2005–2023 |
+| House (LA), tilt 0 | 5,977.53 | ±123.27 | 2,042.5 | PVGIS-ERA5 |
+| Office (Houston), tilt 0 | 4,944.09 | ±191.78 | 1,684.72 | PVGIS-ERA5 |
+
+**`SD_y` is the inter-annual standard deviation across 19 years.** That is a ready-made uncertainty band for the low/expected/high requirement in `SPEC.md` §5 — the solar figure gets a defensible spread without inventing one.
+
+**Open-Meteo returns DNI and DHI already separated from GHI.** So for the hourly path the irradiance *decomposition* step (Erbs 1982) in the `physics.md` brief is **optional** — only the transposition to plane-of-array (Perez 1990) is strictly needed. Worth knowing before that module gets written.
+
+### 5.2 What is blocked, and the caveats
+
+- **`developer.nrel.gov` and `nsrdb.nrel.gov` both fail DNS resolution from this environment** (`curl: (6) Could not resolve host`). So **PVWatts v8 and NSRDB PSM3 are unusable here**, although `api.openei.org` — also NREL-operated — resolves fine. `handoff-plan.md` names PVWatts as a reference implementation for the test plan; use **pvlib locally** instead, with PVGIS as an independent cross-check. [V]
+- **PVGIS offers only `PVGIS-ERA5` for the United States.** `PVGIS-NSRDB` is not a valid value in v5_3, and `PVGIS-SARAH3` answers "location out of the spatial coverage" for Los Angeles. ERA5 is a ~30 km reanalysis, materially coarser than satellite-derived NSRDB, so treat PVGIS as a **sanity band and annual cross-check, not the primary hourly source**. Open-Meteo is the hourly source. [V]
+- **URDB has no tariff at the Houston office coordinates at all** — 0 items for `sector=Commercial`, `sector=Residential`, and with no sector filter. That is consistent with ERCOT's deregulated retail market, where there is no single regulated utility tariff to look up. **The Houston tariff needs a different route** and is currently an open blocker for the office flow's savings figures. Candidates, none yet verified: a named retail provider's published plan, or EIA state average price by sector. [V] the zero result; [P] the replacement
+- **`api.eia.gov` resolves but requires a free API key**, which nobody has yet. It is the most likely Texas fallback (state average retail price by sector, monthly). [P]
+- **Emission factors: eGRID2023 is the current edition** (the EPA page also still references eGRID2022). The relevant subregions are **CAMX** for Los Angeles and **ERCT** for Houston. **The factor values have not been opened**, and per the double-check protocol they are therefore **unverified — do not hardcode them from memory.** The data file must be read before any CO₂ figure is computed. [P]
+- **Measure cost data** is not started. [P]
+
+### 5.3 Consequences for other lanes
+
+1. The analysis lane should write the PV module against **pvlib**, not PVWatts-over-HTTP, and validate against PVGIS annual totals.
+2. The irradiance decomposition module is **optional**, not required, if Open-Meteo is the hourly source.
+3. **Every CO₂ figure is blocked** until eGRID2023 is actually opened. Until then the plan should report energy and dollars, and mark CO₂ unavailable rather than estimated.
+4. **Office-flow dollar savings are blocked in Houston** until a tariff source is settled. The LA home flow is unblocked.
 
 ## 6. Data-lane workflow
 
@@ -344,4 +379,11 @@ Also open: whether a **second zip** exists for the Matterport connection (§2.4)
 | Office lot in Vexcel | live `property/extract` | 2026-11-14 | 1 structure; gable/metal; `building-type.class`=`commercial`; `ac-unit.count`=0 |
 | Office georeference | live query | 2026-11-14 | lat 29.8161169, lon -95.5153827, rotation ≈88.3°, source `processing` |
 | Matterport enums | GraphQL introspection | 2026-11-14 | `OpeningType` includes `window`; `EdgeType` only `invisible`/`wall` |
-| External data sources | — | — | **[P] not started (D9)** |
+| Open-Meteo archive | live, golden house | 2026-11-14 | 200; GHI/DNI/DHI + temp/RH/wind, units documented |
+| PVGIS v5_3 `PVcalc` | live, both golden lots | 2026-11-14 | 200; `E_y`, `SD_y`, `H(i)_y`; ERA5 only for the US |
+| NREL PVWatts / NSRDB | DNS | 2026-11-14 | **unreachable here** — `Could not resolve host` |
+| NREL URDB (LA) | live | 2026-11-14 | LADWP, `eiaid` 11208 |
+| NREL URDB (Houston) | live, 3 sector variants | 2026-11-14 | **0 rates** — ERCOT deregulated; open blocker |
+| pvlib | wheel download | 2026-11-14 | 0.16.1 available locally |
+| EPA eGRID factors | page only | 2026-11-14 | eGRID2023 current; **values not opened, unverified** |
+| Measure cost data | — | — | **[P] not started** |

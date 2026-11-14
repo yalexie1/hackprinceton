@@ -172,6 +172,10 @@ IDs are stable and appear in the contract as `MeasureId`.
 
 A measure is skipped with a stated reason when the role cannot do it, when the model shows it is already done, or when a feasibility flag blocks it.
 
+"Tenant with consent" means the assumption `lease.alteration_consent` is true (a user answer or a document); without it a tenant gets the measure as financeable with the owner's consent, not selected.
+
+Conventions on `MeasureResult.params`, agreed on the board on 2026-11-14 between the measure packages (A16 to A22) and finance (A24): when `applicable` is false, `params["skip_reason"]` holds the machine-readable reason (`role`, `feasibility`, `already_done`, `not_supported`), set by the measure engine, and `not_applicable_reason` holds the sentence. The quantity finance prices is in `params` under the key its cost entry names (for example `floor_area_m2`, `roof_area_m2`, `glazing_area_m2`, `thermostats`); solar size comes from `MeasureResult.solar`. For `PV_ROOF`, `savings.electricity_kwh` is the full production; the netted, self-consumed and exported kWh are in `params`.
+
 Limits the physics spec puts on this table (`specs/physics/02-thermal-systems.md`, sections 10 and 12):
 
 - **`HVAC_RTU` and `HVAC_ECON`** are evaluated only when a packaged rooftop unit is confirmed, by Vexcel, by interior vision, or by the user. Otherwise they return not applicable. `HVAC_ECON` savings are net of the added latent load.

@@ -323,3 +323,108 @@ def test_cpace_region_is_unknown_offline_and_never_asserted_as_false():
     from backend.data_layer import api
 
     assert api.in_pace_region("L3266YcPPvd", live=False) is None
+
+
+# ---------- D17: the state and city when there is no CoStar kit ----------
+
+def _geocoder(city=None, county=None, state="06"):
+    """A geocoder response shaped like the real one. The state arrives as a FIPS
+    string on both the place and the county record; there is no abbreviation in the
+    payload anywhere, which is why `STATE_FIPS` has to exist."""
+    def get(_url, _params):
+        places_ = [{"NAME": city, "STATE": state}] if city else []
+        counties = [{"NAME": county, "STATE": state}] if county else []
+        return {"result": {"geographies": {
+            "Incorporated Places": places_, "Counties": counties}}}
+    return get
+
+
+def test_the_state_comes_back_as_a_usps_code():
+    code, record = places.state_for(29.746, -95.4576,
+                                    get=_geocoder("Houston city", "Harris County", "48"))
+    assert code == "TX"
+    assert record.status == "ok" and record.layer == places.PLACE_LAYER
+    assert "48" in record.detail
+
+
+def test_the_houston_default_this_replaced_would_have_been_wrong():
+    """The bug @Sri-SriPod found: with no kit, `state` was None and the tariff fell
+    back to a hard-coded "CA". For a Houston property that is not a near miss - it
+    swaps the commercial electricity price, the eGRID subregion and the state's legal
+    templates all at once."""
+    assert places.state_for(29.746, -95.4576,
+                            get=_geocoder("Houston city", "Harris County", "48"))[0] == "TX"
+    assert places.state_for(34.036, -118.443,
+                            get=_geocoder("Los Angeles city", "Los Angeles County",
+                                          "06"))[0] == "CA"
+
+
+def test_an_unincorporated_point_still_has_a_state():
+    """6 of the 16 kit properties CoStar labels "Houston" are in no incorporated
+    place. The county record carries the FIPS, so the state is still answerable."""
+    code, record = places.state_for(29.6, -95.2,
+                                    get=_geocoder(None, "Harris County", "48"))
+    assert code == "TX" and record.status == "ok"
+
+
+def test_an_unknown_fips_is_a_record_not_a_guess():
+    code, record = places.state_for(0.0, 0.0, get=_geocoder("Nowhere city", None, "99"))
+    assert code is None
+    assert record.status == "missing" and "99" in record.detail
+
+
+def test_a_failed_lookup_gives_no_state_rather_than_a_default():
+    """`None` must mean "we could not check". A caller substituting "CA" here is the
+    bug, so this asserts the function never does it itself."""
+    def boom(_url, _params):
+        raise RuntimeError("census down")
+
+    code, record = places.state_for(34.0, -118.0, get=boom)
+    assert code is None and record.status == "error"
+
+
+def test_the_fips_table_is_complete_and_unambiguous():
+    """A partial table resolves to None and lands back on the "CA" default, silently -
+    which is the failure this package exists to remove."""
+    assert len(places.STATE_FIPS) == 56, "50 states + DC + 5 territories"
+    assert len(set(places.STATE_FIPS.values())) == len(places.STATE_FIPS)
+    for fips, code in places.STATE_FIPS.items():
+        assert len(fips) == 2 and fips.isdigit()
+        assert len(code) == 2 and code.isupper()
+    for fips, code in (("06", "CA"), ("48", "TX"), ("36", "NY"), ("11", "DC")):
+        assert places.STATE_FIPS[fips] == code
+
+
+def test_the_city_loses_its_census_suffix():
+    name, record = places.city_for(34.036, -118.443,
+                                   get=_geocoder("Los Angeles city", "Los Angeles County"))
+    assert name == "Los Angeles"
+    assert record.status == "ok" and "Los Angeles city" in record.detail
+
+
+def test_only_a_trailing_suffix_is_stripped():
+    """"Oklahoma City" and "Village of Clemmons" must survive; only the Census LSAD
+    tail comes off."""
+    for given, expected in (("Oklahoma City city", "Oklahoma City"),
+                            ("Nassau Bay city", "Nassau Bay"),
+                            ("Houston city", "Houston"),
+                            ("Mount Pleasant town", "Mount Pleasant"),
+                            ("Hollywood CDP", "Hollywood")):
+        assert places.city_for(0.0, 0.0, get=_geocoder(given))[0] == expected
+
+
+def test_the_boundary_rules_still_use_the_full_census_name():
+    """Stripping the suffix everywhere would make `CITY_OF_LA` stop matching, and
+    "Los Angeles" would then also match Los Angeles County - which is how a county
+    property gets handed LADWP."""
+    assert places.CITY_OF_LA == "Los Angeles city"
+    assert "Houston city" in places.TX_PACE_PLACES
+    assert places.utility_for(34.036, -118.443, "CA",
+                              get=_geocoder("Los Angeles city", "Los Angeles County"))[0] \
+        == "LADWP"
+
+
+def test_no_incorporated_place_gives_no_city_which_is_an_answer():
+    name, record = places.city_for(29.6, -95.2, get=_geocoder(None, "Harris County"))
+    assert name is None
+    assert record.status == "missing" and "no incorporated place" in record.detail

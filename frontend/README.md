@@ -91,6 +91,30 @@ SDK behavior on sponsor models remains unverified until configured browser SDK c
 3. Shared run results and event sequences are discovered under `specs/examples/*/` (currently `house`, `office`, and `office_houston`), without editing or copying the spec files. Additional frontend-owned stress fixtures live in `frontend/fixtures/`, outside the default property picker. Both sources validate against the current Pydantic contract. Shared examples have one saved budget each; arbitrary budget and role changes require the live backend.
 4. The financial breakdown and legal checklist depend on the analysis/legal owners. This frontend supplies no production pricing, physics, incentive rules, or statutory contract language.
 
+## Actual property thumbnails
+
+Property cards read the cached-only property preview endpoint. An optional private
+Vexcel photo manifest can override the crop and direction through the existing
+asset API, while keeping the canonical photos as fallbacks. Missing photos fall back to a
+clearly labeled overhead image. Browsing never fetches sponsor imagery or starts
+an analysis. A thumbnail is geographic context, not the capture used for roof
+measurements; those may have different dates.
+
+Prepare photos from a verified scan location from the repository root:
+
+```bash
+uv run --with-requirements frontend/scripts/integration-requirements.txt --with python-dotenv \
+  python frontend/scripts/cache_property_photos.py MODEL_ID LATITUDE LONGITUDE --prefer west
+```
+
+The helper reads `VEXCEL_API_KEY` from the private `.env`, uses the data lane's
+existing clients, and writes only ignored `data/cache/` files. Use the repository's
+default cache for both this command and the backend (unset `DATA_LAYER_CACHE_DIR`).
+`--context-m 45` requests a wider real geographic image when a narrow parcel clips
+the building; it does not change any property boundary or analysis geometry.
+The prepared manifest preserves that crop and preferred direction. The house uses
+a wider west view; Culver a north view; Houston a west view.
+
 ## Checks
 
 ```bash

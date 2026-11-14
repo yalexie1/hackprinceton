@@ -1487,9 +1487,9 @@
   },
   "baseline_after": {
     "electricity_kwh": {
-      "low": 77357.26,
-      "expected": 100222.05,
-      "high": 135076.25,
+      "low": 76325.8,
+      "expected": 99022.05,
+      "high": 133679.86,
       "unit": "kWh"
     },
     "gas_kwh": {
@@ -1499,15 +1499,15 @@
       "unit": "kWh"
     },
     "cost_usd": {
-      "low": 6642.05,
-      "expected": 9383.6,
-      "high": 16276.39,
+      "low": 6546.42,
+      "expected": 9275.6,
+      "high": 16114.38,
       "unit": "USD"
     },
     "co2_kg": {
-      "low": 27679.77,
-      "expected": 35316.7,
-      "high": 46916.28,
+      "low": 27335.15,
+      "expected": 34915.75,
+      "high": 46449.45,
       "unit": "kg"
     },
     "co2_nonbaseload_kg": null

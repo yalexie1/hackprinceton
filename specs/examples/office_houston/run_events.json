@@ -146,9 +146,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 11154.82,
-        "expected": 13167.0,
-        "high": 19824.36,
+        "low": 11063.7,
+        "expected": 13059.0,
+        "high": 19660.42,
         "unit": "USD"
       }
     }

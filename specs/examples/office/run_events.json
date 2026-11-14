@@ -63,6 +63,16 @@
   {
     "type": "fallback",
     "stage": "S2",
+    "message": "Electricity priced at the EIA California state average, not a LADWP schedule",
+    "payload": {
+      "layer": "tariff",
+      "from": "utility tariff",
+      "to": "EIA state average (CA COM, 2026-08)"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
     "message": "No aerial splat for this model; using the Vexcel flat roof",
     "payload": {
       "layer": "matterport",
@@ -167,9 +177,9 @@
       "kind": "baseline",
       "artifact": "/run/baseline.json",
       "annual_cost_usd": {
-        "low": 9866.97,
-        "expected": 12338.0,
-        "high": 15632.63,
+        "low": 13617.24,
+        "expected": 16600.96,
+        "high": 20294.1,
         "unit": "USD"
       }
     }

@@ -1320,9 +1320,9 @@
   "baseline": {
     "annual": {
       "electricity_kwh": {
-        "low": 121380.0,
-        "expected": 142800.0,
-        "high": 171360.0,
+        "low": 120360.0,
+        "expected": 141600.0,
+        "high": 169920.0,
         "unit": "kWh"
       },
       "gas_kwh": {
@@ -1332,15 +1332,15 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 11154.82,
-        "expected": 13167.0,
-        "high": 19824.36,
+        "low": 11063.7,
+        "expected": 13059.0,
+        "high": 19660.42,
         "unit": "USD"
       },
       "co2_kg": {
-        "low": 42176.16,
-        "expected": 49344.83,
-        "high": 58900.12,
+        "low": 41835.25,
+        "expected": 48943.88,
+        "high": 58419.08,
         "unit": "kg"
       },
       "co2_nonbaseload_kg": null
@@ -1348,24 +1348,24 @@
     "end_use_kwh": {
       "heating": 9000.0,
       "cooling": 48000.0,
-      "water_heating": 1200.0,
+      "water_heating": 0.0,
       "lighting": 50600.0,
       "plug": 43000.0,
       "appliances": 0.0
     },
     "monthly_electricity_kwh": [
-      8619.7,
-      8332.4,
-      9769.0,
-      10918.3,
-      13216.9,
-      14940.8,
-      16090.1,
-      16377.5,
-      14366.2,
-      12067.6,
-      9481.7,
-      8619.8
+      8519.7,
+      8232.4,
+      9669.0,
+      10818.3,
+      13116.9,
+      14840.8,
+      15990.1,
+      16277.5,
+      14266.2,
+      11967.6,
+      9381.7,
+      8519.8
     ],
     "monthly_gas_kwh": [
       2368.4,
@@ -4843,9 +4843,9 @@
     },
     "baseline_after": {
       "electricity_kwh": {
-        "low": 77357.26,
-        "expected": 100222.05,
-        "high": 135076.25,
+        "low": 76325.8,
+        "expected": 99022.05,
+        "high": 133679.86,
         "unit": "kWh"
       },
       "gas_kwh": {
@@ -4855,15 +4855,15 @@
         "unit": "kWh"
       },
       "cost_usd": {
-        "low": 6642.05,
-        "expected": 9383.6,
-        "high": 16276.39,
+        "low": 6546.42,
+        "expected": 9275.6,
+        "high": 16114.38,
         "unit": "USD"
       },
       "co2_kg": {
-        "low": 27679.77,
-        "expected": 35316.7,
-        "high": 46916.28,
+        "low": 27335.15,
+        "expected": 34915.75,
+        "high": 46449.45,
         "unit": "kg"
       },
       "co2_nonbaseload_kg": null
@@ -4917,10 +4917,11 @@
       "impact_note": "Unit size sets the cost of replacement and the economizer saving; at the low end the economizer moves closer to the budget."
     }
   ],
-  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for Suite 500: 142,800 kWh of electricity and 9,000 kWh of gas a year, about $13,167 (range $11,155 to $19,824). The electricity price is a published Texas average, not your tariff.\n\nWithin the $50,000 budget the plan selects desk placement, the LED retrofit and a 1.72 kW rooftop array with the money left, for $49,442 upfront, saving about $3,783 a year (range $1,996 to $5,743).\n\nVexcel counts two rooftop units, so unit replacement and an economizer were evaluated. Neither fits the budget. With C-PACE the units would be financed at $68,910 over 20 years (program savings ratio 0.16) and the economizer at $12,088 over 15 years (ratio 0.19). Both are below the 1.0 the Texas program requires, so neither is eligible as it stands. The property is inside the City of Houston PACE region. An assessment is a first lien that runs with the land, and a mortgage holder's written consent is a precondition.\n\nValue uplift: capitalised at the rates of 16 comparable sales, the plan's savings correspond to about $20,684 of property value (range $0 to $81,187). This is an estimate shown beside the totals; it is not added to the savings.\n",
+  "narrative_md": "## Audit summary (illustrative example)\n\nBaseline for Suite 500: 141,600 kWh of electricity and 9,000 kWh of gas a year, about $13,059 (range $11,064 to $19,660). Office hot water is not modelled. The electricity price is a published Texas average, not your tariff.\n\nWithin the $50,000 budget the plan selects desk placement, the LED retrofit and a 1.72 kW rooftop array with the money left, for $49,442 upfront, saving about $3,783 a year (range $1,996 to $5,743).\n\nVexcel counts two rooftop units, so unit replacement and an economizer were evaluated. Neither fits the budget. With C-PACE the units would be financed at $68,910 over 20 years (program savings ratio 0.16) and the economizer at $12,088 over 15 years (ratio 0.19). Both are below the 1.0 the Texas program requires, so neither is eligible as it stands. The property is inside the City of Houston PACE region. An assessment is a first lien that runs with the land, and a mortgage holder's written consent is a precondition.\n\nValue uplift: capitalised at the rates of 16 comparable sales, the plan's savings correspond to about $20,684 of property value (range $0 to $81,187). This is an estimate shown beside the totals; it is not added to the savings.\n",
   "warnings": [
     "LGT_LED and PV_ROOF may exceed budget at the high end of their cost ranges.",
     "Windows were read from panoramas: the scan has no openings.",
-    "The electricity price is a published default, not a tariff."
+    "The electricity price is a published default, not a tariff.",
+    "Office hot water is not modelled (physics 02 DHW-02): the baseline's water_heating is 0."
   ]
 }

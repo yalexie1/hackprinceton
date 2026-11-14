@@ -241,9 +241,14 @@ def test_fixture_expected_values_reproduced(name):
     assert not any("unconfirmed" in w for w in m.warnings)
 
 
-def test_house_fixture_low_and_high_from_production_range():
+def test_house_fixture_low_and_high_from_production_and_price_range():
+    # the house is priced at the EIA California average with a registry range (data-integration
+    # 5.1c), so the fixture's band combines the production range and the price range
     bundle, baseline, fx = _fixture("house")
-    m = evaluate_pv(fx.solar, baseline, bundle.tariff, state="CA")
+    model = json.loads((EXAMPLES / "house" / "building_model.json").read_text())
+    price = Ranged(**next(a["value"] for a in model["assumptions"]
+                          if a["key"] == "tariff.electricity_usd_per_kwh"))
+    m = evaluate_pv(fx.solar, baseline, bundle.tariff, state="CA", electricity_price=price)
     assert m.savings.cost_usd.low == pytest.approx(fx.savings.cost_usd.low, abs=0.02)
     assert m.savings.cost_usd.high == pytest.approx(fx.savings.cost_usd.high, abs=0.02)
     assert any("service upgrade" in w or "not in the installed cost" in w for w in m.warnings)

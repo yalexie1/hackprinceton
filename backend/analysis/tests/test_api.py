@@ -39,7 +39,8 @@ def test_every_example_folder_is_found():
 
 
 @pytest.mark.parametrize("flavor", FLAVORS)
-def test_the_door_runs_end_to_end_on_the_fixture(flavor):
+def test_the_door_runs_end_to_end_on_the_fixture(flavor, monkeypatch):
+    monkeypatch.setattr(api, "_ask_questions", lambda m, plan_fn: [])      # the real rule is tested in test_wiring
     bundle, request = load(flavor)
     assumptions, flags = api.observe_interior(bundle)
     assert assumptions and all(isinstance(a, Assumption) for a in assumptions)
@@ -120,10 +121,12 @@ def test_measure_missing_from_the_example_is_not_applicable_not_a_crash():
 
 
 def test_unknown_sid_raises_lookup_error():
+    """The stubs that replay an example (observe_interior, score_desk_positions) need a known sid;
+    the physics does not look at the sid at all."""
     bundle, _ = load("house")
     bad = bundle.model_copy(update={"summary": bundle.summary.model_copy(update={"sid": "nope"})})
     with pytest.raises(LookupError):
-        api.run_baseline(bad, api.build_building_model(load("house")[0]))
+        api.observe_interior(bad)
 
 
 def test_results_are_deterministic():

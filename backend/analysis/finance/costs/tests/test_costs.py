@@ -239,3 +239,12 @@ def test_results_are_deterministic():
     m = measure("HVAC_HP", params={"capacity_tons": 3, "seer2": 16.5, "hspf2": 8.2})
     a, b = cost_fields(m, summary()), cost_fields(m, summary())
     assert a == b
+
+
+def test_a_per_kwh_incentive_is_never_negative_when_the_measure_costs_energy():
+    m = measure("HVAC_RTU", savings={"electricity_kwh": Ranged(low=-900, expected=-400, high=-100, unit="kWh"),
+                                     "gas_kwh": Ranged(low=0, expected=0, high=0, unit="kWh"),
+                                     "cost_usd": usd(-90, -40, -10), "co2_kg": Ranged(low=0, expected=0, high=0, unit="kg")})
+    for confirmed in ({}, {"confirmed": True}):
+        boss = only(incentives_for(m, summary(segment="commercial"), extra=confirmed), "BOSS")
+        assert boss.amount_usd.low == boss.amount_usd.expected == boss.amount_usd.high == 0.0

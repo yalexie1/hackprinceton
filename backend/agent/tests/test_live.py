@@ -16,6 +16,16 @@ from backend.agent.fixtures import EXAMPLES, flavors
 from backend.schema import RunRequest, RunResult
 
 
+def stub_doors():
+    """Data and legal from their lanes, analysis from the agent lane's fixture-backed stub: these tests
+    are about the agent's plumbing, not about the physics, and run offline in a moment."""
+    from backend.agent import analysis_stub
+    from backend.agent.tools import Doors
+    from backend.data_layer import api as data
+    from backend.legal import api as legal
+    return Doors(data=data, analysis=analysis_stub, legal=legal)
+
+
 class Scripted(GenericFakeChatModel):
     def bind_tools(self, tools, **kwargs: Any):
         return self
@@ -56,7 +66,7 @@ def live_mode(tmp_path, monkeypatch):
 
     def configure(req):
         model, sub = script(req.sid)
-        monkeypatch.setattr(live, "SETTINGS", live.LiveSettings(model=model, subagent_model=sub,
+        monkeypatch.setattr(live, "SETTINGS", live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
                                                                 runs_dir=tmp_path))
     return configure
 
@@ -156,7 +166,7 @@ def test_server_drives_a_live_run_and_a_document(live_mode):
 def test_an_agent_failure_becomes_an_error_event(live_mode, tmp_path, monkeypatch):
     req = request()
     monkeypatch.setattr(live, "SETTINGS", live.LiveSettings(
-        model=Scripted(messages=iter([])), subagent_model=Scripted(messages=iter([])), runs_dir=tmp_path))
+        doors=stub_doors(), model=Scripted(messages=iter([])), subagent_model=Scripted(messages=iter([])), runs_dir=tmp_path))
     run_id = api.start_run(req)
     events = drain(run_id)
     assert events[-1].type == "error"
@@ -190,7 +200,7 @@ def test_parallel_tool_calls_do_not_lose_measures(tmp_path):
     from concurrent.futures import ThreadPoolExecutor
     req = request()
     model, sub = script(req.sid)
-    run = live.LiveRun("run_lock", req, live.LiveSettings(model=model, subagent_model=sub,
+    run = live.LiveRun("run_lock", req, live.LiveSettings(model=model, subagent_model=sub, doors=stub_doors(),
                                                           runs_dir=tmp_path))
     t = run.tools
     t["get_property_bundle"](req.sid)

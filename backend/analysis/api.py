@@ -1,13 +1,17 @@
 """Public door of the Analysis lane (workplan 3.2). The only module other lanes import.
 
-Every function keeps its final signature. A29 replaces the A0 stubs (which return the matching
-example in `specs/examples/`) with the real modules as they merge. Wired so far, marked REAL
-below: the model (A9 geometry, A10 registry, A11 roof), pricing and incentives (A24, A25) and
-the budget plan (A26). Still replaying fixtures, marked STUB, until their packages land:
-observe_interior (A7), run_baseline (A2, A3), evaluate_measure (A16 to A22), design_pv (A14),
-score_desk_positions (A23), cpace_scenario (A28) and sensitivity (the real one, A27, is ready
-but the stub measures do not respond to the model, so it would never ask). Pure, deterministic,
-no network, no file writes.
+Every function keeps its final signature. A29 replaces the A0 stubs with the real modules as
+they merge; a stub replays the matching example in `specs/examples/`. REAL now: the model (A9
+geometry, A10 registry, A11 roof), the baseline (A3 systems with A2 zone loads and A1 climate),
+measures (the A16 engine with every plug-in that is registered: A21, A22, and A17, A18, A20
+as soon as their packages exist), solar (A11 roof, A14 layout, A1 and A4 yield, the A19
+measure), pricing and incentives (A24, A25), the budget plan (A26) and its value uplift (A30).
+STILL FIXTURE-BACKED, and switching by itself when the package lands: a measure with no
+registered plug-in (replays the example's evaluation, marked in its warnings), observe_interior
+(A7 needs a model client: `set_vision`), score_desk_positions (A23), cpace_scenario (no rate or
+term source yet) and sensitivity (the real one, A27, takes over once the envelope, lighting and
+heating-and-cooling plug-ins are all registered, so that the plan answers to the model).
+Pure and deterministic; no network.
 
 Examples are found by scanning `specs/examples/` for folders with a `run_result.json` and
 reading the sid out of it: no folder name and no sid is hard-coded, so repointing `office/`
@@ -15,18 +19,34 @@ or adding `office_houston/` needs no change here.
 """
 from __future__ import annotations
 
+import contextvars
+import hashlib
+import importlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
-from backend.analysis.finance.costs import NoCostData, cost_fields, incentives_for
+import numpy as np
+
+from backend.analysis.finance.costs import NoCostData, cost_fields, incentives_for, measure_cost
 from backend.analysis.finance.economics import financial_breakdown
 from backend.analysis.finance.plan import select_plan
+from backend.analysis.finance.sensitivity import sensitivity as _ask_questions
 from backend.analysis.finance.value import home_pv_uplift, plan_value_uplift
+from backend.analysis.measures import engine
+from backend.analysis.measures.pv import evaluate_pv
+from backend.analysis.physics.climate import ClimateHours, Weather, load_climate, plane_irradiance, read_site_weather, read_weather
+from backend.analysis.physics.pv import energy_range, pv_hourly_yield
+from backend.analysis.physics.systems import (HourlyLoads, SystemsBaseline, calendar_from_stamps,
+                                              egrid_subregion, internal_gains_hourly, systems_baseline)
+from backend.analysis.physics.zone import zone_loads
+from backend.analysis.solar.layout import Module, layout_pv
 from backend.analysis.model.geometry import build_geometry
 from backend.analysis.model.registry import (build_registry, merge_assumptions, scanned_floor_area_m2,
                                              set_model_assumption)
 from backend.analysis.solar.roof import build_parametric_roof
+from backend.analysis.vision import observe_interior as _vision_interior
 from backend.schema import (Assumption, BaselineResult, BuildingModel, EnergyUse, FinancingScenario,
                             Flag, Incentive, LayoutResult, MeasureId, MeasureResult, Plan,
                             PropertyBundle, PropertySummary, Question, Ranged, Role, RunRequest,
@@ -67,7 +87,21 @@ def _not_in_fixture(measure_id: str) -> MeasureResult:
 
 # ---------- S3 See ----------
 
+_VISION: dict = {"ask_model": None, "get_bytes": None}
+
+
+def set_vision(ask_model: Optional[Callable] = None, get_bytes: Optional[Callable] = None) -> None:
+    """Give the door a model client and an image reader so observe_interior runs A7 (panoramas
+    to glazing, HVAC, water heater and lighting). Sending sponsor imagery to an external model
+    waits for the answer to SPEC 16, so the default is none, and the example observations are
+    used instead."""
+    _VISION["ask_model"], _VISION["get_bytes"] = ask_model, get_bytes
+
+
 def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Flag]]:
+    """REAL (A7) when `set_vision` has been called; otherwise the example's observations."""
+    if _VISION["ask_model"] is not None and _VISION["get_bytes"] is not None:
+        return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"])
     m = BuildingModel.model_validate(_load(_folder(bundle.summary.sid), "building_model.json"))
     return list(m.assumptions), list(m.flags)
 
@@ -100,44 +134,256 @@ def set_assumption(model: BuildingModel, key: str, value: float | str | bool,
     return set_model_assumption(model, key, value, source)
 
 
-# ---------- S5 Baseline ----------
+# ---------- climate and the simulate function ----------
+
+_WEATHER_SAMPLES = _EXAMPLES / "weather"
+_SAMPLE_FILE = {"CA": "typical_year_hourly.csv", "TX": "typical_year_hourly_houston.csv"}
+_CLIMATE_CACHE: dict[tuple, tuple[ClimateHours, Weather, tuple[str, ...]]] = {}
+_SIM_CACHE: dict[str, SystemsBaseline] = {}
+_SIM_CACHE_MAX = 512
+_DESIGN_CACHE: dict[str, SolarDesign] = {}
+
+# Assumptions that move the zone loads, run at low and at high so the baseline range reflects
+# them (A2 and A3 handoff note): envelope, glazing, infiltration, setpoints and internal gains.
+_A3_OWN_KEYS = ("lighting.lpd", "plug.ppd", "occupancy.count")
+_LOAD_KEYS = ("wall.u_value", "roof.u_value", "roof.absorptance", "window.u_value", "window.shgc",
+              "infiltration.ach50", "infiltration.leakage_75pa", "setpoint.heating", "setpoint.cooling",
+              "lighting.lpd", "plug.ppd", "occupancy.count")
+
+
+def _climate(bundle: PropertyBundle) -> tuple[ClimateHours, Weather, tuple[str, ...]]:
+    """The site's weather year with the sun for every hour (A1). When the cached file of the
+    site is not on disk, the example year of the same state is used and the notes say so."""
+    key = (bundle.summary.sid, bundle.climate.weather_path)
+    if key not in _CLIMATE_CACHE:
+        site, notes = bundle.climate, ()
+        try:
+            weather = read_site_weather(site)
+        except FileNotFoundError:
+            sample = _WEATHER_SAMPLES / _SAMPLE_FILE[bundle.summary.state]
+            weather = read_weather(sample, site.timezone, site.weather_time_convention,
+                                   source=f"example year {sample.name}")
+            notes = (f"weather: the site file is not cached, so the example year {sample.name} was used",)
+        _CLIMATE_CACHE[key] = (load_climate(site, weather=weather), weather, notes)
+    return _CLIMATE_CACHE[key]
+
+
+def _floor_area(model: BuildingModel) -> float:
+    conditioned = [z.floor_area_m2 for z in model.zones if z.conditioned]
+    return float(sum(conditioned) or sum(z.floor_area_m2 for z in model.zones))
+
+
+def _zone_run(bundle: PropertyBundle, model: BuildingModel, hours: ClimateHours, weather: Weather,
+              cal) -> tuple[HourlyLoads, dict]:
+    """A3 internal gains -> A2 zone model -> hourly loads for A3."""
+    area = _floor_area(model)
+    gains = internal_gains_hourly(model.systems, area, cal, model.bedrooms, len(hours.temp_c))
+    cache: dict = {}
+
+    def irradiance(tilt, azimuth):
+        k = (round(tilt or 0.0, 3), round(180.0 if azimuth is None else azimuth, 3))
+        if k not in cache:
+            cache[k] = plane_irradiance(hours, k[0], k[1])["poa_global"]
+        return cache[k]
+
+    loads = zone_loads(model, hours.temp_c, irradiance, gains["sensible_w"], wind_m_s=weather.wind_m_s,
+                       stamps=hours.stamps, latent_gains_w=gains["latent_w"])
+    need = np.asarray(loads.phi_hc_w, dtype=float)
+    return HourlyLoads(heating_need_w=np.maximum(need, 0.0), cooling_need_w=np.maximum(-need, 0.0),
+                       outdoor_temp_c=np.asarray(hours.temp_c, dtype=float)), {"zone": loads}
+
+
+def _variant_model(bundle: PropertyBundle, model: BuildingModel, key: str, value: float) -> BuildingModel:
+    """The model rebuilt with one assumption collapsed to `value` (geometry and systems follow)."""
+    keep = {a.key: a.value.expected if isinstance(a.value, Ranged) else a.value
+            for a in model.assumptions if a.source == "user"}
+    observed = [a for a in model.assumptions if a.source == "vision"]
+    return build_building_model(bundle, observed, model.flags, {**keep, key: value})
+
+
+def _simulate(bundle: PropertyBundle, model: BuildingModel) -> SystemsBaseline:
+    """S5 for one state of the building, memoised on its content (the plan asks for the same
+    state many times). The range comes from re-running the zone model with each load-driving
+    assumption at its low and high; in fast mode (exploring a plan, the ask rule) that is skipped
+    and the range is the price range alone."""
+    fast = _FAST.get()
+    stamp = hashlib.sha256(((b"fast" if fast else b"full") + (bundle.summary.sid + bundle.climate.weather_path
+                                                              + model.model_dump_json()).encode())).hexdigest()
+    if stamp in _SIM_CACHE:
+        return _SIM_CACHE[stamp]
+    hours, weather, _ = _climate(bundle)
+    cal = calendar_from_stamps(hours.stamps, bundle.climate.weather_time_convention)
+    loads, _ = _zone_run(bundle, model, hours, weather, cal)
+    variants = {}
+    for a in ([] if fast else model.assumptions):
+        if a.key in _LOAD_KEYS and a.user_editable and isinstance(a.value, Ranged) and a.value.low < a.value.high:
+            runs = []
+            for value in (a.value.low, a.value.high):
+                runs.append(_zone_run(bundle, _variant_model(bundle, model, a.key, value), hours, weather, cal)[0])
+            # A3 already varies lighting, plug and occupant energy under these keys; the same inputs
+            # also change the heat gains the zone model sees, which is a separate effect.
+            name = f"zone.{a.key}" if a.key in _A3_OWN_KEYS else a.key
+            variants[name] = (runs[0], runs[1])
+    result = systems_baseline(model.systems, bundle.tariff, loads, floor_area_m2=_floor_area(model),
+                              subregion=egrid_subregion(bundle.summary.state), bedrooms=model.bedrooms,
+                              calendar=cal, assumptions=model.assumptions, load_variants=variants)
+    if len(_SIM_CACHE) >= _SIM_CACHE_MAX:
+        _SIM_CACHE.pop(next(iter(_SIM_CACHE)))
+    _SIM_CACHE[stamp] = result
+    return result
+
+
+def _simulate_baseline(bundle: PropertyBundle, model: BuildingModel) -> BaselineResult:
+    return _simulate(bundle, model).baseline
+
+
+# ---------- S5 Baseline ----------   REAL: A3 -> A2 -> A3, A1 climate
 
 def run_baseline(bundle: PropertyBundle, model: BuildingModel,
                  bills: UtilityBills | None = None) -> BaselineResult:
-    return BaselineResult.model_validate(_load(_folder(bundle.summary.sid), "baseline_result.json"))
+    return _simulate_baseline(bundle, model)          # bill calibration is A6 (P2)
 
 
 # ---------- S6 Measures ----------
 
+def _register_plugins() -> None:
+    """Register every measure package that exists, in the shape the A16 engine documents:
+    a MEASURES dict of MeasureId -> (check, change, describe, formula_ids). A package that has
+    not landed yet is simply absent, and its measures keep replaying the example."""
+    for name in ("envelope", "systems", "walls_windows", "hvac_dhw", "controls"):
+        try:
+            module = importlib.import_module(f"backend.analysis.measures.{name}")
+        except ImportError:
+            continue
+        for measure_id, (check, change, describe, formula_ids) in getattr(module, "MEASURES", {}).items():
+            engine.register(measure_id, change=change, describe=describe, check=check, formula_ids=formula_ids)
+    engine.register("PV_ROOF", change=lambda bundle, model: model.model_copy(deep=True),
+                    describe=_describe_pv, formula_ids=("PV-01", "PV-02", "PV-03", "PV-04", "PV-05",
+                                                        "PV-06", "PV-09", "LAY-03", "ROOF-04"))
+
+
 def evaluate_measure(bundle: PropertyBundle, model: BuildingModel, measure_id: MeasureId,
                      role: Role, desks_requested: int | None = None) -> MeasureResult:
-    found = _measure(bundle.summary.sid, measure_id)
-    return found.model_copy(update={"finance": None}) if found else _not_in_fixture(measure_id)
+    """REAL (A16 engine) for every registered measure. One with no plug-in yet replays the
+    example's evaluation and says so; with no example either it is not applicable."""
+    result = engine.evaluate(bundle, model, measure_id, role, _simulate_baseline,
+                             desks_requested=desks_requested, simulate_formula_ids=_SIM_FORMULAS)
+    if engine.skip_reason(result) != "not_supported":
+        return result
+    stub = _measure(bundle.summary.sid, measure_id)
+    if stub is None:
+        return result
+    return stub.model_copy(update={"finance": None, "warnings": [
+        *stub.warnings, "A0 stub: this measure's package is not registered yet; the example's evaluation is shown"]})
+
+
+_SIM_FORMULAS = ("ZON-01", "ZON-04", "ENV-03", "INF-01", "HVAC-01", "LGT-03", "TAR-01", "EMI-01", "UNC-02")
+
+
+# ---- solar: A11 roof planes -> A14 layout, with the A1 climate and A4 chain behind the yield ----
+
+_FAST: contextvars.ContextVar[bool] = contextvars.ContextVar("fast_simulation", default=False)
+_PV_BUDGET: contextvars.ContextVar[Optional[float]] = contextvars.ContextVar("pv_budget", default=None)
+_NO_WIND_M_S = 1.0     # the weather file has no wind column: a light breeze is assumed for the cell temperature
+
+
+def _plane_hourly(bundle: PropertyBundle, tilt: float, azimuth: float) -> np.ndarray:
+    """Hourly AC kWh per kW DC on one plane (A1 transposition, then the A4 chain)."""
+    hours, weather, _ = _climate(bundle)
+    poa = plane_irradiance(hours, tilt, azimuth)
+    wind = weather.wind_m_s if weather.wind_m_s is not None else np.full(len(hours.temp_c), _NO_WIND_M_S)
+    return pv_hourly_yield(poa["poa_beam"], poa["poa_sky_diffuse"], poa["poa_ground"], poa["incidence_deg"],
+                           hours.temp_c, wind).ac_kwh_per_kw
+
+
+def _plane_yield(bundle: PropertyBundle, plane) -> Ranged:
+    """Annual kWh per kW DC of a plane with the PV-09 range: the tilt range as extra runs, then the
+    weather spread from PVGIS."""
+    tilt, az = plane.tilt_deg, plane.azimuth_deg
+    expected = float(_plane_hourly(bundle, tilt.expected, az).sum())
+    others = [float(_plane_hourly(bundle, t, az).sum()) for t in (tilt.low, tilt.high)]
+    ranged, _ = energy_range(expected, others, bundle.climate.pvgis_sd_fraction, unit="kWh/kW")
+    return ranged
+
+
+def _feasibility(model: BuildingModel) -> tuple[Flag, Flag]:
+    def flag(key: str, message: str) -> Flag:
+        return next((f for f in model.flags if f.key == key),
+                    Flag(key=key, status="unknown", message=message))
+    return (flag("electrical.service", "Main panel not seen; a service upgrade may be needed."),
+            flag("roof.structure", "Roof structure not assessed."))
+
+
+def _design(bundle: PropertyBundle, model: BuildingModel, baseline: BaselineResult,
+            budget_usd: Optional[float]) -> SolarDesign:
+    electrical, structural = _feasibility(model)
+    consumption = baseline.annual.electricity_kwh.expected
+    key = hashlib.sha256(json.dumps([bundle.summary.sid, bundle.climate.weather_path,
+                                     [p.model_dump(mode="json") for p in model.roof_planes],
+                                     electrical.model_dump(mode="json"), structural.model_dump(mode="json"),
+                                     budget_usd, round(consumption, 3)], sort_keys=True).encode()).hexdigest()
+    if key in _DESIGN_CACHE:                      # packing a large flat roof takes seconds
+        return _DESIGN_CACHE[key]
+    cache: dict[str, Ranged] = {}
+
+    def yield_fn(plane, polygon_wkt):
+        if plane.id not in cache:
+            cache[plane.id] = _plane_yield(bundle, plane)
+        return cache[plane.id]
+
+    module_w = Module().watts
+
+    def installed_cost(count: int) -> float:
+        return _pv_installed_cost(bundle, count * module_w)
+    design = layout_pv(list(model.roof_planes), electrical, structural, yield_fn, budget_usd,
+                       consumption if consumption > 0 else None, installed_cost_usd=installed_cost)
+    if len(_DESIGN_CACHE) >= 128:
+        _DESIGN_CACHE.pop(next(iter(_DESIGN_CACHE)))
+    _DESIGN_CACHE[key] = design
+    return design
+
+
+def _pv_installed_cost(bundle: PropertyBundle, watts_dc: float) -> float:
+    """A24's installed cost of PV for a system of this size, the number A14 compares with the budget."""
+    return measure_cost("PV_ROOF", watts_dc, bundle.summary.segment)[0].expected
 
 
 def design_pv(bundle: PropertyBundle, model: BuildingModel, baseline: BaselineResult,
               budget_usd: float | None = None) -> SolarDesign:
-    pv = _measure(bundle.summary.sid, "PV_ROOF")
-    if pv is None or pv.solar is None:
-        raise LookupError("A0 stub: this example has no solar design")
-    return pv.solar
+    """REAL: A14 fills the A11 roof planes in order of yield and stops at the roof, the budget or
+    the site's annual consumption; the yield of each plane is the A1 climate through the A4 chain."""
+    return _design(bundle, model, baseline, budget_usd)
+
+
+def _describe_pv(bundle: PropertyBundle, model: BuildingModel, changed: BuildingModel,
+                 before: BaselineResult, options: dict) -> MeasureResult:
+    """The PV_ROOF card for the A16 engine: the design (A14) and its value (A19). The budget is what
+    the plan has left; evaluated alone there is none, and the roof or the consumption stops the fill."""
+    design = _design(bundle, model, before, _PV_BUDGET.get())
+    existing = (build_parametric_roof(bundle.vexcel, model.north_offset_deg.expected,
+                                      state=bundle.summary.state).existing_solar if bundle.vexcel else False)
+    hourly = None
+    if design.panels:
+        planes = {p.id: p for p in model.roof_planes}
+        kw: dict[str, float] = {}
+        for panel in design.panels:
+            kw[panel.plane_id] = kw.get(panel.plane_id, 0.0) + (design.module_w or Module().watts) / 1000.0
+        parts = [_plane_hourly(bundle, planes[pid].tilt_deg.expected, planes[pid].azimuth_deg) * k
+                 for pid, k in kw.items() if pid in planes]
+        hourly = sum(parts) if parts else None
+    return evaluate_pv(design, before, bundle.tariff, hourly_pv_kwh=hourly, existing_solar=bool(existing),
+                       state=bundle.summary.state)
 
 
 def score_desk_positions(bundle: PropertyBundle, model: BuildingModel,
                          desks_requested: int | None = None) -> LayoutResult:
+    """STUB until A23: the example's desk layout."""
     layout = _measure(bundle.summary.sid, "LAYOUT")
     if layout is None or layout.layout is None:
         raise LookupError("A0 stub: this example has no desk layout")
     return layout.layout
 
 
-# ---------- S7 Plan ----------
-
-# Home and office columns of the SPEC 6.2 measure library.
-_HOME = ("ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE", "ROOF_COOL",
-         "HVAC_HP", "HVAC_DUCT", "DHW_HPWH", "LGT_LED", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
-_OFFICE = ("ENV_ATTIC", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE", "ROOF_COOL", "HVAC_RTU",
-           "HVAC_ECON", "LGT_LED", "LGT_CTRL", "PLUG_MGMT", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
 _FORMULAS = ["COST-01", "COST-02", "ECO-05", "ECO-06", "ECO-07", "ECO-09", "ECO-10", "ECO-11", "ECO-13",
              "INC-40"]
 
@@ -187,27 +433,74 @@ def lookup_incentives(measure_id: MeasureId, summary: PropertySummary) -> list[I
     return incentives_for(found, summary)
 
 
-def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
-    """REAL algorithm (A26, SPEC 6.5) over the stub engine's measures priced by A24 and A25, with
-    the value uplift of A30.
-    The state is the model plus the measures chosen so far; the stub engine does not yet change
-    its savings with the state, and `baseline_after` is the baseline less the chosen savings."""
-    columns = _HOME if model.systems.occupancy_schedule == "home" else _OFFICE
-    ids = [m for m in columns if _measure(bundle.summary.sid, m) is not None]    # the stub engine's measures
-    baseline = run_baseline(bundle, model, request.bills)
+@dataclass(frozen=True)
+class _PlanState:
+    """The building as the plan has changed it so far."""
+    model: BuildingModel
+    stub_savings: tuple = ()        # savings of measures replayed from the example (they cannot change the model)
+    spent: float = 0.0              # net upfront cash of the measures chosen
+    applied: int = 0                # how many measures have been chosen
+
+
+def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
+            wanted: Optional[frozenset] = None) -> Plan:
+    """One run of the SPEC 6.5 algorithm. Every measure is evaluated in fast mode (the expected
+    values decide the order) except the (measure, round) pairs in `wanted`, which get the full
+    ranges."""
+    summary = bundle.summary
+    ids = [m for m, entry in engine.CATALOGUE.items()
+           if engine.flow_of(summary) in entry.flows
+           and (m in engine.REGISTRY.plugins or _measure(summary.sid, m) is not None)]
 
     def evaluate(measure_id, state):
-        found = evaluate_measure(bundle, state[0], measure_id, request.role, request.desks_requested)
+        full = wanted is not None and (measure_id, state.applied) in wanted
+        tokens = (_PV_BUDGET.set(max(0.0, request.budget_usd - state.spent)), _FAST.set(not full))
+        try:
+            found = evaluate_measure(bundle, state.model, measure_id, request.role, request.desks_requested)
+        finally:
+            _FAST.reset(tokens[1])
+            _PV_BUDGET.reset(tokens[0])
         return price_measure(bundle, found)
 
     def apply(state, measure):
-        return (state[0], state[1] + (measure,))
+        spent = state.spent + (measure.finance.net_upfront_usd.expected if measure.finance else 0.0)
+        if measure.measure_id in engine.REGISTRY.plugins:
+            return _PlanState(engine.apply_measure(bundle, state.model, measure.measure_id),
+                              state.stub_savings, spent, state.applied + 1)
+        return _PlanState(state.model, state.stub_savings + (measure.savings,), spent, state.applied + 1)
 
     def energy(state):
-        return _after(baseline.annual, [m.savings for m in state[1]])
+        token = _FAST.set(wanted is None)
+        try:
+            return _after(_simulate_baseline(bundle, state.model).annual, list(state.stub_savings))
+        finally:
+            _FAST.reset(token)
 
-    plan = select_plan(ids, request.role, request.budget_usd, (model, ()), evaluate, apply, energy)
-    return _with_value_uplift(bundle, plan)
+    return select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy)
+
+
+def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
+    """REAL (A26, SPEC 6.5). Every round each measure is evaluated against the building as the plan
+    has changed it (A16 engine, A2 and A3 simulation), priced (A24, A25), and the solar design is
+    sized to the budget still left. A measure with no plug-in yet replays the example's evaluation
+    and cannot change the model; its savings are taken off the final baseline.
+
+    Two passes: the first explores in fast mode, which is all the order needs (it depends on the
+    expected values only); the second repeats the run and gives the measures that made the plan, and
+    the financeable ones, the full low and high ranges."""
+    return _with_value_uplift(bundle, _plan_with_ranges(bundle, model, request))
+
+
+def _plan_fast(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
+    """The plan for exploring (the ask rule re-runs it many times): expected values exact, ranges narrow."""
+    return _select(bundle, model, request)
+
+
+def _plan_with_ranges(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
+    first = _select(bundle, model, request)
+    wanted = frozenset({(item.measure.measure_id, k) for k, item in enumerate(first.selected)}
+                       | {(m.measure_id, len(first.selected)) for m in first.financeable})
+    return _select(bundle, model, request, wanted)
 
 
 def _with_value_uplift(bundle: PropertyBundle, plan: Plan) -> Plan:
@@ -269,7 +562,15 @@ def cpace_scenario(bundle: PropertyBundle, measure: MeasureResult) -> FinancingS
     return a28(measure, summary, in_pace_region=in_region)
 
 
-def sensitivity(bundle: PropertyBundle, model: BuildingModel,
-                request: RunRequest) -> list[Question]:
+def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> list[Question]:
+    """REAL (A27) once the envelope, lighting and heating-and-cooling plug-ins are registered, so
+    that the plan answers to the model; until then the example's questions, which keeps the ask
+    rule demonstrable."""
+    core = ("ENV_ATTIC", "LGT_LED", "HVAC_HP" if engine.flow_of(bundle.summary) == "home" else "HVAC_RTU")
+    if all(m in engine.REGISTRY.plugins for m in core):
+        return _ask_questions(model, lambda m: _plan_fast(bundle, m, request))
     return [Question.model_validate(q)
             for q in _load(_folder(bundle.summary.sid), "run_result.json")["questions"]]
+
+
+_register_plugins()

@@ -563,6 +563,8 @@ class LiveRun:
 
     def answer(self, question_id: str, value) -> None:
         from langgraph.types import Command
+        if self.closed:                     # nothing reads the inbox of a finished run: say so, do not queue
+            raise LookupError(f"run {self.run_id} is closed; it cannot take an answer")
         if self.pending is None or self.pending[1].id != question_id:
             raise LookupError(f"no open question {question_id}")
         kind, _ = self.pending

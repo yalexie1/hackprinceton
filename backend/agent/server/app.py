@@ -110,7 +110,10 @@ def create_app() -> FastAPI:
             raise ApiError(422, "invalid_answer", f"{body.value!r} is not a choice of {question.id}")
         # The run door resumes the paused graph with Command(resume={"value": value}); the
         # server never builds that itself (a bare None resume breaks langgraph).
-        api.answer(run_id, body.question_id, body.value)
+        try:
+            api.answer(run_id, body.question_id, body.value)
+        except LookupError as err:          # the run closed, or the question was already answered, meanwhile
+            raise ApiError(409, "run_not_waiting", str(err))
         return {"ok": True}
 
     @app.patch("/api/runs/{run_id}")

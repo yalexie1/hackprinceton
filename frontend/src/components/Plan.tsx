@@ -201,6 +201,15 @@ export function MeasureCard({
                   f.incentives.map((i, index) => (
                     <p key={index}>
                       {i.name} · {i.status} · {ranged(i.amount_usd, true)}
+                      <small>
+                        {i.kind.replaceAll("_", " ")}
+                        {i.eligibility
+                          ? ` · Project eligibility: ${i.eligibility.replaceAll("_", " ")}`
+                          : ""}
+                      </small>
+                      {i.conditions?.map((condition, j) => (
+                        <small key={j}>{condition}</small>
+                      ))}
                       <small>{i.citation}</small>
                     </p>
                   ))
@@ -264,6 +273,21 @@ export function MeasureCard({
               </button>
             </div>
           )}
+          {measure.value_uplift && (
+            <div className="value-uplift">
+              <h3>Estimated solar property value uplift</h3>
+              <Range value={measure.value_uplift.value_usd} currency />
+              <p className="fineprint">
+                Shown separately from energy savings and financial returns.
+                Method {measure.value_uplift.method}.
+              </p>
+              {measure.value_uplift.notes.map((note, i) => (
+                <p className="fineprint" key={i}>
+                  {note}
+                </p>
+              ))}
+            </div>
+          )}
           {measure.flags.map((flag) => (
             <p className="inline-note" key={flag.key}>
               <Info size={14} />
@@ -301,6 +325,22 @@ export default function PlanView({
         <p>The audit will publish the ranked measures here.</p>
       </div>
     );
+  const skipped = [
+    ...plan.skipped,
+    ...run.measures
+      .filter(
+        (m) =>
+          !m.applicable &&
+          !plan.skipped.some((s) => s.measure_id === m.measure_id),
+      )
+      .map((m) => ({
+        measure_id: m.measure_id,
+        reason: "not_applicable",
+        detail:
+          m.not_applicable_reason ||
+          "This measure does not apply to the current building.",
+      })),
+  ];
   return (
     <>
       <div className="metrics">
@@ -365,7 +405,7 @@ export default function PlanView({
                 : t === "financeable"
                   ? "Beyond your budget"
                   : "Not selected"}
-              <span>{plan[t].length}</span>
+              <span>{t === "skipped" ? skipped.length : plan[t].length}</span>
             </button>
           ))}
         </div>
@@ -391,7 +431,7 @@ export default function PlanView({
             </>
           )}
           {tab === "skipped" &&
-            plan.skipped.map((item, i) => (
+            skipped.map((item, i) => (
               <div className="skipped-item" key={i}>
                 <span>
                   <ChevronRight size={16} />
@@ -402,7 +442,7 @@ export default function PlanView({
                 <p>{item.detail}</p>
               </div>
             ))}
-          {plan[tab].length === 0 && (
+          {(tab === "skipped" ? skipped.length : plan[tab].length) === 0 && (
             <div className="empty-state small">
               <Check />
               <p>No measures in this category.</p>

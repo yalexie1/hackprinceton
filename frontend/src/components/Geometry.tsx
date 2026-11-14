@@ -147,26 +147,32 @@ export default function Geometry({
             })
           ) : (
             <>
-              {roofPolys.map((p, i) => (
-                <polygon
-                  key={i}
-                  points={pts(p)}
-                  fill="#c6cebb"
-                  stroke="#7b8b6d"
-                  strokeWidth="2"
-                />
-              ))}
-              {panelPolys.map((p, i) => (
-                <polygon
-                  key={i}
-                  points={pts(p)}
-                  fill="#315768"
-                  stroke="#91acb2"
-                  strokeWidth="1.5"
-                >
-                  <title>{`Panel ${i + 1}: ${number(solar!.panels[i].annual_kwh)} kWh / year, shading loss ${number(solar!.panels[i].shading_loss_fraction * 100, 1)}%`}</title>
-                </polygon>
-              ))}
+              {roofPolys.map(
+                (p, i) =>
+                  p.length > 0 && (
+                    <polygon
+                      key={i}
+                      points={pts(p)}
+                      fill="#c6cebb"
+                      stroke="#7b8b6d"
+                      strokeWidth="2"
+                    />
+                  ),
+              )}
+              {panelPolys.map(
+                (p, i) =>
+                  p.length > 0 && (
+                    <polygon
+                      key={i}
+                      points={pts(p)}
+                      fill="#315768"
+                      stroke="#91acb2"
+                      strokeWidth="1.5"
+                    >
+                      <title>{`Panel ${i + 1}: ${number(solar!.panels[i].annual_kwh)} kWh / year, shading loss ${number(solar!.panels[i].shading_loss_fraction * 100, 1)}%`}</title>
+                    </polygon>
+                  ),
+              )}
             </>
           )}
           <path
@@ -190,8 +196,9 @@ export default function Geometry({
       {unsupported && (
         <p className="inline-note">
           <Info size={14} />
-          Some geometry uses an unsupported WKT type and could not be drawn. The
-          analysis data is available in the report.
+          Some positions are unavailable or use an unsupported geometry type.
+          Only supplied polygons are drawn; panel counts and energy estimates
+          remain available below.
         </p>
       )}
       {layout && current ? (
@@ -203,12 +210,16 @@ export default function Geometry({
             </strong>
           </div>
           <div>
-            <span>Daylight score</span>
-            <strong>{number(current.daylight, 2)}</strong>
+            <span>Daylight autonomy at 300 lux</span>
+            <strong>
+              {number(current.daylight * 100, 1)}% of occupied hours
+            </strong>
           </div>
           <div>
             <span>Glare risk</span>
-            <strong>{number(current.glare_risk, 2)}</strong>
+            <strong>
+              {number(current.glare_risk * 100, 1)}% of occupied hours
+            </strong>
           </div>
           <div>
             <span>Comfort PPD</span>

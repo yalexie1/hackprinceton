@@ -18,7 +18,8 @@ export function download(name: string, text: string, type = "text/markdown") {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 // Single-ring WKT polygons from the public contract. Unsupported geometry stays visible as a warning.
-export function polygon(wkt: string): [number, number][] {
+export function polygon(wkt?: string | null): [number, number][] {
+  if (typeof wkt !== "string") return [];
   const match = /^POLYGON\s*\(\(\s*([^()]+)\s*\)\)$/i.exec(wkt.trim());
   if (!match) return [];
   const points = match[1]

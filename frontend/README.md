@@ -1,6 +1,6 @@
 # Evergreen frontend
 
-Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.2.0**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
+Vinayak's frontend and demo lane, built against `specs/SPEC.md` section 9, schema **0.3.0**. “Evergreen” is a provisional UI name. React 19, TypeScript, Vite; no backend changes.
 
 ## Run
 
@@ -22,12 +22,12 @@ The renderer loads lazily when visible, pauses rendering offscreen/in background
 
 ## Demo walkthrough
 
-1. Select **5836 La Mirada Ave**, use its saved **$14,000** scenario, and start the demo audit. This is the team's shared golden house example.
+1. Select **5836 La Mirada Ave**, use its saved budget and role, and start the demo audit. This is the team's shared golden house example.
 2. Watch the shared event sequence, including a recoverable tool failure and an electrical-panel question. Choose an answer to resume the saved scenario. Demo answers do not recompute estimates.
 3. Open the plan. Expand solar to see cost ranges, payback, NPV, life, incentives, and evidence. Review the explicit high-cost budget warning.
 4. Open **Solar & roof** and **Assumptions**. A property without desk candidates shows an empty state rather than invented layout data.
 5. In **Documents**, enter illustrative party names, select measures, approve drafting, and export the Markdown preview. Missing terms remain highlighted. Demo documents are unverified interface previews.
-6. Return to Properties and run **Suite A - 2,000SF** at its saved **$3,500** landlord scenario. Inspect workspace candidates, the financeable rooftop unit's C-PACE scenario, and the separate property-value estimate.
+6. Return to Properties and run the office marked **Shared contract example** at its saved budget and role. Inspect workspace candidates, financing eligibility and its stated reasons, and the separate property-value estimate. Shared example identity and budgets follow the team's imported files.
 7. For the budget-change demo, use the **Silver Lake house** or **Westside workspace** UI sandbox and switch between **$5,000**, **$15,000**, and **$30,000**. These are saved snapshots, not a browser physics calculation.
 
 ## Live integration

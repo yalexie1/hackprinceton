@@ -34,6 +34,7 @@ import type {
   RunRequest,
   RunResult,
 } from "./lib/types";
+import { SCHEMA_VERSION } from "./lib/types";
 import { api, streamRun } from "./lib/api";
 import {
   demoBudgets,
@@ -200,9 +201,9 @@ export default function App() {
       setConnecting(true);
       try {
         const health = await api.health();
-        if (health.schema_version !== "0.2.0")
+        if (health.schema_version !== SCHEMA_VERSION)
           throw new Error(
-            `Backend schema ${health.schema_version} differs from this frontend’s 0.2.0 contract. Update the frontend adapter before connecting.`,
+            `Backend schema ${health.schema_version} differs from this frontend’s ${SCHEMA_VERSION} contract. Update the frontend adapter before connecting.`,
           );
       } catch (e) {
         setError(
@@ -377,7 +378,7 @@ export default function App() {
         const { run_id } = await api.start(request);
         if (current !== epoch.current) return;
         setRun({
-          schema_version: "0.2.0",
+          schema_version: SCHEMA_VERSION,
           run_id,
           status: "running",
           request,

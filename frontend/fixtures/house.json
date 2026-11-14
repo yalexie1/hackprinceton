@@ -18,7 +18,7 @@
   },
   "runs": {
     "5000": {
-      "schema_version": "0.2.0",
+      "schema_version": "0.3.0",
       "run_id": "demo-house-5000",
       "status": "done",
       "request": {
@@ -43,7 +43,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.2.0",
+        "schema_version": "0.3.0",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -81,7 +81,7 @@
           }
         ],
         "systems": {
-          "hvac_type": "ac_furnace",
+          "hvac_type": "central_ac_furnace",
           "heating_fuel": "gas",
           "cooling_cop": {
             "low": 2.3,
@@ -95,7 +95,7 @@
             "high": 0.94,
             "unit": "fraction"
           },
-          "dhw_type": "tank",
+          "dhw_type": "storage",
           "dhw_fuel": "gas",
           "dhw_efficiency": {
             "low": 0.57,
@@ -2242,7 +2242,7 @@
       ]
     },
     "15000": {
-      "schema_version": "0.2.0",
+      "schema_version": "0.3.0",
       "run_id": "demo-house-15000",
       "status": "done",
       "request": {
@@ -2267,7 +2267,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.2.0",
+        "schema_version": "0.3.0",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -2305,7 +2305,7 @@
           }
         ],
         "systems": {
-          "hvac_type": "ac_furnace",
+          "hvac_type": "central_ac_furnace",
           "heating_fuel": "gas",
           "cooling_cop": {
             "low": 2.3,
@@ -2319,7 +2319,7 @@
             "high": 0.94,
             "unit": "fraction"
           },
-          "dhw_type": "tank",
+          "dhw_type": "storage",
           "dhw_fuel": "gas",
           "dhw_efficiency": {
             "low": 0.57,
@@ -4466,7 +4466,7 @@
       ]
     },
     "30000": {
-      "schema_version": "0.2.0",
+      "schema_version": "0.3.0",
       "run_id": "demo-house-30000",
       "status": "done",
       "request": {
@@ -4491,7 +4491,7 @@
         "floor_count": 1
       },
       "building_model": {
-        "schema_version": "0.2.0",
+        "schema_version": "0.3.0",
         "sid": "demo-house",
         "north_offset_deg": {
           "low": 0.0,
@@ -4529,7 +4529,7 @@
           }
         ],
         "systems": {
-          "hvac_type": "ac_furnace",
+          "hvac_type": "central_ac_furnace",
           "heating_fuel": "gas",
           "cooling_cop": {
             "low": 2.3,
@@ -4543,7 +4543,7 @@
             "high": 0.94,
             "unit": "fraction"
           },
-          "dhw_type": "tank",
+          "dhw_type": "storage",
           "dhw_fuel": "gas",
           "dhw_efficiency": {
             "low": 0.57,

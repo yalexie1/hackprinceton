@@ -1,4 +1,5 @@
-// Browser contract mirrors specs/SPEC.md section 9 (schema 0.2.0).
+// Browser contract mirrors specs/SPEC.md section 9 (schema 0.3.0).
+export const SCHEMA_VERSION = "0.3.0";
 export interface Ranged {
   low: number;
   expected: number;
@@ -50,6 +51,7 @@ export interface EnergyUse {
   gas_kwh: Ranged;
   cost_usd: Ranged;
   co2_kg: Ranged;
+  co2_nonbaseload_kg?: Ranged | null;
 }
 export interface FinancingScenario {
   kind: "cash" | "cpace";
@@ -70,6 +72,8 @@ export interface FinancialBreakdown {
     kind: string;
     amount_usd: Ranged;
     status: string;
+    eligibility?: "confirmed" | "needs_confirmation" | "not_eligible";
+    conditions?: string[];
     citation: string;
   }[];
   net_upfront_usd: Ranged;
@@ -79,8 +83,10 @@ export interface FinancialBreakdown {
   simple_payback_years?: Ranged | null;
   discounted_payback_years?: number | null;
   npv_usd: Ranged;
+  npv_sensitivity_usd?: number | null;
   sir?: number | null;
   irr?: number | null;
+  airr?: number | null;
   discount_rate: number;
   electricity_escalation: number;
   gas_escalation: number;
@@ -100,7 +106,7 @@ export interface SolarDesign {
   panel_count: number;
   panels: {
     plane_id: string;
-    polygon_wkt: string;
+    polygon_wkt?: string | null;
     annual_kwh: number;
     shading_loss_fraction: number;
   }[];
@@ -118,6 +124,18 @@ export interface DeskScore {
   comfort_ppd: number;
   score: number;
   recommended: boolean;
+  daylight_factor?: number | null;
+  view_azimuth_deg?: number | null;
+  direct_sun_hours?: number | null;
+  max_dt_pr_k?: number | null;
+  warnings?: string[];
+}
+export interface ValueUplift {
+  value_usd: Ranged;
+  method: string;
+  cap_rate?: Ranged | null;
+  comp_count: number;
+  notes: string[];
 }
 export interface MeasureResult {
   measure_id: string;
@@ -133,7 +151,19 @@ export interface MeasureResult {
   evidence: EvidenceRef[];
   formula_ids: string[];
   solar?: SolarDesign | null;
-  layout?: { candidates: DeskScore[]; desks_requested: number } | null;
+  layout?: {
+    candidates: DeskScore[];
+    desks_requested: number;
+    window_source?: "measured" | "vision" | null;
+    target_lux?: number | null;
+    setpoint_lux?: number | null;
+    control_type?: string | null;
+    score_weights?: Record<string, number>;
+    occupied_hours_per_year?: number | null;
+    lighting_kwh_saved?: Ranged | null;
+    warnings?: string[];
+  } | null;
+  value_uplift?: ValueUplift | null;
   warnings: string[];
 }
 export interface Plan {
@@ -150,13 +180,7 @@ export interface Plan {
   total_annual_savings_usd: Ranged;
   total_co2_kg: Ranged;
   baseline_after: EnergyUse;
-  value_uplift?: {
-    value_usd: Ranged;
-    method: string;
-    cap_rate?: Ranged | null;
-    comp_count: number;
-    notes: string[];
-  } | null;
+  value_uplift?: ValueUplift | null;
 }
 export type Role = "owner_occupier" | "landlord" | "tenant";
 export interface RunRequest {

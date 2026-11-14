@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { demoBudgets, demoEvents, demoProperties, demoRun } from "./fixtures";
 import { polygon } from "./format";
 import { resolveSweep } from "../components/Tour";
+import sharedHouse from "../../../specs/examples/house/run_result.json";
+import sharedOffice from "../../../specs/examples/office/run_result.json";
 describe("demo fixtures", () => {
   it("keeps every uncertainty range ordered, including negative net present values", () => {
     function check(value: unknown) {
@@ -52,14 +54,14 @@ describe("demo fixtures", () => {
           expect(
             plan.selected[0].measure.finance!.net_upfront_usd.expected,
           ).toBe(0);
-        expect(run.schema_version).toBe("0.2.0");
+        expect(run.schema_version).toBe("0.3.0");
         expect(run.warnings.join(" ")).toMatch(/illustrative/i);
       }
   });
   it("loads the shared golden house and office with their actual event and request shapes", () => {
-    const house = demoRun("zvKHR9DHNjJ", 14000);
-    const office = demoRun("HjEyXryhRLk", 3500);
-    expect(office.request.role).toBe("landlord");
+    const house = demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
+    const office = demoRun(sharedOffice.property.sid, sharedOffice.request.budget_usd);
+    expect(office.request).toEqual(sharedOffice.request);
     expect(office.plan!.value_uplift).toBeTruthy();
     expect(house.property.costar_listing_id).toBe("235967170");
     const event = demoEvents(house.property.sid).find(
@@ -85,6 +87,8 @@ describe("geometry and evidence mapping", () => {
     ).toHaveLength(4);
     expect(polygon("POLYGON ((NaN 0, 1 0, 1 1, NaN 0))")).toEqual([]);
     expect(polygon("MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")).toEqual([]);
+    expect(polygon(null)).toEqual([]);
+    expect(polygon(undefined)).toEqual([]);
   });
   it("only navigates to a sweep after matching a published sid or uuid", () => {
     const sweeps = { a: { sid: "sdk-a", uuid: "model-pano" } };

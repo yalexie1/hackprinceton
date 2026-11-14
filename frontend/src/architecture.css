@@ -793,14 +793,58 @@ html {
 }
 
 /* The same explorer, pared back for a property or audit panel. */
-.house-explorer.house-embedded { height: 380px; border: 0; border-radius: 0; padding: 0; }
-.setup-property > .house-embedded { background: radial-gradient(ellipse at 52% 37%,#f7f5ef,#e6e5d8); }
-.house-embedded .explorer-topbar { top: 12px; left: 12px; right: 12px; justify-content: center; }
-.house-embedded .explorer-caption, .house-embedded .scene-compass, .house-embedded .scene-room-panel, .house-embedded .scene-insight { display: none; }
-.house-embedded .view-switch button { font-size: 8px; padding: 8px 10px; }
-.house-embedded .scene-tools { top: auto; bottom: 43px; right: 12px; flex-direction: row; gap: 0; padding: 2px; }
-.house-embedded .scene-tools > span { height: 17px; width: 1px; margin: auto 2px; }
-.house-embedded .scene-tools button { width: 28px; height: 28px; }
-.house-embedded .scene-bottomline { height: 34px; left: 12px; right: 12px; flex-direction: row; align-items: center; }
-.house-embedded .scene-bottomline > span { font-size: 6px; }
-.house-embedded .scene-bottomline > small { font-size: 5px; }
+.house-explorer.house-embedded {
+  height: 380px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.setup-property > .house-embedded {
+  background: radial-gradient(ellipse at 52% 37%, #f7f5ef, #e6e5d8);
+}
+.house-embedded .explorer-topbar {
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  justify-content: center;
+}
+.house-embedded .explorer-caption,
+.house-embedded .scene-compass,
+.house-embedded .scene-room-panel,
+.house-embedded .scene-insight {
+  display: none;
+}
+.house-embedded .view-switch button {
+  font-size: 8px;
+  padding: 8px 10px;
+}
+.house-embedded .scene-tools {
+  top: auto;
+  bottom: 43px;
+  right: 12px;
+  flex-direction: row;
+  gap: 0;
+  padding: 2px;
+}
+.house-embedded .scene-tools > span {
+  height: 17px;
+  width: 1px;
+  margin: auto 2px;
+}
+.house-embedded .scene-tools button {
+  width: 28px;
+  height: 28px;
+}
+.house-embedded .scene-bottomline {
+  height: 34px;
+  left: 12px;
+  right: 12px;
+  flex-direction: row;
+  align-items: center;
+}
+.house-embedded .scene-bottomline > span {
+  font-size: 6px;
+}
+.house-embedded .scene-bottomline > small {
+  font-size: 5px;
+}

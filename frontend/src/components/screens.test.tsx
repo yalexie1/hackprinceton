@@ -7,14 +7,19 @@ import Assumptions from "./Assumptions";
 import Geometry from "./Geometry";
 import Find from "./Find";
 import Documents from "./Documents";
-const house = demoRun("zvKHR9DHNjJ", 14000);
-const office = demoRun("HjEyXryhRLk", 3500);
+import sharedHouse from "../../../specs/examples/house/run_result.json";
+import sharedOffice from "../../../specs/examples/office/run_result.json";
+const house = demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
+const office = demoRun(sharedOffice.property.sid, sharedOffice.request.budget_usd);
 describe("shared contract screen compatibility", () => {
   it("offers no edit control for a locked assumption", () => {
     const run = structuredClone(house);
     const assumption = run.building_model!.assumptions[0];
-    assumption.label = "Locked input"; assumption.user_editable = false;
-    const html = renderToStaticMarkup(<Assumptions run={run} demo={false} busy={false} onSave={() => {}}/>);
+    assumption.label = "Locked input";
+    assumption.user_editable = false;
+    const html = renderToStaticMarkup(
+      <Assumptions run={run} demo={false} busy={false} onSave={() => {}} />,
+    );
     expect(html).toContain("Locked input");
     expect(html).not.toContain('aria-label="Edit Locked input"');
   });
@@ -25,7 +30,7 @@ describe("shared contract screen compatibility", () => {
     const work = renderToStaticMarkup(
       <PlanView run={office} onFocus={() => {}} onDocuments={() => {}} />,
     );
-    expect(home).toContain("Rooftop solar, 2.8 kW");
+    for (const item of house.plan!.selected) expect(home).toContain(item.measure.title);
     expect(home).not.toContain("Estimated value uplift");
     expect(work).toContain("Estimated value uplift");
     expect(work).toContain("Shown separately from energy savings.");
@@ -67,8 +72,8 @@ describe("shared contract screen compatibility", () => {
         onSelect={() => {}}
       />,
     );
-    expect(html).toContain("5836 La Mirada Ave");
-    expect(html).toContain("Suite A - 2,000SF");
+    expect(html).toContain(sharedHouse.property.name);
+    expect(html).toContain(sharedOffice.property.name);
     expect(html).toContain("Shared contract example");
     expect(html).toContain("UI sandbox");
   });

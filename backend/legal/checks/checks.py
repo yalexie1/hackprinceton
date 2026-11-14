@@ -202,7 +202,8 @@ def check_document(draft: DocumentDraft) -> list[StatutoryCheck]:
 
     Dispatch rather than one table, so each document's predicates live with the ids its
     own section of `specs/legal.md` lists: `texas.py` for document 1T, `commercial.py`
-    for document 2, and the `CA-R-*` table below for document 1.
+    for document 2, `cpace.py` for document 6 in either state, and the `CA-R-*`
+    table below for document 1.
     """
     if (draft.doc_type, draft.state) == ("retrofit_contract_residential", "TX"):
         from backend.legal.checks import texas
@@ -212,6 +213,10 @@ def check_document(draft: DocumentDraft) -> list[StatutoryCheck]:
         from backend.legal.checks.commercial import check_commercial
 
         return check_commercial(draft)
+    if draft.doc_type == "cpace_package":
+        from backend.legal.checks.cpace import check_cpace
+
+        return check_cpace(draft)
     if (draft.doc_type, draft.state) != ("retrofit_contract_residential", "CA"):
         return []
     d = _Draft(draft)

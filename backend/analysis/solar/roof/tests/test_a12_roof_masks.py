@@ -248,6 +248,31 @@ def test_roof_check_warns_beyond_tolerance():
     assert res.planes == build_parametric_roof(vex).planes
 
 
+def test_roof_check_keeps_the_whole_roof_mask_on_a_rotated_footprint():
+    # A 30 m square turned 45 degrees: its axis-aligned box is twice its area, so the
+    # whole-roof box overlaps the footprint by under half of the box. Vexcel boxes are
+    # always axis-aligned (the LA golden office is turned about 42 degrees).
+    h = 30 / math.sqrt(2)
+    fp = _poly_wkt([(0, -h), (h, 0), (0, h), (-h, 0)])
+    dets = [
+        _det("roof", -h - 0.8, -h - 0.8, h + 0.8, h + 0.8, mask_area=860.0),   # whole roof
+        _det("roof", -5.0, -5.0, 5.0, 5.0, mask_area=60.0),                    # nested fragment
+        _det("roof", h - 1.0, -10.0, h + 19.0, 10.0, mask_area=300.0),         # neighbour touching a corner
+    ]
+    vex = VexcelData(structures=[VexcelStructure(primary=True, footprint_wkt=fp, footprint_area_m2=900.0,
+                                                 attributes={"roof-characteristics.shape.value": "flat"})],
+                     detections=dets)
+    g0 = _to_m(dets[0].bbox_wkt)
+    assert g0.intersection(_to_m(fp)).area / g0.area < 0.5        # the old test would drop it
+    res = refine_with_masks(build_parametric_roof(vex).planes, vex)
+    chk = res.roof_check
+    assert chk.detection_index == 0
+    assert chk.mask_area_m2 == pytest.approx(860.0)
+    assert chk.agrees is True
+    assert not any("tolerance" in w for w in res.warnings)
+    assert "2 roof detections on the building" in " ".join(res.notes)
+
+
 def test_inputs_are_not_mutated():
     tree = _det("tree", 6.5, -8.0, 10.5, -4.0, mask_area=9.6)
     vex = _house(detections=[tree])

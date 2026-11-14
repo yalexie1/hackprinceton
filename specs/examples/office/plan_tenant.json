@@ -1,0 +1,653 @@
+{
+  "budget_usd": 3500.0,
+  "selected": [
+    {
+      "rank": 1,
+      "measure": {
+        "measure_id": "LAYOUT",
+        "title": "Desk placement for daylight",
+        "applicable": true,
+        "not_applicable_reason": null,
+        "description": "Move four desks to the positions with the best daylight, low glare risk and good comfort; electric lighting is displaced where daylight targets are met.",
+        "params": {
+          "grid_m": 0.5,
+          "wall_clearance_m": 0.6,
+          "min_spacing_m": 2.0
+        },
+        "savings": {
+          "electricity_kwh": {
+            "low": 252.0,
+            "expected": 420.0,
+            "high": 546.0,
+            "unit": "kWh"
+          },
+          "gas_kwh": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "kWh"
+          },
+          "cost_usd": {
+            "low": 27.72,
+            "expected": 46.2,
+            "high": 60.06,
+            "unit": "USD"
+          },
+          "co2_kg": {
+            "low": 93.24,
+            "expected": 155.4,
+            "high": 202.02,
+            "unit": "kg"
+          }
+        },
+        "finance": {
+          "installed_cost_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+          "incentives": [],
+          "net_upfront_usd": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "USD"
+          },
+          "annual_savings_usd": {
+            "low": 27.72,
+            "expected": 46.2,
+            "high": 60.06,
+            "unit": "USD"
+          },
+          "annual_om_change_usd": 0.0,
+          "useful_life_years": 10,
+          "simple_payback_years": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "years"
+          },
+          "discounted_payback_years": 0.0,
+          "npv_usd": {
+            "low": 242.48,
+            "expected": 404.14,
+            "high": 525.38,
+            "unit": "USD"
+          },
+          "sir": null,
+          "irr": null,
+          "discount_rate": 0.05,
+          "electricity_escalation": 0.03,
+          "gas_escalation": 0.02,
+          "analysis_period_years": 20,
+          "financing": [
+            {
+              "kind": "cash",
+              "eligible": true,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": 27.72,
+                "expected": 46.2,
+                "high": 60.06,
+                "unit": "USD"
+              },
+              "notes": [
+                "Paid in full at installation."
+              ]
+            },
+            {
+              "kind": "cpace",
+              "eligible": false,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": 27.72,
+                "expected": 46.2,
+                "high": 60.06,
+                "unit": "USD"
+              },
+              "notes": [
+                "Nothing to finance: the measure has no cost."
+              ]
+            }
+          ]
+        },
+        "flags": [],
+        "anchors": [
+          {
+            "room_id": "room_open_office",
+            "pano_id": "pano_01",
+            "x": 1.5,
+            "y": 2.5,
+            "z": 0.75,
+            "label": "Recommended desk 1"
+          },
+          {
+            "room_id": "room_open_office",
+            "pano_id": "pano_01",
+            "x": 4.0,
+            "y": 2.5,
+            "z": 0.75,
+            "label": "Recommended desk 2"
+          },
+          {
+            "room_id": "room_open_office",
+            "pano_id": "pano_01",
+            "x": 6.5,
+            "y": 2.5,
+            "z": 0.75,
+            "label": "Recommended desk 3"
+          },
+          {
+            "room_id": "room_open_office",
+            "pano_id": "pano_01",
+            "x": 8.5,
+            "y": 2.5,
+            "z": 0.75,
+            "label": "Recommended desk 4"
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "pano",
+            "ref": "pano_01",
+            "note": "east glazing along the open office"
+          },
+          {
+            "kind": "matterport_field",
+            "ref": "floors.edges.openings",
+            "note": "window positions along the east wall"
+          }
+        ],
+        "formula_ids": [
+          "DAY",
+          "GLR",
+          "CMF",
+          "LCT"
+        ],
+        "solar": null,
+        "layout": {
+          "desks_requested": 4,
+          "candidates": [
+            {
+              "room_id": "room_open_office",
+              "x": 1.5,
+              "y": 1.0,
+              "daylight": 0.82,
+              "glare_risk": 0.55,
+              "comfort_ppd": 14.0,
+              "score": 0.52,
+              "recommended": false
+            },
+            {
+              "room_id": "room_open_office",
+              "x": 1.5,
+              "y": 2.5,
+              "daylight": 0.71,
+              "glare_risk": 0.18,
+              "comfort_ppd": 8.0,
+              "score": 0.78,
+              "recommended": true
+            },
+            {
+              "room_id": "room_open_office",
+              "x": 4.0,
+              "y": 2.5,
+              "daylight": 0.73,
+              "glare_risk": 0.16,
+              "comfort_ppd": 7.0,
+              "score": 0.8,
+              "recommended": true
+            },
+            {
+              "room_id": "room_open_office",
+              "x": 6.5,
+              "y": 2.5,
+              "daylight": 0.72,
+              "glare_risk": 0.17,
+              "comfort_ppd": 7.0,
+              "score": 0.79,
+              "recommended": true
+            },
+            {
+              "room_id": "room_open_office",
+              "x": 8.5,
+              "y": 2.5,
+              "daylight": 0.66,
+              "glare_risk": 0.15,
+              "comfort_ppd": 8.0,
+              "score": 0.74,
+              "recommended": true
+            },
+            {
+              "room_id": "room_open_office",
+              "x": 4.0,
+              "y": 5.0,
+              "daylight": 0.41,
+              "glare_risk": 0.05,
+              "comfort_ppd": 6.0,
+              "score": 0.55,
+              "recommended": false
+            },
+            {
+              "room_id": "room_open_office",
+              "x": 6.5,
+              "y": 5.0,
+              "daylight": 0.4,
+              "glare_risk": 0.05,
+              "comfort_ppd": 6.0,
+              "score": 0.54,
+              "recommended": false
+            },
+            {
+              "room_id": "room_open_office",
+              "x": 4.0,
+              "y": 7.5,
+              "daylight": 0.18,
+              "glare_risk": 0.02,
+              "comfort_ppd": 6.0,
+              "score": 0.31,
+              "recommended": false
+            }
+          ]
+        },
+        "warnings": []
+      },
+      "cumulative_upfront_usd": 0.0,
+      "remaining_budget_usd": 3500.0
+    },
+    {
+      "rank": 2,
+      "measure": {
+        "measure_id": "LGT_LED",
+        "title": "LED retrofit of ceiling troffers",
+        "applicable": true,
+        "not_applicable_reason": null,
+        "description": "Replace fluorescent tubes and ballasts in the 2x4 troffers with LED.",
+        "params": {
+          "fixtures": 40
+        },
+        "savings": {
+          "electricity_kwh": {
+            "low": 2474.4,
+            "expected": 3093.0,
+            "high": 3711.6,
+            "unit": "kWh"
+          },
+          "gas_kwh": {
+            "low": -291.6,
+            "expected": -243.0,
+            "high": -194.4,
+            "unit": "kWh"
+          },
+          "cost_usd": {
+            "low": 265.38,
+            "expected": 331.73,
+            "high": 398.08,
+            "unit": "USD"
+          },
+          "co2_kg": {
+            "low": 880.34,
+            "expected": 1100.43,
+            "high": 1320.51,
+            "unit": "kg"
+          }
+        },
+        "finance": {
+          "installed_cost_usd": {
+            "low": 2300.0,
+            "expected": 2900.0,
+            "high": 3700.0,
+            "unit": "USD"
+          },
+          "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+          "incentives": [],
+          "net_upfront_usd": {
+            "low": 2300.0,
+            "expected": 2900.0,
+            "high": 3700.0,
+            "unit": "USD"
+          },
+          "annual_savings_usd": {
+            "low": 265.38,
+            "expected": 331.73,
+            "high": 398.08,
+            "unit": "USD"
+          },
+          "annual_om_change_usd": 0.0,
+          "useful_life_years": 15,
+          "simple_payback_years": {
+            "low": 5.78,
+            "expected": 8.74,
+            "high": 13.94,
+            "unit": "years"
+          },
+          "discounted_payback_years": 10.0,
+          "npv_usd": {
+            "low": -369.63,
+            "expected": 1262.96,
+            "high": 2695.56,
+            "unit": "USD"
+          },
+          "sir": 1.44,
+          "irr": 0.1042,
+          "discount_rate": 0.05,
+          "electricity_escalation": 0.03,
+          "gas_escalation": 0.02,
+          "analysis_period_years": 20,
+          "financing": [
+            {
+              "kind": "cash",
+              "eligible": true,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": -3434.62,
+                "expected": -2568.27,
+                "high": -1901.92,
+                "unit": "USD"
+              },
+              "notes": [
+                "Paid in full at installation."
+              ]
+            },
+            {
+              "kind": "cpace",
+              "eligible": false,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": 265.38,
+                "expected": 331.73,
+                "high": 398.08,
+                "unit": "USD"
+              },
+              "notes": [
+                "C-PACE is available to the property owner, not to a tenant."
+              ]
+            }
+          ]
+        },
+        "flags": [],
+        "anchors": [
+          {
+            "room_id": "room_open_office",
+            "pano_id": "pano_01",
+            "x": 5.0,
+            "y": 4.2,
+            "z": 2.74,
+            "label": "Fluorescent troffers"
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "pano",
+            "ref": "pano_01",
+            "note": "2x4 troffers"
+          },
+          {
+            "kind": "user",
+            "ref": "q_lamp_type",
+            "note": "fluorescent"
+          }
+        ],
+        "formula_ids": [
+          "LGT",
+          "HVAC"
+        ],
+        "solar": null,
+        "layout": null,
+        "warnings": [
+          "may exceed budget"
+        ]
+      },
+      "cumulative_upfront_usd": 2900.0,
+      "remaining_budget_usd": 600.0
+    },
+    {
+      "rank": 3,
+      "measure": {
+        "measure_id": "PLUG_MGMT",
+        "title": "Plug load management",
+        "applicable": true,
+        "not_applicable_reason": null,
+        "description": "Advanced power strips and scheduled shut-off for workstations and shared equipment.",
+        "params": {
+          "workstations": 12
+        },
+        "savings": {
+          "electricity_kwh": {
+            "low": 336.0,
+            "expected": 672.0,
+            "high": 1008.0,
+            "unit": "kWh"
+          },
+          "gas_kwh": {
+            "low": 0.0,
+            "expected": 0.0,
+            "high": 0.0,
+            "unit": "kWh"
+          },
+          "cost_usd": {
+            "low": 36.96,
+            "expected": 73.92,
+            "high": 110.88,
+            "unit": "USD"
+          },
+          "co2_kg": {
+            "low": 124.32,
+            "expected": 248.64,
+            "high": 372.96,
+            "unit": "kg"
+          }
+        },
+        "finance": {
+          "installed_cost_usd": {
+            "low": 300.0,
+            "expected": 450.0,
+            "high": 650.0,
+            "unit": "USD"
+          },
+          "cost_source": "ILLUSTRATIVE unit cost; cost tables and their sources are pending in physics.md",
+          "incentives": [],
+          "net_upfront_usd": {
+            "low": 300.0,
+            "expected": 450.0,
+            "high": 650.0,
+            "unit": "USD"
+          },
+          "annual_savings_usd": {
+            "low": 36.96,
+            "expected": 73.92,
+            "high": 110.88,
+            "unit": "USD"
+          },
+          "annual_om_change_usd": 0.0,
+          "useful_life_years": 8,
+          "simple_payback_years": {
+            "low": 2.71,
+            "expected": 6.09,
+            "high": 17.59,
+            "unit": "years"
+          },
+          "discounted_payback_years": 6.8,
+          "npv_usd": {
+            "low": -386.47,
+            "expected": 77.05,
+            "high": 490.58,
+            "unit": "USD"
+          },
+          "sir": 1.17,
+          "irr": 0.0893,
+          "discount_rate": 0.05,
+          "electricity_escalation": 0.03,
+          "gas_escalation": 0.02,
+          "analysis_period_years": 20,
+          "financing": [
+            {
+              "kind": "cash",
+              "eligible": true,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": -613.04,
+                "expected": -376.08,
+                "high": -189.12,
+                "unit": "USD"
+              },
+              "notes": [
+                "Paid in full at installation."
+              ]
+            },
+            {
+              "kind": "cpace",
+              "eligible": false,
+              "financed_usd": 0.0,
+              "rate": null,
+              "term_years": null,
+              "annual_payment_usd": 0.0,
+              "net_cashflow_year1_usd": {
+                "low": 36.96,
+                "expected": 73.92,
+                "high": 110.88,
+                "unit": "USD"
+              },
+              "notes": [
+                "Illustrative screen: plug-in equipment is not permanently fixed to the real property (TX-PACE-02, Loc. Gov't Code section 399.004(b))."
+              ]
+            }
+          ]
+        },
+        "flags": [],
+        "anchors": [
+          {
+            "room_id": "room_open_office",
+            "pano_id": "pano_01",
+            "x": 6.5,
+            "y": 2.5,
+            "z": 0.4,
+            "label": "Workstation outlets"
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "pano",
+            "ref": "pano_01",
+            "note": "monitors and task equipment at each desk"
+          }
+        ],
+        "formula_ids": [
+          "LGT"
+        ],
+        "solar": null,
+        "layout": null,
+        "warnings": [
+          "may exceed budget"
+        ]
+      },
+      "cumulative_upfront_usd": 3350.0,
+      "remaining_budget_usd": 150.0
+    }
+  ],
+  "financeable": [],
+  "skipped": [
+    {
+      "measure_id": "HVAC_RTU",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+    },
+    {
+      "measure_id": "HVAC_ECON",
+      "reason": "role",
+      "detail": "Owner-only measure (SPEC.md section 6.2); the user is a tenant."
+    },
+    {
+      "measure_id": "LGT_CTRL",
+      "reason": "already_done",
+      "detail": "Ceiling occupancy sensors are already installed (pano_02)."
+    },
+    {
+      "measure_id": "WIN_FILM",
+      "reason": "no_savings",
+      "detail": "Allowed for a tenant with consent, but after LAYOUT the film cuts the daylight that displaces electric lighting."
+    }
+  ],
+  "total_upfront_usd": {
+    "low": 2600.0,
+    "expected": 3350.0,
+    "high": 4350.0,
+    "unit": "USD"
+  },
+  "total_annual_savings_usd": {
+    "low": 330.06,
+    "expected": 451.85,
+    "high": 569.02,
+    "unit": "USD"
+  },
+  "total_co2_kg": {
+    "low": 1097.9,
+    "expected": 1504.47,
+    "high": 1895.49,
+    "unit": "kg"
+  },
+  "baseline_after": {
+    "electricity_kwh": {
+      "low": 14794.4,
+      "expected": 19415.0,
+      "high": 25257.6,
+      "unit": "kWh"
+    },
+    "gas_kwh": {
+      "low": 2744.4,
+      "expected": 3643.0,
+      "high": 4711.6,
+      "unit": "kWh"
+    },
+    "cost_usd": {
+      "low": 2026.83,
+      "expected": 2563.15,
+      "high": 3239.84,
+      "unit": "USD"
+    },
+    "co2_kg": {
+      "low": 5988.26,
+      "expected": 7842.93,
+      "high": 10180.52,
+      "unit": "kg"
+    }
+  },
+  "value_uplift": {
+    "value_usd": {
+      "low": 3883.06,
+      "expected": 6024.67,
+      "high": 8754.15,
+      "unit": "USD"
+    },
+    "method": "VAL",
+    "cap_rate": {
+      "low": 0.065,
+      "expected": 0.075,
+      "high": 0.085,
+      "unit": "1/year"
+    },
+    "comp_count": 6,
+    "notes": [
+      "Estimate only: annual savings divided by the capitalisation rate of comparable sales.",
+      "Shown beside the plan totals. Never added to savings and never used in the ranking (SPEC.md section 6.6).",
+      "Method id VAL: section 8 of specs/physics/04-economics-emissions-mv.md, which is not written yet. The formula here is a placeholder."
+    ]
+  }
+}

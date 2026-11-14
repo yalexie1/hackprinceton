@@ -1,0 +1,272 @@
+[
+  {
+    "type": "stage_started",
+    "stage": "S1",
+    "message": "Locating the property",
+    "payload": {}
+  },
+  {
+    "type": "stage_done",
+    "stage": "S1",
+    "message": "Found Suite A - 2,000SF",
+    "payload": {
+      "sid": "HjEyXryhRLk"
+    }
+  },
+  {
+    "type": "todo",
+    "stage": null,
+    "message": "Audit plan",
+    "payload": {
+      "todos": [
+        {
+          "content": "Fetch the three data layers",
+          "status": "in_progress"
+        },
+        {
+          "content": "Read panoramas and the roof",
+          "status": "pending"
+        },
+        {
+          "content": "Build the model and run the baseline",
+          "status": "pending"
+        },
+        {
+          "content": "Score desk positions",
+          "status": "pending"
+        },
+        {
+          "content": "Evaluate measures, build the plan and the C-PACE view",
+          "status": "pending"
+        }
+      ]
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S2",
+    "message": "Fetching Matterport, Vexcel and CoStar",
+    "payload": {}
+  },
+  {
+    "type": "tool_call",
+    "stage": "S2",
+    "message": "scout: get_property_bundle",
+    "payload": {
+      "agent": "scout",
+      "tool": "get_property_bundle",
+      "args": {
+        "sid": "HjEyXryhRLk"
+      }
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "No aerial splat for this model; using the Vexcel roof shape",
+    "payload": {
+      "layer": "matterport",
+      "from": "aerial splat",
+      "to": "Vexcel parametric roof"
+    }
+  },
+  {
+    "type": "fallback",
+    "stage": "S2",
+    "message": "MatterPak is locked; using the wall graph",
+    "payload": {
+      "layer": "matterport",
+      "from": "MatterPak mesh",
+      "to": "wall graph and room heights"
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S2",
+    "message": "Bundle ready: all three layers present",
+    "payload": {}
+  },
+  {
+    "type": "stage_started",
+    "stage": "S3",
+    "message": "Reading panoramas and the roof",
+    "payload": {}
+  },
+  {
+    "type": "error",
+    "stage": "S3",
+    "message": "Vexcel returned 429 for two obliques; continuing without them",
+    "payload": {
+      "code": "vexcel_rate_limited",
+      "message": "HTTP 429",
+      "recoverable": true
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S3",
+    "message": "Observations ready",
+    "payload": {}
+  },
+  {
+    "type": "stage_started",
+    "stage": "S4",
+    "message": "Building the model",
+    "payload": {}
+  },
+  {
+    "type": "question",
+    "stage": "S4",
+    "message": "One question before the model is final",
+    "payload": {
+      "question": {
+        "id": "q_lamp_type",
+        "assumption_key": "lighting.lamp_type",
+        "prompt": "What kind of lamps are in the ceiling light fixtures?",
+        "choices": [
+          {
+            "label": "Fluorescent tubes",
+            "value": "fluorescent"
+          },
+          {
+            "label": "LED tubes or LED panels",
+            "value": "led"
+          },
+          {
+            "label": "I don't know",
+            "value": null
+          }
+        ],
+        "impact_note": "The panoramas cannot tell fluorescent from LED tubes. The answer decides whether the LED retrofit is in the plan."
+      }
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S4",
+    "message": "Building model ready",
+    "payload": {
+      "artifact": "/run/model.json"
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S5",
+    "message": "Simulating the baseline",
+    "payload": {}
+  },
+  {
+    "type": "partial_result",
+    "stage": "S5",
+    "message": "Baseline ready",
+    "payload": {
+      "kind": "baseline",
+      "artifact": "/run/baseline.json",
+      "annual_cost_usd": {
+        "low": 2595.85,
+        "expected": 3015.0,
+        "high": 3569.9,
+        "unit": "USD"
+      }
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S5",
+    "message": "Baseline done",
+    "payload": {}
+  },
+  {
+    "type": "stage_started",
+    "stage": "S6",
+    "message": "Evaluating measures",
+    "payload": {}
+  },
+  {
+    "type": "tool_call",
+    "stage": "S6",
+    "message": "physicist: score_desk_positions",
+    "payload": {
+      "agent": "physicist",
+      "tool": "score_desk_positions",
+      "args": {
+        "room_id": "room_open_office",
+        "desks_requested": 4
+      }
+    }
+  },
+  {
+    "type": "partial_result",
+    "stage": "S6",
+    "message": "Finding: fluorescent troffers",
+    "payload": {
+      "kind": "finding",
+      "measure_id": "LGT_LED",
+      "anchor": {
+        "room_id": "room_open_office",
+        "pano_id": "pano_01",
+        "x": 5.0,
+        "y": 4.2,
+        "z": 2.74,
+        "label": "Fluorescent troffers"
+      }
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S6",
+    "message": "8 measures evaluated",
+    "payload": {
+      "artifact": "/run/measures.json"
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S7",
+    "message": "Building the plan",
+    "payload": {}
+  },
+  {
+    "type": "tool_call",
+    "stage": "S7",
+    "message": "financier: cpace_scenario",
+    "payload": {
+      "agent": "financier",
+      "tool": "cpace_scenario",
+      "args": {
+        "measure_id": "HVAC_RTU"
+      }
+    }
+  },
+  {
+    "type": "stage_done",
+    "stage": "S7",
+    "message": "Plan ready",
+    "payload": {
+      "artifact": "/run/plan.json"
+    }
+  },
+  {
+    "type": "stage_started",
+    "stage": "S8",
+    "message": "Writing the summary",
+    "payload": {}
+  },
+  {
+    "type": "stage_done",
+    "stage": "S8",
+    "message": "Summary passed check_narrative",
+    "payload": {
+      "artifact": "/run/report.md"
+    }
+  },
+  {
+    "type": "done",
+    "stage": null,
+    "message": "Audit complete",
+    "payload": {
+      "run_id": "run_office_example",
+      "status": "done"
+    }
+  }
+]

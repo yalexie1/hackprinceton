@@ -1,0 +1,12 @@
+{
+  "run_id": "run_office_example",
+  "doc_type": "cpace_package",
+  "state": "TX",
+  "measure_ids": [
+    "HVAC_RTU"
+  ],
+  "fields": {
+    "property_address": "9050 Emnora Ln, Houston, TX",
+    "application_date": "2026-11-20"
+  }
+}

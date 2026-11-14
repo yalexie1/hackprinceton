@@ -204,15 +204,18 @@ def _variant_model(bundle: PropertyBundle, model: BuildingModel, key: str, value
 def _simulate(bundle: PropertyBundle, model: BuildingModel) -> SystemsBaseline:
     """S5 for one state of the building, memoised on its content (the plan asks for the same
     state many times). The range comes from re-running the zone model with each load-driving
-    assumption at its low and high."""
-    stamp = hashlib.sha256((bundle.summary.sid + bundle.climate.weather_path + model.model_dump_json()).encode()).hexdigest()
+    assumption at its low and high; in fast mode (exploring a plan, the ask rule) that is skipped
+    and the range is the price range alone."""
+    fast = _FAST.get()
+    stamp = hashlib.sha256(((b"fast" if fast else b"full") + (bundle.summary.sid + bundle.climate.weather_path
+                                                              + model.model_dump_json()).encode())).hexdigest()
     if stamp in _SIM_CACHE:
         return _SIM_CACHE[stamp]
     hours, weather, _ = _climate(bundle)
     cal = calendar_from_stamps(hours.stamps, bundle.climate.weather_time_convention)
     loads, _ = _zone_run(bundle, model, hours, weather, cal)
     variants = {}
-    for a in model.assumptions:
+    for a in ([] if fast else model.assumptions):
         if a.key in _LOAD_KEYS and a.user_editable and isinstance(a.value, Ranged) and a.value.low < a.value.high:
             runs = []
             for value in (a.value.low, a.value.high):
@@ -279,6 +282,7 @@ _SIM_FORMULAS = ("ZON-01", "ZON-04", "ENV-03", "INF-01", "HVAC-01", "LGT-03", "T
 
 # ---- solar: A11 roof planes -> A14 layout, with the A1 climate and A4 chain behind the yield ----
 
+_FAST: contextvars.ContextVar[bool] = contextvars.ContextVar("fast_simulation", default=False)
 _PV_BUDGET: contextvars.ContextVar[Optional[float]] = contextvars.ContextVar("pv_budget", default=None)
 _NO_WIND_M_S = 1.0     # the weather file has no wind column: a light breeze is assumed for the cell temperature
 
@@ -435,38 +439,68 @@ class _PlanState:
     model: BuildingModel
     stub_savings: tuple = ()        # savings of measures replayed from the example (they cannot change the model)
     spent: float = 0.0              # net upfront cash of the measures chosen
+    applied: int = 0                # how many measures have been chosen
 
 
-def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
-    """REAL (A26, SPEC 6.5). Every round each measure is evaluated against the building as the plan
-    has changed it (A16 engine, A2 and A3 simulation), priced (A24, A25), and the solar design is
-    sized to the budget still left. A measure with no plug-in yet replays the example's evaluation
-    and cannot change the model; its savings are taken off the final baseline."""
+def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
+            wanted: Optional[frozenset] = None) -> Plan:
+    """One run of the SPEC 6.5 algorithm. Every measure is evaluated in fast mode (the expected
+    values decide the order) except the (measure, round) pairs in `wanted`, which get the full
+    ranges."""
     summary = bundle.summary
     ids = [m for m, entry in engine.CATALOGUE.items()
            if engine.flow_of(summary) in entry.flows
            and (m in engine.REGISTRY.plugins or _measure(summary.sid, m) is not None)]
 
     def evaluate(measure_id, state):
-        token = _PV_BUDGET.set(max(0.0, request.budget_usd - state.spent))
+        full = wanted is not None and (measure_id, state.applied) in wanted
+        tokens = (_PV_BUDGET.set(max(0.0, request.budget_usd - state.spent)), _FAST.set(not full))
         try:
             found = evaluate_measure(bundle, state.model, measure_id, request.role, request.desks_requested)
         finally:
-            _PV_BUDGET.reset(token)
+            _FAST.reset(tokens[1])
+            _PV_BUDGET.reset(tokens[0])
         return price_measure(bundle, found)
 
     def apply(state, measure):
         spent = state.spent + (measure.finance.net_upfront_usd.expected if measure.finance else 0.0)
         if measure.measure_id in engine.REGISTRY.plugins:
             return _PlanState(engine.apply_measure(bundle, state.model, measure.measure_id),
-                              state.stub_savings, spent)
-        return _PlanState(state.model, state.stub_savings + (measure.savings,), spent)
+                              state.stub_savings, spent, state.applied + 1)
+        return _PlanState(state.model, state.stub_savings + (measure.savings,), spent, state.applied + 1)
 
     def energy(state):
-        return _after(_simulate_baseline(bundle, state.model).annual, list(state.stub_savings))
+        token = _FAST.set(wanted is None)
+        try:
+            return _after(_simulate_baseline(bundle, state.model).annual, list(state.stub_savings))
+        finally:
+            _FAST.reset(token)
 
-    plan = select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy)
-    return _with_value_uplift(bundle, plan)
+    return select_plan(ids, request.role, request.budget_usd, _PlanState(model), evaluate, apply, energy)
+
+
+def build_plan(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
+    """REAL (A26, SPEC 6.5). Every round each measure is evaluated against the building as the plan
+    has changed it (A16 engine, A2 and A3 simulation), priced (A24, A25), and the solar design is
+    sized to the budget still left. A measure with no plug-in yet replays the example's evaluation
+    and cannot change the model; its savings are taken off the final baseline.
+
+    Two passes: the first explores in fast mode, which is all the order needs (it depends on the
+    expected values only); the second repeats the run and gives the measures that made the plan, and
+    the financeable ones, the full low and high ranges."""
+    return _with_value_uplift(bundle, _plan_with_ranges(bundle, model, request))
+
+
+def _plan_fast(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
+    """The plan for exploring (the ask rule re-runs it many times): expected values exact, ranges narrow."""
+    return _select(bundle, model, request)
+
+
+def _plan_with_ranges(bundle: PropertyBundle, model: BuildingModel, request: RunRequest) -> Plan:
+    first = _select(bundle, model, request)
+    wanted = frozenset({(item.measure.measure_id, k) for k, item in enumerate(first.selected)}
+                       | {(m.measure_id, len(first.selected)) for m in first.financeable})
+    return _select(bundle, model, request, wanted)
 
 
 def _with_value_uplift(bundle: PropertyBundle, plan: Plan) -> Plan:
@@ -534,7 +568,7 @@ def sensitivity(bundle: PropertyBundle, model: BuildingModel, request: RunReques
     rule demonstrable."""
     core = ("ENV_ATTIC", "LGT_LED", "HVAC_HP" if engine.flow_of(bundle.summary) == "home" else "HVAC_RTU")
     if all(m in engine.REGISTRY.plugins for m in core):
-        return _ask_questions(model, lambda m: build_plan(bundle, m, request))
+        return _ask_questions(model, lambda m: _plan_fast(bundle, m, request))
     return [Question.model_validate(q)
             for q in _load(_folder(bundle.summary.sid), "run_result.json")["questions"]]
 

@@ -80,7 +80,10 @@ def utility_of(summary: PropertySummary, resolved: Optional[str] = None) -> Opti
 
 
 def _usd(low: float, expected: float, high: float) -> Ranged:
-    return Ranged(low=round(low, 2), expected=round(expected, 2), high=round(high, 2), unit="USD")
+    """An incentive is never negative (a measure that costs energy earns no per-kWh rebate) and the
+    three values stay ordered."""
+    low, expected, high = sorted(round(max(0.0, x), 2) for x in (low, expected, high))
+    return Ranged(low=low, expected=expected, high=high, unit="USD")
 
 
 def _full(amount: float) -> Ranged:

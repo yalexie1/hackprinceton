@@ -132,17 +132,16 @@ def test_every_measure_in_the_plan_lists_formula_ids_and_is_accounted_for(flavor
     assert plan.selected[0].remaining_budget_usd <= plan.budget_usd
 
 
-def test_the_house_plan_is_the_examples_plan_on_the_real_physics():
+def test_the_house_plan_keeps_the_examples_solar_design_on_the_real_physics():
     bundle, request = load("house")
     plan = api.build_plan(bundle, model_of(bundle, request), request)
-    want = Plan.model_validate_json((EX / "house" / "plan.json").read_text())
-    assert [i.measure.measure_id for i in plan.selected] == [i.measure.measure_id for i in want.selected]
-    assert [m.measure_id for m in plan.financeable] == [m.measure_id for m in want.financeable]
-    assert {(s.measure_id, s.reason) for s in want.skipped} <= {(s.measure_id, s.reason) for s in plan.skipped}
-    pv = next(i.measure for i in plan.selected if i.measure.measure_id == "PV_ROOF")
-    assert pv.solar.system_kw_dc == 2.15 and pv.solar.panel_count == 5         # the example's design, sized to the budget
-    assert plan.total_upfront_usd.expected == want.total_upfront_usd.expected
-    assert plan.total_annual_savings_usd.expected == pytest.approx(want.total_annual_savings_usd.expected, rel=0.2)
+    ids = [i.measure.measure_id for i in plan.selected]
+    assert ids[:2] == ["PV_ROOF", "LGT_LED"]                                    # the example's picks, in its order
+    pv = plan.selected[0].measure
+    assert pv.solar.system_kw_dc == 2.15 and pv.solar.panel_count == 5          # sized to the budget, as in the example
+    assert pv.savings.cost_usd.expected == pytest.approx(942.08, rel=0.2)
+    assert plan.selected[-1].cumulative_upfront_usd <= plan.budget_usd
+    assert {"ENV_ATTIC", "HVAC_HP"} <= {m.measure_id for m in plan.financeable}   # the example's financeable pair
 
 
 def test_a_tenant_never_gets_an_owner_only_measure():
@@ -254,52 +253,59 @@ def test_pv_roof_is_evaluated_by_the_engine_and_skips_when_the_roof_has_solar():
 
 
 def test_a_registered_measure_runs_on_the_engine_and_the_rest_replay_the_example():
-    bundle, request = load("house")
-    model = model_of(bundle, request)
-    stubbed = api.evaluate_measure(bundle, model, "ENV_ATTIC", request.role)
-    assert any("not registered yet" in w for w in stubbed.warnings)                   # no plug-in (A17) yet
-    office, office_request = load("office")
-    real = api.evaluate_measure(office, model_of(office, office_request), "LGT_CTRL", office_request.role)
+    office, request = load("office")
+    model = model_of(office, request)
+    stubbed = api.evaluate_measure(office, model, "LAYOUT", request.role)          # A23 has not landed
+    assert any("not registered yet" in w for w in stubbed.warnings)
+    real = api.evaluate_measure(office, model, "LGT_CTRL", request.role)
     assert real.applicable and not any("not registered yet" in w for w in real.warnings)
     assert real.formula_ids and real.savings.electricity_kwh.expected > 0
+    attic = api.evaluate_measure(*load("house")[:1], model_of(*load("house")), "ENV_ATTIC", "owner_occupier")
+    assert attic.applicable and not any("not registered yet" in w for w in attic.warnings)    # A17 has landed
 
 
 def test_a_plugin_that_lands_replaces_the_example_by_itself():
-    bundle, request = load("house")
-    model = model_of(bundle, request)
+    office, request = load("office")
+    model = model_of(office, request)
     registry = api.engine.REGISTRY
-    assert "ENV_ATTIC" not in registry.plugins
+    assert "LAYOUT" not in registry.plugins
 
     def describe(b, m, changed, before, options):
-        return MeasureResult(measure_id="ENV_ATTIC", title="Attic insulation", applicable=True,
-                             params={"area_m2": 82.04}, formula_ids=["ENV-03"])
-    api.engine.register("ENV_ATTIC", change=lambda b, m: m.model_copy(deep=True), describe=describe)
+        return MeasureResult(measure_id="LAYOUT", title="Desk layout", applicable=True,
+                             params={"grid_m": 0.5}, formula_ids=["LAY-01"])
+    before = api.evaluate_measure(office, model, "LAYOUT", request.role)
+    assert any("not registered yet" in w for w in before.warnings)
+    api.engine.register("LAYOUT", change=lambda b, m: m.model_copy(deep=True), describe=describe)
     try:
-        out = api.evaluate_measure(bundle, model, "ENV_ATTIC", request.role)
+        out = api.evaluate_measure(office, model, "LAYOUT", request.role)
         assert not any("not registered yet" in w for w in out.warnings) and out.savings is not None
-        assert out.formula_ids[0] == "ENV-03"
+        assert out.formula_ids[0] == "LAY-01"
     finally:
-        registry.plugins.pop("ENV_ATTIC")
+        registry.plugins.pop("LAYOUT")
 
 
-def test_sensitivity_is_the_example_until_the_core_plugins_are_registered(monkeypatch):
+def test_sensitivity_is_the_real_rule_once_the_core_plugins_are_registered(monkeypatch):
     bundle, request = load("house")
     model = model_of(bundle, request)
-    assert [q.id for q in api.sensitivity(bundle, model, request)] == ["q_service_amps"]
     calls = []
     monkeypatch.setattr(api, "_ask_questions", lambda m, plan_fn: calls.append(m) or [])
+    assert api.sensitivity(bundle, model, request) == [] and len(calls) == 1          # envelope, lighting, heat pump: all registered
     registry = api.engine.REGISTRY
-    added = []
+    saved = registry.plugins.pop("HVAC_HP")                                           # as if a core package were missing
     try:
-        for mid in ("ENV_ATTIC", "LGT_LED", "HVAC_HP"):
-            if mid not in registry.plugins:
-                api.engine.register(mid, change=lambda b, m: m.model_copy(deep=True),
-                                    describe=lambda *a: None)
-                added.append(mid)
-        assert api.sensitivity(bundle, model, request) == [] and len(calls) == 1
+        assert [q.id for q in api.sensitivity(bundle, model, request)] == ["q_service_amps"]    # the example's question
+        assert len(calls) == 1
     finally:
-        for mid in added:
-            registry.plugins.pop(mid)
+        registry.plugins["HVAC_HP"] = saved
+
+
+def test_the_real_ask_rule_runs_on_the_house_in_reasonable_time():
+    import time
+    bundle, request = load("house")
+    started = time.time()
+    questions = api.sensitivity(bundle, model_of(bundle, request), request)
+    assert time.time() - started < 120
+    assert all(q.choices[-1].value is None for q in questions)                        # every question ends in "I don't know"
 
 
 def test_observe_interior_uses_the_vision_reader_once_a_model_client_is_given(monkeypatch):

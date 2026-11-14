@@ -39,7 +39,8 @@ def test_every_example_folder_is_found():
 
 
 @pytest.mark.parametrize("flavor", FLAVORS)
-def test_the_door_runs_end_to_end_on_the_fixture(flavor):
+def test_the_door_runs_end_to_end_on_the_fixture(flavor, monkeypatch):
+    monkeypatch.setattr(api, "_ask_questions", lambda m, plan_fn: [])      # the real rule is tested in test_wiring
     bundle, request = load(flavor)
     assumptions, flags = api.observe_interior(bundle)
     assert assumptions and all(isinstance(a, Assumption) for a in assumptions)

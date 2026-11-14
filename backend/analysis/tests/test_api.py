@@ -120,10 +120,12 @@ def test_measure_missing_from_the_example_is_not_applicable_not_a_crash():
 
 
 def test_unknown_sid_raises_lookup_error():
+    """The stubs that replay an example (observe_interior, score_desk_positions) need a known sid;
+    the physics does not look at the sid at all."""
     bundle, _ = load("house")
     bad = bundle.model_copy(update={"summary": bundle.summary.model_copy(update={"sid": "nope"})})
     with pytest.raises(LookupError):
-        api.run_baseline(bad, api.build_building_model(load("house")[0]))
+        api.observe_interior(bad)
 
 
 def test_results_are_deterministic():

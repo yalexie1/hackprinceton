@@ -63,7 +63,7 @@ Production builds use same-origin `/api` unless `VITE_API_BASE_URL` is set at bu
 - Plans follow the backend's operations/load-reduction/equipment/solar order and distinguish `not_cost_effective` from budget exclusions. No browser economics or sizing replaces the selected marginal results.
 - `GET /api/runs/{id}/roof` supplies georeferenced planes, panels and detections. Missing/null ortho metadata or failed imagery leaves the supplied geometry visible. Parcel-bound overlays are labelled approximate; detection boxes are not treated as masks or summed footprint area. Workspace defaults to recommended positions and offers a precise position picker.
 - `GET /api/templates` always receives both state and property segment. Documents offers only returned types; `template_not_available` is an availability notice. Parties use the legal engine's `owner_names`/`contractor_name` fields, and both supported blank formats are highlighted. C-PACE scope retains selected marginal sizing and clearly labels additional financing-review measures. Template availability is not eligibility.
-- Narrative and document text render as text, not executable HTML. Parties and selected measures require explicit approval before drafting.
+- Narrative remains plain text. Documents render Markdown headings, tables and emphasis without executing HTML or loading external images; internal template comments are hidden, missing terms are highlighted, and the exported source is preserved. Parties and selected measures require explicit approval before drafting.
 
 ### Matterport
 

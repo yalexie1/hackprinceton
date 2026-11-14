@@ -1,4 +1,9 @@
-"""One-off script that wrote the weather samples in this folder (work package A1).
+"""The Open-Meteo request behind the weather samples in this folder (work package A1).
+
+Since #322 the committed files are written by `build_weather_sample.py`: it calls
+`fetch()` here for the irradiance (and for the hours its station data cannot fill),
+and takes temperature, humidity and wind from NOAA station observations. Run alone,
+this script writes the earlier Open-Meteo-only files.
 
 Not a test, and nothing imports it. Run from the repository root:
 

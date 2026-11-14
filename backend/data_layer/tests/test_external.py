@@ -150,6 +150,170 @@ def test_cents_conversion_on_a_second_state(monkeypatch):
     assert tariff.electricity_usd_per_kwh == pytest.approx(0.2975)
 
 
+# ---------- gas (D15) ----------
+
+EIA_GAS_CA_RES = {"response": {"data": [{
+    "period": "2025", "duoarea": "SCA", "process": "PRS", "value": "22.01",
+    "units": "$/MCF",
+    "series-description": "California Price of Natural Gas Delivered to Residential "
+                          "Consumers (Dollars per Thousand Cubic Feet)",
+}]}}
+
+EIA_GAS_TX_COM = {"response": {"data": [{
+    "period": "2025", "duoarea": "STX", "process": "PCS", "value": "10.98",
+    "units": "$/MCF",
+}]}}
+
+
+def test_the_committed_table_matches_the_live_figures():
+    """These four were read live on 2026-11-14. If a refresh changes them, this is the
+    test that notices the table has drifted rather than the demo quietly using stale
+    prices."""
+    assert ex.GAS_DEFAULTS[("CA", "RES")][0] == 22.01
+    assert ex.GAS_DEFAULTS[("CA", "COM")][0] == 16.56
+    assert ex.GAS_DEFAULTS[("TX", "RES")][0] == 19.42
+    assert ex.GAS_DEFAULTS[("TX", "COM")][0] == 10.98
+    # California gas dearer than Texas, commercial below residential - same shape as
+    # the electricity prices, which is a weak but real sanity check.
+    assert ex.GAS_DEFAULTS[("CA", "RES")][0] > ex.GAS_DEFAULTS[("TX", "RES")][0]
+    for state in ("CA", "TX"):
+        assert ex.GAS_DEFAULTS[(state, "COM")][0] < ex.GAS_DEFAULTS[(state, "RES")][0]
+
+
+def test_the_table_answers_without_a_network_call(monkeypatch):
+    """A cold bundle must not wait on a route measured at up to 66 s."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    monkeypatch.delenv(ex.GAS_REFRESH_ENV, raising=False)
+    monkeypatch.setattr(ex, "_gas_get", lambda u, p: (_ for _ in ()).throw(
+        AssertionError("the gas route was called without EIA_GAS_REFRESH")))
+    value, period, raw = ex._eia_gas_usd_per_kwh("CA", "RES")
+    assert value == pytest.approx(0.072422, abs=1e-6)
+    assert period == "2025" and "table" in raw
+
+
+def test_the_gas_unit_is_per_mcf_not_per_therm():
+    """**The trap.** physics 04 TAR-04 gives `usd_per_therm / 29.3071`, but EIA prices
+    gas in dollars per *thousand cubic feet*. Applying the therm conversion to this
+    number overstates the price about tenfold, and nothing would error."""
+    # 22.01 $/MCF, verified live for California residential 2025.
+    assert ex.usd_per_mcf_to_usd_per_kwh(22.01) == pytest.approx(0.072422, abs=1e-6)
+    wrong = 22.01 / 29.3071070172          # what the therm rule would give
+    assert wrong / ex.usd_per_mcf_to_usd_per_kwh(22.01) == pytest.approx(10.37, rel=0.01)
+
+
+def test_the_mcf_conversion_goes_through_energy():
+    """1 MCF of gas is a *volume*; it becomes energy through the heat content."""
+    assert ex.MMBTU_PER_MCF * ex.KWH_PER_MMBTU == pytest.approx(303.915, abs=0.01)
+    # 1 MMBtu is 10 therms, so this must agree with physics 04 TAR-05's constant.
+    assert ex.KWH_PER_MMBTU == pytest.approx(10 * 29.3071070172, abs=1e-6)
+
+
+def test_gas_price_lands_on_the_tariff(monkeypatch):
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    tariff, notes = ex.get_tariff("CA", "RES", get=_getter({
+        "electricity/retail-sales": EIA_CA_RES, "natural-gas": EIA_GAS_CA_RES}))
+    assert tariff.gas_usd_per_kwh == pytest.approx(0.072422, abs=1e-6)
+    gas_note = next(n for n in notes if n.what == "eia/natural-gas-price")
+    assert gas_note.status == "fallback"
+    assert "$/MCF" in gas_note.detail, "the record must show the raw unit"
+    assert "heat content" in gas_note.detail, "the conversion's uncertainty must be stated"
+
+
+def test_the_gas_source_string_names_the_conversion(monkeypatch):
+    """A reader has to be able to reconstruct the number."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    tariff, _ = ex.get_tariff("TX", "COM", get=_getter({
+        "electricity/retail-sales": EIA_TX_COM, "natural-gas": EIA_GAS_TX_COM}))
+    assert tariff.gas_usd_per_kwh == pytest.approx(0.036129, abs=1e-6)
+    assert "MMBtu/MCF" in tariff.source
+    assert "2025" in tariff.source
+
+
+def test_an_empty_live_response_falls_back_to_the_table(monkeypatch):
+    """The table is the point: a slow or empty live route must not leave the field
+    unknown, because `registry.py` and `physics/systems/baseline.py` both branch on
+    whether it is set."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    tariff, notes = ex.get_tariff("CA", "RES", get=_getter({
+        "electricity/retail-sales": EIA_CA_RES, "natural-gas": {"response": {"data": []}}}))
+    assert tariff.gas_usd_per_kwh == pytest.approx(0.072422, abs=1e-6)
+    gas_note = next(n for n in notes if n.what == "eia/natural-gas-price")
+    assert gas_note.status == "fallback"
+    assert "table" in gas_note.detail, "the record must say the table answered"
+
+
+def test_a_state_with_no_table_entry_is_unknown_not_no_gas(monkeypatch):
+    """When there is genuinely nothing, the record must say "unknown" rather than let
+    a reader infer the site has no gas."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    monkeypatch.setattr(ex, "GAS_DEFAULTS", {})
+    tariff, notes = ex.get_tariff("CA", "RES", get=_getter({
+        "electricity/retail-sales": EIA_CA_RES, "natural-gas": {"response": {"data": []}}}))
+    assert tariff.gas_usd_per_kwh is None
+    gas_note = next(n for n in notes if n.what == "eia/natural-gas-price")
+    assert gas_note.status == "missing"
+    assert "not the same as the site having no gas" in gas_note.detail
+
+
+def test_a_gas_failure_never_breaks_the_tariff(monkeypatch):
+    """The gas route measured between 1 s and 66 s with occasional 504s. The
+    electricity price is required by the contract; gas is an improvement."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+
+    def flaky(url, params):
+        if "natural-gas" in url:
+            raise RuntimeError("504 Gateway Timeout")
+        return EIA_CA_RES
+
+    tariff, _ = ex.get_tariff("CA", "RES", get=flaky)
+    assert tariff is not None, "a gas failure must not lose the electricity price"
+    assert tariff.electricity_usd_per_kwh == pytest.approx(0.2975)
+    # ...and the table still answers, so the field is not left unknown.
+    assert tariff.gas_usd_per_kwh == pytest.approx(0.072422, abs=1e-6)
+
+
+def test_gas_uses_annual_not_monthly(monkeypatch):
+    """Gas prices swing with the heating season, so one month is a poor annual proxy
+    in a way the electricity price is not."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    seen = []
+
+    def spy(url, params):
+        seen.append((url, params))
+        return EIA_GAS_CA_RES if "natural-gas" in url else EIA_CA_RES
+
+    ex.get_tariff("CA", "RES", get=spy)
+    gas_call = next(p for u, p in seen if "natural-gas" in u)
+    assert gas_call["frequency"] == "annual" == ex.GAS_FREQUENCY
+    assert gas_call["facets[process][]"] == "PRS"
+    assert gas_call["facets[duoarea][]"] == "SCA"
+
+
+def test_an_unexpected_unit_is_refused_rather_than_converted(monkeypatch):
+    """The conversion hangs entirely on the price being per thousand cubic feet. A
+    per-therm series would be out by a factor of ten, and nothing downstream checks."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    per_therm = {"response": {"data": [{"period": "2025", "value": "2.12",
+                                        "units": "$/therm"}]}}
+    value, _, raw = ex._eia_gas_usd_per_kwh("CA", "RES", get=_getter({"natural-gas": per_therm}))
+    assert value is None, "a per-therm price must not be treated as per-MCF"
+    assert "unexpected units" in (raw or "")
+
+
+def test_an_electricity_payload_cannot_be_read_as_a_gas_price(monkeypatch):
+    """Both live on api.eia.gov, so a fake that routes only by host feeds one to the
+    other. It must come back as no data, not as a number."""
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    value, _, _ = ex._eia_gas_usd_per_kwh("TX", "COM", get=_getter({"api.eia.gov": EIA_TX_COM}))
+    assert value is None
+
+
+def test_an_unknown_state_asks_for_no_gas_price(monkeypatch):
+    monkeypatch.setenv("EIA_API_KEY", "x")
+    assert ex._eia_gas_usd_per_kwh("NY", "RES", get=_getter({}))[0] is None
+    assert ex._eia_gas_usd_per_kwh("CA", "INDUSTRIAL", get=_getter({}))[0] is None
+
+
 def test_export_regime_follows_the_state(monkeypatch):
     """The contract documents `export_regime` as "None where no export price is
     mandated (Texas)". California mandates one, ERCOT does not, and leaving the field

@@ -243,6 +243,145 @@ def _eia_price_usd_per_kwh(state: str, sector: str, *, get: Optional[Getter] = N
     return cents * CENTS_TO_USD, rows[0].get("period")
 
 
+# ---------- gas (D15) ----------
+
+EIA_GAS = "https://api.eia.gov/v2/natural-gas/pri/sum/data/"
+
+#: EIA's process codes for the delivered gas price. Discovered from the route's own
+#: `facet/process` listing rather than guessed.
+GAS_PROCESS = {"RES": "PRS", "COM": "PCS"}      # Residential / Commercial consumers
+GAS_AREA = {"CA": "SCA", "TX": "STX"}
+
+#: **Annual**, not monthly, and deliberately. Gas prices swing hard with the winter
+#: heating season, so one month is a poor proxy for an annual energy model in a way
+#: that the electricity price is not. The monthly route also times out far more often.
+GAS_FREQUENCY = "annual"
+
+#: 1 therm = 29.3071070172 kWh, so 1 MMBtu = 10 therms = 293.071070172 kWh. This is
+#: physics 04 TAR-05's constant, restated here rather than imported: the analysis lane
+#: imports this lane, never the reverse.
+KWH_PER_MMBTU = 293.071070172
+
+#: **The unit trap.** EIA prices gas in **dollars per thousand cubic feet**, not per
+#: therm, so physics 04 TAR-04's `usd_per_therm / 29.3071` is the wrong conversion to
+#: apply to this number - it would overstate the price by a factor of about ten.
+#: Volume becomes energy through the heat content of gas delivered to consumers, about
+#: 1,037 Btu per cubic foot (EIA's published average), hence 1.037 MMBtu per MCF.
+#:
+#: That factor carries roughly ±0.5 % of uncertainty, since the heat content varies
+#: year to year and by region between about 1,030 and 1,040 Btu/cf. It is far below
+#: the uncertainty already in using a **state average** instead of the building's own
+#: tariff, which is why the state average is labelled a fallback.
+MMBTU_PER_MCF = 1.037
+
+
+def usd_per_mcf_to_usd_per_kwh(price: float) -> float:
+    """EIA's `$/MCF` to the contract's `gas_usd_per_kwh` (higher heating value)."""
+    return price / (MMBTU_PER_MCF * KWH_PER_MMBTU)
+
+
+#: The four delivered gas prices this project needs, in EIA's own `$/MCF`, with the
+#: series and the date they were read. **Committed on purpose.**
+#:
+#: The live route is slow and erratic: measured 1 s, 14 s, 41 s and 66 s on the four
+#: combinations, with 504s in between. Waiting on it took a cold bundle assembly from
+#: 2.5 s to **44-76 s**, which is not a demo path. These are public EIA figures (not
+#: sponsor data, so committing them is fine), they change once a year, and a table
+#: beats a timeout that silently leaves the field unknown.
+#:
+#: The live lookup still runs first when `GAS_REFRESH` is set, so the table can be
+#: refreshed rather than drifting. Either way the figure is a **state average** and is
+#: labelled `fallback`; the detail says which route produced it.
+GAS_DEFAULTS: dict[tuple[str, str], tuple[float, str, str]] = {
+    ("CA", "RES"): (22.01, "2025", "N3010CA3"),
+    ("CA", "COM"): (16.56, "2025", "N3020CA3"),
+    ("TX", "RES"): (19.42, "2025", "N3010TX3"),
+    ("TX", "COM"): (10.98, "2025", "N3020TX3"),
+}
+
+#: Set to `1` to try EIA live before the table. Off by default so a bundle never waits
+#: on a route that has taken over a minute.
+GAS_REFRESH_ENV = "EIA_GAS_REFRESH"
+
+#: Short on purpose. If EIA has not answered in this long, the table is better than
+#: both waiting and giving up.
+GAS_TIMEOUT_S = 15.0
+
+
+def _gas_from_table(state: str, sector: str) -> tuple[Optional[float], Optional[str], Optional[str]]:
+    entry = GAS_DEFAULTS.get((state.upper(), sector.upper()))
+    if entry is None:
+        return None, None, None
+    price, period, series = entry
+    return usd_per_mcf_to_usd_per_kwh(price), period, f"{price} $/MCF, EIA {series}, table"
+
+
+def _gas_get(url: str, params: dict) -> dict:
+    """Like `_default_get` but with `GAS_TIMEOUT_S`, so one slow route cannot hold up
+    a bundle that is otherwise two and a half seconds."""
+    import httpx
+
+    resp = httpx.get(url, params=params, timeout=GAS_TIMEOUT_S)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _eia_gas_usd_per_kwh(
+    state: str, sector: str, *, get: Optional[Getter] = None
+) -> tuple[Optional[float], Optional[str], Optional[str]]:
+    """`(usd_per_kwh, period, raw_label)` for the state's delivered gas price.
+
+    The committed table answers immediately. A live fetch is tried first only when
+    `EIA_GAS_REFRESH=1`, or when a caller injects a transport - which is what the
+    tests do, so they still exercise the real parsing and the unit guard.
+    """
+    if get is None and os.environ.get(GAS_REFRESH_ENV) != "1":
+        return _gas_from_table(state, sector)
+
+    key = os.environ.get("EIA_API_KEY")
+    area, process = GAS_AREA.get(state.upper()), GAS_PROCESS.get(sector.upper())
+    if not key or not area or not process:
+        return _gas_from_table(state, sector)
+
+    params = {
+        "api_key": key, "frequency": GAS_FREQUENCY, "data[0]": "value",
+        "facets[duoarea][]": area, "facets[process][]": process,
+        "sort[0][column]": "period", "sort[0][direction]": "desc", "length": 1,
+    }
+    try:
+        payload, _ = cache.cached_json(
+            "eia-gas", f"{state.upper()}-{sector.upper()}",
+            lambda: (get or _gas_get)(EIA_GAS, params),
+            {"frequency": GAS_FREQUENCY, "process": process},
+            use_cache=get is None,
+        )
+    except Exception:
+        # A gas price is an improvement on the bundle, never a precondition for it.
+        return _gas_from_table(state, sector)
+
+    rows = ((payload or {}).get("response") or {}).get("data") or []
+    if not rows:
+        return _gas_from_table(state, sector)
+    row = rows[0]
+    # **Guard the unit, do not assume it.** The whole conversion hangs on the price
+    # being per thousand cubic feet; a per-therm or per-MMBtu series would be out by a
+    # factor of ten or a hundred and nothing downstream would notice. This is the same
+    # lesson as D9, where an offline fixture used a float and kept the suite green
+    # against a shape the real API never sends.
+    units = str(row.get("units") or "")
+    if "MCF" not in units.upper():
+        return None, None, f"unexpected units {units!r}"
+
+    price = _as_number(row.get("value"))      # EIA sends numbers as strings
+    if price is None:
+        return None, None, None
+    return (
+        usd_per_mcf_to_usd_per_kwh(price),
+        str(row.get("period") or ""),
+        f"{price} {row.get('units') or '$/MCF'}",
+    )
+
+
 #: Whether the state mandates a price for exported PV. The contract's own rule -
 #: `Tariff.export_regime` is documented as "None where no export price is mandated
 #: (Texas)" - so California is `net_metering` and ERCOT, which mandates no export
@@ -281,10 +420,31 @@ def get_tariff(
         return None, [FetchRecord(layer="tariff", what="eia/retail-sales", status="missing",
                                   detail="no EIA_API_KEY, or no price for that state and sector")]
     label = f"EIA state average retail price, {state} {sector}, {period}"
+    notes = [FetchRecord(layer="tariff", what="eia/retail-sales", status="fallback", detail=label)]
+
+    # D15. Without this the field stays None, and `physics/systems/baseline.py` reads
+    # a missing gas price as **electric** heating and hot water (`:149`, `:216`) and
+    # prices any gas at zero (`:252`), so a 1920s Los Angeles house came out
+    # all-electric on every live bundle. A missing price is "unknown", not "no gas".
+    gas, gas_period, raw = _eia_gas_usd_per_kwh(state, sector, get=get)
+    if gas is not None:
+        gas_label = (f"EIA state average delivered gas price, {state} {sector}, {gas_period} "
+                     f"({raw} at {MMBTU_PER_MCF} MMBtu/MCF, +/-0.5% on the heat content)")
+        notes.append(FetchRecord(layer="tariff", what="eia/natural-gas-price",
+                                 status="fallback", detail=gas_label))
+        label = f"{label}; {gas_label}"
+    else:
+        notes.append(FetchRecord(
+            layer="tariff", what="eia/natural-gas-price", status="missing",
+            detail=("no delivered gas price for that state and sector, so gas_usd_per_kwh is "
+                    "unknown - which is not the same as the site having no gas"),
+        ))
+
     return Tariff(
         utility=utility or f"{state} state average ({sector})",
         electricity_usd_per_kwh=round(price, 6),
+        gas_usd_per_kwh=round(gas, 6) if gas is not None else None,
         export_regime=EXPORT_REGIME.get(state),
         source=label,
         retrieved=period or "",
-    ), [FetchRecord(layer="tariff", what="eia/retail-sales", status="fallback", detail=label)]
+    ), notes

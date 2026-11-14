@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import mimetypes
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -15,7 +15,7 @@ from backend.agent import api
 from backend.agent.roof import RoofView
 from backend.agent.runtime.replan import PatchError
 from backend.data_layer import api as data
-from backend.schema import (SCHEMA_VERSION, DocumentDraft, DocumentRequest, PropertySummary,
+from backend.schema import (SCHEMA_VERSION, DocType, DocumentDraft, DocumentRequest, PropertySummary,
                             RunRequest, RunResult, Segment, UseType)
 
 _CODES = {400: "bad_request", 404: "not_found", 409: "conflict", 422: "invalid_request"}
@@ -64,6 +64,13 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     def health():
         return {"status": "ok", "schema_version": SCHEMA_VERSION}
+
+    @app.get("/api/templates", response_model=list[DocType])
+    def templates(state: Optional[Literal["CA", "TX"]] = None, segment: Optional[Segment] = None):
+        """The document types that can actually be drafted (read-only; the legal door's `list_templates`).
+        A client offers only these; a request for anything else is a 404 template_not_available."""
+        from backend.legal import api as legal
+        return legal.list_templates(state, segment)
 
     @app.get("/api/properties/search", response_model=list[PropertySummary])
     def search(q: Optional[str] = None, segment: Optional[Segment] = None,

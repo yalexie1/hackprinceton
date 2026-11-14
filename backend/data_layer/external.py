@@ -173,6 +173,77 @@ def _pvgis_elevation(payload: Optional[dict]) -> Optional[float]:
     return float(elev) if isinstance(elev, (int, float)) and not isinstance(elev, bool) else None
 
 
+# ---------- ASHRAE 169 climate zone (D18) ----------
+
+#: Moisture letter by state. The **digit** is measured from the site's own hourly temperatures;
+#: the letter needs annual precipitation, which this lane does not fetch, so it is taken from the
+#: state. Right for the two states the project covers (inland and southern California is dry B,
+#: the Gulf coast is humid A) and the registry only accepts `2A` and `3B`. It would be **wrong**
+#: for coastal northern California, which is marine 3C - so the record says the letter is a
+#: state-level assumption while the digit is a measurement.
+_MOISTURE_BY_STATE = {"CA": "B", "TX": "A"}
+
+
+def _daily_means(temps_c: list[float]) -> list[float]:
+    whole = len(temps_c) - len(temps_c) % 24
+    return [sum(temps_c[i:i + 24]) / 24.0 for i in range(0, whole, 24)]
+
+
+def _thermal_digit(cdd10: float, hdd18: float) -> str:
+    """ASHRAE 169-2021 thermal zone from cooling and heating degree-days, Celsius-days."""
+    if cdd10 > 6000:
+        return "0"
+    if cdd10 > 5000:
+        return "1"
+    if cdd10 > 3500:
+        return "2"
+    if cdd10 > 2500 or hdd18 <= 2000:
+        return "3"
+    if hdd18 <= 3000:
+        return "4"
+    if hdd18 <= 4000:
+        return "5"
+    if hdd18 <= 5000:
+        return "6"
+    if hdd18 <= 7000:
+        return "7"
+    return "8"
+
+
+def climate_zone_from_temperatures(temps_c, state=None) -> tuple[Optional[str], FetchRecord]:
+    """The site's ASHRAE 169 zone, measured from the weather year this lane already fetched.
+
+    Nothing was passing `climate_zone`, so every live bundle carried `None` while the committed
+    examples carried `3B`, `3B` and `2A`. The model registry falls back on the state, so the
+    vintage defaults survived - but the A31 energy-use benchmark has no fallback and reported
+    `not_checked: no climate zone` on every live run, which turns off the one sanity check on the
+    model exactly when the numbers are real.
+
+    Verified on the three golden properties' own TMYx years: CDD10 3,156 / 2,620 / 4,510 and
+    HDD18 527 / 728 / 552 give digits 3, 3 and 2, reproducing the examples' 3B, 3B and 2A.
+    """
+    days = _daily_means([float(t) for t in temps_c])
+    if len(days) < 300:
+        return None, FetchRecord(
+            layer="weather", what="ashrae169/climate-zone", status="missing",
+            detail=f"only {len(days)} whole days of temperature, too few to count degree-days")
+    cdd10 = sum(max(0.0, d - 10.0) for d in days)
+    hdd18 = sum(max(0.0, 18.0 - d) for d in days)
+    digit = _thermal_digit(cdd10, hdd18)
+    letter = _MOISTURE_BY_STATE.get((state or "").upper())
+    if letter is None:
+        return None, FetchRecord(
+            layer="weather", what="ashrae169/climate-zone", status="fallback",
+            detail=(f"thermal zone {digit} measured from this site's year "
+                    f"(CDD10 {cdd10:,.0f}, HDD18 {hdd18:,.0f}), but the moisture letter needs "
+                    f"precipitation and no state was given, so no zone is reported"))
+    return f"{digit}{letter}", FetchRecord(
+        layer="weather", what="ashrae169/climate-zone", status="ok",
+        detail=(f"zone {digit}{letter}: the digit is measured from this site's weather year "
+                f"(CDD10 {cdd10:,.0f}, HDD18 {hdd18:,.0f} Celsius-days, ASHRAE 169-2021); the "
+                f"letter {letter} is assumed from the state ({state}), not measured"))
+
+
 def get_climate_site(
     sid: str, lat: float, lon: float, year: int, *,
     climate_zone: Optional[str] = None,

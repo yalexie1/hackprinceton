@@ -1,0 +1,447 @@
+{
+ "metered_buildings": {
+  "status": "ok",
+  "title": "Metered buildings",
+  "question": "How close is our predicted annual electricity to a real meter, and does our stated uncertainty band tell the truth?",
+  "headline": [
+   {
+    "label": "Interval coverage",
+    "value": 17.6,
+    "unit": "%",
+    "nominal": 80.0,
+    "ci90": [
+     13.7,
+     22.2
+    ],
+    "n": 494,
+    "note": "How often the metered annual fell inside our stated 10-90 band. Nominal is 80%. Lower means the band is too narrow."
+   },
+   {
+    "label": "Median absolute error",
+    "value": 55.5,
+    "unit": "%",
+    "nominal": null,
+    "ci90": null,
+    "n": 494,
+    "note": "Half of buildings are predicted closer than this, half further."
+   },
+   {
+    "label": "Median signed error",
+    "value": -0.5,
+    "unit": "%",
+    "nominal": 0.0,
+    "ci90": null,
+    "n": 494,
+    "note": "Near zero: the model is not systematically high or low, it is scattered."
+   },
+   {
+    "label": "Within 25%",
+    "value": 23.5,
+    "unit": "% of buildings",
+    "nominal": null,
+    "ci90": null,
+    "n": 494,
+    "note": "Share of buildings predicted within a quarter of the metered total."
+   },
+   {
+    "label": "Band width",
+    "value": 41.4,
+    "unit": "% of expected",
+    "nominal": null,
+    "ci90": null,
+    "n": 494,
+    "note": "Mean width of the low-to-high band, relative to the expected value."
+   }
+  ],
+  "bins": {
+   "below_low": 38.1,
+   "low_to_expected": 11.7,
+   "expected_to_high": 5.9,
+   "above_high": 44.3
+  },
+  "bins_note": "Where the metered total fell relative to our band. Truth falls below and above in near-equal measure, so the band is too narrow rather than biased in one direction.",
+  "by_usage": {
+   "Education": {
+    "n": 234,
+    "median_sqm": 7122,
+    "bdg2temp": {
+     "n": 234,
+     "median_pct": 21.6,
+     "median_abs_pct": 52.4,
+     "mean_pct": 128.3,
+     "p10_pct": -58.0,
+     "p90_pct": 189.3,
+     "within_25pct": 24.4,
+     "within_50pct": 46.6,
+     "factor_2_plus": 23.1
+    },
+    "coverage_pct": 20.9
+   },
+   "Entertainment/public assembly": {
+    "n": 53,
+    "median_sqm": 6382,
+    "bdg2temp": {
+     "n": 53,
+     "median_pct": 34.6,
+     "median_abs_pct": 56.8,
+     "mean_pct": 795.1,
+     "p10_pct": -54.0,
+     "p90_pct": 409.9,
+     "within_25pct": 24.5,
+     "within_50pct": 43.4,
+     "factor_2_plus": 28.3
+    },
+    "coverage_pct": 15.1
+   },
+   "Food sales and service": {
+    "n": 1,
+    "median_sqm": 2310,
+    "bdg2temp": {
+     "n": 1,
+     "median_pct": -33.0,
+     "median_abs_pct": 33.0,
+     "mean_pct": -33.0,
+     "p10_pct": -33.0,
+     "p90_pct": -33.0,
+     "within_25pct": 0.0,
+     "within_50pct": 100.0,
+     "factor_2_plus": 0.0
+    },
+    "coverage_pct": 0.0
+   },
+   "Healthcare": {
+    "n": 6,
+    "median_sqm": 3070,
+    "bdg2temp": {
+     "n": 6,
+     "median_pct": -32.4,
+     "median_abs_pct": 39.3,
+     "mean_pct": -15.3,
+     "p10_pct": -45.4,
+     "p90_pct": 1.4,
+     "within_25pct": 16.7,
+     "within_50pct": 83.3,
+     "factor_2_plus": 0.0
+    },
+    "coverage_pct": 16.7
+   },
+   "Lodging/residential": {
+    "n": 73,
+    "median_sqm": 4936,
+    "bdg2temp": {
+     "n": 73,
+     "median_pct": -83.4,
+     "median_abs_pct": 83.4,
+     "mean_pct": -77.0,
+     "p10_pct": -92.4,
+     "p90_pct": -49.5,
+     "within_25pct": 2.7,
+     "within_50pct": 12.3,
+     "factor_2_plus": 0.0
+    },
+    "coverage_pct": 6.8
+   },
+   "Manufacturing/industrial": {
+    "n": 2,
+    "median_sqm": 5705,
+    "bdg2temp": {
+     "n": 2,
+     "median_pct": 56.3,
+     "median_abs_pct": 56.3,
+     "mean_pct": 56.3,
+     "p10_pct": 13.9,
+     "p90_pct": 98.7,
+     "within_25pct": 50.0,
+     "within_50pct": 50.0,
+     "factor_2_plus": 0.0
+    },
+    "coverage_pct": 50.0
+   },
+   "Office": {
+    "n": 61,
+    "median_sqm": 4920,
+    "bdg2temp": {
+     "n": 61,
+     "median_pct": 8.6,
+     "median_abs_pct": 40.7,
+     "mean_pct": 126.2,
+     "p10_pct": -40.7,
+     "p90_pct": 181.9,
+     "within_25pct": 27.9,
+     "within_50pct": 60.7,
+     "factor_2_plus": 21.3
+    },
+    "coverage_pct": 13.1
+   },
+   "Other": {
+    "n": 5,
+    "median_sqm": 436,
+    "bdg2temp": {
+     "n": 5,
+     "median_pct": 10.1,
+     "median_abs_pct": 32.2,
+     "mean_pct": 39.6,
+     "p10_pct": -49.1,
+     "p90_pct": 247.8,
+     "within_25pct": 40.0,
+     "within_50pct": 80.0,
+     "factor_2_plus": 20.0
+    },
+    "coverage_pct": 40.0
+   },
+   "Public services": {
+    "n": 41,
+    "median_sqm": 3274,
+    "bdg2temp": {
+     "n": 41,
+     "median_pct": 2.0,
+     "median_abs_pct": 26.5,
+     "mean_pct": 22.5,
+     "p10_pct": -34.0,
+     "p90_pct": 116.9,
+     "within_25pct": 46.3,
+     "within_50pct": 65.9,
+     "factor_2_plus": 14.6
+    },
+    "coverage_pct": 26.8
+   },
+   "Religious worship": {
+    "n": 2,
+    "median_sqm": 540,
+    "bdg2temp": {
+     "n": 2,
+     "median_pct": 155.1,
+     "median_abs_pct": 155.1,
+     "mean_pct": 155.1,
+     "p10_pct": 140.0,
+     "p90_pct": 170.2,
+     "within_25pct": 0.0,
+     "within_50pct": 0.0,
+     "factor_2_plus": 100.0
+    },
+    "coverage_pct": 0.0
+   },
+   "Retail": {
+    "n": 6,
+    "median_sqm": 3572,
+    "bdg2temp": {
+     "n": 6,
+     "median_pct": 72.9,
+     "median_abs_pct": 84.7,
+     "mean_pct": 488.9,
+     "p10_pct": -63.8,
+     "p90_pct": 226.2,
+     "within_25pct": 0.0,
+     "within_50pct": 33.3,
+     "factor_2_plus": 50.0
+    },
+    "coverage_pct": 0.0
+   },
+   "Technology/science": {
+    "n": 3,
+    "median_sqm": 4946,
+    "bdg2temp": {
+     "n": 3,
+     "median_pct": -22.7,
+     "median_abs_pct": 22.7,
+     "mean_pct": -18.3,
+     "p10_pct": -50.8,
+     "p90_pct": 18.6,
+     "within_25pct": 66.7,
+     "within_50pct": 66.7,
+     "factor_2_plus": 0.0
+    },
+    "coverage_pct": 33.3
+   },
+   "Utility": {
+    "n": 2,
+    "median_sqm": 4569,
+    "bdg2temp": {
+     "n": 2,
+     "median_pct": 41.4,
+     "median_abs_pct": 68.0,
+     "mean_pct": 41.4,
+     "p10_pct": -26.6,
+     "p90_pct": 109.4,
+     "within_25pct": 0.0,
+     "within_50pct": 50.0,
+     "factor_2_plus": 50.0
+    },
+    "coverage_pct": 0.0
+   },
+   "Warehouse/storage": {
+    "n": 5,
+    "median_sqm": 1379,
+    "bdg2temp": {
+     "n": 5,
+     "median_pct": 9.1,
+     "median_abs_pct": 52.7,
+     "mean_pct": 275.5,
+     "p10_pct": -52.7,
+     "p90_pct": 1283.0,
+     "within_25pct": 40.0,
+     "within_50pct": 40.0,
+     "factor_2_plus": 40.0
+    },
+    "coverage_pct": 20.0
+   }
+  },
+  "by_site": {
+   "Bear": {
+    "n": 86,
+    "median_sqm": 6536,
+    "bdg2temp": {
+     "n": 86,
+     "median_pct": 35.1,
+     "median_abs_pct": 77.1,
+     "mean_pct": 180.3,
+     "p10_pct": -67.2,
+     "p90_pct": 249.9,
+     "within_25pct": 16.3,
+     "within_50pct": 31.4,
+     "factor_2_plus": 38.4
+    },
+    "coverage_pct": 14.0
+   },
+   "Cockatoo": {
+    "n": 100,
+    "median_sqm": 7454,
+    "bdg2temp": {
+     "n": 100,
+     "median_pct": -15.9,
+     "median_abs_pct": 69.2,
+     "mean_pct": 125.3,
+     "p10_pct": -86.0,
+     "p90_pct": 144.6,
+     "within_25pct": 16.0,
+     "within_50pct": 33.0,
+     "factor_2_plus": 16.0
+    },
+    "coverage_pct": 12.0
+   },
+   "Fox": {
+    "n": 89,
+    "median_sqm": 6707,
+    "bdg2temp": {
+     "n": 89,
+     "median_pct": 30.6,
+     "median_abs_pct": 50.2,
+     "mean_pct": 70.4,
+     "p10_pct": -50.2,
+     "p90_pct": 177.8,
+     "within_25pct": 20.2,
+     "within_50pct": 49.4,
+     "factor_2_plus": 25.8
+    },
+    "coverage_pct": 16.9
+   },
+   "Panther": {
+    "n": 96,
+    "median_sqm": 4091,
+    "bdg2temp": {
+     "n": 96,
+     "median_pct": -35.7,
+     "median_abs_pct": 58.0,
+     "mean_pct": 9.7,
+     "p10_pct": -87.7,
+     "p90_pct": 77.4,
+     "within_25pct": 19.8,
+     "within_50pct": 47.9,
+     "factor_2_plus": 8.3
+    },
+    "coverage_pct": 15.6
+   },
+   "Rat": {
+    "n": 123,
+    "median_sqm": 5565,
+    "bdg2temp": {
+     "n": 123,
+     "median_pct": 2.6,
+     "median_abs_pct": 36.3,
+     "mean_pct": 363.9,
+     "p10_pct": -51.9,
+     "p90_pct": 158.9,
+     "within_25pct": 39.8,
+     "within_50pct": 59.3,
+     "factor_2_plus": 13.8
+    },
+    "coverage_pct": 26.8
+   }
+  },
+  "weather_decomposition": {
+   "electricity_median_pct": -1.0,
+   "heating_need_median_pct": 24.8,
+   "n_electricity": 494,
+   "n_heating": 451,
+   "note": "Swapping measured station temperatures for the Open-Meteo reanalysis path. The bias is large on heating need and small on the electricity meter, because these buildings are dominated by cooling, lighting and plug loads."
+  },
+  "storey_diagnostic": {
+   "floors_ge_4": {
+    "n": 66,
+    "median_pct": 2.1,
+    "median_abs_pct": 61.7,
+    "mean_pct": 70.8,
+    "p10_pct": -67.8,
+    "p90_pct": 214.4,
+    "within_25pct": 18.2,
+    "within_50pct": 36.4,
+    "factor_2_plus": 30.3
+   },
+   "floors_le_1": {
+    "n": 411,
+    "median_pct": -7.6,
+    "median_abs_pct": 51.9,
+    "mean_pct": 159.3,
+    "p10_pct": -83.2,
+    "p90_pct": 154.0,
+    "within_25pct": 24.8,
+    "within_50pct": 47.7,
+    "factor_2_plus": 16.3
+   },
+   "note": "Known limitation: all buildings are modelled as one storey scaled to total floor area. If the 4+ storey group is biased differently, that is the cause."
+  },
+  "scope": "defaults-path eval: 5R1C zone model + DEF-* defaults, given area/vintage/type. Excludes geometry extraction, vision, daylight, PV (no scan or roof inputs in BDG2). Energy only; cost and CO2 not scored (state forced to CA by the contract Literal).",
+  "caveats": [
+   "Truth is one annual total per building: this is a cross-sectional error distribution, not a Guideline 14 time-series fit.",
+   "Weather is site-level across only 5 sites, so the effective N for the weather-driven error term is 5, not the building count. CIs are bootstrapped over sites and are wide.",
+   "Every building is modelled as a single zone at a single storey scaled to its floor area, so a tall building's surface-to-volume ratio is wrong by construction.",
+   "Non-office uses (Education, Lodging, Entertainment, Public services, Healthcare) are run on office or residential defaults; type mismatch is inside the reported error.",
+   "Irradiance is Open-Meteo in BOTH arms (BDG2 ships none), so the arm difference isolates temperature error only, not irradiance error."
+  ],
+  "provenance": {
+   "dataset": "Building Data Genome Project 2",
+   "year": 2017,
+   "n_scored": 494,
+   "n_sampled": 494,
+   "n_sites": 5,
+   "sites": [
+    "Bear",
+    "Cockatoo",
+    "Fox",
+    "Panther",
+    "Rat"
+   ],
+   "refused": 0,
+   "arm": "bdg2temp",
+   "manifest": "backend/evals/manifests/bdg2.yaml"
+  }
+ },
+ "pv_crosscheck": {
+  "status": "not_run",
+  "title": "PV yield vs PVGIS",
+  "question": "Does our modelled PV yield agree with an independent estimate?",
+  "note": "This check has not been run yet."
+ },
+ "cost_check": {
+  "status": "not_run",
+  "title": "Installed cost vs Tracking the Sun",
+  "question": "Are our installed costs inside the real market distribution?",
+  "note": "This check has not been run yet."
+ },
+ "opensolar_spotcheck": {
+  "status": "not_run",
+  "title": "OpenSolar spot check",
+  "question": "Does our system design match a tool the industry trusts?",
+  "note": "This check has not been run yet."
+ }
+}

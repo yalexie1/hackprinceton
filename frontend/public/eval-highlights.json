@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "title": "The results we stand behind",
-  "question": "Two accuracy results scored against real energy use the model did not see, one agreement check against an independent solar model, and one reliability count. The full studies follow below.",
+  "question": "Two accuracy results scored against real energy use the model did not see, and one agreement check against an independent solar model. The full studies follow below.",
   "headline": [
     {
       "label": "Median error with a year of utility bills",
@@ -35,16 +35,6 @@
       "n": 76,
       "note": "Our predicted annual output per kilowatt for 76 scanned Los Angeles roofs, against PVGIS, the European Commission's solar model. The median difference is +2%. This shows two models agree; it is not a measured output.",
       "kind": "Agreement with another model"
-    },
-    {
-      "label": "Real scans that produced a full result",
-      "value": 116,
-      "unit": " of 150",
-      "nominal": null,
-      "ci90": null,
-      "n": 150,
-      "note": "How many real scans ran end to end. This measures reliability, not accuracy. Every failure is counted, not dropped. 31 of the 34 failures were one data error, fixed tonight and being rerun; 2 are a known solver limit.",
-      "kind": "Reliability on real scans"
     }
   ],
   "caveats": [
@@ -55,6 +45,6 @@
     "Savings from individual upgrades have not yet been checked against measured results."
   ],
   "provenance": {
-    "sources": "Building Data Genome Project 2 (bills result); City of Los Angeles EBEWE benchmarking and PVGIS (offices, solar and scans), run on 15 November 2026"
+    "sources": "Building Data Genome Project 2 (bills result); City of Los Angeles EBEWE benchmarking and PVGIS (offices and solar), run on 15 November 2026"
   }
 }

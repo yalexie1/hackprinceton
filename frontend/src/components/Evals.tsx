@@ -247,7 +247,7 @@ function NotRun({ section }: { section: EvalSection }) {
  * Studies left off the page by the team lead's call (15 Nov). The data stays in
  * evals.json and backend/evals/out; only the rendering is skipped.
  */
-const HIDDEN_SECTIONS = new Set(["metered_buildings"]);
+const HIDDEN_SECTIONS = new Set(["metered_buildings", "opensolar_spotcheck"]);
 
 /** The headline results, shown first. Same figure cards as the studies below. */
 function Highlights({ section }: { section: EvalSection }) {

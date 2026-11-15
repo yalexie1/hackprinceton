@@ -28,7 +28,6 @@ export default function Geometry({
   const [imageFailed, setImageFailed] = useState(false);
   const [showDetections, setShowDetections] = useState(false);
   const [showPanels, setShowPanels] = useState(true);
-  const [allPositions, setAllPositions] = useState(false);
   useEffect(() => {
     setRoofView(null);
     setRoofError("");
@@ -54,12 +53,8 @@ export default function Geometry({
   }, [run, demo, layout]);
   const roofs = run.building_model?.roof_planes || [];
   const candidates = desks?.candidates || [];
-  const [selected, setSelected] = useState(() =>
-    Math.max(
-      0,
-      candidates.findIndex((candidate) => candidate.recommended),
-    ),
-  );
+  const [selected, setSelected] = useState(0);
+  useEffect(() => setSelected(0), [run.run_id]);
   const roofPolys = (roofView?.planes || roofs).map((r) =>
     polygon(r.polygon_wkt),
   );
@@ -108,7 +103,7 @@ export default function Geometry({
             <>
               The analysis will provide{" "}
               {layout
-                ? "scored desk positions"
+                ? "candidate workspace positions"
                 : "roof planes and panel placements"}{" "}
               when available for this property.
             </>
@@ -132,12 +127,7 @@ export default function Geometry({
   ];
   const pts = (poly: number[][]) => poly.map((p) => xy(p).join(",")).join(" ");
   const current = candidates[selected];
-  const hasRecommended = candidates.some((point) => point.recommended);
-  const positions = candidates
-    .map((point, i) => ({ point, i }))
-    .filter(
-      ({ point }) => allPositions || !hasRecommended || point.recommended,
-    );
+  const positions = candidates.map((point, i) => ({ point, i }));
   const unsupported =
     !layout &&
     (roofPolys.some((p) => !p.length) || panelPolys.some((p) => !p.length));
@@ -149,14 +139,14 @@ export default function Geometry({
             {layout ? "WORK WITH YOUR SPACE" : "ENERGY FROM ABOVE"}
           </span>
           <h2>
-            {layout ? "A brighter place to work." : "Your roof has potential."}
+            {layout ? "Explore your workspace." : "Your roof has potential."}
           </h2>
         </div>
         <Compass size={26} />
       </div>
       <p className="section-description">
         {layout
-          ? "Compare daylight, glare, and comfort at each candidate position. Select a point to inspect its score."
+          ? "Select a position to explore daylight calculated from room geometry and a sky model. These comparisons are exploratory and have not been validated against measurements. They do not establish comfort or a best desk position."
           : "Explore the roof planes and proposed solar modules returned by the analysis."}
       </p>
       {!layout && (
@@ -192,33 +182,8 @@ export default function Geometry({
       )}
       {layout && (
         <div className="roof-layer-controls">
-          <label>
-            Workspace positions
-            <select
-              value={allPositions ? "all" : "recommended"}
-              onChange={(event) => {
-                const next = event.target.value === "all";
-                setAllPositions(next);
-                if (
-                  !next &&
-                  hasRecommended &&
-                  !candidates[selected]?.recommended
-                )
-                  setSelected(
-                    candidates.findIndex((point) => point.recommended),
-                  );
-              }}
-            >
-              <option value="recommended">
-                {hasRecommended
-                  ? "Recommended positions"
-                  : "Available positions"}
-              </option>
-              <option value="all">All analysed positions</option>
-            </select>
-          </label>
           <span>
-            {positions.length} shown of {candidates.length} analysed
+            {positions.length} positions · no ranking
           </span>
           <label>
             Inspect position
@@ -228,8 +193,7 @@ export default function Geometry({
             >
               {positions.map(({ point, i }) => (
                 <option key={i} value={i}>
-                  Position {i + 1} · {point.room_id.replaceAll("_", " ")} ·
-                  score {number(point.score, 2)}
+                  Position {i + 1} · {point.room_id.replaceAll("_", " ")}
                 </option>
               ))}
             </select>
@@ -305,7 +269,8 @@ export default function Geometry({
                   key={i}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Position ${i + 1}, score ${point.score}`}
+                  aria-label={`Position ${i + 1}, ${point.room_id.replaceAll("_", " ")}`}
+                  aria-pressed={selected === i}
                   onClick={() => setSelected(i)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
@@ -314,13 +279,13 @@ export default function Geometry({
                     }
                   }}
                 >
-                  <title>{`Position ${i + 1}, ${point.room_id}: score ${number(point.score, 2)}, ${point.recommended ? "recommended" : "alternative"}`}</title>
+                  <title>{`Position ${i + 1}, ${point.room_id.replaceAll("_", " ")}`}</title>
                   <circle
                     cx={x}
                     cy={y}
-                    r={point.recommended || selected === i ? 28 : 6}
-                    fill={point.recommended ? "#82a778" : "#b6c8a8"}
-                    opacity={0.35 + point.score * 0.4}
+                    r={selected === i ? 28 : 20}
+                    fill="#b6c8a8"
+                    opacity={0.7}
                   />
                   <rect
                     x={x - 12}
@@ -330,8 +295,7 @@ export default function Geometry({
                     rx="3"
                     fill={selected === i ? "#174b35" : "#486653"}
                   />
-                  {(point.recommended || selected === i) && (
-                    <text
+                  {selected === i && <text
                       x={x}
                       y={y + 4}
                       textAnchor="middle"
@@ -339,8 +303,7 @@ export default function Geometry({
                       fontSize="16"
                     >
                       {i + 1}
-                    </text>
-                  )}
+                  </text>}
                 </g>
               );
             })
@@ -454,33 +417,39 @@ export default function Geometry({
         </p>
       )}
       {layout && current ? (
-        <div className="detail-grid">
+        <div className="detail-grid workspace-details">
           <div>
             <span>Position {selected + 1}</span>
             <strong>
-              {current.recommended ? "Recommended" : "Alternative"}
+              {current.room_id.replaceAll("_", " ")}
             </strong>
           </div>
           <div>
-            <span>Time with enough daylight (300 lux)</span>
+            <span>Modelled daylight at 300 lux</span>
             <strong>
               {number(current.daylight * 100, 1)}% of occupied hours
             </strong>
+            <small>Calculated from room geometry and a sky model; not measured.</small>
           </div>
-          <div>
-            <span>Glare risk</span>
-            <strong>
-              {number(current.glare_risk * 100, 1)}% of occupied hours
-            </strong>
-          </div>
-          <div>
-            <span>Predicted occupants uncomfortable (PPD)</span>
-            <strong>{number(current.comfort_ppd, 1)}%</strong>
-          </div>
-          <div>
-            <span>Overall score</span>
-            <strong>{number(current.score, 2)}</strong>
-          </div>
+          {current.daylight_factor != null && Number.isFinite(current.daylight_factor) && (
+            <div>
+              <span>Modelled indoor daylight relative to outdoors</span>
+              <strong>{number(current.daylight_factor, 1)}%</strong>
+              <small>Under the model’s overcast sky; not a measurement.</small>
+            </div>
+          )}
+          {current.direct_sun_hours != null && Number.isFinite(current.direct_sun_hours) && (
+            <div>
+              <span>Modelled time with direct sun in view</span>
+              <strong>{number(current.direct_sun_hours)} occupied hours per year</strong>
+            </div>
+          )}
+          {current.view_azimuth_deg != null && Number.isFinite(current.view_azimuth_deg) && (
+            <div>
+              <span>Direction used for this comparison</span>
+              <strong>{number(current.view_azimuth_deg)}° clockwise from north</strong>
+            </div>
+          )}
           <div>
             <span>Desks requested</span>
             <strong>{desks?.desks_requested}</strong>

@@ -150,6 +150,18 @@ describe("shared contract screen compatibility", () => {
     expect(html).toContain("Read full note");
     expect(html.split("END OF DETAIL")).toHaveLength(2);
   });
+  it("groups related warnings without losing distinct source notes", () => {
+    const electricity = "EIA electricity uses a state average, not your contract.";
+    const gas = "EIA gas uses last year's annual average.";
+    const html = renderToStaticMarkup(
+      <Warnings warnings={[electricity, gas, electricity, "TMY weather is not this year's weather."]} />,
+    );
+    expect(html.split("Check the energy prices used")).toHaveLength(2);
+    expect(html).toContain("Read 2 notes");
+    for (const note of [electricity, gas])
+      expect(html.split(note.replaceAll("'", "&#x27;"))).toHaveLength(2);
+    expect(html).toContain("Review the weather data used");
+  });
   it("marks an earlier narrative as outdated after a backend re-run warning", () => {
     const html = renderToStaticMarkup(
       <AuditNarrative
@@ -212,13 +224,40 @@ describe("shared contract screen compatibility", () => {
       const layout = renderToStaticMarkup(<Geometry run={run} layout demo />);
       if (measure?.layout) {
         expect((layout.match(/role="button"/g) || []).length).toBe(
-          measure.layout.candidates.filter((point) => point.recommended).length,
+          measure.layout.candidates.length,
         );
-        expect(layout).toContain("Recommended");
+        expect(layout).toContain("exploratory");
+        expect(layout).not.toContain("Recommended");
       } else if (measure?.not_applicable_reason) {
         expect(layout).toContain(measure.not_applicable_reason);
       } else expect(layout).toContain("No workspace candidates yet");
     }
+  });
+  it("does not let unvalidated comfort scores rank, label, or style workspace candidates", () => {
+    const run = structuredClone(office);
+    const measure = run.measures.find((item) => item.measure_id === "LAYOUT")!;
+    measure.layout = {
+      desks_requested: 1,
+      candidates: [0, 1].map((i) => ({
+        room_id: `room_${i + 1}`, x: i * 3, y: i * 2,
+        daylight: 0.45, daylight_factor: 2.1, view_azimuth_deg: 90, direct_sun_hours: 120,
+        score: i, recommended: i === 1, comfort_ppd: 15, glare_risk: 0.3, max_dt_pr_k: 4,
+      })),
+    };
+    const before = renderToStaticMarkup(<Geometry run={run} layout demo />);
+    for (const point of measure.layout.candidates) {
+      point.score = 1 - point.score;
+      point.recommended = !point.recommended;
+      point.comfort_ppd = 99;
+      point.glare_risk = 1;
+      point.max_dt_pr_k = 99;
+    }
+    expect(renderToStaticMarkup(<Geometry run={run} layout demo />)).toBe(before);
+    expect((before.match(/role="button"/g) || []).length).toBe(2);
+    expect(before).toContain("45% of occupied hours");
+    expect(before).toContain("not measured");
+    expect(before).toContain("120 occupied hours per year");
+    expect(before).not.toMatch(/Overall score|Glare risk|Recommended|PPD/);
   });
   it("offers shared analysis properties without invented sandbox properties", () => {
     const html = renderToStaticMarkup(

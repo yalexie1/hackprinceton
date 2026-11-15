@@ -15,7 +15,7 @@
   "headline": [
    {
     "label": "Interval coverage",
-    "value": 11.5,
+    "value": 17.7,
     "unit": "%",
     "nominal": 80.0,
     "ci90": null,
@@ -23,7 +23,7 @@
    },
    {
     "label": "Median absolute error",
-    "value": 56.7,
+    "value": 45.7,
     "unit": "%",
     "nominal": null,
     "ci90": null,
@@ -31,7 +31,7 @@
    },
    {
     "label": "Median signed error",
-    "value": -45.6,
+    "value": -38.3,
     "unit": "%",
     "nominal": 0.0,
     "ci90": null,
@@ -41,8 +41,8 @@
   "bins": {
    "below_low": 12.5,
    "low_to_expected": 11.5,
-   "expected_to_high": 0.0,
-   "above_high": 76.0
+   "expected_to_high": 6.2,
+   "above_high": 69.8
   },
   "note": "Our default tables only carry two climate zones, 2A and 3B. Buildings anywhere else are modelled on a blend of them, so these are the buildings the model was actually built for. We show both readings: the full sample above is the honest headline, and this narrower one is the stricter test. It is harder, not easier.",
   "ci_note": "No site-clustered CI is reported: the qualifying buildings come from 1 site(s) (Panther), and a bootstrap over one cluster cannot produce a real interval."
@@ -51,19 +51,19 @@
  "headline": [
   {
    "label": "Interval coverage",
-   "value": 12.8,
+   "value": 17.8,
    "unit": "%",
    "nominal": 80.0,
    "ci90": [
-    10.7,
-    15.5
+    14.5,
+    21.3
    ],
    "n": 494,
    "note": "How often the metered total fell inside the low-to-high range we report. That range is built by varying our uncertain inputs one at a time, and 80% was the design intent; measured, it is far lower, so treat the range as input-sensitivity bounds and not as a confidence interval."
   },
   {
    "label": "Median absolute error",
-   "value": 52.9,
+   "value": 46.0,
    "unit": "%",
    "nominal": null,
    "ci90": null,
@@ -72,7 +72,7 @@
   },
   {
    "label": "Median signed error",
-   "value": -17.1,
+   "value": -10.8,
    "unit": "%",
    "nominal": 0.0,
    "ci90": null,
@@ -81,7 +81,7 @@
   },
   {
    "label": "Within 25%",
-   "value": 21.9,
+   "value": 26.1,
    "unit": "% of buildings",
    "nominal": null,
    "ci90": null,
@@ -90,7 +90,7 @@
   },
   {
    "label": "Band width",
-   "value": 31.1,
+   "value": 30.9,
    "unit": "% of expected",
    "nominal": null,
    "ci90": null,
@@ -99,10 +99,10 @@
   }
  ],
  "bins": {
-  "below_low": 30.6,
-  "low_to_expected": 10.9,
-  "expected_to_high": 1.8,
-  "above_high": 56.7
+  "below_low": 31.8,
+  "low_to_expected": 13.4,
+  "expected_to_high": 4.5,
+  "above_high": 50.4
  },
  "bins_note": "Where the metered total fell relative to our low and high. Most buildings fall outside on one side or the other, which is how we know the range is too narrow; more fall above than below, which is the same low bias the median signed error shows.",
  "by_usage": {
@@ -183,18 +183,18 @@
    "median_sqm": 4936,
    "bdg2temp": {
     "n": 73,
-    "median_pct": -84.4,
-    "median_abs_pct": 84.4,
-    "mean_pct": -79.8,
-    "p10_pct": -92.4,
-    "p90_pct": -55.5,
-    "within_25pct": 0.0,
-    "within_50pct": 9.6,
-    "over_by_2x_plus": 0.0,
-    "under_by_2x_plus": 90.4,
-    "off_by_2x_either_way": 90.4
+    "median_pct": -34.1,
+    "median_abs_pct": 43.7,
+    "mean_pct": -23.6,
+    "p10_pct": -68.4,
+    "p90_pct": 31.9,
+    "within_25pct": 28.8,
+    "within_50pct": 54.8,
+    "over_by_2x_plus": 2.7,
+    "under_by_2x_plus": 38.4,
+    "off_by_2x_either_way": 41.1
    },
-   "coverage_pct": 2.7
+   "coverage_pct": 37.0
   },
   "Manufacturing/industrial": {
    "n": 2,
@@ -365,72 +365,72 @@
    "median_sqm": 6536,
    "bdg2temp": {
     "n": 86,
-    "median_pct": 11.7,
-    "median_abs_pct": 67.3,
-    "mean_pct": 139.1,
-    "p10_pct": -69.4,
+    "median_pct": 18.9,
+    "median_abs_pct": 66.4,
+    "mean_pct": 143.5,
+    "p10_pct": -66.9,
     "p90_pct": 188.1,
-    "within_25pct": 17.4,
-    "within_50pct": 34.9,
+    "within_25pct": 18.6,
+    "within_50pct": 37.2,
     "over_by_2x_plus": 25.6,
-    "under_by_2x_plus": 23.3,
-    "off_by_2x_either_way": 48.8
+    "under_by_2x_plus": 18.6,
+    "off_by_2x_either_way": 44.2
    },
-   "coverage_pct": 10.5
+   "coverage_pct": 11.6
   },
   "Cockatoo": {
    "n": 100,
    "median_sqm": 7454,
    "bdg2temp": {
     "n": 100,
-    "median_pct": -30.1,
-    "median_abs_pct": 63.3,
-    "mean_pct": 82.6,
-    "p10_pct": -86.2,
-    "p90_pct": 97.6,
-    "within_25pct": 19.0,
-    "within_50pct": 41.0,
-    "over_by_2x_plus": 10.0,
-    "under_by_2x_plus": 40.0,
-    "off_by_2x_either_way": 50.0
+    "median_pct": -8.3,
+    "median_abs_pct": 43.8,
+    "mean_pct": 102.3,
+    "p10_pct": -64.8,
+    "p90_pct": 114.0,
+    "within_25pct": 29.0,
+    "within_50pct": 56.0,
+    "over_by_2x_plus": 12.0,
+    "under_by_2x_plus": 23.0,
+    "off_by_2x_either_way": 35.0
    },
-   "coverage_pct": 12.0
+   "coverage_pct": 26.0
   },
   "Fox": {
    "n": 89,
    "median_sqm": 6707,
    "bdg2temp": {
     "n": 89,
-    "median_pct": 22.2,
-    "median_abs_pct": 55.5,
-    "mean_pct": 56.5,
-    "p10_pct": -56.6,
+    "median_pct": 28.9,
+    "median_abs_pct": 50.8,
+    "mean_pct": 63.6,
+    "p10_pct": -52.0,
     "p90_pct": 137.3,
-    "within_25pct": 18.0,
-    "within_50pct": 43.8,
+    "within_25pct": 23.6,
+    "within_50pct": 48.3,
     "over_by_2x_plus": 20.2,
-    "under_by_2x_plus": 19.1,
-    "off_by_2x_either_way": 39.3
+    "under_by_2x_plus": 13.5,
+    "off_by_2x_either_way": 33.7
    },
-   "coverage_pct": 10.1
+   "coverage_pct": 14.6
   },
   "Panther": {
    "n": 96,
    "median_sqm": 4091,
    "bdg2temp": {
     "n": 96,
-    "median_pct": -45.6,
-    "median_abs_pct": 56.7,
-    "mean_pct": -5.5,
-    "p10_pct": -89.3,
+    "median_pct": -38.3,
+    "median_abs_pct": 45.7,
+    "mean_pct": 4.8,
+    "p10_pct": -70.3,
     "p90_pct": 55.0,
-    "within_25pct": 19.8,
-    "within_50pct": 44.8,
+    "within_25pct": 25.0,
+    "within_50pct": 55.2,
     "over_by_2x_plus": 6.2,
-    "under_by_2x_plus": 44.8,
-    "off_by_2x_either_way": 51.0
+    "under_by_2x_plus": 34.4,
+    "off_by_2x_either_way": 40.6
    },
-   "coverage_pct": 11.5
+   "coverage_pct": 17.7
   },
   "Rat": {
    "n": 123,
@@ -438,15 +438,15 @@
    "bdg2temp": {
     "n": 123,
     "median_pct": -14.9,
-    "median_abs_pct": 34.2,
-    "mean_pct": 275.4,
-    "p10_pct": -60.7,
+    "median_abs_pct": 34.0,
+    "mean_pct": 276.4,
+    "p10_pct": -58.1,
     "p90_pct": 109.8,
     "within_25pct": 31.7,
-    "within_50pct": 68.3,
+    "within_50pct": 69.9,
     "over_by_2x_plus": 10.6,
-    "under_by_2x_plus": 15.4,
-    "off_by_2x_either_way": 26.0
+    "under_by_2x_plus": 13.8,
+    "off_by_2x_either_way": 24.4
    },
    "coverage_pct": 17.9
   }
@@ -462,29 +462,29 @@
  "storey_diagnostic": {
   "floors_ge_4": {
    "n": 66,
-   "median_pct": -13.2,
-   "median_abs_pct": 65.8,
-   "mean_pct": 46.2,
-   "p10_pct": -73.4,
+   "median_pct": -8.3,
+   "median_abs_pct": 64.0,
+   "mean_pct": 50.2,
+   "p10_pct": -67.7,
    "p90_pct": 168.7,
-   "within_25pct": 18.2,
-   "within_50pct": 37.9,
+   "within_25pct": 19.7,
+   "within_50pct": 40.9,
    "over_by_2x_plus": 18.2,
-   "under_by_2x_plus": 28.8,
-   "off_by_2x_either_way": 47.0
+   "under_by_2x_plus": 24.2,
+   "off_by_2x_either_way": 42.4
   },
   "floors_le_1": {
    "n": 411,
-   "median_pct": -19.2,
-   "median_abs_pct": 49.7,
-   "mean_pct": 115.2,
-   "p10_pct": -84.2,
-   "p90_pct": 114.0,
-   "within_25pct": 22.6,
-   "within_50pct": 50.4,
-   "over_by_2x_plus": 11.9,
-   "under_by_2x_plus": 29.0,
-   "off_by_2x_either_way": 40.9
+   "median_pct": -13.1,
+   "median_abs_pct": 43.5,
+   "mean_pct": 124.3,
+   "p10_pct": -64.1,
+   "p90_pct": 119.8,
+   "within_25pct": 27.5,
+   "within_50pct": 57.9,
+   "over_by_2x_plus": 12.4,
+   "under_by_2x_plus": 20.7,
+   "off_by_2x_either_way": 33.1
   },
   "note": "Known limitation: all buildings are modelled as one storey scaled to total floor area. If the 4+ storey group is biased differently, that is the cause."
  },

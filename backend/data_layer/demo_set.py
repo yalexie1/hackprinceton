@@ -48,6 +48,8 @@ nothing in particular.
 from __future__ import annotations
 
 import argparse
+import ast
+import os
 import random
 import re
 from collections import defaultdict
@@ -372,19 +374,86 @@ def _format_entries(entries: Iterable[tuple[str, str]]) -> str:
 #: regex anchored only on `DEMO_SET: tuple[...] = (` and the next bare `)\n`, which
 #: for an *empty* placeholder tuple (no entries between the parens) skipped straight
 #: past that empty pair and matched the next unrelated `)` at column zero later in
-#: this very file - deleting everything in between. Exact sentinel strings have no
-#: such ambiguity: there is exactly one place in the file each one appears.
-_MANIFEST_BEGIN = "# DEMO_SET-GENERATED-BEGIN"
-_MANIFEST_END = "# DEMO_SET-GENERATED-END"
+#: this very file - deleting everything in between.
+#:
+#: Built by concatenation rather than as one literal string, on purpose: writing
+#: the marker text as a single contiguous literal here would itself contain the
+#: full sentinel, so `text.index(...)` against this module's own source would
+#: have *two* candidates - the real comment above `DEMO_SET`, and this
+#: assignment's own string - and would only find the right one because the real
+#: comment happens to come first in the file today. That ordering dependency is
+#: exactly the fragility a review of the previous version flagged. Splitting the
+#: marker across a `+` (and never spelling it out contiguously anywhere else in
+#: this module, including in comments like this one) means the full text appears
+#: exactly once in the source: the real comment line. `test_manifest_sentinels_
+#: appear_exactly_once_in_source` pins this.
+_MANIFEST_BEGIN = "# DEMO_SET" + "-GENERATED-BEGIN"
+_MANIFEST_END = "# DEMO_SET" + "-GENERATED-END"
+
+#: Every name a reader of this module is allowed to assume exists. The previous
+#: version of `_write_manifest` wrote straight to disk with no check at all, and a
+#: wrong sentinel-boundary match silently deleted five of these names - discovered
+#: only later, by an unrelated test's `ImportError`. `_assert_still_whole` parses
+#: the candidate rewrite and refuses to write unless every one of these survives.
+_REQUIRED_NAMES = frozenset({"DEMO_SET", "sids", "spares", "resolve", "ManifestStale"})
 
 
-def _write_manifest(entries: tuple[tuple[str, str], ...]) -> None:
+def _top_level_names(tree: ast.Module) -> set[str]:
+    """Every name bound at module scope by a `def`, `class`, or plain assignment -
+    enough to answer "did the rewrite drop a name a caller imports", without
+    executing the candidate text (which would re-trigger whatever just went wrong
+    in a half-written module, and risks import side effects this check must not
+    have)."""
+    names: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+    return names
+
+
+def _assert_still_whole(new_text: str, path: Path) -> None:
+    """Refuse `new_text` unless it both parses and still defines every name in
+    `_REQUIRED_NAMES`. A syntax error is the easy case; the dangerous one - the one
+    that actually bit this module once - is a rewrite that stays syntactically
+    valid Python while quietly missing a sentinel's real match and deleting
+    everything between two *unintended* boundaries. Checking for the specific
+    names this module promises callers, rather than trusting that a non-empty diff
+    means a correct one, is what turns that failure mode into a loud `RuntimeError`
+    instead of a silent `ImportError` three test files later."""
+    try:
+        tree = ast.parse(new_text, filename=str(path))
+    except SyntaxError as exc:
+        raise RuntimeError(f"--generate produced invalid Python for {path}: {exc}") from exc
+    missing = _REQUIRED_NAMES - _top_level_names(tree)
+    if missing:
+        raise RuntimeError(
+            f"--generate's rewrite of {path} would drop {sorted(missing)} - "
+            "refusing to write anything"
+        )
+
+
+def _write_manifest(entries: tuple[tuple[str, str], ...], path: Optional[Path] = None) -> None:
     """Rewrite this module's own `DEMO_SET` literal in place, replacing everything
     strictly between the `_MANIFEST_BEGIN`/`_MANIFEST_END` sentinel lines (exclusive)
     with a fresh `DEMO_SET = (...)` block. Everything outside those sentinels -
     docstrings, the comment introducing the block, every other function - survives
-    byte-for-byte."""
-    path = Path(__file__)
+    byte-for-byte.
+
+    `path` defaults to this module's own file; a test passes a throwaway file
+    instead so it can exercise the sentinel search and the `_assert_still_whole`
+    guard without touching the real `demo_set.py`.
+
+    Nothing reaches disk until `_assert_still_whole` has parsed the candidate
+    result and confirmed it is still a module a caller can import from - see that
+    function's docstring for why. The write itself goes to a temporary file and is
+    `os.replace`d into place, the same atomic-write discipline `cache.py` already
+    uses elsewhere in this lane, so a process killed mid-write cannot leave a
+    half-written `demo_set.py` behind."""
+    path = path if path is not None else Path(__file__)
     text = path.read_text()
     begin = text.index(_MANIFEST_BEGIN) + len(_MANIFEST_BEGIN)
     end = text.index(_MANIFEST_END, begin)
@@ -394,7 +463,10 @@ def _write_manifest(entries: tuple[tuple[str, str], ...]) -> None:
         + "\n)\n"
     )
     new_text = text[:begin] + body + text[end:]
-    path.write_text(new_text)
+    _assert_still_whole(new_text, path)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(new_text)
+    os.replace(tmp, path)
 
 
 def main(argv: Optional[list[str]] = None) -> None:

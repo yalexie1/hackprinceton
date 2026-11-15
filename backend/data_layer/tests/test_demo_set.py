@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
@@ -143,3 +144,102 @@ def test_resolve_names_a_sid_the_index_no_longer_has(monkeypatch):   # Review Fo
     monkeypatch.setattr(index, "by_sid", lambda: {})
     with pytest.raises(ManifestStale, match="MISSINGSID1"):
         resolve()
+
+
+# ---------------------------------------------------------------------------
+# `_write_manifest` - the function that rewrites this module's own source.
+#
+# It has already corrupted itself once: a sentinel-boundary bug silently deleted
+# `sids`, `spares`, `ManifestStale`, `resolve`, `_format_entries` and the sentinel
+# constants themselves, and the only reason that was caught was an unrelated
+# `ImportError` surfacing on the next full test run - `_write_manifest` itself
+# raised nothing. These tests exercise the rewrite directly, against a throwaway
+# fake module file rather than the real `demo_set.py`, so they can both prove the
+# round trip is byte-exact outside the sentinels and prove the corrupting case
+# (a rewrite that would drop a required name) is now a loud `RuntimeError`
+# instead of a silent write.
+# ---------------------------------------------------------------------------
+
+def _fake_module(demo_set_body: str = '    ("OLDSID1234", "old/TX"),\n') -> str:
+    """A minimal stand-in for `demo_set.py`'s own shape: a line before the
+    sentinel block, the block itself, a line after. `demo_set._REQUIRED_NAMES`
+    are stubbed so a well-formed rewrite passes `_assert_still_whole`."""
+    return (
+        "X = 1\n"
+        + demo_set._MANIFEST_BEGIN
+        + "\n"
+        + "DEMO_SET = (\n"
+        + demo_set_body
+        + ")\n"
+        + demo_set._MANIFEST_END
+        + "\n"
+        "def sids(): ...\n"
+        "def spares(): ...\n"
+        "def resolve(): ...\n"
+        "class ManifestStale(RuntimeError): ...\n"
+        "Y = 2\n"
+    )
+
+
+def test_write_manifest_replaces_only_the_interior(tmp_path):
+    path = tmp_path / "fake_demo_set.py"
+    path.write_text(_fake_module())
+
+    demo_set._write_manifest((("NEWSID12345", "retail/CA"),), path=path)
+
+    new_text = path.read_text()
+    assert '("NEWSID12345", "retail/CA"),' in new_text
+    assert "OLDSID1234" not in new_text
+    # Everything outside the sentinel-bounded interior survives byte-for-byte.
+    assert new_text.startswith("X = 1\n" + demo_set._MANIFEST_BEGIN + "\n")
+    assert new_text.endswith(
+        demo_set._MANIFEST_END + "\n"
+        "def sids(): ...\n"
+        "def spares(): ...\n"
+        "def resolve(): ...\n"
+        "class ManifestStale(RuntimeError): ...\n"
+        "Y = 2\n"
+    )
+
+
+def test_write_manifest_is_valid_python_afterwards(tmp_path):
+    path = tmp_path / "fake_demo_set.py"
+    path.write_text(_fake_module())
+
+    demo_set._write_manifest((("NEWSID12345", "retail/CA"),), path=path)
+
+    compile(path.read_text(), str(path), "exec")   # raises SyntaxError if broken
+
+
+def test_write_manifest_rejects_a_rewrite_that_would_drop_required_names(tmp_path):
+    """The exact failure class task 3's review caught: a sentinel match landing
+    in the wrong place and taking `sids`/`spares`/`resolve`/`ManifestStale` with
+    it. Built here by a fake module whose sentinel-bounded interior is immediately
+    followed by nothing - `_assert_still_whole` must refuse to write rather than
+    silently producing a module with no required names, and the source file on
+    disk must be untouched."""
+    original = (
+        "X = 1\n"
+        + demo_set._MANIFEST_BEGIN
+        + "\nDEMO_SET = ()\n"
+        + demo_set._MANIFEST_END
+        + "\n"
+        # Deliberately no sids/spares/resolve/ManifestStale below.
+    )
+    path = tmp_path / "fake_demo_set.py"
+    path.write_text(original)
+
+    with pytest.raises(RuntimeError, match="sids"):
+        demo_set._write_manifest((("NEWSID12345", "retail/CA"),), path=path)
+
+    assert path.read_text() == original   # refused before a single byte was written
+
+
+def test_manifest_sentinels_appear_exactly_once_in_source():
+    """Pins the fix for the review's third finding: the sentinel markers are built
+    by concatenation specifically so the contiguous marker text cannot also occur
+    inside their own definitions or anywhere else in this module. If it ever does,
+    `text.index` in `_write_manifest` stops being an unambiguous boundary search."""
+    source = Path(demo_set.__file__).read_text()
+    assert source.count(demo_set._MANIFEST_BEGIN) == 1
+    assert source.count(demo_set._MANIFEST_END) == 1

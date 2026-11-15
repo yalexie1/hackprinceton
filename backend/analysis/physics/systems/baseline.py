@@ -30,7 +30,7 @@ from .cost import grid_emission_factor, gas_emission_factor
 from .dhw import daily_hot_water_volume, dhw_energy, mains_temperature
 from .hvac import (cooling_power_single_stage, cop47_from_hspf, eer_a_from_seer,
                    heat_pump_heating_power, to_base_metric)
-from .loads import Calendar, building_kind, default_calendar, end_use_profiles
+from .loads import Calendar, bedrooms_per_dwelling, building_kind, default_calendar, end_use_profiles
 from .uncertainty import SensitivityRow, propagate
 
 END_USES = ("heating", "cooling", "water_heating", "lighting", "plug", "appliances")
@@ -229,6 +229,9 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
 
     gas_price = tariff.gas_usd_per_kwh
     occ_r = systems.occupants
+    # multi-dwelling buildings (#439): the registry's "dwelling.units"; one dwelling otherwise
+    units_r = next((a.value for a in assumptions
+                    if a.key == "dwelling.units" and isinstance(a.value, Ranged)), None) if kind == "home" else None
     lpd_exp, ppd_exp = systems.lighting_w_per_m2.expected, systems.plug_w_per_m2.expected
     egrid_avg = grid_emission_factor(subregion, "average")
     egrid_nb = grid_emission_factor(subregion, "nonbaseload")
@@ -249,6 +252,7 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
         "lighting.lpd": lpd_exp,
         "plug.ppd": ppd_exp,
         "occupancy.count": occ_r.expected if occ_r is not None else None,
+        "dwelling.units": units_r.expected if units_r is not None else 1.0,
         "tariff.electricity_usd_per_kwh": tariff.electricity_usd_per_kwh,
         "tariff.gas_usd_per_kwh": gas_price if gas_price is not None else 0.0,
     }
@@ -259,7 +263,8 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
         ld = next((p[k] for k in variants if p[k] is not None), loads)
         eu = end_use_profiles(
             occupancy_schedule=systems.occupancy_schedule, floor_area_m2=floor_area_m2, cal=cal,
-            lpd_w_m2=p["lighting.lpd"], ppd_w_m2=p["plug.ppd"], occupants=p["occupancy.count"], bedrooms=bedrooms,
+            lpd_w_m2=p["lighting.lpd"], ppd_w_m2=p["plug.ppd"], occupants=p["occupancy.count"],
+            bedrooms=bedrooms_per_dwelling(bedrooms, p["dwelling.units"]), dwelling_units=p["dwelling.units"],
             # homes only (offices use the densities directly): relative to the fixed reference,
             # not to this model's own expected value, so a measure that lowers it saves energy
             lpd_scale=p["lighting.lpd"] / HOME_LPD_REFERENCE_W_M2,
@@ -303,7 +308,7 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
         dhw_el = np.zeros(n)
         dhw_gas = np.zeros(n)
         if kind == "home":
-            vol = daily_hot_water_volume(eu.bedrooms, t_mains_day) * p["dhw.volume"]
+            vol = daily_hot_water_volume(eu.bedrooms, t_mains_day) * p["dhw.volume"] * p["dwelling.units"]
             e_day = dhw_energy(vol, t_mains_day, p["dhw.uef"])["input_kwh"] * p["dhw.energy"]
             e_hour = (e_day / 24.0)[day_of_hour]          # a day's energy spread evenly over its hours
             if dhw_fuel == "gas":
@@ -355,6 +360,8 @@ def systems_baseline(systems: Systems, tariff: Tariff, loads: HourlyLoads, *, fl
     add("plug.ppd", _ends(systems.plug_w_per_m2))
     if occ_r is not None:
         add("occupancy.count", _ends(occ_r))
+    if units_r is not None:
+        add("dwelling.units", _ends(units_r))
     for a in assumptions:
         if a.key in ("tariff.electricity_usd_per_kwh", "tariff.gas_usd_per_kwh") and isinstance(a.value, Ranged):
             if a.key == "tariff.gas_usd_per_kwh" and gas_price is None:

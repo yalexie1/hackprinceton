@@ -305,6 +305,17 @@ OUTDOOR_AIR_M3_S_PER_PERSON = 0.00944  # INF-05, 20 cfm
 # LGT-03 occupant count for homes from bedrooms.
 HOME_OCCUPANTS = {"single_family": (0.59, 0.87), "multifamily_unit": (0.92, 0.63)}
 
+# ---- Multi-dwelling buildings (lodging archetype, #439) ----
+# A "multifamily_unit" scan larger than any one apartment is a whole apartment block, dormitory or
+# hotel. The home formulas (LGT-01, LGT-02, LGT-03 eq. 23, DHW-02) are per dwelling, so applying them
+# once to the whole floor area modelled one household for the whole building (eval: lodging 5.4x low).
+# Above this area the building is split into dwellings of DWELLING_UNIT_AREA_M2 each.
+# UNSOURCED, judgment [J]: no apartment unit is this large; check against RECS 2020 before relying on it.
+MULTI_DWELLING_MIN_AREA_M2 = 500.0
+# (low, expected, high) floor area of one dwelling, m2. UNSOURCED placeholder [J]; the range carries
+# the uncertainty into the unit count. Larger units mean fewer dwellings, so low area -> high count.
+DWELLING_UNIT_AREA_M2 = (60.0, 80.0, 110.0)
+
 # Unsourced spreads (judgments of this package; candidates for backend/config.py):
 OCCUPANT_DEFAULT_SPREAD = 0.30   # +/- on a default occupant count (A_f / 18.59 or bedrooms formula)
 VACANT_CONFIDENCE = 0.6        # no sitting tenant in the CoStar kit; the kit can lag a new lease (judgment)

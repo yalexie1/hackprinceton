@@ -82,6 +82,8 @@ HOME_PERSON_HOURS_PER_DAY = 16.5       # LGT-03, S10 Figure 25
 OFFICE_M2_PER_PERSON = 18.59           # LGT-03, S11 Table 4
 PLUG_SCALE_LIMITS = (0.5, 2.0)         # LGT-02: plug scaling by head count, limited (tier B design choice)
 HOME_BEDROOMS_DEFAULT = 3              # this file's fallback when neither bedrooms nor occupants is known
+BEDROOMS_PER_DWELLING = 1.5           # multi-dwelling buildings (#439): bedrooms per dwelling when the scan's
+                                       # count cannot give one each. UNSOURCED judgment [J]
 
 # ---- DEF-09 schedules (S11 Table B-13; S13 home shares), hour 1 = 00:00 to 01:00 ----
 OFFICE_SCHEDULES = {

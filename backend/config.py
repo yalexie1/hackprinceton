@@ -6,6 +6,7 @@ from pathlib import Path
 ORCHESTRATOR_MODEL = "claude-opus-5-5"     # SPEC 8: the auditor
 SUBAGENT_MODEL = "claude-sonnet-5-5"       # SPEC 8: scout, surveyor, physicist, financier, counsel
 VISION_MODEL = "claude-haiku-5-5"          # SPEC 8: bulk image reading
+VISION_MAX_PANOS = 40                      # panoramas read per property, spread across rooms (issue 392)
 
 # ---- the ask rule: SPEC 5.3 ----
 ASK_WIDTH = 0.40    # SPEC 5.3 step 3: ask when (high - low) / expected of the plan's total savings exceeds this

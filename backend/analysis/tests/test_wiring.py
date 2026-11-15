@@ -460,7 +460,7 @@ def test_the_vision_read_is_asked_for_the_room_fallback_and_its_flags_come_throu
         assert api.observe_interior(bundle) == ([], [flag])
     finally:
         api.set_vision(None, None)
-    assert seen == {"room_fallback": True}
+    assert seen == {"room_fallback": True, "max_panos": 40}
 
 
 # ---- a missing state never crashes pricing ----

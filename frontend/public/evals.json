@@ -516,6 +516,54 @@
    "manifest": "backend/evals/manifests/bdg2.yaml"
   }
  },
+ "calibrated_bills": {
+  "status": "ok",
+  "title": "With a year of utility bills",
+  "question": "Given one year of bills, how close is our prediction of the next year?",
+  "rows": [
+   {
+    "measure": "Median error",
+    "without_bills_pct": 18.1,
+    "with_bills_pct": 4.1
+   },
+   {
+    "measure": "Within 25% of the meter",
+    "without_bills_pct": 61.4,
+    "with_bills_pct": 93.2
+   },
+   {
+    "measure": "Off by 2x either way",
+    "without_bills_pct": 6.8,
+    "with_bills_pct": 2.3
+   },
+   {
+    "measure": "Median bias",
+    "without_bills_pct": 12.7,
+    "with_bills_pct": 1.1
+   },
+   {
+    "measure": "Range contained the meter",
+    "without_bills_pct": 43.2,
+    "with_bills_pct": 45.5
+   }
+  ],
+  "caveats": [
+   "Calibrated on 2016 bills, tested on 2017, a year the model never saw; same 44 buildings in both columns.",
+   "Only 44 of 283 eligible buildings (16%) calibrate today; the rest are excluded, not shown at their uncalibrated values.",
+   "The 44 were already our closest (18% error without bills vs 49% across all 283), so this shows bills finishing the job on buildings we nearly fit, not a 53%-to-4% improvement.",
+   "The ranges barely improve even when the estimate does: the range problem is in how ranges are built."
+  ],
+  "provenance": {
+   "dataset": "Building Data Genome Project 2",
+   "fit_year": 2016,
+   "test_year": 2017,
+   "n_eligible_both_years": 283,
+   "n_calibrated": 44,
+   "method": "ASHRAE Guideline 14 / IPMVP Option D, MV-04 tolerances; buildings that do not converge abstain",
+   "produced_by": "backend/evals/run_calibrated.py",
+   "note": "Aggregate only. The per-building output stays in the git-ignored cache at data/cache/evals/out/calibrated.json."
+  }
+ },
  "pv_crosscheck": {
   "status": "ok",
   "title": "PV yield vs PVGIS",
@@ -526,11 +574,13 @@
    "status": "unavailable",
    "note": "developer.nrel.gov does not resolve from this environment ([Errno -5] No address associated with hostname); PVGIS is the only reference used. Matches specs/physics.md section 5."
   },
-  "n_checked": 3,
+  "n_checked": 6,
   "rows": [
    {
     "sid": "ZSPaQbkGcJJ",
     "mountingplace": "free",
+    "constraint": "roof_and_consumption",
+    "panel_count": 509,
     "system_kw_dc": 218.87,
     "annual_kwh": 357079.40762399795,
     "pvgis_kwh_per_kw": 1676.75,
@@ -543,8 +593,26 @@
     "status": "checked"
    },
    {
+    "sid": "ZSPaQbkGcJJ",
+    "mountingplace": "free",
+    "constraint": "budget_10000",
+    "panel_count": 6,
+    "system_kw_dc": 2.58,
+    "annual_kwh": 4209.18751619644,
+    "pvgis_kwh_per_kw": 1676.75,
+    "kwh_per_kw": 1631.47,
+    "pct_diff": -2.7,
+    "pv10_deviation_pct": 3.21,
+    "pv10_tolerance_pct": 6.66,
+    "pv10_within": true,
+    "warnings": [],
+    "status": "checked"
+   },
+   {
     "sid": "zvKHR9DHNjJ",
     "mountingplace": "free",
+    "constraint": "roof_and_consumption",
+    "panel_count": 8,
     "system_kw_dc": 3.44,
     "annual_kwh": 5705.977034677438,
     "pvgis_kwh_per_kw": 1677.42,
@@ -557,10 +625,44 @@
     "status": "checked"
    },
    {
+    "sid": "zvKHR9DHNjJ",
+    "mountingplace": "free",
+    "constraint": "budget_10000",
+    "panel_count": 5,
+    "system_kw_dc": 2.15,
+    "annual_kwh": 3566.2356466733986,
+    "pvgis_kwh_per_kw": 1677.42,
+    "kwh_per_kw": 1658.71,
+    "pct_diff": -1.12,
+    "pv10_deviation_pct": 1.62,
+    "pv10_tolerance_pct": 6.67,
+    "pv10_within": true,
+    "warnings": [],
+    "status": "checked"
+   },
+   {
     "sid": "L3266YcPPvd",
     "mountingplace": "free",
+    "constraint": "roof_and_consumption",
+    "panel_count": 225,
     "system_kw_dc": 96.75,
     "annual_kwh": 128760.89225067281,
+    "pvgis_kwh_per_kw": 1355.34,
+    "kwh_per_kw": 1330.86,
+    "pct_diff": -1.81,
+    "pv10_deviation_pct": 3.42,
+    "pv10_tolerance_pct": 9.3,
+    "pv10_within": true,
+    "warnings": [],
+    "status": "checked"
+   },
+   {
+    "sid": "L3266YcPPvd",
+    "mountingplace": "free",
+    "constraint": "budget_10000",
+    "panel_count": 6,
+    "system_kw_dc": 2.58,
+    "annual_kwh": 3433.6237933512753,
     "pvgis_kwh_per_kw": 1355.34,
     "kwh_per_kw": 1330.86,
     "pct_diff": -1.81,

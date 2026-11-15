@@ -94,8 +94,8 @@ def test_weather_decomposition_keeps_both_terms():
 
 def test_an_eval_that_has_not_run_is_marked_not_run_never_omitted_or_zeroed():
     site = merge_site_payload(metered=build_payload(SCORECARD), pv=None, cost=None,
-                              opensolar=None)
-    for key in ("pv_crosscheck", "cost_check", "opensolar_spotcheck"):
+                              opensolar=None, calibrated=None)
+    for key in ("pv_crosscheck", "cost_check", "opensolar_spotcheck", "calibrated_bills"):
         assert site[key]["status"] == "not_run", key
         assert "value" not in site[key]
     assert site["metered_buildings"]["status"] == "ok"
@@ -205,3 +205,54 @@ def test_supported_zone_cohort_explains_itself_in_plain_english():
     sz = build_payload(SCORECARD)["supported_zones"]
     assert len(sz["note"]) > 60
     assert "2A" in sz["note"] and "3B" in sz["note"]
+
+
+# --- "with a year of bills", the calibrated arm (#430) ---------------------------
+# Aggregate only. The raw per-building calibration output stays in the git-ignored
+# cache; what reaches the page is these five rows and the four caveats.
+CALIBRATED = {
+    "status": "ok",
+    "title": "With a year of utility bills",
+    "question": "Given one year of bills, how close is our prediction of the next year?",
+    "rows": [
+        {"measure": "Median error", "without_bills_pct": 18.1, "with_bills_pct": 4.1},
+        {"measure": "Within 25% of the meter", "without_bills_pct": 61.4, "with_bills_pct": 93.2},
+        {"measure": "Off by 2x either way", "without_bills_pct": 6.8, "with_bills_pct": 2.3},
+        {"measure": "Median bias", "without_bills_pct": 12.7, "with_bills_pct": 1.1},
+        {"measure": "Range contained the meter", "without_bills_pct": 43.2, "with_bills_pct": 45.5},
+    ],
+    "caveats": ["a", "b", "c", "d"],
+}
+
+
+def test_calibrated_arm_is_published_when_the_file_is_there():
+    site = merge_site_payload(metered=build_payload(SCORECARD), pv=None, cost=None,
+                              opensolar=None, calibrated=CALIBRATED)
+    out = site["calibrated_bills"]
+    assert out["status"] == "ok"
+    assert out["title"] == "With a year of utility bills"
+    assert len(out["rows"]) == 5
+
+
+def test_calibrated_arm_keeps_both_columns_on_every_row():
+    # One column alone would read as "our error is 4%", which is not what was measured.
+    site = merge_site_payload(metered=build_payload(SCORECARD), pv=None, cost=None,
+                              opensolar=None, calibrated=CALIBRATED)
+    for row in site["calibrated_bills"]["rows"]:
+        assert "without_bills_pct" in row, row["measure"]
+        assert "with_bills_pct" in row, row["measure"]
+
+
+def test_calibrated_arm_carries_its_caveats_to_the_page():
+    # The selection effect and the 16% convergence rate are the result, not footnotes:
+    # without them the table reads as a 4x accuracy win on every building.
+    site = merge_site_payload(metered=build_payload(SCORECARD), pv=None, cost=None,
+                              opensolar=None, calibrated=CALIBRATED)
+    assert len(site["calibrated_bills"]["caveats"]) >= 4
+
+
+def test_calibrated_arm_is_passed_through_untouched():
+    # publish.py selects and relabels; this slot must not reshape or round anything.
+    site = merge_site_payload(metered=build_payload(SCORECARD), pv=None, cost=None,
+                              opensolar=None, calibrated=CALIBRATED)
+    assert site["calibrated_bills"] == CALIBRATED

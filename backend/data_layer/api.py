@@ -521,10 +521,32 @@ def _assemble(sid: str) -> PropertyBundle:
             detail=("no CoStar address coordinates, so the Matterport georeference "
                     "picks the building; it locates the scan, not the parcel"),
         ))
+    # The point everything downstream is built at. Normally the georeference, because
+    # the scan was physically taken at the building. But 10 of 96 models in the warm
+    # cache (10.4%) come back with no `geocoordinates` at all - Matterport never
+    # georeferenced that scan - and every one of those 10 has coordinates in the CoStar
+    # index, which `at` has already resolved above. Reading only `geo` here meant those
+    # bundles raised `IncompleteBundle` with a usable location two variables away, and
+    # @Sri-SriPod's eval run was losing about 12% of its cohort to it.
+    #
+    # Deliberately a FALLBACK, not a switch to `at`: where the georeference exists it
+    # still wins, so no bundle that builds today moves by the 45-80 m between the two
+    # locators. This path only runs where the alternative was no bundle at all.
+    site_lat, site_lon = lat, lon
+    if site_lat is None or site_lon is None:
+        site_lat, site_lon = at
+        if site_lat is not None and site_lon is not None:
+            provenance.append(FetchRecord(
+                layer="weather", what="location", status="fallback",
+                detail=("the scan has no georeference, so the weather, the climate zone "
+                        "and the parcel all come from the CoStar address point - that "
+                        "locates the property, not the scan"),
+            ))
+
     plate = d16.floor_plate_m2(costar)
 
     vexcel = None
-    if lat is not None and lon is not None:
+    if site_lat is not None and site_lon is not None:
         vexcel, vnotes = _parcel_at(at, locator, costar, plate)
         provenance += vnotes
         if vexcel is None and locator != "georeference":
@@ -532,7 +554,7 @@ def _assemble(sid: str) -> PropertyBundle:
             # work from. The georeference is physically at the building because the
             # scan was taken there, so it is the right second try - and saying so
             # matters, since the building is then whatever is under the scan.
-            vexcel, gnotes = _parcel_at((lat, lon), "georeference", costar, plate)
+            vexcel, gnotes = _parcel_at((site_lat, site_lon), "georeference", costar, plate)
             provenance.append(FetchRecord(
                 layer="vexcel", what="property/extract:locator", status="fallback",
                 detail=(f"no parcel at the CoStar address point, so the georeference was "
@@ -548,11 +570,14 @@ def _assemble(sid: str) -> PropertyBundle:
         vexcel, inotes = _with_imagery(sid, vexcel)
         provenance += inotes
 
-    if lat is None or lon is None:
-        raise IncompleteBundle(f"{sid}: no georeference, so climate cannot be built",
-                               provenance)
+    if site_lat is None or site_lon is None:
+        # Neither the scan nor the kit knows where this building is. There is genuinely
+        # nothing to build climate from, so this still refuses.
+        raise IncompleteBundle(
+            f"{sid}: no georeference and no CoStar address coordinates, so climate "
+            f"cannot be built", provenance)
 
-    climate, cnotes = d9.get_climate_site(sid, lat, lon, WEATHER_YEAR)
+    climate, cnotes = d9.get_climate_site(sid, site_lat, site_lon, WEATHER_YEAR)
     provenance += cnotes
 
     # D17: without a kit mirror the starter-CSV row is `{}`, so `state` was `None` and

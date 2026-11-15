@@ -104,11 +104,11 @@ def test_thermostat_offered_to_both_flows(name, registry):
     if name == "house":
         assert skip_reason(r) == "already_done"
         assert r.not_applicable_reason == fixture_card("house", "CTRL_TSTAT")["not_applicable_reason"]
-        # without the thermostat reading, the home gets the measure
+        # without the thermostat reading, the home measure is off by default (LETO_HOME_TSTAT)
         m = model("house")
         m.assumptions = [a for a in m.assumptions if a.key != "hvac.thermostat_type"]
         r2 = evaluate(bundle("house"), m, "CTRL_TSTAT", "owner_occupier", fake_simulate, registry=registry)
-        assert r2.applicable and r2.params["thermostats"] == 1
+        assert not r2.applicable and skip_reason(r2) == "not_supported"
     else:
         assert r.applicable
 
@@ -212,3 +212,23 @@ def test_lighting_control_card(name, fixtures, registry):
     assert r.params["fixtures"] == fixtures      # finance's quantity key; luminaire counts of LGT_LED
     assert r.anchors and r.formula_ids[:2] == ["LGT-01", "LGT-03"]
     assert any("unsourced" in w for w in r.warnings)
+
+
+def test_home_thermostat_is_off_by_default_and_switches_back_on(monkeypatch, registry):
+    """CTRL_TSTAT on homes is off unless LETO_HOME_TSTAT is truthy; offices are unaffected."""
+    m = model("house")
+    m.assumptions = [a for a in m.assumptions if a.key != "hvac.thermostat_type"]
+    monkeypatch.delenv("LETO_HOME_TSTAT", raising=False)
+    off = evaluate(bundle("house"), m, "CTRL_TSTAT", "owner_occupier", fake_simulate, registry=registry)
+    assert not off.applicable and skip_reason(off) == "not_supported"
+    assert "never turned down" in off.not_applicable_reason
+    for value in ("1", "true", "YES", "on"):
+        monkeypatch.setenv("LETO_HOME_TSTAT", value)
+        on = evaluate(bundle("house"), m, "CTRL_TSTAT", "owner_occupier", fake_simulate, registry=registry)
+        assert on.applicable and on.params["thermostats"] == 1
+    monkeypatch.setenv("LETO_HOME_TSTAT", "0")
+    assert not evaluate(bundle("house"), m, "CTRL_TSTAT", "owner_occupier", fake_simulate,
+                        registry=registry).applicable
+    monkeypatch.delenv("LETO_HOME_TSTAT", raising=False)
+    for name in OFFICES:
+        assert run(name, "CTRL_TSTAT", "owner_occupier", registry).applicable

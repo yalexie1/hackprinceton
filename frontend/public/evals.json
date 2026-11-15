@@ -14,7 +14,7 @@
      15.5
     ],
     "n": 494,
-    "note": "How often the metered annual fell inside our stated 10-90 band. Nominal is 80%. Lower means the band is too narrow."
+    "note": "How often the metered total fell inside the low-to-high range we report. That range is built by varying our uncertain inputs one at a time, and 80% was the design intent; measured, it is far lower, so treat the range as input-sensitivity bounds and not as a confidence interval."
    },
    {
     "label": "Median absolute error",
@@ -32,7 +32,7 @@
     "nominal": 0.0,
     "ci90": null,
     "n": 494,
-    "note": "Near zero: the model is not systematically high or low, it is scattered."
+    "note": "Negative means we estimate less energy than the meter recorded. The model underpredicts, and it is also widely scattered: both are true, and they need different fixes."
    },
    {
     "label": "Within 25%",
@@ -59,7 +59,7 @@
    "expected_to_high": 1.8,
    "above_high": 56.7
   },
-  "bins_note": "Where the metered total fell relative to our band. Truth falls below and above in near-equal measure, so the band is too narrow rather than biased in one direction.",
+  "bins_note": "Where the metered total fell relative to our low and high. Most buildings fall outside on one side or the other, which is how we know the range is too narrow; more fall above than below, which is the same low bias the median signed error shows.",
   "by_usage": {
    "Education": {
     "n": 234,
@@ -411,7 +411,8 @@
    "heating_need_median_pct": 20.1,
    "n_electricity": 494,
    "n_heating": 485,
-   "note": "Swapping measured station temperatures for the Open-Meteo reanalysis path. The bias is large on heating need and small on the electricity meter, because these buildings are dominated by cooling, lighting and plug loads."
+   "note": "Swapping measured station temperatures for the Open-Meteo reanalysis path. The bias is large on heating need and small on the electricity meter, because these buildings are dominated by cooling, lighting and plug loads.",
+   "caveat": "Both arms use the same modelled irradiance, so this isolates temperature error only."
   },
   "storey_diagnostic": {
    "floors_ge_4": {

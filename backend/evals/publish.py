@@ -30,14 +30,19 @@ def build_payload(card: dict) -> dict:
     headline = [
         {"label": "Interval coverage", "value": l4["coverage_pct"], "unit": "%",
          "nominal": l4["nominal_pct"], "ci90": l4["site_clustered_ci90"], "n": l4["n"],
-         "note": "How often the metered annual fell inside our stated 10-90 band. "
-                 "Nominal is 80%. Lower means the band is too narrow."},
+         "note": "How often the metered total fell inside the low-to-high range we "
+                 "report. That range is built by varying our uncertain inputs one at a "
+                 "time, and 80% was the design intent; measured, it is far lower, so "
+                 "treat the range as input-sensitivity bounds and not as a confidence "
+                 "interval."},
         {"label": "Median absolute error", "value": l3["median_abs_pct"], "unit": "%",
          "nominal": None, "ci90": None, "n": l3["n"],
          "note": "Half of buildings are predicted closer than this, half further."},
         {"label": "Median signed error", "value": l3["median_pct"], "unit": "%",
          "nominal": 0.0, "ci90": None, "n": l3["n"],
-         "note": "Near zero: the model is not systematically high or low, it is scattered."},
+         "note": "Negative means we estimate less energy than the meter recorded. The "
+                 "model underpredicts, and it is also widely scattered: both are true, "
+                 "and they need different fixes."},
         {"label": "Within 25%", "value": l3["within_25pct"], "unit": "% of buildings",
          "nominal": None, "ci90": None, "n": l3["n"],
          "note": "Share of buildings predicted within a quarter of the metered total."},
@@ -53,9 +58,10 @@ def build_payload(card: dict) -> dict:
                     "and does our stated uncertainty band tell the truth?",
         "headline": headline,
         "bins": l4["bins_pct"],
-        "bins_note": "Where the metered total fell relative to our band. Truth falls "
-                     "below and above in near-equal measure, so the band is too narrow "
-                     "rather than biased in one direction.",
+        "bins_note": "Where the metered total fell relative to our low and high. Most "
+                     "buildings fall outside on one side or the other, which is how we "
+                     "know the range is too narrow; more fall above than below, which is "
+                     "the same low bias the median signed error shows.",
         "by_usage": card["by_usage"],
         "by_site": card["by_site"],
         "weather_decomposition": {
@@ -67,6 +73,8 @@ def build_payload(card: dict) -> dict:
                     "reanalysis path. The bias is large on heating need and small on "
                     "the electricity meter, because these buildings are dominated by "
                     "cooling, lighting and plug loads.",
+            "caveat": "Both arms use the same modelled irradiance, so this isolates "
+                      "temperature error only.",
         },
         "storey_diagnostic": card["storey_diagnostic"],
         "scope": card["scope"],

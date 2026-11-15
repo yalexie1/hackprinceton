@@ -6,7 +6,7 @@ Planning: [#398](https://github.com/yalexie1/hackprinceton/issues/398). Deferred
 
 Determine which predictions Leto can support: present energy consumption, savings from specific upgrades, solar production, bill savings and the reliability of displayed ranges. Report each separately, with the populations and inputs actually tested. Agreement between two models is different evidence from agreement with measured outcomes.
 
-**State: planned; waiting for initial results. No second-stage experiments or model tuning have started.**
+**State: stage-0 independent audit started after Vignesha's explicit #403 delivery.** Source revision `081a433` is pinned in draft #406 / audit task #405. Independent arithmetic/input-unit checks found asymmetric factor-of-two scoring and a km/h-to-m/s weather mapping error; both are with the initial owner for correction. Nine arithmetic tests passed. Exact 494-building headline reproduction remains unverified pending per-building outputs and archived weather inputs. No new scored cohort or model tuning has started. Frontend Evals/Solar map integration remains first priority once the owner PRs land.
 
 Yale approved `backend/evals/high_level/` for the follow-on implementation on the team board; Vignesha keeps the rest of `backend/evals/` and `Evals.tsx`. Execution is tracked in #400 so the documentation task can close independently. No further ownership approval is needed within that scope.
 

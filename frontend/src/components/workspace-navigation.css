@@ -1,0 +1,148 @@
+.app-shell.horizontal-workspace {
+  display: block;
+}
+.horizontal-workspace > .main-shell {
+  width: 100%;
+  margin-left: 0;
+}
+.workspace-header {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  background: #f8f7f2;
+  border-bottom: 1px solid var(--line);
+}
+.workspace-topbar {
+  max-width: 1600px;
+  margin: auto;
+  padding: 18px 43px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.workspace-brand {
+  display: flex;
+  flex-shrink: 0;
+}
+.workspace-brand img {
+  width: 102px;
+  height: 46px;
+  object-fit: contain;
+}
+.workspace-header nav {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  min-width: 0;
+}
+.workspace-public-links {
+  flex: 1;
+  flex-wrap: wrap;
+}
+.workspace-header .workspace-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 17px;
+  line-height: 1.4;
+  color: #45564b;
+  white-space: nowrap;
+}
+.workspace-link:hover {
+  background: #ecefe4;
+}
+.workspace-header .workspace-link[aria-current="page"] {
+  background: #e3ebdc;
+  color: #19543d;
+  font-weight: 650;
+  box-shadow: inset 0 -3px #19543d;
+}
+.workspace-connection {
+  margin-left: auto;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.property-navigation,
+.workspace-audit-status {
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px max(22px, calc((100vw - 1514px) / 2));
+  background: #f0f2e9;
+}
+.property-navigation-context {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 0 1 240px;
+  line-height: 1.4;
+}
+.property-navigation-context span {
+  font-size: 15px;
+  color: #45564b;
+}
+.property-navigation-context strong {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.property-navigation-links {
+  overflow-x: auto;
+  padding: 3px;
+  scrollbar-width: thin;
+}
+.workspace-audit-status {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  font-size: 17px;
+}
+@media (max-width: 1100px) {
+  .workspace-header {
+    position: static;
+  }
+  .workspace-topbar {
+    flex-wrap: wrap;
+    padding: 14px 22px;
+    gap: 12px;
+  }
+  .workspace-public-links {
+    order: 3;
+    flex-basis: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 3px;
+    scrollbar-width: thin;
+  }
+  .property-navigation {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .property-navigation-context {
+    flex: auto;
+  }
+}
+@media (max-width: 500px) {
+  .workspace-topbar {
+    padding: 12px 16px;
+  }
+  .workspace-brand img {
+    width: 84px;
+    height: 38px;
+  }
+  .workspace-connection .connection-state {
+    max-width: 210px;
+    font-size: 15px;
+    white-space: normal;
+  }
+  .property-navigation,
+  .workspace-audit-status {
+    padding: 12px 16px;
+  }
+}

@@ -75,3 +75,34 @@ def test_probe_reports_unreachable_and_keeps_going_on_error(tmp_path, monkeypatc
     out = warm.probe(2, post=fake_post_403)
     assert [r[1] for r in out] == [False, False]
     assert "403" in out[0][2]
+
+
+def test_probe_forces_a_refresh_on_the_default_transport(monkeypatch):
+    """`post is None` is the live path. Without `refresh=True`, a sid this probe
+    already reached once would answer "reachable" straight from the Matterport
+    payload cache on a later run - a gate that can pass without touching the
+    network. This pins that `probe` always asks for a refresh on that path."""
+    calls = []
+
+    def fake_get_with_notes(sid, *, post=None, refresh=False):
+        calls.append((sid, post, refresh))
+        return (None, [])
+
+    monkeypatch.setattr(warm.matterport, "get_matterport_data_with_notes", fake_get_with_notes)
+    warm.probe(1)
+    assert calls == [("SID_A", None, True)]
+
+
+def test_probe_does_not_force_a_refresh_when_a_transport_is_injected(monkeypatch):
+    """An injected `post` already bypasses the cache (`use_cache=post is None`), so
+    `refresh` would be a no-op; pin it at `False` there so a reader is not misled
+    into thinking it does something in that branch."""
+    calls = []
+
+    def fake_get_with_notes(sid, *, post=None, refresh=False):
+        calls.append((sid, post, refresh))
+        return (None, [])
+
+    monkeypatch.setattr(warm.matterport, "get_matterport_data_with_notes", fake_get_with_notes)
+    warm.probe(1, post=fake_post_ok)
+    assert calls == [("SID_A", fake_post_ok, False)]

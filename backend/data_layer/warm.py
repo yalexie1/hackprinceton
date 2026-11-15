@@ -9,8 +9,11 @@ as specified - so this module proves reachability first, cheaply, before Task 2
 spends any effort on selection.
 
 `probe` draws its sample from `uncached_sids`, not from the index at large: a sid
-that is already cached proves nothing about whether the key can reach a model
-nobody has fetched, which is the actual question Task 2 needs answered.
+with an assembled bundle already proves nothing about whether the key can still
+reach it. That alone is not enough to guarantee a live call, though - see the
+`refresh` note on `probe` below: without it, a sid this probe already reached
+once answers "reachable" from the Matterport payload cache on every later run,
+which is not what Task 1 is for.
 
 **Honouring the shared rate limit.** `MIN_INTERVAL_S` (0.25 s) is a key shared with
 every other team at the hackathon, so this module never posts GraphQL directly -
@@ -61,11 +64,21 @@ def probe(n: int = 5, *, post: Optional[Poster] = None) -> list[tuple[str, bool,
 
     Never raises on an individual sid: a 403 or a dead model is recorded, not
     thrown, so the caller sees every result even when some are unreachable.
+
+    On the default transport (`post is None`), `get_matterport_data_with_notes`
+    passes `use_cache=True` - its cache is keyed by sid alone, with no notion of
+    "uncached for this plan's purposes," so a sid this probe reached once would
+    answer "reachable" from disk on every later run without the key being asked
+    anything. That defeats the one thing this module exists to prove, so the live
+    path forces `refresh=True`: skip the read, always call Matterport, write the
+    fresh response over whatever was there. An injected `post` already bypasses
+    the cache entirely (`use_cache=post is None`), so `refresh` is a no-op there
+    and is left `False` for it.
     """
     results: list[tuple[str, bool, str]] = []
     for sid in uncached_sids(n):
         try:
-            matterport.get_matterport_data_with_notes(sid, post=post)
+            matterport.get_matterport_data_with_notes(sid, post=post, refresh=post is None)
         except Exception as exc:  # noqa: BLE001 - reported, not swallowed
             results.append((sid, False, str(exc)))
         else:

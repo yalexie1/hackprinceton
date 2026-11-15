@@ -25,10 +25,13 @@ describe("ROI map helpers", () => {
   });
   it("colours short paybacks green and long ones red, grey when there is none", () => {
     const b = paybackBreaks(rows);
-    expect(b).toEqual([10, 12, 15, 20]);                 // the same bands for every city
+    expect(b).toEqual([10.5, 11.5, 12.5, 15, 20, 27]);   // the same bands for every city
+    expect(ROI_COLORS).toHaveLength(b.length + 1);
     expect(paybackColor(8, b)).toBe(ROI_COLORS[0]);
-    expect(paybackColor(25, b)).toBe(ROI_COLORS[4]);
-    expect(paybackColor(99, b)).toBe(ROI_COLORS[4]);
+    expect(paybackColor(11, b)).toBe(ROI_COLORS[1]);
+    expect(paybackColor(11.5, b)).toBe(ROI_COLORS[2]);       // a break belongs to the band above it
+    expect(paybackColor(25, b)).toBe(ROI_COLORS[5]);
+    expect(paybackColor(99, b)).toBe(ROI_COLORS[6]);
     expect(paybackColor(null, b)).toBe("#7a7a7a");
   });
   it("renders the ranked table in plain words", () => {
@@ -36,5 +39,21 @@ describe("ROI map helpers", () => {
     expect(html).toContain("8 years");
     expect(html).toContain("$25,200");
     expect(html).not.toContain("90005");
+  });
+});
+
+describe("ROI map bands on the committed data", () => {
+  it("splits each city across more than one colour", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    for (const city of ["la", "houston"]) {
+      const data = JSON.parse(
+        readFileSync(resolve(__dirname, `../../../backend/roi_map/data/${city}.json`), "utf8"),
+      ) as { rows: RoiRow[] };
+      const used = new Set(data.rows.map((r) => paybackColor(r.payback_years)));
+      expect(used.size).toBeGreaterThan(1);
+      const counts = [...used].map((c) => data.rows.filter((r) => paybackColor(r.payback_years) === c).length);
+      expect(Math.max(...counts) / data.rows.length).toBeLessThan(0.7);   // no colour swallows the city
+    }
   });
 });

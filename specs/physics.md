@@ -36,7 +36,7 @@ These are fixed. A file that disagrees with this table is wrong.
 | Gas | carried as kWh of higher heating value. 1 therm = 29.3071 kWh | `TAR-05` |
 | Emissions | kg CO2-equivalent, first year, eGRID total-output rate for electricity and the EPA combustion factor for gas. The non-baseload figure is an optional "up to" number | `EMI-01`, `EMI-02` |
 | Money over time | discount and escalation rates are real, not nominal. Costs are at the base date | `ECO-01`, `ECO-05`, `COST-00` |
-| Ranges | every result is low, expected, high. Expected is the run at expected inputs; low and high are the range the inputs' judged 10th-to-90th ranges produce, built from one-at-a-time runs combined in quadrature, and not a measured 80 % interval (measured coverage 17.0 %, #394) | `UNC-01`, `UNC-02` |
+| Ranges | every result is low, expected, high. Expected is the run at expected inputs; low and high are the range the inputs' judged 10th-to-90th ranges produce, built from one-at-a-time runs combined in quadrature, and not a measured 80 % interval (measured coverage 12.8 %, #394) | `UNC-01`, `UNC-02` |
 | Openings | a window is a `WallEdge.openings` entry of type `window`. `relative_center` is a fraction of the edge length from 0 to 1. Measured openings are the primary source; windows read by vision are the fallback, with a wider range | SPEC 3.3, 5.1 |
 
 ## 4. What each file hands to the others

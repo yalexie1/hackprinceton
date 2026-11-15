@@ -114,6 +114,22 @@ def probe(n: int = 5, *, post: Optional[Poster] = None) -> list[tuple[str, bool,
     return results
 
 
+def _verify_without_refetch(sid: str, **kwargs) -> list[Check]:
+    """The default `verify` for `warm_one`: `demo_check.check_property` with
+    `refresh=False`.
+
+    `check_property`'s *own* default (`refresh=True`) is correct for `demo_check`'s
+    purpose - it measures cold worst-case fetch timings, which is the number worth
+    knowing before a demo. But `warm_one` calls `verify` immediately after `assemble`
+    has already fetched this same property live; taking that default here would
+    fetch every property twice, doubling the cost of a pass that can already run up
+    to an hour against Matterport keys shared with every other team at the
+    hackathon. `refresh=False` serves the "bundle" check from the bundle `assemble`
+    just wrote instead of fetching it again.
+    """
+    return demo_check.check_property(sid, refresh=False, **kwargs)
+
+
 def warm_one(
     sid: str, *, assemble: Optional[Assembler] = None, verify: Optional[Verifier] = None
 ) -> tuple[bool, str]:
@@ -129,11 +145,11 @@ def warm_one(
     already warmed earlier in this same pass (or by a previous run) should not be
     re-fetched for nothing; the point of warming is that the second read is free.
 
-    `verify` defaults to `demo_check.check_property`, called with `run_analysis=True`
-    per the plan - a warmed property is meant to drive a demo end to end, not just sit
-    in cache. Only a `fail` status disqualifies; a `warn` (an unresolved utility, a
-    thin scan) is normal even on the golden three and must not throw away a property
-    over it.
+    `verify` defaults to `_verify_without_refetch` (see its docstring), called with
+    `run_analysis=True` per the plan - a warmed property is meant to drive a demo end
+    to end, not just sit in cache. Only a `fail` status disqualifies; a `warn` (an
+    unresolved utility, a thin scan) is normal even on the golden three and must not
+    throw away a property over it.
 
     Everything after `assemble` succeeds - calling `verify`, reading `.status` off
     each result, reading `.name`/`.detail` off the first failure - stays inside one
@@ -145,7 +161,7 @@ def warm_one(
     which defeats the entire point of this function never raising.
     """
     assemble = assemble if assemble is not None else api.get_property_bundle
-    verify = verify if verify is not None else demo_check.check_property
+    verify = verify if verify is not None else _verify_without_refetch
 
     try:
         assemble(sid, live=True, refresh=False)

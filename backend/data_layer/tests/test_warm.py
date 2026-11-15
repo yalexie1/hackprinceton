@@ -164,6 +164,27 @@ def always_fail(sid, **kwargs):
     raise RuntimeError(f"{sid}: always fails")
 
 
+def test_default_verify_does_not_force_a_refresh(monkeypatch):
+    """`warm_one`'s default verifier used to be `demo_check.check_property` taken
+    as-is, which defaults to `refresh=True` - correct for `demo_check`'s own
+    cold-timing purpose, but `warm_one` calls it right after `assemble` has already
+    fetched the same property live, so that default would fetch every property
+    twice: once in `assemble`, once again in `verify`. Over a 50-property pass
+    against Matterport keys shared with every other team at the hackathon, that
+    silently doubles the cost of an hour-long run. This pins that the default
+    verify path asks `check_property` for `refresh=False`."""
+    calls = []
+
+    def fake_check_property(sid, *, refresh=True, **kwargs):
+        calls.append(refresh)
+        return [Check("bundle", "ok", "assembled")]
+
+    monkeypatch.setattr(warm.demo_check, "check_property", fake_check_property)
+    ok, _ = warm.warm_one("SID_A", assemble=ok_assemble)
+    assert ok is True
+    assert calls == [False]
+
+
 def test_a_warn_does_not_disqualify_a_property():
     ok, detail = warm.warm_one(
         "SID_A", assemble=ok_assemble,

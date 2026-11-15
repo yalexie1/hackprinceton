@@ -28,7 +28,7 @@ worst case rather than the demo's warm case - which is the number worth knowing.
 
 Usage:
 
-    python -m backend.data_layer.demo_check                     # the golden three
+    python -m backend.data_layer.demo_check                     # the full 50-property demo set
     python -m backend.data_layer.demo_check SID [SID ...]       # named properties
     python -m backend.data_layer.demo_check --analysis          # also run the plan
     python -m backend.data_layer.demo_check --keep-cache        # use the real cache
@@ -89,26 +89,43 @@ def _min_comps() -> int:
         return DEFAULT_MIN_COMPS
 
 
-def check_property(sid: str, *, run_analysis: bool = False) -> list[Check]:
-    """Every check for one property, in the order a reader wants them."""
+def check_property(sid: str, *, run_analysis: bool = False, refresh: bool = True) -> list[Check]:
+    """Every check for one property, in the order a reader wants them.
+
+    `refresh` defaults to `True` because this function's own purpose is measuring
+    cold worst-case fetch timings - the "fetch time" check below is the number
+    worth knowing before a demo, and that number is meaningless against a bundle
+    already sitting in cache.
+
+    `warm.warm_one` calls this as its default verifier immediately *after*
+    `assemble` has already fetched the same property live, so a caller there that
+    took this default would fetch every property twice - doubling the cost of an
+    hour-long unattended warming pass against Matterport keys shared with every
+    other team at the hackathon. `refresh=False` is the opt-out for exactly that
+    caller: it serves the "bundle" check from the bundle `assemble` just wrote,
+    leaving `demo_check`'s own cold-timing runs (`main`, and any other direct
+    caller) unaffected because they never pass it.
+    """
     from backend.data_layer import api, imagery, vexcel
 
     out: list[Check] = []
 
     started = time.time()
     try:
-        bundle = api.get_property_bundle(sid, live=True, refresh=True)
+        bundle = api.get_property_bundle(sid, live=True, refresh=refresh)
     except Exception as exc:
         return [Check("bundle", "fail", f"{type(exc).__name__}: {str(exc)[:160]}")]
     elapsed = time.time() - started
 
-    out.append(Check("bundle", "ok", f"assembled in {elapsed:.1f} s (cold)"))
+    out.append(Check("bundle", "ok", f"assembled in {elapsed:.1f} s" + (" (cold)" if refresh else "")))
     out.append(_kit_check())
     out.append(Check(
         "fetch time",
         "warn" if elapsed > SLOW_BUNDLE_S else "ok",
         f"{elapsed:.1f} s cold against a {SLOW_BUNDLE_S:.0f} s budget"
-        + ("; upstream was slow, re-run before reading anything into it" if elapsed > SLOW_BUNDLE_S else ""),
+        + ("; upstream was slow, re-run before reading anything into it" if elapsed > SLOW_BUNDLE_S else "")
+        if refresh else
+        f"{elapsed:.1f} s warm (not a cold measurement; refresh=False)",
     ))
 
     # ---- provenance
@@ -405,11 +422,27 @@ def _analysis_checks(bundle) -> list[Check]:
 # ---------- running ----------
 
 def golden_sids() -> list[str]:
-    """The demo properties, read from `specs/examples/` rather than hard-coded, since
-    folders get repointed."""
+    """The three `specs/examples/` fixture properties, read from their folders rather
+    than hard-coded, since folders get repointed.
+
+    Kept alongside `demo_sids()` rather than retired: these three ship bundled
+    fixtures and are the properties the per-property checks above were written
+    against, so checking them by name stays meaningful on its own - pass them to
+    `main` explicitly (or call this directly) when that is what is wanted, rather
+    than the full fifty."""
     from backend.data_layer import api
 
     return [api._load(folder, "property_summary.json")["sid"] for folder in api._folders()]
+
+
+def demo_sids() -> list[str]:
+    """The current demo set, read from the committed manifest (`demo_set.sids()`) -
+    the single source of truth for "which properties" after the demo grew from
+    three fixtures to fifty live ones. This is `main`'s default now; `golden_sids()`
+    stays available for checking just the three fixtures by name."""
+    from backend.data_layer import demo_set
+
+    return list(demo_set.sids())
 
 
 _SYMBOL = {"ok": "ok  ", "warn": "WARN", "fail": "FAIL"}
@@ -431,7 +464,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         os.environ["DATA_LAYER_CACHE_DIR"] = temporary
 
     if not sids:
-        sids = golden_sids()
+        sids = demo_sids()
 
     print(f"demo-day checks on {len(sids)} propert{'y' if len(sids) == 1 else 'ies'}: "
           f"{', '.join(sids)}")

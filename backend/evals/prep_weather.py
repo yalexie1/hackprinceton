@@ -14,6 +14,7 @@ expects: time_local,temp_c,rh_pct,ghi_w_m2,dni_w_m2,dhi_w_m2,wind_m_s
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 import urllib.parse
@@ -25,7 +26,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 BDG2 = ROOT / "data/cache/evals/bdg2"
 OUT = ROOT / "data/cache/evals/weather"
-YEAR = 2017
+YEAR = int(os.environ.get("EVAL_WEATHER_YEAR", "2017"))
 
 # US sites only: UK/Canada sites would hit state-keyed paths (eGRID subregion,
 # the CA/TX weather fallback in analysis.api._climate).
@@ -128,14 +129,14 @@ def main() -> int:
         om = fetch_openmeteo(lat, lon, tz).reindex(index)
         om = om.interpolate(limit_direction="both")
         check_wind_units(om["wind_m_s"], site)
-        write_arm(om, OUT / f"openmeteo_{site}.csv")
+        write_arm(om, OUT / f"openmeteo_{site}_{YEAR}.csv")
 
         meas = bdg2_temps(weather, site).reindex(index)
         gaps = int(meas.isna().sum())
         meas = meas.interpolate(limit_direction="both")
         arm_a = om.copy()
         arm_a["temp_c"] = meas
-        write_arm(arm_a, OUT / f"bdg2temp_{site}.csv")
+        write_arm(arm_a, OUT / f"bdg2temp_{site}_{YEAR}.csv")
 
         # Degree days on NOAA's method: daily (Tmax+Tmin)/2 against 65 degF.
         def hdd_cdd(series: pd.Series) -> tuple[float, float]:
@@ -160,7 +161,7 @@ def main() -> int:
         print(f"    HDD65 om={h_om:.0f} bdg2={h_bd:.0f} "
               f"({report[site]['hdd_bias_pct']}%)  gaps={gaps} h", flush=True)
 
-    (OUT / "weather_report.json").write_text(json.dumps(report, indent=2))
+    (OUT / f"weather_report_{YEAR}.json").write_text(json.dumps(report, indent=2))
     print(f"\nwrote {OUT}/weather_report.json")
     return 0
 

@@ -52,7 +52,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional
 
-from backend.schema import PropertySummary, UseType
+from backend.schema import PropertySummary
 
 from . import cache, index
 

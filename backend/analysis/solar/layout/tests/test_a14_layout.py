@@ -252,3 +252,20 @@ def test_house_obstructions_cut_out():
     assert any(p.plane_id == "plane_south" for p in res.design.panels)
     for p in res.design.panels:
         assert not shapely_wkt.loads(p.polygon_wkt).intersects(vent)
+
+
+def test_west_face_fills_before_east_on_a_yield_tie():
+    """#396: an east/west tie goes to the west face (afternoon value), even when east is listed first."""
+    east = [Candidate(0, j, None, 1300, 1300, 1300, 0.0, 1, 90.0) for j in range(6)]
+    west = [Candidate(1, j, None, 1300, 1300, 1300, 0.0, 1, 270.0) for j in range(6)]
+    placed, reason = greedy_fill(east + west, {0: 6, 1: 6}, 0.430, annual_use_kwh=4 * 1300 * 0.430)
+    assert reason == "consumption"
+    assert {c.plane_idx for c in placed} == {1}
+
+
+def test_west_tiebreak_never_beats_a_clearly_better_face():
+    """The nudge orders near-ties only: a south face 3 % better still fills first."""
+    south = [Candidate(0, j, None, 1340, 1340, 1340, 0.0, 1, 180.0) for j in range(4)]
+    west = [Candidate(1, j, None, 1300, 1300, 1300, 0.0, 1, 270.0) for j in range(4)]
+    placed, _ = greedy_fill(west + south, {0: 4, 1: 4}, 0.430, annual_use_kwh=4 * 1340 * 0.430)
+    assert {c.plane_idx for c in placed} == {0}

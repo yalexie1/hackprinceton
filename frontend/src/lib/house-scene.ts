@@ -30,9 +30,13 @@ export function createHouseScene(
     onUnavailable: () => void;
     onHover?: (part: EnergyPart | null) => void;
     onProject?: (points: EnergyPoint[]) => void;
+    // Azimuth the recommended array faces (0 = north, clockwise). The model's
+    // panels sit on its +z side; a north arrow on the ground is turned so that
+    // +z points along this azimuth. Omitted: no arrow (illustrative house).
+    panelAzimuthDeg?: number | null;
   },
 ): HouseController {
-  const { compact, office } = options;
+  const { compact, office, panelAzimuthDeg } = options;
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     alpha: true,
@@ -311,6 +315,49 @@ export function createHouseScene(
   ground.position.y = -0.49;
   ground.receiveShadow = true;
   scene.add(ground);
+  if (panelAzimuthDeg != null && Number.isFinite(panelAzimuthDeg)) {
+    // North arrow. In the arrow's own frame north is -z; turning it by
+    // A + 180 deg about y puts north at (sin A, 0, cos A), which makes the
+    // model's +z (the panel side) face azimuth A.
+    const compass = new THREE.Group();
+    compass.position.set(7.4, -0.46, 5.4);
+    compass.rotation.y = ((panelAzimuthDeg + 180) * Math.PI) / 180;
+    const ink = mat("#303832", 0.6);
+    const paper = mat("#f5f0e5", 0.9);
+    const dial = new THREE.Mesh(new THREE.CircleGeometry(1.15, 40), paper);
+    dial.rotation.x = -Math.PI / 2;
+    dial.receiveShadow = true;
+    compass.add(dial);
+    const needle = new THREE.Shape();
+    needle.moveTo(0, 1.0);
+    needle.lineTo(0.32, -0.35);
+    needle.lineTo(0, -0.12);
+    needle.lineTo(-0.32, -0.35);
+    needle.closePath();
+    const arrow = new THREE.Mesh(new THREE.ShapeGeometry(needle), ink);
+    arrow.rotation.x = -Math.PI / 2;
+    arrow.position.y = 0.02;
+    compass.add(arrow);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#303832";
+      ctx.font = "bold 96px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("N", 64, 68);
+    }
+    const letter = new THREE.CanvasTexture(canvas);
+    textures.push(letter);
+    const labelMaterial = new THREE.SpriteMaterial({ map: letter });
+    materials.push(labelMaterial);
+    const label = new THREE.Sprite(labelMaterial);
+    label.scale.set(0.9, 0.9, 0.9);
+    label.position.set(0, 0.55, -1.6);
+    compass.add(label);
+    scene.add(compass);
+  }
   const lower = new THREE.Group();
   house.add(lower);
   const upper = new THREE.Group();

@@ -39,6 +39,11 @@ NORTH_EXCLUDE_MIN_TILT_DEG = 9.5    # LAY-03 step 1: the rule applies to tilted 
 MAX_TILT_DEG = 60.0                 # LAY-03 step 1: steeper planes are unsuitable
 MAX_SHADING_LOSS = 0.20             # LAY-03 step 5 / SHD-05: skip positions shaded above this
 WKT_DECIMALS = 9                    # ~0.1 mm in latitude, so output panels stay inside the region
+# #396 fill-order tie-break: within about this fraction of yield, the more western face fills first.
+# Afternoon output is worth more under time-of-use rates (LA and Houston peaks are late afternoon), and
+# without it an exact east/west tie went to the east face, which A11 lists first on a north-south ridge.
+# Orders the fill only; energy and money still use the plane's own yield.
+WEST_TIEBREAK = 0.01
 
 StopReason = Literal["roof_area", "budget", "consumption", "fire_code_share", "blocked"]
 YieldValue = Union[float, Ranged]
@@ -56,6 +61,7 @@ class Candidate:
     yield_high: float
     shading: float
     plan_m2: float            # plan-view area of the module (for the ROOF-06 share)
+    azimuth_deg: float = 180.0  # plane azimuth, 0 = north clockwise (fill-order tie-break only)
 
 
 @dataclass
@@ -84,6 +90,12 @@ def plane_excluded(plane: RoofPlane, exclude_north: bool = True) -> Optional[str
     return None
 
 
+def fill_rank(c: Candidate) -> float:
+    """LAY-03 step 3 order: yield per kW, nudged by WEST_TIEBREAK toward the afternoon (west) side."""
+    westness = -math.sin(math.radians(c.azimuth_deg))      # +1 due west, -1 due east, 0 north or south
+    return c.yield_exp * (1.0 + WEST_TIEBREAK * westness)
+
+
 def _cost_fn(cost: CostArg) -> Optional[Callable[[int], float]]:
     if cost is None:
         return None
@@ -101,7 +113,7 @@ def greedy_fill(candidates: list[Candidate], capacity: dict[int, int], module_kw
     cost = _cost_fn(installed_cost_usd)
     if budget_usd is not None and cost is None:
         raise ValueError("a budget needs installed_cost_usd (per module, or a function of the count)")
-    order = sorted(candidates, key=lambda c: (-c.yield_exp, c.plane_idx, c.pos_idx))
+    order = sorted(candidates, key=lambda c: (-fill_rank(c), c.plane_idx, c.pos_idx))
     placed: list[Candidate] = []
     per_plane: dict[int, int] = {}
     energy = 0.0
@@ -176,7 +188,7 @@ def _plane_layout(i: int, plane: RoofPlane, group: BuildingGroup, ridge: float,
     for j, cell in enumerate(cells):
         poly_wkt = _wkt(region.frame.to_lonlat(cell)) if region.frame is not None else None
         lo, ex, hi, sh = _yield_parts(yield_fn(seen, poly_wkt))
-        cands.append(Candidate(i, j, poly_wkt, lo, ex, hi, sh, cell.area * cosb))
+        cands.append(Candidate(i, j, poly_wkt, lo, ex, hi, sh, cell.area * cosb, plane.azimuth_deg % 360.0))
     return _PlaneLayout(region, capacity, cands)
 
 

@@ -77,6 +77,11 @@ def load_truth(ids: list[str], fuel: str) -> dict[str, dict]:
     return out
 
 
+def zone_is_supported(zone: str | None) -> bool:
+    """Whether the DEF tables actually carry this zone (lead decision: abstain if not)."""
+    return zone in SUPPORTED_CLIMATES
+
+
 def effective_climate_zone(zone: str | None) -> tuple[str | None, str]:
     """The zone the DEF tables will actually use, and whether that is what we asked for."""
     if zone in SUPPORTED_CLIMATES:

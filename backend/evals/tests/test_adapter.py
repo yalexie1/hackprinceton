@@ -79,3 +79,14 @@ def test_the_bundle_records_which_zone_was_actually_in_force():
     assert b["climate"]["climate_zone"] == "6A"
     assert b["_eval"]["stated_climate_zone"] == "6A"
     assert b["_eval"]["zone_source"] == "unsupported_fallback"
+
+
+def test_an_unsupported_zone_is_refused_not_silently_run(monkeypatch):
+    # Lead decision (@yalexie1, board 2026-11-15): abstain on zones the DEF tables
+    # do not carry, rather than running them on a 3B/2A blend and reporting the
+    # number as if the stated zone had been honoured.
+    import backend.evals.run_eval as run_eval
+    assert run_eval.zone_is_supported("2A") is True
+    assert run_eval.zone_is_supported("3B") is True
+    for zone in ("3C", "6A", "2B", "4A", None):
+        assert run_eval.zone_is_supported(zone) is False, zone

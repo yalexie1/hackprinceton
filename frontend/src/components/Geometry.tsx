@@ -4,6 +4,7 @@ import type { RoofView, RunResult } from "../lib/types";
 import { api, assetUrl } from "../lib/api";
 import Warnings from "./Warnings";
 import { number, polygon, ranged } from "../lib/format";
+import { panelFacing } from "../lib/panel-orientation";
 export default function Geometry({
   run,
   layout = false,
@@ -21,6 +22,7 @@ export default function Geometry({
     (m) => m.measure_id === "LAYOUT" || m.layout,
   );
   const desks = layoutMeasure?.layout;
+  const facing = layout ? null : panelFacing(run);
   const [roofView, setRoofView] = useState<RoofView | null>(null);
   const [roofError, setRoofError] = useState("");
   const [imageFailed, setImageFailed] = useState(false);
@@ -413,6 +415,15 @@ export default function Geometry({
           </text>
         </svg>
       </div>
+      {facing && showPanels && (
+        <p className="section-description roof-facing">
+          The proposed panels face {facing.label} (
+          {Math.round(facing.azimuthDeg)}° from north; north is at the top of
+          the map). The design fills the side of the roof with the most
+          modelled sunlight first, and when two sides are within about 1% of
+          each other it uses the western one.
+        </p>
+      )}
       {!layout && detections.length > 0 && (
         <details className="roof-detections">
           <summary>Inspect {detections.length} roof detections</summary>

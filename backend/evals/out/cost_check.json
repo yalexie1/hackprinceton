@@ -1,0 +1,57 @@
+{
+ "status": "ok",
+ "title": "Installed cost vs Tracking the Sun",
+ "question": "Is our modelled installed PV cost ordinary for this market, or are we quoting a price nobody actually pays?",
+ "entry": "COST-01",
+ "source": "LBNL Tracking the Sun 2024, OEDI, partitioned by state",
+ "n_checked": 3,
+ "rows": [
+  {
+   "sid": "ZSPaQbkGcJJ",
+   "state": "CA",
+   "segment": "commercial",
+   "our_usd_per_w": 2.2,
+   "p25_usd_per_w": 2.086,
+   "median_usd_per_w": 2.944,
+   "p75_usd_per_w": 3.851,
+   "n_systems": 2830,
+   "year": 2023,
+   "indicative": false,
+   "verdict": "inside_iqr",
+   "pct_vs_median": -25.3
+  },
+  {
+   "sid": "zvKHR9DHNjJ",
+   "state": "CA",
+   "segment": "residential",
+   "our_usd_per_w": 4.2,
+   "p25_usd_per_w": 3.82,
+   "median_usd_per_w": 5.666,
+   "p75_usd_per_w": 6.739,
+   "n_systems": 77,
+   "year": 2024,
+   "indicative": false,
+   "verdict": "inside_iqr",
+   "pct_vs_median": -25.9
+  },
+  {
+   "sid": "L3266YcPPvd",
+   "state": "TX",
+   "segment": "commercial",
+   "our_usd_per_w": 3.35,
+   "p25_usd_per_w": 0.579,
+   "median_usd_per_w": 2.061,
+   "p75_usd_per_w": 2.809,
+   "n_systems": 12,
+   "year": 2024,
+   "indicative": true,
+   "verdict": "above_iqr",
+   "pct_vs_median": 62.5
+  }
+ ],
+ "caveats": [
+  "Tracking the Sun reports up-front price before incentives, across installers, hardware and system sizes we do not match on. Inside the IQR means our assumption is ordinary, not that a given project would cost that.",
+  "Only CA and TX are downloaded, because PropertySummary.state admits only those two.",
+  "A band built from fewer than 30 systems is flagged indicative and should not be read as a verdict."
+ ]
+}

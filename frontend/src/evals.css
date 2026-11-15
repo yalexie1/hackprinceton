@@ -1,0 +1,180 @@
+/* Evals page. Owned by @vigjay (issue #394).
+   Minimum type size is 16px everywhere, per the frontend lane's rule. */
+
+.evals {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.evals h2 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+.eval-intro {
+  font-size: 1.0625rem;
+  max-width: 44rem;
+  margin: 0 0 2rem;
+}
+
+.eval-section {
+  border-top: 1px solid currentColor;
+  border-color: color-mix(in srgb, currentColor 18%, transparent);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+}
+
+.eval-section h3 {
+  font-size: 1.375rem;
+  margin: 0 0 0.25rem;
+}
+
+.eval-section h4 {
+  font-size: 1.0625rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.eval-question {
+  font-size: 1rem;
+  margin: 0 0 1.25rem;
+  opacity: 0.8;
+  max-width: 44rem;
+}
+
+/* Figures */
+
+.eval-figures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.eval-figure {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.eval-figure-label {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.eval-figure-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0.25rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.eval-figure-unit {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-left: 0.15em;
+  opacity: 0.7;
+}
+
+/* The nominal is the point of the figure, not a footnote: 17.6% means nothing
+   without the 80% it was supposed to hit. */
+.eval-figure-nominal {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.25rem 0 0;
+}
+
+.eval-figure-meta {
+  font-size: 1rem;
+  margin: 0.35rem 0 0;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.eval-figure-note {
+  font-size: 1rem;
+  margin: 0.6rem 0 0;
+  opacity: 0.85;
+}
+
+/* Tables */
+
+.evals table {
+  border-collapse: collapse;
+  font-size: 1rem;
+  width: 100%;
+  max-width: 40rem;
+}
+
+.evals th,
+.evals td {
+  text-align: left;
+  padding: 0.4rem 0.75rem 0.4rem 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.evals thead th {
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+/* Wide tables scroll inside themselves; the page never scrolls sideways. */
+.eval-table-scroll {
+  overflow-x: auto;
+}
+
+.eval-table-scroll table {
+  max-width: none;
+  min-width: 44rem;
+}
+
+.eval-note {
+  font-size: 1rem;
+  margin: 0.6rem 0 0;
+  max-width: 44rem;
+  opacity: 0.85;
+}
+
+/* Caveats are rendered open, never behind a disclosure: a reliability page that
+   hides its limits is worse than no page. */
+.eval-caveats ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  max-width: 48rem;
+}
+
+.eval-caveats li {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.eval-provenance {
+  font-size: 1rem;
+  margin-top: 1.5rem;
+  opacity: 0.75;
+}
+
+.eval-section-pending .eval-pending {
+  font-size: 1rem;
+  margin: 0;
+}
+
+@media (max-width: 40rem) {
+  .evals {
+    padding: 1.5rem 1rem 3rem;
+  }
+  .evals h2 {
+    font-size: 1.625rem;
+  }
+  .eval-figure-value {
+    font-size: 2rem;
+  }
+}

@@ -29,18 +29,22 @@ worst case rather than the demo's warm case - which is the number worth knowing.
 Usage:
 
     python -m backend.data_layer.demo_check                     # the full 50-property demo set
+    python -m backend.data_layer.demo_check --golden            # the 3 specs/examples/ fixtures
     python -m backend.data_layer.demo_check SID [SID ...]       # named properties
     python -m backend.data_layer.demo_check --analysis          # also run the plan
     python -m backend.data_layer.demo_check --keep-cache        # use the real cache
 
-**What the default costs.** The default set grew from the 3 `specs/examples/` fixtures
+**What each mode costs.** The default set grew from the 3 `specs/examples/` fixtures
 to the full 50-property manifest, and every check here is live with `refresh=True`, so
 nothing is served from cache even on a fully warmed laptop. At the measured 2 s to 76 s
 per bundle that is roughly **an hour** and 50 cold fetch cycles against sponsor keys
 shared with every other team at the hackathon - not something to start ten minutes
-before a rehearsal, and not something two people should run at once. Naming sids
-explicitly, or checking just the three `golden_sids()`, is the two-minute version and
-is the right one for a quick smoke check.
+before a rehearsal, and not something two people should run at once. The default stays
+the full 50: it was chosen deliberately and this file does not second-guess it.
+`--golden` runs only the three `golden_sids()` fixtures and is the **two-minute**
+version - the right one for a quick smoke check before a rehearsal. Naming sids
+explicitly is equivalent to `--golden` for exactly those three, or a different subset
+of the caller's choosing; explicit sids always win over `--golden`.
 
 Exit status is 1 if any check **failed**, 0 if the worst was a warning, so it can gate
 a demo rehearsal.
@@ -462,6 +466,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     run_analysis = "--analysis" in argv
     keep_cache = "--keep-cache" in argv
+    golden = "--golden" in argv
     sids = [a for a in argv if not a.startswith("--")]
 
     # Both overrides are process-global, so both are put back in the `finally`
@@ -481,8 +486,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         os.environ["DATA_LAYER_CACHE_DIR"] = temporary
 
     try:
-        if not sids:
-            sids = demo_sids()
+        if sids and golden:
+            # Explicit sids win, exactly as they do against the full default - but
+            # that choice is said out loud rather than silently dropping the flag.
+            print(f"--golden ignored: explicit sids were given ({', '.join(sids)})")
+        elif not sids:
+            sids = golden_sids() if golden else demo_sids()
 
         print(f"demo-day checks on {len(sids)} propert{'y' if len(sids) == 1 else 'ies'}: "
               f"{', '.join(sids)}")

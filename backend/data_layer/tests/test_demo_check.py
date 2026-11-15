@@ -98,3 +98,52 @@ def test_main_does_not_leave_live_mode_on_for_the_rest_of_the_process(monkeypatc
     demo_check.main(["SID_A"])
 
     assert "DATA_LAYER_LIVE" not in os.environ
+
+
+def test_golden_flag_selects_the_three_golden_sids(monkeypatch):
+    """`--golden` is the two-minute mode: just the three `specs/examples/` fixtures,
+    not the full 50-property manifest."""
+    seen: list[str] = []
+    monkeypatch.setattr(demo_check, "golden_sids", lambda: ["G1", "G2", "G3"])
+    monkeypatch.setattr(demo_check, "demo_sids", lambda: ["D1"] * 50)
+    monkeypatch.setattr(
+        demo_check, "check_property",
+        lambda sid, **k: (seen.append(sid), [Check("bundle", "ok", "")])[1],
+    )
+
+    demo_check.main(["--golden"])
+
+    assert seen == ["G1", "G2", "G3"]
+
+
+def test_no_args_still_defaults_to_the_full_demo_set(monkeypatch):
+    """The default is unchanged by this change: no sids and no `--golden` still
+    means the full 50-property manifest."""
+    seen: list[str] = []
+    monkeypatch.setattr(demo_check, "golden_sids", lambda: ["G1"])
+    monkeypatch.setattr(demo_check, "demo_sids", lambda: ["D1", "D2"])
+    monkeypatch.setattr(
+        demo_check, "check_property",
+        lambda sid, **k: (seen.append(sid), [Check("bundle", "ok", "")])[1],
+    )
+
+    demo_check.main([])
+
+    assert seen == ["D1", "D2"]
+
+
+def test_explicit_sids_win_over_golden(monkeypatch, capsys):
+    """`--golden` combined with explicit sids must not silently drop either - the
+    explicit sids win, exactly as they do against the full default, and the run
+    says so rather than going quiet about which one it picked."""
+    seen: list[str] = []
+    monkeypatch.setattr(demo_check, "golden_sids", lambda: ["G1", "G2", "G3"])
+    monkeypatch.setattr(
+        demo_check, "check_property",
+        lambda sid, **k: (seen.append(sid), [Check("bundle", "ok", "")])[1],
+    )
+
+    demo_check.main(["SID_A", "--golden"])
+
+    assert seen == ["SID_A"]
+    assert "golden" in capsys.readouterr().out.lower()

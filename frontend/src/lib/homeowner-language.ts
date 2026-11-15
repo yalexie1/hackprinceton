@@ -103,6 +103,10 @@ export function readableText(input: string): string {
 }
 export function warningText(text: string): string {
   if (/Uses the LED efficacy ratio/i.test(text)) return "Lighting savings depend on the assumed efficiency of the existing bulbs and replacement LEDs. These efficiencies are model inputs, not measurements of the installed lamps.";
+  if (/Lamp count estimated at/i.test(text)) return "The number of lamps was estimated from the home's floor area. It was not counted in the photographs; check the actual number before ordering replacements.";
+  if (/Useful life of \d+ years is unverified/i.test(text)) return "The expected service life is an estimate. Ask the contractor about the product warranty and likely replacement timing.";
+  if (/Main panel not visible in any panorama/i.test(text)) return "The main electrical panel was not visible in the interior photographs, and two-prong outlets suggest older wiring. A licensed electrician should check the service before solar installation. This estimate allows for a possible electrical upgrade and routing through plaster walls; confirm the work and price with a quote.";
+  if (/No cue on the roof structure yet/i.test(text)) return "The available images do not show whether the roof can support solar panels. An installer or structural professional should check it.";
   if (/Assumes 2x4 wood framing at 16 in/i.test(text)) return "The insulation estimate assumes wood framing made from two-by-four studs spaced 16 inches apart. The predicted heat transfer uses a published wall example, rather than a measurement of this wall.";
 
   if (/No splat/i.test(text)) return "A detailed 3D roof scan is unavailable. The roof estimate uses aerial survey information instead.";

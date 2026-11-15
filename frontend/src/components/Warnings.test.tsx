@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitNarrative } from "./Warnings";
+import { homeownerReport, splitNarrative } from "./Warnings";
 
 const REPORT = `## Audit summary
 
@@ -39,5 +39,18 @@ describe("splitNarrative", () => {
 
   it("handles an empty report without throwing", () => {
     expect(splitNarrative("").lead).toBe("");
+  });
+});
+
+describe("homeowner report warnings", () => {
+  it("turns technical fallback lines into homeowner checks without changing measured figures", () => {
+    const report = "Baseline: 7,728 kWh.\n\nWarnings and fallbacks in this run:\n- quaternion sense not decidable from the footprint on this model\n- tariff eia/retail-sales (fallback): EIA state average retail price, CA RES, 2026-08";
+    const result = homeownerReport(report);
+    expect(result).toContain("7,728 kWh");
+    expect(result).toContain("What to check before deciding:");
+    expect(result).toContain("Check its orientation");
+    expect(result).toContain("state average for homes");
+    expect(result).not.toContain("quaternion");
+    expect(result).not.toContain("eia/retail-sales");
   });
 });

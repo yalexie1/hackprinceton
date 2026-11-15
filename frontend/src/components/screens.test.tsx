@@ -174,6 +174,18 @@ describe("shared contract screen compatibility", () => {
     expect(html).toContain("<details");
     expect(html).toContain("Earlier savings: $1000");
   });
+  it("keeps the plan summary readable without repeating the technical report", () => {
+    const html = renderToStaticMarkup(
+      <AuditNarrative
+        text={"## Your energy audit\n\nYour home may use less energy after the selected upgrades.\n\nTechnical model inputs and calculation details."}
+        warnings={[]}
+        concise
+      />,
+    );
+    expect(html).toContain("Your home may use less energy");
+    expect(html).not.toContain("Technical model inputs");
+    expect(html).not.toContain("Read the rest of the report");
+  });
   it("offers no edit control for a locked assumption", () => {
     const run = structuredClone(house);
     const assumption = run.building_model!.assumptions[0];

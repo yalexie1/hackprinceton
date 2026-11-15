@@ -1129,11 +1129,7 @@ export default function App() {
                         {money(run.baseline.annual.cost_usd.expected)}
                         <small> / year</small>
                       </h3>
-                      <p>
-                        {money(run.baseline.annual.cost_usd.low)}–
-                        {money(run.baseline.annual.cost_usd.high)} estimated
-                        energy cost
-                      </p>
+                      <p>Estimated yearly energy cost before improvements</p>
                       <div
                         className="spark-bars"
                         aria-label="Monthly electricity use in kilowatt-hours"

@@ -9,7 +9,7 @@ import type {
 } from "../lib/energy-explorer";
 import type { HouseController, HouseMode } from "../lib/house-scene";
 import type { RunResult } from "../lib/types";
-import { money, number, ranged } from "../lib/format";
+import { money, number } from "../lib/format";
 
 const partNames: Record<EnergyPart, string> = {
   solar: "Solar",
@@ -64,9 +64,6 @@ export function UpgradeDetails({
                 : "Savings not estimated"}
               {finance && <small>/ yr</small>}
             </strong>
-            {finance && (
-              <small>{ranged(finance.annual_savings_usd, true)} / yr</small>
-            )}
           </div>
           <div>
             <span>Upfront cost</span>
@@ -75,7 +72,6 @@ export function UpgradeDetails({
                 ? money(finance.net_upfront_usd.expected)
                 : "Quote needed"}
             </strong>
-            {finance && <small>{ranged(finance.net_upfront_usd, true)}</small>}
           </div>
           {savings && (
             <div>

@@ -73,7 +73,7 @@ export function homeownerReport(text: string): string {
     }
     if (inChecks && /^#{1,6}\s/.test(line)) inChecks = false;
     return line;
-  }).join("\n");
+  }).join("\n").replace(/\s*\((?:estimated\s+)?range\s+[^)]*\)/gi, "");
 }
 
 export function AuditNarrative({

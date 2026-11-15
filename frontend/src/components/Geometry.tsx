@@ -415,7 +415,6 @@ export default function Geometry({
               <div>
                 <span>Annual production</span>
                 <strong>{number(solar.annual_kwh.expected)} kWh</strong>
-                <small>{ranged(solar.annual_kwh)} kWh</small>
               </div>
               <div>
                 <span>Solar energy used in the building</span>

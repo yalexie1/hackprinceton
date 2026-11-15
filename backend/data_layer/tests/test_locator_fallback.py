@@ -125,3 +125,45 @@ def test_no_second_parcel_query_at_the_same_point(sources, monkeypatch):
     assert not claimed, (
         "a record claims the georeference was used, but there is no georeference: "
         f"{[r.detail for r in claimed]}")
+
+
+# --- every consumer must use the RESOLVED point (@Sri-SriPod's run-2 regression) --
+def test_place_lookups_get_the_resolved_point_never_none(sources, monkeypatch):
+    """#442 moved the guard and the climate call to site_lat/site_lon and left the
+    place lookups on the raw georeference.
+
+    For a scan with no georeference that is None, so the function now runs PAST the
+    guard and dies in places.lookup with
+    `TypeError: type NoneType doesn't define __round__`. 31 buildings in
+    @Sri-SriPod's EBEWE run went from a clean IncompleteBundle refusal to an uncaught
+    crash - strictly worse than before the fix.
+
+    The earlier tests here did not catch it because they stub state_for/city_for/
+    utility_for, which are exactly the functions that blow up. So this asserts on the
+    ARGUMENTS rather than on completion.
+    """
+    from backend.data_layer import places as d14
+    seen = {}
+
+    def state_for(lat, lon):
+        seen["state"] = (lat, lon)
+        return "TX", FetchRecord(layer="costar", what="state", status="ok")
+
+    def city_for(lat, lon):
+        seen["city"] = (lat, lon)
+        return "Houston", FetchRecord(layer="costar", what="city", status="ok")
+
+    def utility_for(lat, lon, st):
+        seen["utility"] = (lat, lon)
+        return None, FetchRecord(layer="tariff", what="utility", status="missing")
+
+    monkeypatch.setattr(d14, "state_for", state_for)
+    monkeypatch.setattr(d14, "city_for", city_for)
+    monkeypatch.setattr(d14, "utility_for", utility_for)
+
+    api._assemble(SID)
+
+    for which, point in seen.items():
+        assert point == (ADDR_LAT, ADDR_LON), (
+            f"{which} lookup got {point}; with no georeference it must receive the "
+            f"resolved CoStar address point, not the raw georeference")

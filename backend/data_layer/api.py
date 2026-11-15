@@ -594,10 +594,10 @@ def _assemble(sid: str) -> PropertyBundle:
     state = row.get("state")
     city = row.get("city")
     if not state:
-        state, srecord = d14.state_for(lat, lon)
+        state, srecord = d14.state_for(site_lat, site_lon)
         provenance.append(srecord)
     if not city:
-        city, crecord = d14.city_for(lat, lon)
+        city, crecord = d14.city_for(site_lat, site_lon)
         provenance.append(crecord)
     sector = "RES" if (costar and costar.kind == "residential_listing") else "COM"
 
@@ -605,7 +605,15 @@ def _assemble(sid: str) -> PropertyBundle:
     # the CoStar `City` field, which is a *mailing* city - right 14/14 for Los Angeles
     # and only 9 of 16 for Houston. `None` means "do not guess", and `get_tariff` then
     # keeps its own honest label rather than being handed a wrong utility name.
-    utility, ploc = d14.utility_for(lat, lon, state or _TARIFF_DEFAULT_STATE)
+    # site_lat/site_lon, not the raw georeference: #442 switched the guard and the
+    # climate call to the resolved point and left these three on `lat`/`lon`. For a
+    # scan with no georeference those are None, so execution ran past the guard and
+    # died in places.lookup with "NoneType doesn't define __round__" - 31 buildings in
+    # @Sri-SriPod's EBEWE run turned a clean refusal into an uncaught crash. The
+    # resolved point is also the better input on its own terms: D16's rule is that the
+    # CoStar address decides which building this is, and these three pick the tariff
+    # state, the eGRID subregion and the legal templates.
+    utility, ploc = d14.utility_for(site_lat, site_lon, state or _TARIFF_DEFAULT_STATE)
     provenance.append(ploc)
 
     if not state:

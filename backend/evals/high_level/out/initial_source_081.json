@@ -1,0 +1,21 @@
+{
+  "audit_scope": "initial source/metric audit; no model tuning",
+  "source_revision": "081a433fc63301fbb73b732ad01155042b34b85c",
+  "scorer_sha256": "703c94fa6910848e042b989c6bb8cdde57772e890ee20df1f76a08dd11dea7af",
+  "arithmetic_probe": {
+    "evidence_type": "synthetic arithmetic counterexample, not building evidence",
+    "prediction_truth_ratios": [
+      0.2,
+      0.5,
+      1.0,
+      2.0
+    ],
+    "correct_factor_two_or_more_pct": 75.0,
+    "delivered_factor_2_plus_pct": 25.0,
+    "finding": "Delivered factor_2_plus is not a symmetric factor-of-two metric"
+  },
+  "building_metrics": {
+    "status": "blocked",
+    "reason": "Per-building output not provided; aggregate headlines not independently reproduced"
+  }
+}

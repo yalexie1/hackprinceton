@@ -368,7 +368,8 @@ def test_the_real_ask_rule_runs_on_the_house_in_reasonable_time():
 def test_observe_interior_uses_the_vision_reader_once_a_model_client_is_given(monkeypatch):
     bundle, _ = load("house")
     seen = []
-    monkeypatch.setattr(api, "_vision_interior", lambda b, ask, get, **kw: seen.append((ask, get)) or ([], []))
+    from backend.analysis.vision.interior import VisionResult
+    monkeypatch.setattr(api, "_read_interior", lambda b, ask, get, **kw: seen.append((ask, get)) or VisionResult([], [], [], {"p": 1}))
     try:
         api.set_vision(ask_model=lambda *a: "{}", get_bytes=lambda p: b"")
         assert api.observe_interior(bundle) == ([], []) and len(seen) == 1
@@ -453,8 +454,9 @@ def test_the_vision_read_is_asked_for_the_room_fallback_and_its_flags_come_throu
 
     def reader(b, ask, get, **kw):
         seen.update(kw)
-        return [], [flag]
-    monkeypatch.setattr(api, "_vision_interior", reader)
+        from backend.analysis.vision.interior import VisionResult
+        return VisionResult([], [flag], [], {"p": 1})
+    monkeypatch.setattr(api, "_read_interior", reader)
     try:
         api.set_vision(ask_model=lambda *a: "{}", get_bytes=lambda p: b"")
         assert api.observe_interior(bundle) == ([], [flag])

@@ -51,7 +51,14 @@ def describe(errs: list[float]) -> dict:
         "p90_pct": round(pct(errs, 0.90), 1),
         "within_25pct": round(100 * sum(abs(e) <= 25 for e in errs) / len(errs), 1),
         "within_50pct": round(100 * sum(abs(e) <= 50 for e in errs) / len(errs), 1),
-        "factor_2_plus": round(100 * sum(abs(e) >= 100 for e in errs) / len(errs), 1),
+        # ratio = pred/truth = 1 + e/100. A 2x OVERprediction is e = +100; a 2x
+        # UNDERprediction is e = -50, not -100. An earlier abs(e) >= 100 test
+        # therefore counted only overpredictions and could never flag an
+        # underprediction at all (e <= -100 is impossible). Both sides, named.
+        "over_by_2x_plus": round(100 * sum(e >= 100 for e in errs) / len(errs), 1),
+        "under_by_2x_plus": round(100 * sum(e <= -50 for e in errs) / len(errs), 1),
+        "off_by_2x_either_way": round(
+            100 * sum(e >= 100 or e <= -50 for e in errs) / len(errs), 1),
     }
 
 

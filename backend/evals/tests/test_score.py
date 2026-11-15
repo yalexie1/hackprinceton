@@ -85,7 +85,7 @@ def test_describe_reports_median_not_mean_for_a_skewed_set():
     assert out["median_pct"] == 10.0
     assert out["mean_pct"] == 260.0
     assert out["median_abs_pct"] == 10.0
-    assert out["factor_2_plus"] == 20.0
+    assert out["over_by_2x_plus"] == 20.0
 
 
 def _write_meter_csv(path, rows):
@@ -129,3 +129,29 @@ def test_load_truth_ignores_rows_outside_the_eval_year(tmp_path, monkeypatch):
     ])
     monkeypatch.setattr(run_eval, "BDG2", tmp_path)
     assert run_eval.load_truth(["A"], "electricity")["A"]["annual_kwh"] == 1.0
+
+
+def test_describe_counts_2x_errors_on_both_sides():
+    # Signed % error e = 100*(pred-truth)/truth, so ratio = 1 + e/100.
+    # A 2x OVERprediction is e=+100; a 2x UNDERprediction is e=-50, NOT -100.
+    # The old abs(e) >= 100 test could never flag an underprediction at all.
+    out = describe([100.0, -50.0, 0.0, 10.0])
+    assert out["over_by_2x_plus"] == 25.0
+    assert out["under_by_2x_plus"] == 25.0
+    assert out["off_by_2x_either_way"] == 50.0
+    # The ambiguous old key must be gone, not silently redefined.
+    assert "factor_2_plus" not in out
+
+
+def test_describe_2x_boundaries_are_inclusive():
+    assert describe([-50.0])["under_by_2x_plus"] == 100.0
+    assert describe([-49.9])["under_by_2x_plus"] == 0.0
+    assert describe([100.0])["over_by_2x_plus"] == 100.0
+    assert describe([99.9])["over_by_2x_plus"] == 0.0
+
+
+def test_describe_cannot_report_an_underprediction_worse_than_total():
+    # e <= -100 is impossible (you cannot predict less than zero against a
+    # positive truth), which is exactly why abs(e) was the wrong test.
+    out = describe([-90.0, -99.0])
+    assert out["under_by_2x_plus"] == 100.0

@@ -16,6 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCORECARD = ROOT / "data/cache/evals/out/scorecard.json"
+RUNS = ROOT / "data/cache/evals/out/runs.json"
 OUT = ROOT / "backend/evals/out"
 SITE_JSON = ROOT / "frontend/public/evals.json"
 ARM = "bdg2temp"          # the measured-temperature arm is the headline
@@ -84,6 +85,34 @@ def build_payload(card: dict) -> dict:
     }
 
 
+def per_building_rows(runs: dict) -> list[dict]:
+    """One record per building, for anyone rescoring our intervals independently.
+
+    Requested by @yalexie1 (fitting a widening factor) and @vinayak-sinha (stage-0
+    reproduction). Deliberately carries no hourly or monthly series: this file is
+    for rescoring, not for re-running the model. A refused arm stays in the file
+    as null rather than being dropped, because dropping it silently shrinks N for
+    whoever scores from it.
+    """
+    rows = []
+    for r in runs["runs"]:
+        row = {
+            "building_id": r["building_id"], "site_id": r["site_id"],
+            "usage": r["usage"], "segment": r["segment"], "sqm": r["sqm"],
+            "yearbuilt": r["yearbuilt"], "floors": r["floors"],
+            "climate_zone": r["climate_zone"],
+            "measured_elec_kwh": r["truth_elec_kwh"],
+            "measured_gas_kwh": r.get("truth_gas_kwh"),
+            "elec_completeness": r.get("elec_completeness"),
+        }
+        for arm in runs["arms"]:
+            e = r["arms"].get(arm, {}).get("elec")
+            row[arm] = None if e is None else {"low": e["low"], "expected": e["expected"],
+                                               "high": e["high"]}
+        rows.append(row)
+    return rows
+
+
 def _slot(payload: dict | None, title: str, question: str) -> dict:
     """An eval that has not run is an explicit not_run, never a zero and never absent."""
     if payload is not None:
@@ -116,6 +145,11 @@ def main() -> int:
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "metered_buildings.json").write_text(json.dumps(metered, indent=1))
+
+    if RUNS.is_file():
+        rows = per_building_rows(json.loads(RUNS.read_text()))
+        (OUT / "per_building.json").write_text(json.dumps(rows, indent=1))
+        print(f"wrote {OUT / 'per_building.json'}  ({len(rows)} buildings)")
 
     site = merge_site_payload(metered=metered,
                               pv=_read(OUT / "pv_crosscheck.json"),

@@ -3,6 +3,13 @@
 494 buildings with metered 2017 electricity, from the Building Data Genome Project 2.
 Five US sites. Zero model refusals. Run on 2026-11-15.
 
+> **Revised after an independent audit.** @vinayak-sinha's stage-0 pass (#406) found two
+> real defects in the first version of this report, both confirmed and fixed: wind was
+> fetched in km/h and stored as m/s (3.6x too high into infiltration), and the
+> "off by 2x" statistic counted only overpredictions. The wind fix barely moved the
+> headline (coverage 17.6 -> 17.0%, median absolute error 55.5 -> 55.9%). The metric fix
+> did: the true two-sided 2x figure is **43.5%**, not the 19.6% first published.
+
 Scope and limits: [SCOPE.md](SCOPE.md). Inputs and checksums:
 [manifests/bdg2.yaml](manifests/bdg2.yaml). Reproduce in about eight minutes with
 `python -m backend.evals.run_eval 500`.
@@ -15,20 +22,22 @@ not know that.**
 
 | | Value | Nominal |
 |---|---|---|
-| Median absolute error | **55.5%** | — |
+| Median absolute error | **55.9%** | — |
 | Median signed error | −0.5% | 0% |
-| Within ±25% | 23.5% of buildings | — |
-| Off by 2× or more | 19.6% of buildings | — |
-| **Interval coverage** | **17.6%** (90% CI 13.7–22.2) | **80%** |
-| Band width | 41.4% of expected | — |
+| Within ±25% | 23.1% of buildings | — |
+| Overpredicted by 2× or more | 19.6% of buildings | — |
+| Underpredicted by 2× or more | 23.9% of buildings | — |
+| **Off by 2× either way** | **43.5% of buildings** | — |
+| **Interval coverage** | **17.0%** (90% CI 13.1–22.0) | **80%** |
+| Band width | 40.9% of expected | — |
 
-The median signed error is essentially zero while the median absolute error is 55.5%.
+The median signed error is essentially zero while the median absolute error is 55.9%.
 The model is not systematically high or low. It is **scattered**.
 
 ## The interval is the real finding
 
 We publish every result as low / expected / high and call it a 10th-to-90th percentile
-band (`UNC-01`). On 494 metered buildings that band contained the truth **17.6%** of the
+band (`UNC-01`). On 494 metered buildings that band contained the truth **17.0%** of the
 time. It should have been 80%.
 
 Where the metered total actually fell:
@@ -37,8 +46,8 @@ Where the metered total actually fell:
 |---|---|
 | Below our low | 38.1% |
 | Between low and expected | 11.7% |
-| Between expected and high | 5.9% |
-| Above our high | 44.3% |
+| Between expected and high | 5.3% |
+| Above our high | 44.9% |
 
 Truth falls outside on **both** sides in near-equal measure. That is the diagnostic: a
 biased model would pile up on one side. This is a **sharpness failure** — the band is
@@ -75,7 +84,7 @@ But running both arms shows where it lands:
 | | Median shift |
 |---|---|
 | Annual electricity | **−1.0%** |
-| Heating need (thermal, pre-efficiency) | **+24.8%** |
+| Heating need (thermal, pre-efficiency) | **+26.4%** |
 
 A 25% error in heating need barely reaches the electricity meter, because these buildings
 are dominated by cooling, lighting and plug loads. **Judge a weather source against the
@@ -88,7 +97,7 @@ By use type, worst and best (full table in `out/metered_buildings.json`):
 
 | Use | n | Median signed | Median abs | Coverage |
 |---|---|---|---|---|
-| Lodging/residential | 73 | **−83.4%** | 83.4% | 6.8% |
+| Lodging/residential | 73 | **−84.1%** | 84.1% | 2.7% |
 | Retail | 6 | +72.9% | 84.7% | 0.0% |
 | Entertainment/public assembly | 53 | +34.6% | 56.8% | 15.1% |
 | Education | 234 | +21.6% | 52.4% | 20.9% |
@@ -103,13 +112,14 @@ By site, median absolute error ranges 36.3% (Rat) to 77.1% (Bear). Coverage is b
 12.0% and 26.8% everywhere: no site is calibrated.
 
 The single-storey simplification costs about ten points: buildings of four or more
-storeys show 61.7% median absolute error against 51.9% for single-storey ones. Real,
+storeys show 61.7% median absolute error against 52.2% for single-storey ones. Real,
 but not the main term.
 
 ## What this does and does not license us to say
 
 **Can say:** that we measured ourselves against 494 real meters; that our expected value
-is unbiased in the median and scattered by about 55%; that our uncertainty band is
+is unbiased in the median and scattered by about 56%, with 43.5% of buildings off by a
+factor of two or more in one direction or the other; that our uncertainty band is
 overconfident by a factor of roughly four and we know by how much; that we can attribute
 part of the error to the weather source and part to the single-zone geometry.
 

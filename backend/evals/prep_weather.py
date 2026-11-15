@@ -41,11 +41,37 @@ HOURLY = ["temperature_2m", "relativehumidity_2m", "windspeed_10m",
           "shortwave_radiation", "direct_normal_irradiance", "diffuse_radiation"]
 
 
+
+
+def check_wind_units(wind: "list[float] | pd.Series", site: str) -> None:
+    """Fail loudly if a wind series looks like km/h wearing an m/s label.
+
+    Annual mean wind at 10 m is roughly 2-6 m/s and an hourly mean above ~35 m/s
+    is a major hurricane, so a mean near 11 and a max near 42 is km/h. Nothing
+    downstream catches this: the column is wind_m_s and the physics just runs,
+    quietly inflating infiltration (INF-03) by a factor of 3.6.
+    """
+    values = [float(v) for v in list(wind) if v == v]
+    if not values:
+        raise ValueError(f"{site}: wind series is empty; cannot check units")
+    mean, peak = sum(values) / len(values), max(values)
+    if mean > 8.0 or peak > 45.0:
+        raise ValueError(
+            f"{site}: wind mean {mean:.1f} max {peak:.1f} looks like km/h, not m/s. "
+            f"Open-Meteo defaults to km/h; pass windspeed_unit=ms."
+        )
+
+
 def fetch_openmeteo(lat: float, lon: float, tz: str) -> pd.DataFrame:
     q = urllib.parse.urlencode({
         "latitude": f"{lat:.4f}", "longitude": f"{lon:.4f}",
         "start_date": f"{YEAR}-01-01", "end_date": f"{YEAR}-12-31",
         "hourly": ",".join(HOURLY), "timezone": tz,
+        # Open-Meteo returns windspeed_10m in km/h by default. The reader's column
+        # is wind_m_s and the physics (INF-03 Sherman-Grimsrud, ENV-06 exterior
+        # surface coefficient) takes m/s, so asking for km/h and storing it as m/s
+        # overstates wind by 3.6x. Request the unit explicitly; never assume it.
+        "windspeed_unit": "ms",
     })
     url = f"https://archive-api.open-meteo.com/v1/archive?{q}"
     for attempt in range(4):
@@ -101,6 +127,7 @@ def main() -> int:
 
         om = fetch_openmeteo(lat, lon, tz).reindex(index)
         om = om.interpolate(limit_direction="both")
+        check_wind_units(om["wind_m_s"], site)
         write_arm(om, OUT / f"openmeteo_{site}.csv")
 
         meas = bdg2_temps(weather, site).reindex(index)
@@ -127,6 +154,8 @@ def main() -> int:
             "hdd_bias_pct": round(100 * (h_om - h_bd) / h_bd, 1) if h_bd else None,
             "cdd_bias_pct": round(100 * (c_om - c_bd) / c_bd, 1) if c_bd else None,
             "ghi_kwh_m2_year": round(float(om["ghi_w_m2"].sum()) / 1000, 1),
+            "wind_mean_m_s": round(float(om["wind_m_s"].mean()), 2),
+            "wind_max_m_s": round(float(om["wind_m_s"].max()), 2),
         }
         print(f"    HDD65 om={h_om:.0f} bdg2={h_bd:.0f} "
               f"({report[site]['hdd_bias_pct']}%)  gaps={gaps} h", flush=True)

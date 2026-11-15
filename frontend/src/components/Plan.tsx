@@ -153,13 +153,17 @@ export function MeasureCard({
   rank,
   onFocus,
   assumptions = [],
+  defaultOpen = false,
 }: {
   measure: MeasureResult;
   rank?: number;
   onFocus: (id: string) => void;
   assumptions?: Assumption[];
+  // Lets a static-markup test render the expanded detail grid directly, without a click
+  // handler to drive. Production callers never pass this; it always starts collapsed.
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [sources, setSources] = useState(false);
   const f = measure.finance;
   return (
@@ -371,7 +375,7 @@ export function MeasureCard({
                 ) : (
                   <p>
                     No incentive applied. Tax benefits do not reduce the upfront
-                    budget.
+                    cost.
                   </p>
                 )}
               </div>
@@ -455,15 +459,19 @@ export default function PlanView({
   run,
   onFocus,
   onDocuments,
+  initialTab = "selected",
 }: {
   run: RunResult;
   onFocus: (id: string) => void;
   onDocuments: () => void;
+  // Lets a static-markup test render a non-default tab panel directly, without a click
+  // handler to drive. Production callers never pass this; it always starts on "selected".
+  initialTab?: "selected" | "financeable" | "skipped";
 }) {
   const plan = run.plan;
   const budgeted = hasBudget(run.request.budget_usd);
   const [tab, setTab] = useState<"selected" | "financeable" | "skipped">(
-    "selected",
+    initialTab,
   );
   const tabsId = useId();
   if (!plan)
@@ -479,9 +487,10 @@ export default function PlanView({
       (item) =>
         !(
           item.reason === "over_budget" &&
-          plan.financeable.some(
+          (plan.financeable.some(
             (measure) => measure.measure_id === item.measure_id,
-          )
+          ) ||
+            !budgeted)
         ),
     ),
     ...run.measures

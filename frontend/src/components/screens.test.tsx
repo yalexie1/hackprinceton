@@ -357,4 +357,44 @@ describe("shared contract screen compatibility", () => {
     expect(html).toContain("disabled");
     expect(html).not.toContain("Prepare documents");
   });
+  it("keeps per-measure cost labels but no budget framing on an expanded card before a budget is given", () => {
+    const measure = house.plan!.selected[0].measure;
+    const html = renderToStaticMarkup(
+      <MeasureCard measure={measure} onFocus={() => {}} defaultOpen />,
+    );
+    expect(html).toContain("Installed cost");
+    expect(html).toContain("Cash needed upfront");
+    expect(html).not.toMatch(/budget/i);
+  });
+  it("filters an over-budget skipped item out of Other findings before a budget is given", () => {
+    const skipped = [
+      {
+        measure_id: "ENV_WALL",
+        reason: "over_budget",
+        detail: "Net upfront cost is above the whole budget.",
+      },
+    ];
+    const pre = uncapped(house);
+    pre.plan!.skipped = skipped;
+    const preHtml = renderToStaticMarkup(
+      <PlanView
+        run={pre}
+        onFocus={() => {}}
+        onDocuments={() => {}}
+        initialTab="skipped"
+      />,
+    );
+    expect(preHtml).not.toContain("Does not fit this budget");
+    const budgetedRun = structuredClone(house);
+    budgetedRun.plan!.skipped = skipped;
+    const budgetedHtml = renderToStaticMarkup(
+      <PlanView
+        run={budgetedRun}
+        onFocus={() => {}}
+        onDocuments={() => {}}
+        initialTab="skipped"
+      />,
+    );
+    expect(budgetedHtml).toContain("Does not fit this budget");
+  });
 });

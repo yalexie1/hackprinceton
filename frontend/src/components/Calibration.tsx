@@ -7,8 +7,8 @@ export default function Calibration({ run }: { run: RunResult }) {
   if (!summary)
     return (
       <p className="inline-note">
-        Uncalibrated estimate: these results have not been matched to your
-        utility bills.
+        Not checked against your utility bills yet. Adding twelve months of
+        bills helps check whether the energy estimate matches your home.
       </p>
     );
   return (
@@ -21,43 +21,48 @@ export default function Calibration({ run }: { run: RunResult }) {
           ? "Calibrated to your bills"
           : "Bill fit needs review"}
       </h3>
-      <p>
-        We compare twelve months of bills with the energy model. Bias shows
-        whether the model estimates more or less use than the bills. Fit error
-        measures the overall difference; lower is better.
-      </p>
-      <div className="calibration-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Fuel</th>
-              <th>Bias before → after</th>
-              <th>Fit error before → after</th>
-              <th>Monthly fit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.fits.map((fit) => (
-              <tr key={fit.fuel}>
-                <th>{fit.fuel === "gas" ? "Gas" : "Electricity"}</th>
-                <td>
-                  {number(fit.nmbe_before * 100, 1)}% →{" "}
-                  {number(fit.nmbe_after * 100, 1)}%
-                </td>
-                <td>
-                  {number(fit.cv_rmse_before * 100, 1)}% →{" "}
-                  {number(fit.cv_rmse_after * 100, 1)}%
-                </td>
-                <td>{fit.passed ? "Within tolerance" : "Outside tolerance"}</td>
+      <details className="financial-guide">
+        <summary>How closely does the estimate match your bills?</summary>
+        <p>
+          We compare twelve months of bills with the energy model. Bias shows
+          whether the model estimates more or less use than the bills. Fit error
+          measures the overall difference; lower is better.
+        </p>
+        <div className="calibration-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fuel</th>
+                <th>Bias before → after</th>
+                <th>Fit error before → after</th>
+                <th>Monthly fit</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="fineprint">
-        Monthly criteria: bias within ±5%, CV(RMSE) at most 15%. A fitted
-        baseline does not guarantee future savings.
-      </p>
+            </thead>
+            <tbody>
+              {summary.fits.map((fit) => (
+                <tr key={fit.fuel}>
+                  <th>{fit.fuel === "gas" ? "Gas" : "Electricity"}</th>
+                  <td>
+                    {number(fit.nmbe_before * 100, 1)}% →{" "}
+                    {number(fit.nmbe_after * 100, 1)}%
+                  </td>
+                  <td>
+                    {number(fit.cv_rmse_before * 100, 1)}% →{" "}
+                    {number(fit.cv_rmse_after * 100, 1)}%
+                  </td>
+                  <td>
+                    {fit.passed ? "Within tolerance" : "Outside tolerance"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="fineprint">
+          Monthly criteria: bias within ±5%, CV(RMSE) at most 15%. A fitted
+          baseline does not guarantee future savings.
+        </p>
+      </details>
       {summary.moved.length > 0 && (
         <details>
           <summary>Inputs adjusted within their stated ranges</summary>

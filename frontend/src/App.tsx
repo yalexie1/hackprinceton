@@ -36,17 +36,8 @@ import type {
 } from "./lib/types";
 import { SCHEMA_VERSION } from "./lib/types";
 import { api, streamRun } from "./lib/api";
-import {
-  demoBudgets,
-  demoEvents,
-  demoProperties,
-  demoQuestion,
-  demoRun,
-  demoStages,
-} from "./lib/fixtures";
 import { auditStageLabel, download, money, number } from "./lib/format";
 import Find from "./components/Find";
-import HouseViewer from "./components/HouseViewer";
 import Tour from "./components/Tour";
 import PlanView from "./components/Plan";
 import Geometry from "./components/Geometry";
@@ -58,9 +49,13 @@ import RunSource from "./components/RunSource";
 import { AuditProgress } from "./components/AuditProgress";
 import HowItWorks from "./components/HowItWorks";
 import AuditTasks from "./components/AuditTasks";
-import { replayBatch } from "./lib/audit-replay";
 import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
-import { initialConnectedBudget, initialConnectedRole } from "./lib/recorded-budget";
+import {
+  initialConnectedBudget,
+  initialConnectedRole,
+} from "./lib/recorded-budget";
+import PropertyPreview from "./components/PropertyPreview";
+import { requireRealAudit, RealAuditRequired } from "./lib/real-audit";
 type View =
   | "find"
   | "setup"
@@ -93,14 +88,15 @@ function bills(text: string): number[] | undefined {
   return values;
 }
 export default function App() {
-  const [demo, setDemo] = useState(true);
-  const [connecting, setConnecting] = useState(false);
+  const demo = false;
+  const [connecting, setConnecting] = useState(true);
+  const [serviceReady, setServiceReady] = useState(false);
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [view, setView] = useState<View>("find");
   const [property, setProperty] = useState<PropertySummary | null>(null);
   const [query, setQuery] = useState("");
   const [segment, setSegment] = useState("");
-  const [properties, setProperties] =
-    useState<PropertySummary[]>(demoProperties);
+  const [properties, setProperties] = useState<PropertySummary[]>([]);
   const [searching, setSearching] = useState(false);
   const [budget, setBudget] = useState(15000);
   const [auditMethod, setAuditMethod] = useState<AuditMethod>("server");
@@ -119,11 +115,7 @@ export default function App() {
   const [mobileNav, setMobileNav] = useState(false);
   const [help, setHelp] = useState(false);
   const controller = useRef<AbortController | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const epoch = useRef(0);
-  const savedRun = useRef<RunResult | null>(null);
-  const step = useRef(0);
-  const replay = useRef<RunEvent[]>(demoStages);
   const streamCursor = useRef({ id: "", count: 0 });
   useEffect(() => {
     if (!help) return;
@@ -157,28 +149,15 @@ export default function App() {
   }, [help]);
   const done = run?.status === "done";
   const office = property?.segment === "commercial";
-  const budgets = demoBudgets(property?.sid);
-  // @Sri-SriPod's cold-start finding: the form defaulted to $15,000 whatever the property, so
-  // choosing a saved run with a different budget re-planned it on the spot and every screen
-  // then said "the plan has changed" and "the summary was not regenerated". A saved run's own
-  // budget is the honest default for it. Only when the property has exactly one saved budget:
-  // a sandbox with several, or a live property with none, keeps whatever the user typed.
-  useEffect(() => {
-    if (!demo || !property) return;
-    const saved = demoBudgets(property.sid);
-    if (saved.length === 1) setBudget(saved[0]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demo, property?.sid]);
+  const budgets: number[] = [];
   function clearAsync() {
     epoch.current++;
     controller.current?.abort();
-    if (timer.current) clearTimeout(timer.current);
   }
   useEffect(
     () => () => {
       epoch.current++;
       controller.current?.abort();
-      if (timer.current) clearTimeout(timer.current);
     },
     [],
   );
@@ -186,17 +165,8 @@ export default function App() {
     document.title = `${view === "find" ? "Your properties" : views.find((v) => v.id === view)?.label || "Building audit"} — Leto`;
   }, [view]);
   useEffect(() => {
-    if (demo) {
-      setProperties(
-        demoProperties.filter(
-          (p) =>
-            (!segment || p.segment === segment) &&
-            `${p.name} ${p.city} ${p.address}`
-              .toLowerCase()
-              .includes(query.toLowerCase()),
-        ),
-      );
-      setSearching(false);
+    if (!serviceReady) {
+      setProperties([]);
       return;
     }
     const abort = new AbortController();
@@ -216,49 +186,41 @@ export default function App() {
       clearTimeout(timeout);
       abort.abort();
     };
-  }, [demo, query, segment]);
+  }, [serviceReady, query, segment]);
   useEffect(() => {
     if (view !== "documents") setNotice("");
   }, [view]);
-  async function switchMode(nextDemo: boolean) {
-    if (nextDemo === demo || connecting) return;
+  useEffect(() => {
+    let cancelled = false;
+    setConnecting(true);
+    setServiceReady(false);
     setError("");
-    if (!nextDemo) {
-      setConnecting(true);
-      try {
-        const health = await api.health();
+    void api
+      .health()
+      .then((health) => {
+        if (cancelled) return;
         if (health.schema_version !== SCHEMA_VERSION)
           throw new Error(
-            `Backend schema ${health.schema_version} differs from this frontend’s ${SCHEMA_VERSION} contract. Update the frontend adapter before connecting.`,
+            "The building service has been updated. Refresh the app before continuing.",
           );
-      } catch (e) {
-        setError(
-          e instanceof Error && e.message.startsWith("Backend schema")
-            ? e.message
-            : "Could not connect to the compatible backend at /api/health. Start the FastAPI server on port 8000, or configure VITE_API_BASE_URL. Demo mode remains available.",
-        );
-        setConnecting(false);
-        return;
-      }
-      setConnecting(false);
-    }
-    clearAsync();
-    setDemo(nextDemo);
-    setView("find");
-    setProperty(null);
-    setRun(null);
-    setQuestion(null);
-    setEvents([]);
-    setProperties(nextDemo ? demoProperties : []);
-    setBusy(false);
-    setRole("owner_occupier");
-    setQuery("");
-    setSegment("");
-    setElectricBills("");
-    setGasBills("");
-    setFirstMonth("");
-    setDesks("");
-  }
+        setServiceReady(true);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          setError(
+            error instanceof Error &&
+              error.message.startsWith("The building service")
+              ? error.message
+              : "We couldn’t connect to the building service. Try the connection again in a moment.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setConnecting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [connectionAttempt]);
   function navigate(v: View) {
     if (v !== "find" && !done) return;
     setView(v);
@@ -274,54 +236,12 @@ export default function App() {
     setBusy(false);
     setError("");
     setView("setup");
-    const options = demoBudgets(p.sid);
-    setRole(demo ? demoRun(p.sid, options[0]).request.role : initialConnectedRole(p.sid));
-    setBudget(
-      demo
-        ? (options.includes(15000) ? 15000 : options[0])
-        : initialConnectedBudget(p.sid),
-    );
+    setRole(initialConnectedRole(p.sid));
+    setBudget(initialConnectedBudget(p.sid));
     setElectricBills("");
     setGasBills("");
     setFirstMonth("");
     setDesks("");
-  }
-  function pumpDemo(fast = false) {
-    if (timer.current) clearTimeout(timer.current);
-    const current = epoch.current;
-    timer.current = setTimeout(
-      () => {
-        if (current !== epoch.current) return;
-        const { batch, next } = replayBatch(replay.current, step.current, fast);
-        step.current = next;
-        const event = batch.at(-1);
-        if (!event) return;
-        setEvents((previous) => [...previous, ...batch]);
-        if (event.type === "question") {
-          const q = (event.payload.question ||
-            event.payload) as unknown as Question;
-          const pending = q.id && q.choices ? q : demoQuestion;
-          setQuestion(pending);
-          setBusy(false);
-          setRun(
-            (previous) =>
-              previous && {
-                ...previous,
-                status: "waiting_for_user",
-                questions: [pending],
-              },
-          );
-          return;
-        }
-        if (event.type === "done") {
-          setRun(savedRun.current);
-          setBusy(false);
-          return;
-        }
-        pumpDemo();
-      },
-      fast ? 0 : 70,
-    );
   }
   async function watch(id: string, current: number) {
     const abort = new AbortController();
@@ -329,6 +249,7 @@ export default function App() {
     try {
       const snapshot = await api.result(id);
       if (current !== epoch.current || abort.signal.aborted) return;
+      requireRealAudit(snapshot, property!.sid);
       const completed =
         snapshot.status === "done" || snapshot.status === "error";
       if (streamCursor.current.id !== id)
@@ -353,6 +274,7 @@ export default function App() {
       if (current !== epoch.current) return;
       const result = await api.result(id);
       if (current !== epoch.current) return;
+      requireRealAudit(result, property!.sid);
       setRun(result);
       setBudget(result.request.budget_usd);
       if (result.status === "waiting_for_user")
@@ -365,12 +287,19 @@ export default function App() {
       if (result.status === "error")
         setError(result.warnings.join(" ") || "The audit could not complete.");
     } catch (e) {
-      if (current === epoch.current && !abort.signal.aborted)
+      if (current === epoch.current && !abort.signal.aborted) {
+        if (e instanceof RealAuditRequired) {
+          setRun(null);
+          setEvents([]);
+          setQuestion(null);
+          setView("setup");
+        }
         setError(
           e instanceof Error
             ? e.message
             : "The audit connection was interrupted.",
         );
+      }
     } finally {
       if (current === epoch.current) setBusy(false);
     }
@@ -424,38 +353,21 @@ export default function App() {
             }
           : {}),
       };
-      if (demo) {
-        const result = demoRun(property.sid, budget);
-        savedRun.current = result;
-        replay.current = demoEvents(property.sid);
-        setRun({
-          ...result,
-          status: "running",
-          plan: null,
-          measures: [],
-          baseline: null,
-          building_model: null,
-        });
-        setView("audit");
-        step.current = 0;
-        pumpDemo();
-      } else {
-        const { run_id } = await api.start(request);
-        if (current !== epoch.current) return;
-        setRun({
-          schema_version: SCHEMA_VERSION,
-          run_id,
-          status: "running",
-          request,
-          property,
-          measures: [],
-          questions: [],
-          narrative_md: "",
-          warnings: [],
-        });
-        setView("audit");
-        void watch(run_id, current);
-      }
+      const { run_id } = await api.start(request);
+      if (current !== epoch.current) return;
+      setRun({
+        schema_version: SCHEMA_VERSION,
+        run_id,
+        status: "running",
+        request,
+        property,
+        measures: [],
+        questions: [],
+        narrative_md: "",
+        warnings: [],
+      });
+      setView("audit");
+      void watch(run_id, current);
     } catch (e) {
       if (current === epoch.current) {
         setError(e instanceof Error ? e.message : "Could not start the audit.");
@@ -466,23 +378,6 @@ export default function App() {
   async function answer(value: unknown) {
     if (!run || !question || busy) return;
     setError("");
-    if (demo) {
-      setQuestion(null);
-      setBusy(true);
-      setRun({ ...run, status: "running", questions: [] });
-      setEvents((previous) => [
-        ...previous,
-        {
-          type: "stage_done",
-          stage: "assumptions",
-          message:
-            "Answer recorded for the demo replay. The saved example estimates are unchanged.",
-          payload: {},
-        },
-      ]);
-      pumpDemo();
-      return;
-    }
     setBusy(true);
     const current = epoch.current;
     try {
@@ -506,13 +401,6 @@ export default function App() {
   }) {
     if (!run || busy) return;
     setError("");
-    if (demo) {
-      const result = demoRun(run.property.sid, changes.budget_usd || budget);
-      setRun(result);
-      setBudget(result.request.budget_usd);
-      setNotice("Showing the saved scenario for this budget.");
-      return;
-    }
     if (
       changes.budget_usd != null &&
       (!Number.isFinite(changes.budget_usd) || changes.budget_usd < 0)
@@ -635,11 +523,10 @@ export default function App() {
             <ArrowRight size={15} />
           </button>
           <div className="profile">
-            <span>VS</span>
+            <Home size={22} />
             <div>
-              Vinayak Sinha<small>HackPrinceton workspace</small>
+              Your home energy plan<small>Understand your next step</small>
             </div>
-            <span className="online-dot" />
           </div>
         </div>
       </aside>
@@ -665,37 +552,29 @@ export default function App() {
             <strong>{title}</strong>
           </div>
           <div className="topbar-right">
-            <div className="mode-switch" aria-label="Data mode">
-              <button
-                className={demo ? "selected" : ""}
-                onClick={() => void switchMode(true)}
-                disabled={connecting}
-              >
-                Demo
-              </button>
-              <button
-                className={!demo ? "selected" : ""}
-                onClick={() => void switchMode(false)}
-                disabled={connecting}
-              >
-                {connecting
-                  ? "Connecting…"
-                  : demo
-                    ? "Connect API"
-                    : "Connected"}
-              </button>
+            <div className="connection-state" role="status">
+              <span className={`status-dot ${serviceReady ? "" : "pending"}`} />
+              {connecting
+                ? "Connecting…"
+                : serviceReady
+                  ? "Building service connected"
+                  : "Connection needed"}
+              {!connecting && !serviceReady && (
+                <button
+                  onClick={() => setConnectionAttempt((attempt) => attempt + 1)}
+                >
+                  Try again
+                </button>
+              )}
             </div>
-            <span className="avatar">VS</span>
           </div>
         </header>
         <main>
           <div className={`mode-notice ${demo ? "" : "live"}`}>
             <span className="status-dot" />
-            {demo ? "DEMO WORKSPACE" : "CONNECTED WORKSPACE"}
+            YOUR HOME, UNDERSTOOD
             <span>
-              {demo
-                ? "Example scenarios and saved results. No live building analysis."
-                : "Connected to the team’s building analysis API."}
+              See what improvements could cost, save and change for your home.
             </span>
             <button
               onClick={() => setHelp(true)}
@@ -731,7 +610,7 @@ export default function App() {
               setQuery={setQuery}
               segment={segment}
               setSegment={setSegment}
-              loading={searching}
+              loading={connecting || searching}
               demo={demo}
               onSelect={choose}
             />
@@ -749,11 +628,16 @@ export default function App() {
                   </span>
                   <h1>Set up your energy audit.</h1>
                   <p className="section-description">
-                    Choose your cash budget and your role in the building.
-                    Review the assumptions behind each recommendation.
+                    Tell us your budget and whether you own or rent. We’ll show
+                    which improvements could make sense for you.
                   </p>
                   <div className="setup-property">
-                    <HouseViewer office={office} embedded />
+                    <div className="setup-actual-photo">
+                      <PropertyPreview
+                        property={property}
+                        allowListedLocation
+                      />
+                    </div>
                     <div>
                       <h3>{property.name}</h3>
                       <p>
@@ -769,7 +653,7 @@ export default function App() {
                       <Sparkles size={18} />
                       <span>Set up your energy audit</span>
                     </div>
-                    <span className="step-label">01 / 03</span>
+                    <span className="step-label">Your preferences</span>
                   </div>
                   {!demo && (
                     <AuditMethodChoice
@@ -823,9 +707,11 @@ export default function App() {
                       disabled={demo}
                       onChange={(e) => setRole(e.target.value as Role)}
                     >
-                      <option value="owner_occupier">Owner-occupier</option>
-                      <option value="landlord">Landlord</option>
-                      <option value="tenant">Tenant</option>
+                      <option value="owner_occupier">
+                        I own and use this property
+                      </option>
+                      <option value="landlord">I own it and rent it out</option>
+                      <option value="tenant">I rent this property</option>
                     </select>
                     <small>
                       {demo
@@ -909,15 +795,15 @@ export default function App() {
                     {demo
                       ? "Explore demo audit"
                       : auditMethod === "analysis"
-                        ? "Compute real analysis"
+                        ? "Calculate my plan"
                         : "Start energy audit"}
                     <ArrowRight size={17} />
                   </button>
                   <p className="fineprint">
                     {demo
-                      ? "A replay of an illustrative audit, including a sample question."
+                      ? "Review the property’s saved audit."
                       : auditMethod === "analysis"
-                        ? "Computes your plan without agent narration. Review the returned assumptions and data-quality warnings."
+                        ? "Uses your property’s records and preferences to estimate improvements. Review what was measured and what still needs checking."
                         : "You may be asked up to three questions if an uncertain input changes the plan."}
                   </p>
                 </form>
@@ -960,68 +846,68 @@ export default function App() {
               {/* The question sits above the log: in a rehearsal it was below a
                   screenful of events, so the one thing the run needed from a person was
                   the last thing they saw. */}
-                {question && (
-                  <div className="question-card">
-                    <span className="eyebrow">
-                      {approval
-                        ? "YOUR APPROVAL IS REQUIRED"
-                        : "A QUICK QUESTION"}
-                    </span>
-                    <h3>{question.prompt}</h3>
-                    <p>{question.impact_note}</p>
-                    {approval && (
-                      <p className="inline-note">
-                        Draft request:{" "}
-                        {String(approval.doc_type || "document").replaceAll(
-                          "_",
-                          " ",
-                        )}{" "}
-                        · {String(approval.state || "jurisdiction pending")}
-                        <br />
-                        Scope:{" "}
-                        {Array.isArray(approval.measure_ids)
-                          ? approval.measure_ids
-                              .map(
-                                (id) =>
-                                  run.plan?.selected.find(
-                                    (item) => item.measure.measure_id === id,
-                                  )?.measure.title ||
-                                  run.measures.find(
-                                    (measure) => measure.measure_id === id,
-                                  )?.title ||
-                                  String(id),
-                              )
-                              .join(", ")
-                          : "Review the scope before approving."}
-                      </p>
-                    )}
-                    {demo && (
-                      <p className="fineprint">
-                        Demo replay: your choice advances the saved scenario.
-                        Its estimates and original answers remain unchanged.
-                      </p>
-                    )}
-                    <div>
-                      {question.choices.map((choice, i) => (
-                        <button
-                          className="secondary-button"
-                          disabled={busy}
-                          key={i}
-                          onClick={() => void answer(choice.value)}
-                        >
-                          {choice.label}
-                          <ArrowRight size={14} />
-                        </button>
-                      ))}
-                    </div>
+              {question && (
+                <div className="question-card">
+                  <span className="eyebrow">
+                    {approval
+                      ? "YOUR APPROVAL IS REQUIRED"
+                      : "A QUICK QUESTION"}
+                  </span>
+                  <h3>{question.prompt}</h3>
+                  <p>{question.impact_note}</p>
+                  {approval && (
+                    <p className="inline-note">
+                      Draft request:{" "}
+                      {String(approval.doc_type || "document").replaceAll(
+                        "_",
+                        " ",
+                      )}{" "}
+                      · {String(approval.state || "jurisdiction pending")}
+                      <br />
+                      Scope:{" "}
+                      {Array.isArray(approval.measure_ids)
+                        ? approval.measure_ids
+                            .map(
+                              (id) =>
+                                run.plan?.selected.find(
+                                  (item) => item.measure.measure_id === id,
+                                )?.measure.title ||
+                                run.measures.find(
+                                  (measure) => measure.measure_id === id,
+                                )?.title ||
+                                String(id),
+                            )
+                            .join(", ")
+                        : "Review the scope before approving."}
+                    </p>
+                  )}
+                  {demo && (
+                    <p className="fineprint">
+                      Demo replay: your choice advances the saved scenario. Its
+                      estimates and original answers remain unchanged.
+                    </p>
+                  )}
+                  <div>
+                    {question.choices.map((choice, i) => (
+                      <button
+                        className="secondary-button"
+                        disabled={busy}
+                        key={i}
+                        onClick={() => void answer(choice.value)}
+                      >
+                        {choice.label}
+                        <ArrowRight size={14} />
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
               <div className="audit-grid">
                 <section className="audit-timeline">
                   <div className="card-heading">
                     <div>
                       <Sparkles size={17} />
-                      <span>{demo ? "Audit replay" : "Agent activity"}</span>
+                      <span>How we built your plan</span>
                     </div>
                     <span className="count-pill">
                       {done
@@ -1033,14 +919,6 @@ export default function App() {
                             : "Disconnected"}
                     </span>
                   </div>
-                  {demo && busy && !question && (
-                    <button
-                      className="secondary-button"
-                      onClick={() => pumpDemo(true)}
-                    >
-                      Show next question or result <ArrowRight size={16} />
-                    </button>
-                  )}
                   <div
                     className="event-list"
                     aria-live="polite"
@@ -1249,7 +1127,7 @@ export default function App() {
                     <div className="card-heading">
                       <div>
                         <Settings2 size={16} />
-                        <span>Your investment</span>
+                        <span>Your budget</span>
                       </div>
                     </div>
                     <form
@@ -1309,8 +1187,8 @@ export default function App() {
                             ? "This example has one saved budget. A live analysis is needed to compare a different budget."
                             : "Switch between saved budget scenarios."
                           : run.served_by === "replay"
-                            ? "Budget changes go to the API. Review the returned plan and warnings; a saved replay may keep its recorded selection."
-                            : "Changing your budget reruns the backend analysis."}
+                            ? "Changing your budget checks the saved plan again. Review any notes before deciding."
+                            : "Changing your budget recalculates the plan."}
                       </small>
                     </form>
                     <p className="budget-rule">
@@ -1351,8 +1229,8 @@ export default function App() {
                       </div>
                       <small>
                         {run.baseline.calibrated_to_bills
-                          ? "Calibrated to utility history"
-                          : "Not calibrated to utility history"}
+                          ? "Checked against your utility bills"
+                          : "Not checked against utility bills yet"}
                       </small>
                     </section>
                   )}
@@ -1434,10 +1312,9 @@ export default function App() {
             <div className="inline-note">
               <Info size={17} />
               <span>
-                Demo mode lets you explore saved examples. Connect API uses the
-                team’s analysis service. Each result labels its property-data
-                source and whether you are viewing a saved replay. Savings are
-                estimates; review the assumptions and confirm costs before
+                Your plan explains where its numbers came from and whether it is
+                a saved audit or a new calculation. Savings are estimates.
+                Confirm the building details and get a contractor’s quote before
                 starting work.
               </span>
             </div>

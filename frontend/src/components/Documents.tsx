@@ -7,7 +7,6 @@ import type {
   RunResult,
 } from "../lib/types";
 import { api, ApiError } from "../lib/api";
-import { demoDraft } from "../lib/fixtures";
 import { download } from "../lib/format";
 import DocumentText from "./DocumentText";
 const labels: Record<DocType, string> = {
@@ -170,7 +169,9 @@ export default function Documents({
       },
     };
     try {
-      const result = demo ? demoDraft(body, run) : await api.draft(body);
+      const result = demo
+        ? (await import("../lib/fixtures")).demoDraft(body, run)
+        : await api.draft(body);
       if (current === version.current) setDraft(result);
     } catch (e) {
       if (
@@ -201,8 +202,8 @@ export default function Documents({
         <FileText size={26} />
       </div>
       <p className="section-description">
-        Confirm the parties and scope, then review the draft and any unfilled
-        terms.
+        Confirm who is involved and which upgrades are included, then review
+        the draft and complete any details still needed.
       </p>
       <form onSubmit={generate}>
         {loadingTemplates && (
@@ -384,10 +385,16 @@ export default function Documents({
               }
             >
               <Download size={15} />
-              Export Markdown
+              Download draft
             </button>
           </div>
           <DocumentText text={draft.disclaimer} variant="notice" />
+          {draft.unfilled_placeholders.length > 0 && (
+            <p className="inline-note">
+              This draft still needs a few details. Complete the highlighted
+              information before signing.
+            </p>
+          )}
           <DocumentText text={draft.markdown} />
           <div className="document-checklist">
             <h3>Review checklist</h3>
@@ -399,7 +406,7 @@ export default function Documents({
             )}
             {draft.unfilled_placeholders.length > 0 && (
               <p className="fineprint">
-                Unfilled terms:{" "}
+                Details still needed:{" "}
                 {draft.unfilled_placeholders
                   .map((p) => p.replaceAll("_", " "))
                   .join(", ")}

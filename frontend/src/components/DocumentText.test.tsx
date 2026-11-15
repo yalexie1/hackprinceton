@@ -16,8 +16,10 @@ describe("real legal document presentation", () => {
     expect(html).toContain("<h4>Parties</h4>");
     expect(html).toContain("<table>");
     expect(html).toContain("<strong>Example Owner</strong>");
-    expect(html).toContain("<mark>[[BLANK: licence, value required]]</mark>");
-    expect(html).toContain("<mark>{{start_date}}</mark>");
+    expect(html).toContain("<mark>licence — needs confirmation</mark>");
+    expect(html).toContain("<mark>start date — needs confirmation</mark>");
+    expect(html).not.toContain("[[BLANK:");
+    expect(html).not.toContain("{{start_date}}");
     expect(html).toContain("<li>Confirm scope</li>");
     expect(html).not.toContain("internal template marker");
   });

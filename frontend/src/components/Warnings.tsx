@@ -1,6 +1,19 @@
 import { Info } from "lucide-react";
 import DocumentText from "./DocumentText";
 
+function noteHeading(note: string) {
+  if (/weather|climate|TMY/i.test(note)) return "Review the weather data used";
+  if (/tariff|EIA|energy price/i.test(note))
+    return "Check the energy prices used";
+  if (/vexcel|matterport|footprint|wall graph|geometry/i.test(note))
+    return "Some building measurements need checking";
+  if (/budget|re-run|replan/i.test(note))
+    return "Check that the plan matches your budget";
+  if (/cost|price|quote/i.test(note))
+    return "Confirm the cost with a contractor";
+  return "A detail in this audit needs checking";
+}
+
 export default function Warnings({ warnings }: { warnings: string[] }) {
   const unique = [...new Set(warnings.filter(Boolean))];
   if (!unique.length) return null;
@@ -9,23 +22,16 @@ export default function Warnings({ warnings }: { warnings: string[] }) {
       className="run-warnings"
       aria-label="Audit warnings and data quality"
     >
-      <h3>Notes &amp; data quality</h3>
-      {unique.map((warning) =>
-        warning.length > 150 ? (
-          <details className="warning-detail" key={warning}>
-            <summary>
-              <Info size={18} />
-              {warning.slice(0, 120)}… <span>Read full note</span>
-            </summary>
-            <p>{warning}</p>
-          </details>
-        ) : (
-          <p key={warning}>
+      <h3>What to check before deciding</h3>
+      {unique.map((warning) => (
+        <details className="warning-detail" key={warning}>
+          <summary>
             <Info size={18} />
-            <span>{warning}</span>
-          </p>
-        ),
-      )}
+            {noteHeading(warning)} <span>Read full note</span>
+          </summary>
+          <p>{warning}</p>
+        </details>
+      ))}
     </section>
   );
 }
@@ -57,7 +63,8 @@ export function AuditNarrative({
   warnings: string[];
   concise?: boolean;
 }) {
-  const fallback = "Read the selected measures and their evidence before you start work.";
+  const fallback =
+    "Read the selected measures and their evidence before you start work.";
   const { lead, rest } = splitNarrative(text || fallback);
   const content = concise ? (
     <>
@@ -69,7 +76,8 @@ export function AuditNarrative({
         </details>
       )}
       <p className="fineprint">
-        Every input behind these numbers is in the Assumptions tab, with where it came from.
+        Every input behind these numbers is in the Assumptions tab, with where
+        it came from.
       </p>
     </>
   ) : (

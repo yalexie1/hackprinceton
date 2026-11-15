@@ -130,7 +130,7 @@ describe("shared contract screen compatibility", () => {
           run={{ ...house, baseline: null, building_model: null }}
         />,
       ),
-    ).toContain("Uncalibrated estimate");
+    ).toContain("Not checked against your utility bills yet");
   });
   it("does not claim an unchanged replay plan fits a lower requested budget", () => {
     const run = structuredClone(house);
@@ -200,7 +200,7 @@ describe("shared contract screen compatibility", () => {
       );
       for (const assumption of run.building_model!.assumptions)
         expect(html).toContain(assumption.label.replaceAll("&", "&amp;"));
-      expect(html).toContain("Confidence");
+      expect(html).toContain("Where this detail came from");
     }
   });
   it("draws shared roof geometry and reports unavailable layouts using the analysis reason", () => {
@@ -235,7 +235,9 @@ describe("shared contract screen compatibility", () => {
     );
     expect(html).toContain(sharedHouse.property.name);
     expect(html).toContain(sharedOffice.property.name);
-    expect(html).toContain("Shared contract example");
+    expect(html).not.toContain("Shared contract example");
+    expect(html).not.toContain("EXAMPLE ENERGY PLAN");
+    expect(html).not.toContain("$619");
     expect(html).not.toContain("UI sandbox");
     expect(html).toContain(
       'aria-label="Explore Culver Connect in Los Angeles"',

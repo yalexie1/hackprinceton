@@ -10,7 +10,6 @@ import {
 import type { PropertySummary } from "../lib/types";
 import PropertyPreview from "./PropertyPreview";
 import HouseViewer from "./HouseViewer";
-import { fixtureSource, demoShowcaseRun } from "../lib/fixtures";
 import { useMemo } from "react";
 import { propertyReadiness, sortByReadiness } from "../lib/property-readiness";
 export default function Find({
@@ -32,7 +31,6 @@ export default function Find({
   demo: boolean;
   onSelect: (p: PropertySummary) => void;
 }) {
-  const showcase = useMemo(() => demoShowcaseRun(), []);
   const orderedProperties = useMemo(
     () => sortByReadiness(properties),
     [properties],
@@ -62,7 +60,10 @@ export default function Find({
             </a>
           </div>
         </div>
-        <HouseViewer run={showcase} />
+        <HouseViewer />
+        <p className="hero-data-note">
+          Choose a property below to see its estimated costs and savings.
+        </p>
         <div className="perspective-strip">
           <span>
             <span className="strip-number">01 /</span> Understand your space
@@ -177,9 +178,6 @@ export default function Find({
                     "An audit must establish which inputs are measured and which are estimated."}
                 </span>
               </div>
-              {demo && (
-                <small className="fixture-source">{fixtureSource(p.sid)}</small>
-              )}
               <span className="property-action">
                 Explore this property <ArrowRight size={14} />
               </span>
@@ -243,9 +241,8 @@ export default function Find({
           LangChain
         </p>
         <small>
-          {demo
-            ? "Demo properties and results are illustrative. Connect to live mode for sponsor data."
-            : "Data availability varies by property. Provenance is shown in the audit."}
+          Your plan uses the available building records. Each estimate explains
+          what was measured and what still needs checking.
         </small>
       </div>
     </>

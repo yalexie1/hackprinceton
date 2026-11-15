@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Info, Pencil, RotateCcw } from "lucide-react";
 import type { Assumption, RunResult } from "../lib/types";
 import { number, ranged } from "../lib/format";
+import { hasPlaceholderEvidence } from "../lib/real-audit";
 /**
  * A readable name for an assumption.
  *
@@ -11,7 +12,7 @@ import { number, ranged } from "../lib/format";
  * already reads as a sentence is left exactly as it is.
  */
 export function readableLabel(label: string, key: string): string {
-  const raw = label || key;
+  const raw = hasPlaceholderEvidence({ label }) ? key : label || key;
   if (raw.includes(" ")) return raw;
   const words = raw.replaceAll(".", " ").replaceAll("_", " ").trim();
   if (!words) return raw;
@@ -22,7 +23,7 @@ const sourceNames: Record<string, string> = {
   vintage_default: "Estimate based on building age",
   published_default: "Published reference value",
   measured: "Measured input",
-  user: "Provided by you",
+  user: "Provided during the audit",
   vision: "Estimated from images",
   costar: "CoStar property records",
   vexcel: "Vexcel aerial imagery",
@@ -46,7 +47,11 @@ export default function Assumptions({
   function begin(a: Assumption) {
     setEditing(a.key);
     setValue(
-      typeof a.value === "object" ? String(a.value.expected) : String(a.value),
+      hasPlaceholderEvidence(a)
+        ? ""
+        : typeof a.value === "object"
+          ? String(a.value.expected)
+          : String(a.value),
     );
   }
   return (
@@ -54,20 +59,20 @@ export default function Assumptions({
       <div className="section-heading">
         <div>
           <span className="eyebrow">THE INPUTS BEHIND YOUR PLAN</span>
-          <h2>Review the building assumptions.</h2>
+          <h2>What we know about your building.</h2>
         </div>
         <Info size={25} />
       </div>
       <p className="section-description">
-        See which inputs were measured, estimated or provided by you. Changing
-        an editable input asks the analysis service to calculate a new plan.
+        See what was measured and what was estimated. Correct an editable detail
+        to update your plan.
       </p>
       <details className="financial-guide">
         <summary>How to read these inputs</summary>
         <p>
-          Each source label tells you where an input came from. Confidence is
-          the analysis’s estimate of how reliable it is; lower-confidence inputs
-          are worth checking.
+          Each source label explains where a detail came from. Measured details
+          come from the scan. Estimates use images, building age or reference
+          values and may need checking on site.
         </p>
         <p>
           COP, EER and SEER are cooling-efficiency ratings: higher values mean
@@ -111,31 +116,44 @@ export default function Assumptions({
             <div className="assumption-body">
               <div>
                 <strong>
-                  {typeof a.value === "object"
-                    ? `${number(a.value.expected, 2)} ${a.value.unit}`
-                    : typeof a.value === "boolean"
-                      ? a.value
-                        ? "Yes"
-                        : "No"
-                      : String(a.value).replaceAll("_", " ")}
+                  {hasPlaceholderEvidence(a)
+                    ? "Needs confirmation"
+                    : typeof a.value === "object"
+                      ? `${number(a.value.expected, 2)} ${a.value.unit}`
+                      : typeof a.value === "boolean"
+                        ? a.value
+                          ? "Yes"
+                          : "No"
+                        : String(a.value).replaceAll("_", " ")}
                 </strong>
                 <small>
-                  {typeof a.value === "object"
-                    ? ranged(a.value)
-                    : "Current setting"}
+                  {hasPlaceholderEvidence(a)
+                    ? "No verified value is available for this detail."
+                    : typeof a.value === "object"
+                      ? ranged(a.value)
+                      : "Current setting"}
                 </small>
               </div>
               <div className="confidence">
-                <span>Confidence {number(a.confidence * 100)}%</span>
-                <progress value={a.confidence} max="1" />
+                <span>
+                  {hasPlaceholderEvidence(a)
+                    ? "Check this detail"
+                    : a.source === "measured"
+                      ? "Measured in the scan"
+                      : "Review the source below"}
+                </span>
               </div>
             </div>
-            {a.evidence.map((e, i) => (
-              <p className="fineprint" key={i}>
-                {e.kind.replaceAll("_", " ")}: {e.ref}
-                {e.note && ` · ${e.note}`}
-              </p>
-            ))}
+            <details className="assumption-evidence">
+              <summary>Where this detail came from</summary>
+              {a.evidence.map((e, i) => (
+                <p className="fineprint" key={i}>
+                  {hasPlaceholderEvidence({ evidence: [e] })
+                    ? "This detail needs a property measurement or a confirmed record."
+                    : `${e.kind.replaceAll("_", " ")}: ${e.ref}${e.note ? ` · ${e.note}` : ""}`}
+                </p>
+              ))}
+            </details>
             {editing === a.key && (
               <form
                 className="edit-assumption"

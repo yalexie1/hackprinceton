@@ -70,3 +70,23 @@ secondary:
       openmeteo arm. Year 2017. Not checksummed: it is a live API, so prep_weather.py
       records the per-site degree-day summary in data/cache/evals/weather/
       weather_report.json as the reproducibility trace instead.
+
+# ---------------------------------------------------------------------------
+# LBNL Tracking the Sun 2024 (installed-cost check, backend/evals/run_cost.py).
+# Partitioned by state on OEDI; only the two states PropertySummary.state admits
+# are downloaded. Bytes land in data/cache/evals/tts/ and are not committed.
+tracking_the_sun:
+  source: https://data.openei.org/submissions/3
+  bucket: s3://oedi-data-lake/tracking-the-sun/2024/
+  retrieved: 2026-11-15
+  licence: Public data file published by LBNL via the Open Energy Data Initiative.
+  citation: >
+    Lawrence Berkeley National Laboratory, Tracking the Sun: Pricing and Design
+    Trends for Distributed Photovoltaic Systems in the United States, 2024 edition.
+  files:
+    - path: data/cache/evals/tts/CA.parquet
+      key: tracking-the-sun/2024/state=CA/part-00002-975d0624-ef42-4442-a6b6-46e6cbd8f20b.c000.snappy.parquet
+      bytes: 81279467
+    - path: data/cache/evals/tts/TX.parquet
+      key: tracking-the-sun/2024/state=TX/part-00005-975d0624-ef42-4442-a6b6-46e6cbd8f20b.c000.snappy.parquet
+      bytes: 3142592

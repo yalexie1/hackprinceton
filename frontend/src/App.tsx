@@ -51,6 +51,7 @@ import {
 import PropertyPreview from "./components/PropertyPreview";
 import { requireRealAudit, RealAuditRequired } from "./lib/real-audit";
 import WorkspaceNavigation, { publicViews, views, type View } from "./components/WorkspaceNavigation";
+import { auditIdFromUrl, auditUrl, restoreAudit } from "./lib/audit-link";
 function bills(text: string): number[] | undefined {
   if (!text.trim()) return undefined;
   const values = text
@@ -87,6 +88,10 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [restoring, setRestoring] = useState(() =>
+    typeof window !== "undefined" && !!auditIdFromUrl(window.location.href),
+  );
+  const [restored, setRestored] = useState(false);
   const [focus, setFocus] = useState<string>();
   const [help, setHelp] = useState(false);
   const controller = useRef<AbortController | null>(null);
@@ -181,6 +186,7 @@ export default function App() {
         setServiceReady(true);
       })
       .catch((error: unknown) => {
+        if (!cancelled) setRestoring(false);
         if (!cancelled)
           setError(
             error instanceof Error &&
@@ -196,6 +202,42 @@ export default function App() {
       cancelled = true;
     };
   }, [connectionAttempt]);
+  useEffect(() => {
+    if (!serviceReady) return;
+    const id = auditIdFromUrl(window.location.href);
+    if (!id) return;
+    const current = epoch.current;
+    const abort = new AbortController();
+    controller.current = abort;
+    let cancelled = false;
+    setRestoring(true);
+    void restoreAudit(id, AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]))
+      .then((result) => {
+        if (cancelled || current !== epoch.current) return;
+        setProperty(result.property);
+        setRun(result);
+        setBudget(result.request.budget_usd);
+        setRole(result.request.role);
+        setEvents([]);
+        setQuestion(result.status === "waiting_for_user" ? result.questions[0] || null : null);
+        setRestored(true);
+        setView(result.status === "done" ? "plan" : "audit");
+        if (result.status === "error")
+          setError(result.warnings.join(" ") || "This earlier audit did not complete. No new analysis was started.");
+      })
+      .catch((error: unknown) => {
+        if (cancelled || current !== epoch.current) return;
+        setError(error instanceof RealAuditRequired ? error.message :
+          "We couldn’t reopen this audit. Its files may still be saved, but this service cannot currently retrieve it. Browse properties or retry the link when recovery is available. No new analysis was started.");
+      })
+      .finally(() => {
+        if (!cancelled && current === epoch.current) setRestoring(false);
+      });
+    return () => { cancelled = true; abort.abort(); };
+  }, [serviceReady]);
+  useEffect(() => {
+    if (run) window.history.replaceState(null, "", auditUrl(window.location.href, run.run_id));
+  }, [run?.run_id]);
   function navigate(v: View) {
     if (!publicViews.has(v) && !done) return;
     setView(v);
@@ -203,6 +245,9 @@ export default function App() {
   }
   function choose(p: PropertySummary) {
     clearAsync();
+    window.history.replaceState(null, "", auditUrl(window.location.href, null));
+    setRestored(false);
+    setRestoring(false);
     setProperty(p);
     setRun(null);
     setQuestion(null);
@@ -285,6 +330,7 @@ export default function App() {
     const current = epoch.current;
     setError("");
     setNotice("");
+    setRestored(false);
     setBusy(true);
     setQuestion(null);
     setEvents([]);
@@ -357,6 +403,7 @@ export default function App() {
     try {
       await api.answer(run.run_id, question.id, value);
       if (current !== epoch.current) return;
+      setRestored(false);
       setQuestion(null);
       setRun({ ...run, status: "running", questions: [] });
       void watch(run.run_id, current);
@@ -388,6 +435,7 @@ export default function App() {
     try {
       await api.update(run.run_id, changes);
       if (current !== epoch.current) return;
+      setRestored(false);
       setRun({ ...run, status: "running", questions: [] });
       setQuestion(null);
       setView("audit");
@@ -444,6 +492,13 @@ export default function App() {
           </div>
         </WorkspaceNavigation>
         <main>
+          {restoring && <p className="inline-note" role="status"><LoaderCircle className="spin" size={18} /> Reopening your existing audit…</p>}
+          {restored && (
+            <p className="inline-note" role="status">
+              Reopened your existing audit. Results are from the original calculation; no new analysis was started.
+              {events.length === 0 && " Earlier activity has not been loaded on this page."}
+            </p>
+          )}
           <div className={`mode-notice ${demo ? "" : "live"}`}>
             <span className="status-dot" />
             YOUR HOME, UNDERSTOOD
@@ -478,7 +533,7 @@ export default function App() {
           {view === "how" && <HowItWorks onExplore={navigate} />}
           {view === "evals" && <Evals />}
           {view === "solar-map" && <RoiMap />}
-          {view === "find" && (
+          {view === "find" && !restoring && (
             <Find
               properties={properties}
               query={query}
@@ -701,7 +756,7 @@ export default function App() {
                     {run.property.name} · {money(run.request.budget_usd)} cash
                     budget
                   </p>
-                  <RunSource run={run} />
+                  <RunSource run={run} restored={restored} />
                   <AuditProgress
                     events={events}
                     done={done}
@@ -916,7 +971,7 @@ export default function App() {
                       Audit complete
                     </span>
                   </p>
-                  <RunSource run={run} />
+                  <RunSource run={run} restored={restored} />
                 </div>
                 <button
                   className="secondary-button"

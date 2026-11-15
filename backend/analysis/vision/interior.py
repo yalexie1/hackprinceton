@@ -457,6 +457,15 @@ LPD_BY_FIXTURE = {
 }
 
 
+#: A categorical reading overrides the vintage default only when the panoramas that
+#: saw the item agree. The winner must hold this share of the summed confidence; a
+#: 1-1 split at similar confidence lands near 0.5 and is refused.
+MIN_WINNER_SHARE = 0.60
+#: ...and the combined confidence must clear this floor, so one faint sighting of
+#: something nobody else saw does not override a documented default.
+MIN_COMBINED_CONFIDENCE = 0.20
+
+
 @dataclass
 class _Vote:
     """Confidence-weighted vote over panoramas for one categorical value."""
@@ -470,12 +479,30 @@ class _Vote:
         self.panos[value].append((pano_id, note))
 
     def winner(self) -> Optional[tuple[str, float, list[tuple[str, Optional[str]]]]]:
+        """The agreed value, or None when the panoramas do not agree well enough.
+
+        Returning None means "vision saw nothing decisive", so the vintage default
+        stands. That is the safe direction: a default is a documented assumption,
+        whereas a coin-flip between two disagreeing photographs is an unsourced one
+        wearing a confidence number.
+
+        Measured case this guards (house, 2026-11-15): 2 of 39 panoramas saw a
+        thermostat and disagreed, "smart" 0.35 against "manual" 0.30. The old rule
+        took the heavier by 0.05 and returned it at combined confidence 0.19, which
+        swung a $722/yr recommendation on a $312 device against a $3,642 bill. Note
+        the old tie-break on exactly equal weights was the value's alphabetical
+        order, which could decide a measure outright.
+        """
         total = sum(self.weights.values())
         if not self.weights or total <= 0:
             return None
         value = max(self.weights, key=lambda v: (self.weights[v], v))
         share = self.weights[value] / total
+        if share < MIN_WINNER_SHARE:                     # the readings split: no override
+            return None
         conf = min(VISION_MAX_CONFIDENCE, round(self.best_conf[value] * share, 3))
+        if conf < MIN_COMBINED_CONFIDENCE:               # agreed, but too weak to act on
+            return None
         return value, conf, self.panos[value]
 
 

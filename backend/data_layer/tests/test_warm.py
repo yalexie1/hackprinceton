@@ -32,6 +32,17 @@ def fake_index(monkeypatch):
     )
 
 
+#: The keys `api.get_obliques` really returns, spelled out literally and **never
+#: derived from the code under test**. The first version of the fixture below built
+#: its mapping from `warm._OBLIQUE_DIRECTIONS`, so when that constant was wrong
+#: (bare `"north"`, against a service that names them `"oblique-north"`) the double
+#: was wrong in exactly the same way and every test agreed with the bug. The real
+#: 50-property run then logged "0 of 4 obliques" for all fifty, including the 33
+#: that had all four crops on disk. A double for a value that crosses a module
+#: boundary has to state that value, not import it.
+_REAL_OBLIQUE_KEYS = ("oblique-north", "oblique-south", "oblique-east", "oblique-west")
+
+
 @pytest.fixture(autouse=True)
 def no_live_obliques(monkeypatch):
     """`warm_one`'s oblique fetch defaults to `api.get_obliques`, which is live.
@@ -41,7 +52,7 @@ def no_live_obliques(monkeypatch):
     the oblique behaviour itself inject their own."""
     monkeypatch.setattr(
         warm.api, "get_obliques",
-        lambda sid, **kwargs: ({d: f"{sid}-{d}.jpg" for d in warm._OBLIQUE_DIRECTIONS}, []),
+        lambda sid, **kwargs: ({d: f"{sid}-{d}.jpg" for d in _REAL_OBLIQUE_KEYS}, []),
     )
 
 
@@ -550,6 +561,28 @@ def test_default_assemble_is_live_and_does_not_refresh(monkeypatch):
     assert calls == [("SID_A", {"live": True, "refresh": False})]
 
 
+def test_the_oblique_keys_are_the_ones_the_service_really_uses():
+    """The bug this pins cost the first real run its oblique reporting entirely:
+    `warm` spelled the directions `"north"`, the service names them
+    `"oblique-north"`, so `found.get(d)` missed every time and all 50 properties
+    reported "0 of 4" - a false alarm pointing a teammate at imagery that was fine.
+
+    Asserted against a literal, and separately against `demo_transfer`'s own
+    independent spelling of the cache folder names (`<sid>-oblique-<dir>`), so the
+    three places that have to agree are checked against each other rather than all
+    reading one constant that could be wrong together."""
+    from backend.data_layer import imagery
+
+    assert tuple(warm._OBLIQUE_DIRECTIONS) == _REAL_OBLIQUE_KEYS
+    assert tuple(imagery.OBLIQUE_DIRECTIONS) == _REAL_OBLIQUE_KEYS
+    # `demo_transfer.check` looks for a cache folder whose name contains
+    # f"-oblique-{d}" for d in north/south/east/west. A crop this module warms lands
+    # in f"{sid}-{direction}" - the two must describe the same folder.
+    assert {f"-{d}" for d in warm._OBLIQUE_DIRECTIONS} == {
+        f"-oblique-{d}" for d in ("north", "south", "east", "west")
+    }
+
+
 def test_default_oblique_fetch_is_live(monkeypatch):
     """`get_obliques`'s own `live` default reads `DATA_LAYER_LIVE` from the
     environment; a warming pass must not depend on that being set, or it quietly
@@ -558,7 +591,7 @@ def test_default_oblique_fetch_is_live(monkeypatch):
 
     def recording_obliques(sid, **kwargs):
         calls.append((sid, kwargs))
-        return {d: f"{d}.jpg" for d in warm._OBLIQUE_DIRECTIONS}, []
+        return {d: f"{d}.jpg" for d in _REAL_OBLIQUE_KEYS}, []
 
     monkeypatch.setattr(warm.api, "get_obliques", recording_obliques)
     ok, detail = warm.warm_one("SID_A", assemble=ok_assemble, verify=ok_verify)
@@ -602,9 +635,10 @@ def test_a_short_oblique_fetch_is_reported_by_direction():
     operator should learn it now rather than on a teammate's laptop."""
     ok, detail = warm.warm_one(
         "SID_A", assemble=ok_assemble, verify=ok_verify,
-        obliques=lambda sid, **k: ({"north": "n.jpg", "south": "s.jpg"}, []),
+        obliques=lambda sid, **k: ({"oblique-north": "n.jpg", "oblique-south": "s.jpg"}, []),
     )
     assert ok is True
+    # Looked up by the service's keys, printed without the repeated prefix.
     assert "2 of 4 obliques (north, south)" in detail
 
 
@@ -612,7 +646,7 @@ def test_warm_all_collects_oblique_notes_without_dropping_the_property(monkeypat
     monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
     out = warm.warm_all(
         ["OK1"], [], assemble=ok_assemble, verify=ok_verify,
-        obliques=lambda sid, **k: ({"north": "n.jpg"}, []),
+        obliques=lambda sid, **k: ({"oblique-north": "n.jpg"}, []),
         log=lambda *_: None,
     )
     assert out["warmed"] == ["OK1"]
@@ -667,3 +701,112 @@ def test_a_malformed_oblique_result_is_a_note_not_a_crash():
     )
     assert ok is True
     assert "obliques unavailable" in detail
+
+
+def test_a_property_with_every_oblique_records_no_note_under_the_real_keys():
+    """The complement of the key-shape test above, through the whole function: a
+    property that genuinely has all four must come back a plain "ok". Under the old
+    spelling this case produced "0 of 4 obliques (none)"."""
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble, verify=ok_verify,
+        obliques=lambda sid, **k: ({d: f"{d}.jpg" for d in _REAL_OBLIQUE_KEYS}, []),
+    )
+    assert (ok, detail) == (True, "ok")
+
+
+# ---------- tolerated checks (the real run drained the spares on `market`) ----------
+#
+# The first `--all` run disqualified 43 of 50 properties against 25 spares and left
+# two slots unfillable. 19 of the 43 were `market` alone - fewer than ten sale comps,
+# so `plan_value_uplift` returns `None`. That is one figure that will not compute, not
+# a property a judge cannot be shown.
+
+
+def test_a_tolerated_check_failure_does_not_disqualify_but_is_noted():
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble,
+        verify=lambda s, **k: [
+            Check("market", "fail", "only 3 comps against a minimum of 10")
+        ],
+    )
+    assert ok is True
+    assert detail == "market: only 3 comps against a minimum of 10"
+
+
+def test_market_is_tolerated_and_existing_solar_is_not():
+    """The user approved relaxing `market` only. `existing solar` (8 of the 43
+    disqualifications) is a measure the demo actually shows being lost, and stays a
+    disqualification - this pins the boundary rather than just the one name."""
+    assert "market" in warm.TOLERATED_CHECKS
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble,
+        verify=lambda s, **k: [Check("existing solar", "fail", "panels already on roof")],
+    )
+    assert ok is False
+    assert "existing solar" in detail
+
+
+def test_a_blocking_failure_still_disqualifies_even_beside_a_tolerated_one():
+    """A property short on comps *and* broken in a way that matters is still thrown
+    away, and the reason named is the blocking one - not whichever `fail` happened to
+    come first in the list."""
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble,
+        verify=lambda s, **k: [
+            Check("market", "fail", "only 3 comps"),
+            Check("model", "fail", "no zones could be built"),
+        ],
+    )
+    assert ok is False
+    assert detail.startswith("model:")
+
+
+def test_every_tolerated_failure_is_reported_not_only_the_first():
+    """A property can be short on more than one tolerated check at once, and the
+    operator is deciding what each of the 50 cards will be missing on screen."""
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble,
+        verify=lambda s, **k: [
+            Check("market", "fail", "only 3 comps"),
+            Check("market", "fail", "and again"),
+        ],
+    )
+    assert ok is True
+    assert detail == "market: only 3 comps; market: and again"
+
+
+def test_a_tolerated_failure_and_a_short_oblique_fetch_are_both_noted():
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble,
+        verify=lambda s, **k: [Check("market", "fail", "only 3 comps")],
+        obliques=lambda sid, **k: ({"oblique-north": "n.jpg"}, []),
+    )
+    assert ok is True
+    assert detail == (
+        "market: only 3 comps; "
+        "1 of 4 obliques (north) - the Side angle tab will be short"
+    )
+
+
+def test_warm_all_carries_tolerated_failures_into_its_notes(monkeypatch):
+    """"Which of the 50 will have no uplift figure" has to be readable off the
+    summary, not reconstructed from an hour of log lines."""
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    out = warm.warm_all(
+        ["OK1"], [], assemble=ok_assemble,
+        verify=lambda s, **k: [Check("market", "fail", "only 3 comps")],
+        log=lambda *_: None,
+    )
+    assert out["warmed"] == ["OK1"]
+    assert out["notes"] == [("OK1", "market: only 3 comps")]
+
+
+def test_demo_checks_own_market_verdict_is_left_strict():
+    """The relaxation lives in the warm pass, deliberately not in `demo_check`: that
+    is the pre-demo rehearsal tool the presenter runs, and its bar stays where the
+    lead set it. If someone 'simplifies' this by softening the check itself, this
+    fails."""
+    import inspect
+
+    source = inspect.getsource(warm.demo_check._market_check)
+    assert 'Check("market", "fail"' in source

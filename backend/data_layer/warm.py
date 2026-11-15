@@ -49,6 +49,8 @@ things the pass alone cannot:
   first second instead of surfacing an hour later as `SparesExhausted: 0 of 50`;
 * it prints the result - including a partial one carried out of `SparesExhausted` -
   because an unattended run's operator may have no scrollback left;
+* it reports the per-property notes the pass collected - a tolerated check failure
+  (`TOLERATED_CHECKS`) or a short oblique fetch, neither of which costs a spare;
 * it writes the pass's substitutions back into the committed manifest through
   `demo_set.apply_replacements`, which is what makes `demo_transfer pack` archive the
   50 properties that actually warmed rather than the 50 that were planned.
@@ -60,7 +62,7 @@ import sys
 from pathlib import Path
 from typing import Callable, Optional
 
-from . import api, demo_check, demo_set, index, matterport
+from . import api, demo_check, demo_set, imagery, index, matterport
 from .demo_check import Check
 from .matterport import Poster
 
@@ -72,8 +74,33 @@ Verifier = Callable[..., list[Check]]
 ObliqueFetcher = Callable[..., tuple[dict, list]]
 
 #: The four directions `demo_transfer.check` requires before it calls a property
-#: complete rather than `incomplete`.
-_OBLIQUE_DIRECTIONS = ("north", "south", "east", "west")
+#: complete rather than `incomplete` - **aliased from `imagery`, never re-spelled
+#: here.** The first version of this module wrote its own `("north", "south", "east",
+#: "west")`, but the service names them `"oblique-north"` and so on, which is what
+#: `api.get_obliques` keys its mapping by and what `data/cache/vexcel-image/
+#: <sid>-oblique-<dir>/` is named after. Every lookup missed, so the real 50-property
+#: run logged "0 of 4 obliques" for all fifty - including the 33 that had all four on
+#: disk - a false alarm pointing a teammate at imagery that was never broken. One
+#: definition, in the module that does the fetching, cannot drift from itself.
+_OBLIQUE_DIRECTIONS = imagery.OBLIQUE_DIRECTIONS
+
+#: Check names the warm pass records but does **not** disqualify a property over.
+#:
+#: `market` is "fewer than ten sale comps, so `plan_value_uplift` returns `None`".
+#: That is a real quality bar for the three hand-picked golden properties, and
+#: `demo_check` is right to call it a `fail` - but it does not mean the property
+#: cannot be shown to a judge, only that one figure will not compute. The first real
+#: `--all` run disqualified 19 of 50 properties on it alone, out of 43 total against
+#: 25 spares: it drained two buckets dry and left 2 slots unfilled. Tolerating it
+#: here spends no spare and costs one number on one card.
+#:
+#: **`demo_check`'s own verdict is deliberately unchanged.** It is the pre-demo
+#: rehearsal tool the presenter runs, and its bar stays exactly as strict as it is;
+#: this set is the warm pass's own, narrower question - "is this property worth a
+#: cache slot" - not a re-grading of the checks. Anything tolerated still reaches the
+#: operator as a per-property note, because "which of the 50 will have no uplift
+#: figure" is something they have to be able to read off the summary.
+TOLERATED_CHECKS: frozenset[str] = frozenset({"market"})
 
 
 def uncached_sids(n: int, *, root: Optional[Path] = None) -> list[str]:
@@ -147,9 +174,19 @@ def _verify_without_refetch(sid: str, **kwargs) -> list[Check]:
     return demo_check.check_property(sid, refresh=False, **kwargs)
 
 
-def _fetch_obliques(sid: str, obliques: ObliqueFetcher) -> str:
-    """Warm `sid`'s four oblique crops. Returns `"ok"`, or a note describing what is
-    short - never raises, and never disqualifies the property.
+def _fetch_obliques(sid: str, obliques: ObliqueFetcher) -> Optional[str]:
+    """Warm `sid`'s four oblique crops. Returns `None` when all four landed, or a
+    note describing what is short - never raises, and never disqualifies the
+    property.
+
+    **The mapping is keyed `"oblique-north"`, not `"north"`.** That is what
+    `api.get_obliques` returns (from `imagery.OBLIQUE_DIRECTIONS`, via either the
+    cache lookup or `vexcel.oblique_directions`'s `product-type` values), and what
+    the cache folders are named after. The keys are read through the alias at the
+    top of this module rather than re-spelled, because the first version spelled
+    them short and silently matched nothing for all fifty properties. The note
+    *prints* them short, since a human reading "2 of 4 obliques (north, south)"
+    does not need the prefix repeated twice.
 
     **Why the warm pass fetches obliques at all.** `api._with_imagery` deliberately
     does not: the lead's decision (board, 2026-11-14) is that bundle assembly skips
@@ -184,10 +221,11 @@ def _fetch_obliques(sid: str, obliques: ObliqueFetcher) -> str:
     except Exception as exc:  # noqa: BLE001 - noted, never a disqualification
         return f"obliques unavailable ({type(exc).__name__}: {exc})"
     if len(have) == len(_OBLIQUE_DIRECTIONS):
-        return "ok"
+        return None
+    short = ", ".join(d.removeprefix("oblique-") for d in have) or "none"
     return (
         f"{len(have)} of {len(_OBLIQUE_DIRECTIONS)} obliques "
-        f"({', '.join(have) or 'none'}) - the Side angle tab will be short"
+        f"({short}) - the Side angle tab will be short"
     )
 
 
@@ -214,7 +252,10 @@ def warm_one(
     `run_analysis=True` per the plan - a warmed property is meant to drive a demo end
     to end, not just sit in cache. Only a `fail` status disqualifies; a `warn` (an
     unresolved utility, a thin scan) is normal even on the golden three and must not
-    throw away a property over it.
+    throw away a property over it. A `fail` whose check name is in
+    `TOLERATED_CHECKS` becomes a note instead of a disqualification - see that
+    constant for which checks, why, and why `demo_check`'s own verdict is left
+    strict.
 
     Everything after `assemble` succeeds - calling `verify`, reading `.status` off
     each result, reading `.name`/`.detail` off the first failure - stays inside one
@@ -228,9 +269,12 @@ def warm_one(
     `obliques` defaults to `api.get_obliques` and runs only after assembly and
     verification have both passed - see `_fetch_obliques` for why the warm pass
     fetches them when assembly does not, and why a short fetch is reported rather
-    than disqualifying. On success the returned detail is `"ok"` when all four
-    directions landed, and the oblique note otherwise; `warm_all` turns anything
-    other than `"ok"` into a per-property note in its summary.
+    than disqualifying.
+
+    On success the detail is `"ok"` when there is nothing to say, or every note this
+    property earned joined by `"; "` - a tolerated check failure, a short oblique
+    fetch, or both. `warm_all` turns any detail other than `"ok"` into a
+    per-property note in its summary.
     """
     assemble = assemble if assemble is not None else api.get_property_bundle
     verify = verify if verify is not None else _verify_without_refetch
@@ -244,12 +288,20 @@ def warm_one(
     try:
         checks = verify(sid, run_analysis=True)
         fails = [c for c in checks if c.status == "fail"]
-        if fails:
-            return False, f"{fails[0].name}: {fails[0].detail}"
+        blocking = [c for c in fails if c.name not in TOLERATED_CHECKS]
+        if blocking:
+            return False, f"{blocking[0].name}: {blocking[0].detail}"
+        # Every tolerated failure is kept, not just the first: a property can be
+        # short on more than one of them, and the operator is deciding what each of
+        # the 50 cards will be missing on screen.
+        notes = [f"{c.name}: {c.detail}" for c in fails]
     except Exception as exc:  # noqa: BLE001 - same: reported, not raised
         return False, str(exc)
 
-    return True, _fetch_obliques(sid, obliques)
+    oblique_note = _fetch_obliques(sid, obliques)
+    if oblique_note:
+        notes.append(oblique_note)
+    return True, "; ".join(notes) if notes else "ok"
 
 
 class SparesExhausted(RuntimeError):

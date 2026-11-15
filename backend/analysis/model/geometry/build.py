@@ -96,6 +96,19 @@ class GeometryResult:
 
 # ---------------------------------------------------------------- inputs
 
+
+def ceiling_height_range(heights: list[float]) -> Ranged:
+    """Low, mean and high of the room ceiling heights, all rounded to 0.1 mm the same way.
+
+    Rounding only the mean broke low <= expected <= high when every room has the same height
+    with more than four decimals (2.606261730194092 m: the rounded mean exceeds the raw max),
+    which crashed build_building_model on about a fifth of real scans. Rounding is monotone,
+    so rounding all three keeps the order."""
+    lo, hi = round(min(heights), 4), round(max(heights), 4)
+    ex = min(max(round(sum(heights) / len(heights), 4), lo), hi)
+    return Ranged(low=lo, expected=ex, high=hi, unit="m")
+
+
 def _pick(assumptions: Iterable[Assumption], key: str,
           source: Optional[str] = None) -> Optional[Assumption]:
     found = [a for a in assumptions if a.key == key and (source is None or a.source == source)]
@@ -458,8 +471,7 @@ def build_geometry(matterport: MatterportData, vexcel: Optional[VexcelData] = No
                     f"the scan; the mean of the measured rooms is used")
         new_assumptions.append(Assumption(
             key="geometry.ceiling_height_m", label="Ceiling height",
-            value=Ranged(low=min(used_h), expected=round(sum(used_h) / len(used_h), 4),
-                         high=max(used_h), unit="m"),
+            value=ceiling_height_range(used_h),
             source="measured", confidence=0.95 if measured_h else 0.3, user_editable=False,
             evidence=[EvidenceRef(kind="matterport_field", ref="rooms.dimensions.height",
                                   note=note)]))

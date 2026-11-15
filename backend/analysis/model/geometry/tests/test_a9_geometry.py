@@ -249,3 +249,19 @@ def test_opening_center_carries_both_readings():
     first, second = opening_center(xy[e.vertex_ids[0]], xy[e.vertex_ids[1]], o)
     assert first == pytest.approx((1.008, 0.0))
     assert second == pytest.approx((4.032, 0.0))
+
+
+def test_ceiling_height_range_with_identical_long_decimals_does_not_crash():
+    """Real scans with one uniform height (EBEWE eval: 23 of 105 crashed) must build a valid range."""
+    from backend.analysis.model.geometry.build import ceiling_height_range
+    h = 2.606261730194092
+    r = ceiling_height_range([h, h, h, h, h, h, h])
+    assert r.low == r.expected == r.high == round(h, 4)
+
+
+def test_ceiling_height_range_keeps_order_on_mixed_heights():
+    from backend.analysis.model.geometry.build import ceiling_height_range
+    r = ceiling_height_range([2.43841234567, 2.7432999912, 3.04801111111])
+    assert r.low <= r.expected <= r.high
+    assert (r.low, r.high) == (2.4384, 3.048)
+    assert r.expected == round((2.43841234567 + 2.7432999912 + 3.04801111111) / 3, 4)

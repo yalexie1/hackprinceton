@@ -6,19 +6,19 @@
   "headline": [
    {
     "label": "Interval coverage",
-    "value": 17.0,
+    "value": 12.8,
     "unit": "%",
     "nominal": 80.0,
     "ci90": [
-     13.1,
-     22.0
+     10.7,
+     15.5
     ],
     "n": 494,
-    "note": "How often the metered annual fell inside our stated 10-90 band. Nominal is 80%. Lower means the band is too narrow."
+    "note": "How often the metered total fell inside the low-to-high range we report. That range is built by varying our uncertain inputs one at a time, and 80% was the design intent; measured, it is far lower, so treat the range as input-sensitivity bounds and not as a confidence interval."
    },
    {
     "label": "Median absolute error",
-    "value": 55.9,
+    "value": 52.9,
     "unit": "%",
     "nominal": null,
     "ci90": null,
@@ -27,16 +27,16 @@
    },
    {
     "label": "Median signed error",
-    "value": -0.5,
+    "value": -17.1,
     "unit": "%",
     "nominal": 0.0,
     "ci90": null,
     "n": 494,
-    "note": "Near zero: the model is not systematically high or low, it is scattered."
+    "note": "Negative means we estimate less energy than the meter recorded. The model underpredicts, and it is also widely scattered: both are true, and they need different fixes."
    },
    {
     "label": "Within 25%",
-    "value": 23.1,
+    "value": 21.9,
     "unit": "% of buildings",
     "nominal": null,
     "ci90": null,
@@ -45,7 +45,7 @@
    },
    {
     "label": "Band width",
-    "value": 40.9,
+    "value": 31.1,
     "unit": "% of expected",
     "nominal": null,
     "ci90": null,
@@ -54,59 +54,59 @@
    }
   ],
   "bins": {
-   "below_low": 38.1,
-   "low_to_expected": 11.7,
-   "expected_to_high": 5.3,
-   "above_high": 44.9
+   "below_low": 30.6,
+   "low_to_expected": 10.9,
+   "expected_to_high": 1.8,
+   "above_high": 56.7
   },
-  "bins_note": "Where the metered total fell relative to our band. Truth falls below and above in near-equal measure, so the band is too narrow rather than biased in one direction.",
+  "bins_note": "Where the metered total fell relative to our low and high. Most buildings fall outside on one side or the other, which is how we know the range is too narrow; more fall above than below, which is the same low bias the median signed error shows.",
   "by_usage": {
    "Education": {
     "n": 234,
     "median_sqm": 7122,
     "bdg2temp": {
      "n": 234,
-     "median_pct": 21.6,
-     "median_abs_pct": 52.4,
-     "mean_pct": 128.3,
-     "p10_pct": -58.0,
-     "p90_pct": 189.3,
-     "within_25pct": 24.4,
-     "within_50pct": 46.6,
-     "over_by_2x_plus": 23.1,
-     "under_by_2x_plus": 15.0,
+     "median_pct": 0.7,
+     "median_abs_pct": 47.7,
+     "mean_pct": 91.8,
+     "p10_pct": -65.3,
+     "p90_pct": 152.6,
+     "within_25pct": 26.5,
+     "within_50pct": 51.7,
+     "over_by_2x_plus": 17.5,
+     "under_by_2x_plus": 20.5,
      "off_by_2x_either_way": 38.0
     },
-    "coverage_pct": 20.9
+    "coverage_pct": 17.5
    },
    "Entertainment/public assembly": {
     "n": 53,
     "median_sqm": 6382,
     "bdg2temp": {
      "n": 53,
-     "median_pct": 34.6,
-     "median_abs_pct": 56.8,
-     "mean_pct": 795.1,
-     "p10_pct": -54.0,
-     "p90_pct": 409.9,
-     "within_25pct": 24.5,
-     "within_50pct": 43.4,
-     "over_by_2x_plus": 28.3,
-     "under_by_2x_plus": 13.2,
-     "off_by_2x_either_way": 41.5
+     "median_pct": 9.4,
+     "median_abs_pct": 50.8,
+     "mean_pct": 632.0,
+     "p10_pct": -63.8,
+     "p90_pct": 306.7,
+     "within_25pct": 22.6,
+     "within_50pct": 49.1,
+     "over_by_2x_plus": 20.8,
+     "under_by_2x_plus": 17.0,
+     "off_by_2x_either_way": 37.7
     },
-    "coverage_pct": 15.1
+    "coverage_pct": 7.5
    },
    "Food sales and service": {
     "n": 1,
     "median_sqm": 2310,
     "bdg2temp": {
      "n": 1,
-     "median_pct": -33.0,
-     "median_abs_pct": 33.0,
-     "mean_pct": -33.0,
-     "p10_pct": -33.0,
-     "p90_pct": -33.0,
+     "median_pct": -47.7,
+     "median_abs_pct": 47.7,
+     "mean_pct": -47.7,
+     "p10_pct": -47.7,
+     "p90_pct": -47.7,
      "within_25pct": 0.0,
      "within_50pct": 100.0,
      "over_by_2x_plus": 0.0,
@@ -120,29 +120,29 @@
     "median_sqm": 3070,
     "bdg2temp": {
      "n": 6,
-     "median_pct": -32.4,
-     "median_abs_pct": 39.3,
-     "mean_pct": -15.3,
-     "p10_pct": -45.4,
-     "p90_pct": 1.4,
+     "median_pct": -45.9,
+     "median_abs_pct": 50.1,
+     "mean_pct": -24.3,
+     "p10_pct": -55.9,
+     "p90_pct": -19.2,
      "within_25pct": 16.7,
-     "within_50pct": 83.3,
+     "within_50pct": 50.0,
      "over_by_2x_plus": 0.0,
-     "under_by_2x_plus": 0.0,
-     "off_by_2x_either_way": 0.0
+     "under_by_2x_plus": 33.3,
+     "off_by_2x_either_way": 33.3
     },
-    "coverage_pct": 16.7
+    "coverage_pct": 0.0
    },
    "Lodging/residential": {
     "n": 73,
     "median_sqm": 4936,
     "bdg2temp": {
      "n": 73,
-     "median_pct": -84.1,
-     "median_abs_pct": 84.1,
-     "mean_pct": -79.5,
+     "median_pct": -84.4,
+     "median_abs_pct": 84.4,
+     "mean_pct": -79.8,
      "p10_pct": -92.4,
-     "p90_pct": -54.3,
+     "p90_pct": -55.5,
      "within_25pct": 0.0,
      "within_50pct": 9.6,
      "over_by_2x_plus": 0.0,
@@ -156,88 +156,88 @@
     "median_sqm": 5705,
     "bdg2temp": {
      "n": 2,
-     "median_pct": 56.3,
-     "median_abs_pct": 56.3,
-     "mean_pct": 56.3,
-     "p10_pct": 13.9,
-     "p90_pct": 98.7,
+     "median_pct": 22.9,
+     "median_abs_pct": 35.7,
+     "mean_pct": 22.9,
+     "p10_pct": -12.8,
+     "p90_pct": 58.6,
      "within_25pct": 50.0,
      "within_50pct": 50.0,
      "over_by_2x_plus": 0.0,
      "under_by_2x_plus": 0.0,
      "off_by_2x_either_way": 0.0
     },
-    "coverage_pct": 50.0
+    "coverage_pct": 0.0
    },
    "Office": {
     "n": 61,
     "median_sqm": 4920,
     "bdg2temp": {
      "n": 61,
-     "median_pct": 8.6,
-     "median_abs_pct": 40.7,
-     "mean_pct": 126.2,
-     "p10_pct": -40.7,
-     "p90_pct": 181.9,
-     "within_25pct": 27.9,
-     "within_50pct": 60.7,
-     "over_by_2x_plus": 21.3,
-     "under_by_2x_plus": 4.9,
-     "off_by_2x_either_way": 26.2
+     "median_pct": 0.6,
+     "median_abs_pct": 44.1,
+     "mean_pct": 93.3,
+     "p10_pct": -48.1,
+     "p90_pct": 137.3,
+     "within_25pct": 18.0,
+     "within_50pct": 62.3,
+     "over_by_2x_plus": 16.4,
+     "under_by_2x_plus": 8.2,
+     "off_by_2x_either_way": 24.6
     },
-    "coverage_pct": 13.1
+    "coverage_pct": 11.5
    },
    "Other": {
     "n": 5,
     "median_sqm": 436,
     "bdg2temp": {
      "n": 5,
-     "median_pct": 10.1,
-     "median_abs_pct": 32.2,
-     "mean_pct": 39.6,
-     "p10_pct": -49.1,
-     "p90_pct": 247.8,
+     "median_pct": -9.4,
+     "median_abs_pct": 44.0,
+     "mean_pct": 20.3,
+     "p10_pct": -51.5,
+     "p90_pct": 185.9,
      "within_25pct": 40.0,
-     "within_50pct": 80.0,
+     "within_50pct": 60.0,
      "over_by_2x_plus": 20.0,
-     "under_by_2x_plus": 0.0,
-     "off_by_2x_either_way": 20.0
+     "under_by_2x_plus": 20.0,
+     "off_by_2x_either_way": 40.0
     },
-    "coverage_pct": 40.0
+    "coverage_pct": 20.0
    },
    "Public services": {
     "n": 41,
     "median_sqm": 3274,
     "bdg2temp": {
      "n": 41,
-     "median_pct": 2.0,
-     "median_abs_pct": 26.5,
-     "mean_pct": 22.5,
-     "p10_pct": -34.0,
-     "p90_pct": 116.9,
-     "within_25pct": 46.3,
-     "within_50pct": 65.9,
-     "over_by_2x_plus": 14.6,
-     "under_by_2x_plus": 9.8,
-     "off_by_2x_either_way": 24.4
+     "median_pct": -14.9,
+     "median_abs_pct": 32.1,
+     "mean_pct": 1.8,
+     "p10_pct": -51.1,
+     "p90_pct": 71.3,
+     "within_25pct": 39.0,
+     "within_50pct": 73.2,
+     "over_by_2x_plus": 2.4,
+     "under_by_2x_plus": 12.2,
+     "off_by_2x_either_way": 14.6
     },
-    "coverage_pct": 26.8
+    "coverage_pct": 17.1
    },
    "Religious worship": {
     "n": 2,
     "median_sqm": 540,
     "bdg2temp": {
      "n": 2,
-     "median_pct": 155.1,
-     "median_abs_pct": 155.1,
-     "mean_pct": 155.1,
-     "p10_pct": 140.0,
-     "p90_pct": 170.2,
+     "median_pct": 107.1,
+     "median_abs_pct": 107.1,
+     "mean_pct": 107.1,
+     "p10_pct": 99.4,
+     "p90_pct": 114.8,
      "within_25pct": 0.0,
      "within_50pct": 0.0,
-     "over_by_2x_plus": 100.0,
+     "over_by_2x_plus": 50.0,
      "under_by_2x_plus": 0.0,
-     "off_by_2x_either_way": 100.0
+     "off_by_2x_either_way": 50.0
     },
     "coverage_pct": 0.0
    },
@@ -246,16 +246,16 @@
     "median_sqm": 3572,
     "bdg2temp": {
      "n": 6,
-     "median_pct": 72.9,
-     "median_abs_pct": 84.7,
-     "mean_pct": 488.9,
-     "p10_pct": -63.8,
-     "p90_pct": 226.2,
+     "median_pct": 43.1,
+     "median_abs_pct": 61.6,
+     "mean_pct": 419.7,
+     "p10_pct": -68.2,
+     "p90_pct": 169.0,
      "within_25pct": 0.0,
      "within_50pct": 33.3,
-     "over_by_2x_plus": 50.0,
+     "over_by_2x_plus": 33.3,
      "under_by_2x_plus": 16.7,
-     "off_by_2x_either_way": 66.7
+     "off_by_2x_either_way": 50.0
     },
     "coverage_pct": 0.0
    },
@@ -264,12 +264,12 @@
     "median_sqm": 4946,
     "bdg2temp": {
      "n": 3,
-     "median_pct": -22.7,
-     "median_abs_pct": 22.7,
-     "mean_pct": -18.3,
-     "p10_pct": -50.8,
-     "p90_pct": 18.6,
-     "within_25pct": 66.7,
+     "median_pct": -36.3,
+     "median_abs_pct": 36.3,
+     "mean_pct": -29.2,
+     "p10_pct": -60.4,
+     "p90_pct": 9.0,
+     "within_25pct": 33.3,
      "within_50pct": 66.7,
      "over_by_2x_plus": 0.0,
      "under_by_2x_plus": 33.3,
@@ -282,16 +282,16 @@
     "median_sqm": 4569,
     "bdg2temp": {
      "n": 2,
-     "median_pct": 41.4,
-     "median_abs_pct": 68.0,
-     "mean_pct": 41.4,
-     "p10_pct": -26.6,
-     "p90_pct": 109.4,
+     "median_pct": 10.6,
+     "median_abs_pct": 57.4,
+     "mean_pct": 10.6,
+     "p10_pct": -46.8,
+     "p90_pct": 68.0,
      "within_25pct": 0.0,
      "within_50pct": 50.0,
-     "over_by_2x_plus": 50.0,
+     "over_by_2x_plus": 0.0,
      "under_by_2x_plus": 0.0,
-     "off_by_2x_either_way": 50.0
+     "off_by_2x_either_way": 0.0
     },
     "coverage_pct": 0.0
    },
@@ -300,18 +300,18 @@
     "median_sqm": 1379,
     "bdg2temp": {
      "n": 5,
-     "median_pct": 9.1,
-     "median_abs_pct": 52.7,
-     "mean_pct": 275.5,
-     "p10_pct": -52.7,
-     "p90_pct": 1283.0,
+     "median_pct": -10.2,
+     "median_abs_pct": 52.0,
+     "mean_pct": 211.5,
+     "p10_pct": -52.0,
+     "p90_pct": 1019.2,
      "within_25pct": 40.0,
      "within_50pct": 40.0,
      "over_by_2x_plus": 40.0,
      "under_by_2x_plus": 20.0,
      "off_by_2x_either_way": 60.0
     },
-    "coverage_pct": 20.0
+    "coverage_pct": 0.0
    }
   },
   "by_site": {
@@ -320,34 +320,34 @@
     "median_sqm": 6536,
     "bdg2temp": {
      "n": 86,
-     "median_pct": 35.1,
-     "median_abs_pct": 77.1,
-     "mean_pct": 180.3,
-     "p10_pct": -67.2,
-     "p90_pct": 249.9,
-     "within_25pct": 16.3,
-     "within_50pct": 31.4,
-     "over_by_2x_plus": 38.4,
-     "under_by_2x_plus": 20.9,
-     "off_by_2x_either_way": 59.3
+     "median_pct": 11.7,
+     "median_abs_pct": 67.3,
+     "mean_pct": 139.1,
+     "p10_pct": -69.4,
+     "p90_pct": 188.1,
+     "within_25pct": 17.4,
+     "within_50pct": 34.9,
+     "over_by_2x_plus": 25.6,
+     "under_by_2x_plus": 23.3,
+     "off_by_2x_either_way": 48.8
     },
-    "coverage_pct": 14.0
+    "coverage_pct": 10.5
    },
    "Cockatoo": {
     "n": 100,
     "median_sqm": 7454,
     "bdg2temp": {
      "n": 100,
-     "median_pct": -15.9,
-     "median_abs_pct": 69.2,
-     "mean_pct": 125.3,
-     "p10_pct": -86.1,
-     "p90_pct": 144.6,
-     "within_25pct": 16.0,
-     "within_50pct": 33.0,
-     "over_by_2x_plus": 16.0,
-     "under_by_2x_plus": 36.0,
-     "off_by_2x_either_way": 52.0
+     "median_pct": -30.1,
+     "median_abs_pct": 63.3,
+     "mean_pct": 82.6,
+     "p10_pct": -86.2,
+     "p90_pct": 97.6,
+     "within_25pct": 19.0,
+     "within_50pct": 41.0,
+     "over_by_2x_plus": 10.0,
+     "under_by_2x_plus": 40.0,
+     "off_by_2x_either_way": 50.0
     },
     "coverage_pct": 12.0
    },
@@ -356,89 +356,90 @@
     "median_sqm": 6707,
     "bdg2temp": {
      "n": 89,
-     "median_pct": 30.6,
-     "median_abs_pct": 52.7,
-     "mean_pct": 69.0,
-     "p10_pct": -52.7,
-     "p90_pct": 177.8,
+     "median_pct": 22.2,
+     "median_abs_pct": 55.5,
+     "mean_pct": 56.5,
+     "p10_pct": -56.6,
+     "p90_pct": 137.3,
      "within_25pct": 18.0,
-     "within_50pct": 47.2,
-     "over_by_2x_plus": 25.8,
-     "under_by_2x_plus": 13.5,
+     "within_50pct": 43.8,
+     "over_by_2x_plus": 20.2,
+     "under_by_2x_plus": 19.1,
      "off_by_2x_either_way": 39.3
     },
-    "coverage_pct": 13.5
+    "coverage_pct": 10.1
    },
    "Panther": {
     "n": 96,
     "median_sqm": 4091,
     "bdg2temp": {
      "n": 96,
-     "median_pct": -35.7,
-     "median_abs_pct": 58.0,
-     "mean_pct": 9.2,
-     "p10_pct": -89.0,
-     "p90_pct": 77.4,
+     "median_pct": -45.6,
+     "median_abs_pct": 56.7,
+     "mean_pct": -5.5,
+     "p10_pct": -89.3,
+     "p90_pct": 55.0,
      "within_25pct": 19.8,
-     "within_50pct": 47.9,
-     "over_by_2x_plus": 8.3,
-     "under_by_2x_plus": 39.6,
-     "off_by_2x_either_way": 47.9
+     "within_50pct": 44.8,
+     "over_by_2x_plus": 6.2,
+     "under_by_2x_plus": 44.8,
+     "off_by_2x_either_way": 51.0
     },
-    "coverage_pct": 15.6
+    "coverage_pct": 11.5
    },
    "Rat": {
     "n": 123,
     "median_sqm": 5565,
     "bdg2temp": {
      "n": 123,
-     "median_pct": 2.6,
-     "median_abs_pct": 36.3,
-     "mean_pct": 363.8,
-     "p10_pct": -51.9,
-     "p90_pct": 158.9,
-     "within_25pct": 39.8,
-     "within_50pct": 59.3,
-     "over_by_2x_plus": 13.8,
-     "under_by_2x_plus": 11.4,
-     "off_by_2x_either_way": 25.2
+     "median_pct": -14.9,
+     "median_abs_pct": 34.2,
+     "mean_pct": 275.4,
+     "p10_pct": -60.7,
+     "p90_pct": 109.8,
+     "within_25pct": 31.7,
+     "within_50pct": 68.3,
+     "over_by_2x_plus": 10.6,
+     "under_by_2x_plus": 15.4,
+     "off_by_2x_either_way": 26.0
     },
-    "coverage_pct": 26.8
+    "coverage_pct": 17.9
    }
   },
   "weather_decomposition": {
    "electricity_median_pct": -1.0,
-   "heating_need_median_pct": 26.4,
+   "heating_need_median_pct": 20.1,
    "n_electricity": 494,
-   "n_heating": 451,
-   "note": "Swapping measured station temperatures for the Open-Meteo reanalysis path. The bias is large on heating need and small on the electricity meter, because these buildings are dominated by cooling, lighting and plug loads."
+   "n_heating": 485,
+   "note": "Swapping measured station temperatures for the Open-Meteo reanalysis path. The bias is large on heating need and small on the electricity meter, because these buildings are dominated by cooling, lighting and plug loads.",
+   "caveat": "Both arms use the same modelled irradiance, so this isolates temperature error only."
   },
   "storey_diagnostic": {
    "floors_ge_4": {
     "n": 66,
-    "median_pct": 2.1,
-    "median_abs_pct": 61.7,
-    "mean_pct": 70.8,
-    "p10_pct": -67.8,
-    "p90_pct": 214.4,
+    "median_pct": -13.2,
+    "median_abs_pct": 65.8,
+    "mean_pct": 46.2,
+    "p10_pct": -73.4,
+    "p90_pct": 168.7,
     "within_25pct": 18.2,
-    "within_50pct": 36.4,
-    "over_by_2x_plus": 30.3,
-    "under_by_2x_plus": 25.8,
-    "off_by_2x_either_way": 56.1
+    "within_50pct": 37.9,
+    "over_by_2x_plus": 18.2,
+    "under_by_2x_plus": 28.8,
+    "off_by_2x_either_way": 47.0
    },
    "floors_le_1": {
     "n": 411,
-    "median_pct": -7.6,
-    "median_abs_pct": 52.2,
-    "mean_pct": 158.9,
-    "p10_pct": -83.7,
-    "p90_pct": 154.0,
-    "within_25pct": 24.3,
-    "within_50pct": 47.2,
-    "over_by_2x_plus": 16.3,
-    "under_by_2x_plus": 24.3,
-    "off_by_2x_either_way": 40.6
+    "median_pct": -19.2,
+    "median_abs_pct": 49.7,
+    "mean_pct": 115.2,
+    "p10_pct": -84.2,
+    "p90_pct": 114.0,
+    "within_25pct": 22.6,
+    "within_50pct": 50.4,
+    "over_by_2x_plus": 11.9,
+    "under_by_2x_plus": 29.0,
+    "off_by_2x_either_way": 40.9
    },
    "note": "Known limitation: all buildings are modelled as one storey scaled to total floor area. If the 4+ storey group is biased differently, that is the cause."
   },

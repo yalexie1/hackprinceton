@@ -42,6 +42,12 @@ SITES = {
     "Rat":      {"state": "DC", "tz": "US/Eastern",  "zone": "4A"},
 }
 RESIDENTIAL = {"Lodging/residential"}
+
+# backend/analysis/model/registry/tables.py ships DEF tables for these zones only;
+# registry.py blends 2A/3B or defaults to 3B for anything else. Our five sites span
+# 3C/6A/2B/4A/2A, so all but Panther fall back. Recorded per building rather than
+# silently relabelled - see @vinayak-sinha's finding on the board.
+SUPPORTED_CLIMATES = ("2A", "3B")
 # Parking structures are unconditioned and have no defaults path in DEF-*; modelling one
 # as an office overstates it by an order of magnitude (measured: +1650% on a smoke test).
 # Excluded as out of scope rather than carried as model error.
@@ -69,6 +75,20 @@ def load_truth(ids: list[str], fuel: str) -> dict[str, dict]:
             continue
         out[c] = {"annual_kwh": total, "completeness": present / hours}
     return out
+
+
+def zone_is_supported(zone: str | None) -> bool:
+    """Whether the DEF tables actually carry this zone (lead decision: abstain if not)."""
+    return zone in SUPPORTED_CLIMATES
+
+
+def effective_climate_zone(zone: str | None) -> tuple[str | None, str]:
+    """The zone the DEF tables will actually use, and whether that is what we asked for."""
+    if zone in SUPPORTED_CLIMATES:
+        return zone, "stated"
+    if zone is None:
+        return None, "absent"
+    return "3B/2A blend", "unsupported_fallback"
 
 
 def scaled_bundle(golden: dict, row, site: dict, arm: str) -> dict:
@@ -114,8 +134,25 @@ def scaled_bundle(golden: dict, row, site: dict, arm: str) -> dict:
         "weather_source": f"eval arm {arm}, site {row.site_id}, {YEAR}",
         "weather_time_convention": "hour_end",
     })
+    # The golden example's CoStar record and Vexcel roof describe the Culver office,
+    # not this building. Keeping them fed real leasing data, class A, 10,600 m2 gross
+    # and - because build_geometry reads costar.stories - a hard-coded 4 storeys into
+    # every commercial eval building. BDG2 supplies only vintage and floor count, so
+    # that is all the CoStar block is allowed to carry.
+    floors = None if pd.isna(row.numberoffloors) else int(row.numberoffloors)
     if b.get("costar"):
-        b["costar"]["year_built"] = int(row.yearbuilt)
+        kind = b["costar"].get("kind")
+        b["costar"] = {"kind": kind, "matterport_model_id": b["summary"]["sid"],
+                       "record_id": f"BDG2:{row.building_id}", "raw": {},
+                       "year_built": int(row.yearbuilt), "stories": floors}
+    # BDG2 carries no roof geometry; keeping the example's would invent evidence,
+    # and PV is out of scope for this eval in any case.
+    b["vexcel"] = None
+    b["summary"]["floor_count"] = floors or 1
+
+    zone, zone_source = effective_climate_zone(site["zone"])
+    b["_eval"] = {"stated_climate_zone": site["zone"], "effective_climate_zone": zone,
+                  "zone_source": zone_source, "bdg2_building_id": str(row.building_id)}
     return b
 
 
@@ -170,7 +207,10 @@ def main(target_n: int = DEFAULT_TARGET_N) -> int:
         }
         for arm in ARMS:
             try:
-                bundle = PropertyBundle(**scaled_bundle(golden[seg], row, site, arm))
+                raw = scaled_bundle(golden[seg], row, site, arm)
+                rec.setdefault("effective_climate_zone", raw["_eval"]["effective_climate_zone"])
+                rec.setdefault("zone_source", raw["_eval"]["zone_source"])
+                bundle = PropertyBundle(**{k: v for k, v in raw.items() if k != "_eval"})
                 model = api.build_building_model(bundle)
                 res = api.run_baseline(bundle, model)
                 e, g = res.annual.electricity_kwh, res.annual.gas_kwh

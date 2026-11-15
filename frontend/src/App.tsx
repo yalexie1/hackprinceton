@@ -35,8 +35,7 @@ import PlanView from "./components/Plan";
 import Geometry from "./components/Geometry";
 import Assumptions from "./components/Assumptions";
 import Documents from "./components/Documents";
-import Warnings, { AuditNarrative } from "./components/Warnings";
-import Calibration from "./components/Calibration";
+import { AuditNarrative } from "./components/Warnings";
 import RunSource from "./components/RunSource";
 import { AuditProgress } from "./components/AuditProgress";
 import HowItWorks from "./components/HowItWorks";
@@ -492,6 +491,9 @@ export default function App() {
             {!connecting && !serviceReady && (
               <button onClick={() => setConnectionAttempt((attempt) => attempt + 1)}>Try again</button>
             )}
+            <button type="button" onClick={() => setHelp(true)} aria-label="About this workspace">
+              <Info size={15} />
+            </button>
           </div>
         </WorkspaceNavigation>
         <main>
@@ -502,19 +504,6 @@ export default function App() {
               {events.length === 0 && " Earlier activity has not been loaded on this page."}
             </p>
           )}
-          <div className={`mode-notice ${demo ? "" : "live"}`}>
-            <span className="status-dot" />
-            YOUR HOME, UNDERSTOOD
-            <span>
-              See what improvements could cost, save and change for your home.
-            </span>
-            <button
-              onClick={() => setHelp(true)}
-              aria-label="About this workspace"
-            >
-              <Info size={15} />
-            </button>
-          </div>
           {error && (
             <div className="error-message" role="alert">
               <Info size={18} />
@@ -934,7 +923,6 @@ export default function App() {
                       Reconnect to this audit
                     </button>
                   )}
-                  {done && <Calibration run={run} />}
                 </section>
                 <Tour
                   key={run.property.sid}
@@ -1025,7 +1013,6 @@ export default function App() {
                   </section>}
                   {view === "plan" && (
                     <>
-                      <Calibration run={run} />
                       <PlanView
                         run={run}
                         onFocus={setFocus}
@@ -1175,24 +1162,6 @@ export default function App() {
                   )}
                 </aside>
               </div>
-              <Warnings
-                warnings={[
-                  ...run.warnings,
-                  ...(run.baseline?.warnings || []),
-                  ...events
-                    .filter(
-                      (event) =>
-                        event.type === "fallback" || event.type === "error",
-                    )
-                    .map(
-                      (event) =>
-                        event.message ||
-                        String(
-                          event.payload.detail || event.payload.fallback || "",
-                        ),
-                    ),
-                ]}
-              />
             </>
           )}
           <footer className="app-footer">

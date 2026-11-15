@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Compass, Info, Sun } from "lucide-react";
 import type { RoofView, RunResult } from "../lib/types";
 import { api, assetUrl } from "../lib/api";
-import Warnings from "./Warnings";
 import { number, polygon, ranged } from "../lib/format";
 import { panelFacing } from "../lib/panel-orientation";
 export default function Geometry({
@@ -70,26 +69,20 @@ export default function Geometry({
     bounds.east > bounds.west &&
     bounds.north > bounds.south;
   const roofPoints = [...roofPolys, ...panelPolys].flat();
-  // Use the real photo's width and centre the crop on the roof. A tall parcel
-  // photograph otherwise collapses into a narrow strip inside a landscape map.
-  const roofCentreY = roofPoints.length ? (Math.min(...roofPoints.map(p => p[1])) + Math.max(...roofPoints.map(p => p[1]))) / 2 : validBounds ? (bounds.south+bounds.north)/2 : 0;
-  const imageHalfHeight = validBounds ? (bounds.east-bounds.west) * Math.cos(roofCentreY*Math.PI/180) * 1000/680/2 : 0;
-  const imageCorners = validBounds ? [[bounds.west, roofCentreY-imageHalfHeight], [bounds.east, roofCentreY+imageHalfHeight]] : [];
-  const canvasHeight = !layout && validBounds ? 1000 : 430;
-  const points = !layout && validBounds ? imageCorners : layout
+  // Frame the whole measured roof, while letting the viewer follow its shape.
+  // The aerial image uses the same geographic transform and can extend past
+  // the frame without stretching or displacing the roof outlines.
+  const roofFrame = roofPoints.length ? roofPoints : validBounds
+    ? [[bounds.west, bounds.south], [bounds.east, bounds.north]]
+    : [];
+  const roofSpanX = roofFrame.length ? Math.max(...roofFrame.map((p) => p[0])) - Math.min(...roofFrame.map((p) => p[0])) : 0;
+  const roofSpanY = roofFrame.length ? Math.max(...roofFrame.map((p) => p[1])) - Math.min(...roofFrame.map((p) => p[1])) : 0;
+  const roofLatitude = roofFrame.length ? roofFrame.reduce((sum, p) => sum + p[1], 0) / roofFrame.length : 0;
+  const roofAspect = roofSpanX > 0 ? roofSpanY / (roofSpanX * Math.cos(roofLatitude * Math.PI / 180)) : 1;
+  const canvasHeight = layout ? 430 : Math.max(420, Math.min(880, Math.round(680 * roofAspect)));
+  const points = layout
     ? candidates.map((p) => [p.x, p.y])
-    : [
-        ...roofPolys,
-        ...panelPolys,
-        ...(validBounds
-          ? [
-              [
-                [bounds.west, bounds.south],
-                [bounds.east, bounds.north],
-              ],
-            ]
-          : []),
-      ].flat();
+    : roofFrame;
   if (!points.length)
     return (
       <div className="empty-state">
@@ -123,8 +116,8 @@ export default function Geometry({
   const longitudeScale =
     !layout && roofView ? Math.cos((((minY + maxY) / 2) * Math.PI) / 180) : 1;
   const scale = Math.min(
-    (layout ? 510 : 680) / ((maxX - minX) * longitudeScale || 1),
-    (layout ? 290 : canvasHeight) / (maxY - minY || 1),
+    (layout ? 510 : 612) / ((maxX - minX) * longitudeScale || 1),
+    (layout ? 290 : canvasHeight - 68) / (maxY - minY || 1),
   );
   const xy = (p: number[]) => [
     340 + (p[0] - (minX + maxX) / 2) * longitudeScale * scale,
@@ -215,7 +208,7 @@ export default function Geometry({
           geometry is shown.
         </p>
       )}
-      <div className={`geometry-canvas ${layout ? "" : "roof-photo-canvas"}`}>
+      <div className={`geometry-canvas ${layout ? "" : `roof-photo-canvas ${canvasHeight > 700 ? "roof-photo-portrait" : ""}`}`}>
         <svg
           viewBox={`0 0 680 ${canvasHeight}`}
           role={layout ? "group" : "img"}
@@ -456,11 +449,6 @@ export default function Geometry({
             ))}
           </>
         )
-      )}
-      {layout && (
-        <Warnings
-          warnings={[...(desks?.warnings || []), ...(current?.warnings || [])]}
-        />
       )}
     </section>
   );

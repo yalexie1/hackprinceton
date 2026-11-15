@@ -30,7 +30,7 @@ BDG2 = ROOT / "data/cache/evals/bdg2"
 WX = ROOT / "data/cache/evals/weather"
 OUT = ROOT / "data/cache/evals/out"
 YEAR = 2017
-TARGET_N = int(sys.argv[1]) if len(sys.argv) > 1 else 500
+DEFAULT_TARGET_N = 500
 ARMS = ("bdg2temp", "openmeteo")
 
 # ASHRAE 169 climate zones for the five US sites.
@@ -119,7 +119,7 @@ def scaled_bundle(golden: dict, row, site: dict, arm: str) -> dict:
     return b
 
 
-def main() -> int:
+def main(target_n: int = DEFAULT_TARGET_N) -> int:
     from backend.schema import PropertyBundle
     from backend.analysis import api
 
@@ -139,7 +139,7 @@ def main() -> int:
           f"{len(pool[pool.building_id.isin(gas)])})", flush=True)
 
     # Stratified by site, proportional, seeded.
-    n = min(TARGET_N, len(pool))
+    n = min(target_n, len(pool))
     frac = n / len(pool)
     parts = []
     for site_id, group in pool.groupby("site_id"):
@@ -203,4 +203,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_TARGET_N))

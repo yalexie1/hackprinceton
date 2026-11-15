@@ -909,3 +909,32 @@ def get_asset(path: str) -> bytes:
         raise FileNotFoundError(f"not cached: {path}")
     return target.read_bytes()
 
+
+def get_pano_faces(sid: str, pano_id: str, defurnished: bool = False, *,
+                   post=None, download=None) -> list[bytes]:
+    """The six cube faces of one panorama, in the API's order (up, four sides, down). Cache first
+    (`matterport.pano_face_paths`); on a miss, ask Matterport for fresh signed URLs, download the six
+    faces, write them to those cache paths and return them. Nothing but bytes is stored: the URLs
+    expire and are never kept. Raises `LookupError` when the model has no such panorama (or no
+    defurnished set: only the furnished faces can be fetched), and `FileNotFoundError` never.
+    """
+    from . import matterport
+    if defurnished:
+        raise LookupError("defurnished panorama faces are not fetched, only the furnished ones")
+    paths = [_ROOT / p for p in matterport.pano_face_paths(sid, pano_id)]
+    root = _cache_dir().resolve()
+    if not all(p.resolve().is_relative_to(root) for p in paths):
+        raise ValueError(f"panorama paths outside the cache directory: {sid}/{pano_id}")
+    if all(p.is_file() for p in paths):
+        return [p.read_bytes() for p in paths]
+    urls = matterport.pano_face_urls(sid, post=post).get(pano_id)
+    if not urls:
+        raise LookupError(f"no 2k panorama {pano_id} in model {sid}")
+    get = download or matterport.download_face
+    faces = [get(u) for u in urls]
+    if not all(faces):
+        raise LookupError(f"empty face downloaded for panorama {pano_id}")
+    for path, data in zip(paths, faces):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    return faces

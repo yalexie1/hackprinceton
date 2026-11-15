@@ -134,6 +134,53 @@ query Model($id: ID!) {
 """
 
 
+PANO_FACES_QUERY = """
+query PanoFaces($id: ID!) {
+  model(id: $id) {
+    locations { id panos { id skyboxes(resolutions: ["2k"]) { resolution status children } } }
+  }
+}
+"""
+
+
+def download_face(url: str) -> bytes:
+    """One signed face URL to bytes."""
+    import httpx  # imported lazily so offline tests need no transport
+
+    resp = httpx.get(url, timeout=60.0, follow_redirects=True)
+    resp.raise_for_status()
+    return resp.content
+
+
+#: One query returns every panorama of a model, so a run reading dozens of panoramas asks once. The signed URLs
+#: expire, so what is held here is only reused for a few minutes and never written anywhere.
+_FACE_URLS: dict[str, tuple[float, dict[str, list[str]]]] = {}
+_FACE_URL_TTL_S = 300.0
+
+
+def pano_face_urls(sid: str, *, post: Optional[Poster] = None) -> dict[str, list[str]]:
+    """Fresh, expiring download URLs of the six 2k cube faces of every panorama, by pano id, in the
+    API's order (up, four sides, down; checked on real images: face0 is the ceiling, face5 the floor). The URLs are signed and short-lived: use them at once and
+    never store them. A panorama with no available 2k skybox is left out."""
+    now = time.monotonic()
+    hit = _FACE_URLS.get(sid) if post is None else None
+    if hit and now - hit[0] < _FACE_URL_TTL_S:
+        return hit[1]
+    body = (post or _default_post)(PANO_FACES_QUERY, {"id": sid})
+    if body.get("errors") and not (body.get("data") or {}).get("model"):
+        raise LookupError(f"Matterport refused the panorama query: {str(body['errors'])[:200]}")
+    out: dict[str, list[str]] = {}
+    for loc in ((body.get("data") or {}).get("model") or {}).get("locations") or []:
+        for pano in loc.get("panos") or []:
+            for sky in pano.get("skyboxes") or []:
+                kids = sky.get("children") or []
+                if sky.get("status") == "available" and sky.get("resolution") == "2k" and len(kids) == 6:
+                    out[pano["id"]] = list(kids)
+    if post is None:
+        _FACE_URLS[sid] = (now, out)
+    return out
+
+
 # ---------- cache paths (never URLs) ----------
 
 def cache_root(sid: str) -> str:

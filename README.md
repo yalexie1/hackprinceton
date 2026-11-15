@@ -23,7 +23,8 @@ Then start the server from the same shell:
 - `AGENT_MODE=replay` is also the default; never set `live` on stage.
 - Recordings are in `data/runs/_demo/<sid>/` (git-ignored, per machine). A property with no recording falls back to the example in `specs/examples/`. Override the folder with `AGENT_DEMO_DIR`.
 - Make a recording with a live run (`AGENT_MODE=live`, needs `ANTHROPIC_API_KEY`, `EIA_API_KEY` and the mirrored CoStar kit): it is saved only when the run reaches `done` with a plan.
-- Before the demo: `python -m backend.data_layer.mirror --check` and `python -m backend.data_layer.demo_check`.
+- Before the demo: `python -m backend.data_layer.mirror --check` and `python -m backend.data_layer.demo_check --golden` (the three golden properties, about 2 min). Bare `demo_check` now checks all 50 warm properties and takes about an hour.
+- After pulling, run `npm install` in `frontend/` (the Solar map needs `leaflet`), and restart the API with the keys loaded (next line).
 - `demo_check` and every live run need the sponsor and EIA keys **in the process environment** (`set -a; source .env; set +a` in that shell); without them they stop with an auth error such as `MatterportAuthMissing`, never fall back silently. Check the run header says **live property data** before trusting a recording.
 - Frontend: `cd frontend && npm ci && npm run dev`, then open http://localhost:5173, **never 127.0.0.1**: the Matterport SDK key is allowlisted for `localhost` only, and on 127.0.0.1 the tour cannot load its evidence markers (see `frontend/README.md`).
 

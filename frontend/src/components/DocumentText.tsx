@@ -26,11 +26,11 @@ function highlightBlanks() {
             value.startsWith("{{") || value.startsWith("[[BLANK:")
               ? {
                   type: "missingTerm",
-                  data: { hName: "mark" },
+                  data: { hName: value.includes("_box") ? "span" : "mark" },
                   children: [
                     {
                       type: "text",
-                      value: `${value
+                      value: value.includes("_box") ? "☐" : `${value
                         .replace(/^\{\{|\}\}$/g, "")
                         .replace(/^\[\[BLANK:\s*|\]\]$/g, "")
                         .split(",")[0]

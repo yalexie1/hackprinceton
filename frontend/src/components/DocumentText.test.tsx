@@ -37,4 +37,12 @@ describe("real legal document presentation", () => {
     expect(html).not.toContain("onerror");
     expect(html).toContain("Legal text remains.");
   });
+  it("shows an actual checkbox symbol instead of a checkbox field name", () => {
+    const html = renderToStaticMarkup(
+      <DocumentText text="Subcontractors: {{subcontractor_yes_box}} Yes {{subcontractor_no_box}} No" />,
+    );
+    expect(html).toContain("<span>☐</span> Yes");
+    expect(html).toContain("<span>☐</span> No");
+    expect(html).not.toContain("subcontractor yes box");
+  });
 });

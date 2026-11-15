@@ -7,7 +7,6 @@ import type {
   RunResult,
 } from "../lib/types";
 import { api, ApiError } from "../lib/api";
-import { download } from "../lib/format";
 import DocumentText from "./DocumentText";
 const labels: Record<DocType, string> = {
   retrofit_contract_residential: "Residential retrofit contract",
@@ -77,6 +76,7 @@ export default function Documents({
   );
   const [approved, setApproved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [draft, setDraft] = useState<DocumentDraft | null>(null);
   const [error, setError] = useState("");
   const [available, setAvailable] = useState<DocType[]>(() =>
@@ -377,15 +377,22 @@ export default function Documents({
             </div>
             <button
               className="text-button"
-              onClick={() =>
-                download(
-                  `${draft.doc_type}-${draft.state}.md`,
-                  `${draft.disclaimer}\n\n${draft.markdown}`,
-                )
-              }
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true);
+                setError("");
+                try {
+                  const { exportLegalPdf } = await import("../lib/legal-pdf");
+                  exportLegalPdf(draft);
+                } catch (cause) {
+                  setError(cause instanceof Error ? cause.message : "Could not create the PDF.");
+                } finally {
+                  setExporting(false);
+                }
+              }}
             >
-              <Download size={15} />
-              Download draft
+              {exporting ? <LoaderCircle className="spin" size={15} /> : <Download size={15} />}
+              {exporting ? "Creating PDF…" : "Download PDF draft"}
             </button>
           </div>
           <DocumentText text={draft.disclaimer} variant="notice" />

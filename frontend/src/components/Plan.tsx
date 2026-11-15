@@ -1,7 +1,6 @@
 import {
   ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
   Check,
   ChevronDown,
   ChevronRight,
@@ -15,14 +14,12 @@ import {
 } from "lucide-react";
 import { useId, useState } from "react";
 import type {
-  Assumption,
   FinancingScenario,
   MeasureResult,
   Ranged,
   RunResult,
 } from "../lib/types";
 import { readableText, warningText } from "../lib/homeowner-language";
-import { SourceDrawer } from "./SourceDrawer";
 import { REASON_DETAIL, REASON_LABELS, measureName } from "./FindingReason";
 import { money, number, ranged } from "../lib/format";
 const reasonLabels = REASON_LABELS;
@@ -151,15 +148,12 @@ export function MeasureCard({
   measure,
   rank,
   onFocus,
-  assumptions = [],
 }: {
   measure: MeasureResult;
   rank?: number;
   onFocus: (id: string) => void;
-  assumptions?: Assumption[];
 }) {
   const [open, setOpen] = useState(false);
-  const [sources, setSources] = useState(false);
   const f = measure.finance;
   return (
     <article className={`measure-card ${open ? "expanded" : ""}`}>
@@ -207,18 +201,6 @@ export function MeasureCard({
       {open && (
         <div className="measure-details">
           <p>{readableText(measure.description)}</p>
-          {/* One click to the provenance, and nothing added to the page until asked:
-              a source for every estimate, with the main pages kept clean. */}
-          <button className="source-link" onClick={() => setSources(true)}>
-            <Info size={14} /> How this was calculated
-          </button>
-          {sources && (
-            <SourceDrawer
-              measure={measure}
-              assumptions={assumptions}
-              onClose={() => setSources(false)}
-            />
-          )}
           {f && (
             <>
               <div className="detail-grid">
@@ -248,78 +230,6 @@ export function MeasureCard({
                   <small>Savings minus costs, in today’s dollars.</small>
                 </div>
               </div>
-              <details className="financial-guide">
-                <summary>Detailed return calculations</summary>
-                <div className="detail-grid">
-                  <div>
-                    <span>Discounted payback</span>
-                    <strong>
-                      {f.discounted_payback_years == null
-                        ? "Not available"
-                        : `${number(f.discounted_payback_years, 1)} years`}
-                    </strong>
-                  </div>
-                  <div>
-                    <span>Useful life</span>
-                    <strong>{f.useful_life_years} years</strong>
-                  </div>
-                  <div>
-                    <span>Savings compared with cost (SIR)</span>
-                    <strong>
-                      {f.sir == null ? "Not available" : number(f.sir, 2)}
-                    </strong>
-                  </div>
-                  <div>
-                    <span>Internal rate of return (IRR)</span>
-                    <strong>
-                      {f.irr == null
-                        ? "Not available"
-                        : `${number(f.irr * 100, 1)}%`}
-                    </strong>
-                  </div>
-                  <div>
-                    <span>Yearly maintenance cost change</span>
-                    <strong>{money(f.annual_om_change_usd)}</strong>
-                  </div>
-                </div>
-              </details>
-              <details className="financial-guide">
-                <summary>What do these financial terms mean?</summary>
-                <dl>
-                  <dt>Simple payback</dt>
-                  <dd>
-                    How long estimated yearly savings take to recover the
-                    upfront cost.
-                  </dd>
-                  <dt>Discounted payback</dt>
-                  <dd>
-                    Payback after allowing for the lower value of money received
-                    in the future.
-                  </dd>
-                  <dt>Net present value (NPV)</dt>
-                  <dd>
-                    Future savings minus costs, expressed in today’s dollars.
-                    Positive values indicate a financial benefit under the
-                    stated assumptions.
-                  </dd>
-                  <dt>Savings-to-investment ratio (SIR)</dt>
-                  <dd>
-                    Discounted lifetime savings compared with the investment. A
-                    ratio of at least 1 passes the plan’s cost-effectiveness
-                    test.
-                  </dd>
-                  <dt>Internal rate of return (IRR)</dt>
-                  <dd>
-                    The discount rate at which the project’s net present value
-                    is zero.
-                  </dd>
-                  <dt>Estimated range</dt>
-                  <dd>
-                    The low and high estimates supplied by the analysis. These
-                    are estimates, not contractor quotes or guaranteed savings.
-                  </dd>
-                </dl>
-              </details>
               {measure.savings && (
                 <div className="detail-grid">
                   <div>
@@ -342,13 +252,6 @@ export function MeasureCard({
                   </div>
                 </div>
               )}
-              <p className="fineprint">
-                {f.analysis_period_years}-year analysis ·{" "}
-                {number(f.discount_rate * 100, 1)}% discount rate · electricity
-                price increase {number(f.electricity_escalation * 100, 1)}% per
-                year · gas price increase {number(f.gas_escalation * 100, 1)}%
-                per year. Cost source: {f.cost_source}.
-              </p>
               <div className="incentives">
                 <strong>Incentives</strong>
                 {f.incentives.length ? (
@@ -402,30 +305,12 @@ export function MeasureCard({
                 ))}
             </>
           )}
-          {measure.evidence.length > 0 && (
-            <div className="evidence">
-              <span>Evidence</span>
-              {measure.evidence.map((e, i) => (
-                <p key={i}>
-                  {e.kind.replaceAll("_", " ")} · {e.ref}
-                  {e.note && <small>{e.note}</small>}
-                </p>
-              ))}
-              <button
-                className="text-button"
-                onClick={() => onFocus(measure.measure_id)}
-              >
-                Locate in building <ArrowUpRight size={14} />
-              </button>
-            </div>
-          )}
           {measure.value_uplift && (
             <div className="value-uplift">
               <h3>Estimated solar property value uplift</h3>
               <Range value={measure.value_uplift.value_usd} currency />
               <p className="fineprint">
                 Shown separately from energy savings and financial returns.
-                Method {measure.value_uplift.method}.
               </p>
               {measure.value_uplift.notes.map((note, i) => (
                 <p className="fineprint" key={i}>
@@ -619,7 +504,7 @@ export default function PlanView({
             </h3>
             <p>
               {tab === "selected"
-                ? "These upgrades contribute to the savings totals above. Expand an upgrade to see its costs, estimated savings and supporting evidence."
+                ? "These upgrades contribute to the savings totals above. Expand an upgrade to see its costs, estimated savings and what to check before starting work."
                 : tab === "financeable"
                   ? "These upgrades pass the analysis’s cost-effectiveness test but are outside your current plan. Their savings are not included in your totals. More budget or suitable financing may make them possible."
                   : "These findings may not apply to your building, may depend on another upgrade, or may not justify their cost. Each item shows the reason from the analysis."}
@@ -632,7 +517,6 @@ export default function PlanView({
                 measure={item.measure}
                 rank={item.rank}
                 onFocus={onFocus}
-                assumptions={run.building_model?.assumptions ?? []}
               />
             ))}
           {tab === "financeable" && (
@@ -646,7 +530,6 @@ export default function PlanView({
                   key={m.measure_id}
                   measure={m}
                   onFocus={onFocus}
-                  assumptions={run.building_model?.assumptions ?? []}
                 />
               ))}
             </>

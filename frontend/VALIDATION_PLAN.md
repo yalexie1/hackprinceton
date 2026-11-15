@@ -1,6 +1,6 @@
 # Higher-level energy savings validation
 
-Tracking: [#398](https://github.com/yalexie1/hackprinceton/issues/398). Depends on Vignesha's initial [#394 evaluations](https://github.com/yalexie1/hackprinceton/issues/394).
+Planning: [#398](https://github.com/yalexie1/hackprinceton/issues/398). Deferred execution: [#400](https://github.com/yalexie1/hackprinceton/issues/400). Depends on Vignesha's initial [#394 evaluations](https://github.com/yalexie1/hackprinceton/issues/394).
 
 ## Objective and current state
 

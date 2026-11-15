@@ -124,6 +124,74 @@ def err_pct(r: dict, arm: str) -> float | None:
     return 100 * (a["elec"]["expected"] - t) / t if t else None
 
 
+def constant_eui_errors(rows: list[dict]) -> list[float]:
+    """Signed % errors of the naive predictor: cohort median intensity x floor area.
+
+    No model in it at all - one number times the one input every building has. It is
+    the floor any physics has to clear to be worth running, and it is deliberately
+    computed from the SAME rows being scored, which makes it an oracle and therefore
+    a hard floor rather than a fair one. `skill_section` says so in its note.
+    """
+    usable = [r for r in rows if r.get("sqm") and r.get("truth_elec_kwh")]
+    if not usable:
+        return []
+    median_eui = st.median([r["truth_elec_kwh"] / r["sqm"] for r in usable])
+    return [100 * (median_eui * r["sqm"] - r["truth_elec_kwh"]) / r["truth_elec_kwh"]
+            for r in usable]
+
+
+def skill_section(rows: list[dict], arm: str) -> dict:
+    """Does the model beat a predictor with no model in it? Reported, never implied.
+
+    An error figure on its own reads as an accuracy claim. We published "median
+    absolute error 52.9%" for hours and stratified it, bootstrapped it and wrote a
+    diagnosis of it before anyone asked what a constant scores: 42.5%, better than
+    the model on the same 494 and on every usage class in it. @Sri-SriPod hit the
+    same wall independently on a different dataset against a different ground truth.
+
+    Pooled and PER USAGE, because pooled error cancels between classes biased in
+    opposite directions - a model can look adequate overall and be beaten everywhere.
+    """
+    model = describe([e for e in (err_pct(r, arm) for r in rows) if e is not None])
+    const = describe(constant_eui_errors(rows))
+
+    def compare(m: dict, c: dict) -> dict:
+        if not m.get("n") or not c.get("n"):
+            return {"beats_constant": None, "margin_pct_points": None,
+                    "verdict": "not enough rows to compare against the constant"}
+        margin = round(c["median_abs_pct"] - m["median_abs_pct"], 1)
+        beats = margin > 0
+        return {
+            "beats_constant": beats,
+            "margin_pct_points": margin,
+            "verdict": (f"the model is {abs(margin)} points "
+                        f"{'better' if beats else 'WORSE'} than the constant "
+                        f"(cohort median intensity x floor area)"),
+        }
+
+    out: dict = {"model": model, "constant_eui": const, **compare(model, const)}
+    out["by_usage"] = {}
+    groups: dict[str, list[dict]] = {}
+    for r in rows:
+        groups.setdefault(str(r.get("usage")), []).append(r)
+    for name, rs in sorted(groups.items()):
+        m = describe([e for e in (err_pct(r, arm) for r in rs) if e is not None])
+        c = describe(constant_eui_errors(rs))
+        out["by_usage"][name] = {"n": m.get("n", 0), "model_median_abs_pct":
+                                 m.get("median_abs_pct"),
+                                 "constant_median_abs_pct": c.get("median_abs_pct"),
+                                 **compare(m, c)}
+    out["note"] = (
+        "The constant is fitted on the same truth it is scored against, so it is an "
+        "ORACLE and a harder floor than a deployable baseline would be. The fair "
+        "version uses published reference medians (CBECS/RECS): measured separately "
+        "on the 61 BDG2 offices, the public CBECS table scored 39.8% median absolute "
+        "against this model's 44.1%, so the model loses to that too. Quote the "
+        "comparison, never the error alone."
+    )
+    return out
+
+
 def supported_zone_section(rows: list[dict]) -> dict:
     """The stricter cohort: only buildings in a climate zone the DEF tables carry.
 
@@ -186,10 +254,14 @@ def main() -> int:
             "record, and the supported-zone cohort is scored separately below.",
             "Irradiance is Open-Meteo in BOTH arms (BDG2 ships none), so the arm difference "
             "isolates temperature error only, not irradiance error.",
+            "The model does not beat a constant predictor (cohort median intensity x "
+            "floor area) on this cohort, nor on any usage class in it. See the `skill` "
+            "section: an error figure without that comparison is not an accuracy claim.",
         ],
         "l3_electricity": {},
         "l4_interval": {},
         "supported_zones": {},
+        "skill": {},
         "by_usage": {},
         "by_site": {},
         "weather_decomposition": {},
@@ -206,6 +278,9 @@ def main() -> int:
 
     # The stricter reading, published beside the all-building headline, not instead.
     card["supported_zones"] = supported_zone_section(ok)
+
+    # "Better than what?" - answered on every run, not when someone remembers to ask.
+    card["skill"] = skill_section(ok, ARMS[0])
 
     # Stratify.
     for key, field in (("by_usage", "usage"), ("by_site", "site_id")):
@@ -251,8 +326,8 @@ def main() -> int:
     (OUT / "scorecard.json").write_text(json.dumps(card, indent=1))
     print(json.dumps({k: card[k] for k in
                       ("n_scored", "refused_count", "n_sites", "l3_electricity",
-                       "l4_interval", "supported_zones", "weather_decomposition",
-                       "storey_diagnostic")}, indent=1))
+                       "l4_interval", "supported_zones", "skill",
+                       "weather_decomposition", "storey_diagnostic")}, indent=1))
     print(f"\nwrote {OUT}/scorecard.json")
     return 0
 

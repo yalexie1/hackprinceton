@@ -21,6 +21,7 @@ import type {
   Ranged,
   RunResult,
 } from "../lib/types";
+import { readableText, warningText } from "../lib/homeowner-language";
 import { SourceDrawer } from "./SourceDrawer";
 import { REASON_DETAIL, REASON_LABELS, measureName } from "./FindingReason";
 import { money, number, ranged } from "../lib/format";
@@ -123,7 +124,7 @@ function SkippedItem({
       <p className="skipped-detail">
         {/\b(SIR|NPV|IRR)\b/.test(item.detail) && explain
           ? explain.what.split(". ")[0] + "."
-          : item.detail}
+          : readableText(item.detail)}
       </p>
       {open && explain && (
         <div className="skipped-explain">
@@ -132,8 +133,8 @@ function SkippedItem({
           <h4>What would change it</h4>
           <p>{explain.change}</p>
           <details>
-            <summary>See the audit’s technical detail</summary>
-            <p>{item.detail}</p>
+            <summary>Read the audit’s explanation</summary>
+            <p>{readableText(item.detail)}</p>
           </details>
         </div>
       )}
@@ -205,7 +206,7 @@ export function MeasureCard({
       </button>
       {open && (
         <div className="measure-details">
-          <p>{measure.description}</p>
+          <p>{readableText(measure.description)}</p>
           {/* One click to the provenance, and nothing added to the page until asked:
               a source for every estimate, with the main pages kept clean. */}
           <button className="source-link" onClick={() => setSources(true)}>
@@ -428,7 +429,7 @@ export function MeasureCard({
               </p>
               {measure.value_uplift.notes.map((note, i) => (
                 <p className="fineprint" key={i}>
-                  {note}
+                  {readableText(note)}
                 </p>
               ))}
             </div>
@@ -436,12 +437,12 @@ export function MeasureCard({
           {measure.flags.map((flag) => (
             <p className="inline-note" key={flag.key}>
               <Info size={14} />
-              {flag.message}
+              {warningText(flag.message)}
             </p>
           ))}
           {measure.warnings.map((w, i) => (
             <p className="fineprint" key={i}>
-              {w}
+              {warningText(w)}
             </p>
           ))}
         </div>
@@ -683,7 +684,7 @@ export default function PlanView({
           <Range value={plan.value_uplift.value_usd} currency />
           <p className="fineprint">
             Shown separately from energy savings. Method{" "}
-            {plan.value_uplift.method} · {plan.value_uplift.comp_count}{" "}
+            {readableText(plan.value_uplift.method)} · {plan.value_uplift.comp_count}{" "}
             comparable sales.
           </p>
           {plan.value_uplift.cap_rate && (
@@ -696,7 +697,7 @@ export default function PlanView({
           )}
           {plan.value_uplift.notes.map((note, i) => (
             <p className="fineprint" key={i}>
-              {note}
+              {readableText(note)}
             </p>
           ))}
         </section>

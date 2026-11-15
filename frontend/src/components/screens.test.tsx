@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { demoProperties, demoRun } from "../lib/fixtures";
 import PlanView, { MeasureCard } from "./Plan";
+import { inputName, warningText } from "../lib/homeowner-language";
 import Assumptions from "./Assumptions";
 import Geometry from "./Geometry";
 import Find from "./Find";
@@ -159,7 +160,7 @@ describe("shared contract screen compatibility", () => {
     expect(html.split("Check the energy prices used")).toHaveLength(2);
     expect(html).toContain("Read 2 notes");
     for (const note of [electricity, gas])
-      expect(html.split(note.replaceAll("'", "&#x27;"))).toHaveLength(2);
+      expect(html.split(warningText(note).replaceAll("'", "&#x27;"))).toHaveLength(2);
     expect(html).toContain("Review the weather data used");
   });
   it("marks an earlier narrative as outdated after a backend re-run warning", () => {
@@ -211,7 +212,7 @@ describe("shared contract screen compatibility", () => {
         <Assumptions run={run} demo busy={false} onSave={() => {}} />,
       );
       for (const assumption of run.building_model!.assumptions)
-        expect(html).toContain(assumption.label.replaceAll("&", "&amp;"));
+        expect(html).toContain(inputName(assumption.key, assumption.label).replaceAll("&", "&amp;"));
       expect(html).toContain("Where this detail came from");
     }
   });

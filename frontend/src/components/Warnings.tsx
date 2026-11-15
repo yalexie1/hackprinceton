@@ -1,3 +1,4 @@
+import { readableText, warningText } from "../lib/homeowner-language";
 import { Info } from "lucide-react";
 import DocumentText from "./DocumentText";
 
@@ -29,12 +30,12 @@ export default function Warnings({ warnings }: { warnings: string[] }) {
     >
       <h3>What to check before deciding</h3>
       {[...groups].map(([heading, notes]) => (
-        <details className="warning-detail" key={heading}>
+        <details open className="warning-detail" key={heading}>
           <summary>
             <Info size={18} />
             {heading} <span>{notes.length > 1 ? `Read ${notes.length} notes` : "Read full note"}</span>
           </summary>
-          {notes.map((note) => <p key={note}>{note}</p>)}
+          {notes.map((note) => <p key={note}>{warningText(note)}</p>)}
         </details>
       ))}
     </section>
@@ -73,11 +74,11 @@ export function AuditNarrative({
   const { lead, rest } = splitNarrative(text || fallback);
   const content = concise ? (
     <>
-      <DocumentText variant="report" text={lead} />
+      <DocumentText variant="report" text={readableText(lead)} />
       {rest && (
         <details className="narrative-rest">
           <summary>Read the rest of the report</summary>
-          <DocumentText variant="report" text={rest} />
+          <DocumentText variant="report" text={readableText(rest)} />
         </details>
       )}
       <p className="fineprint">
@@ -86,7 +87,7 @@ export function AuditNarrative({
       </p>
     </>
   ) : (
-    <DocumentText variant="report" text={text || fallback} />
+    <DocumentText variant="report" text={readableText(text || fallback)} />
   );
   return warnings.some((warning) => warning.startsWith("re-run:")) ? (
     <>

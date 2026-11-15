@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
+            if (id.includes("preload-helper") || id.includes("commonjsHelpers")) return "vendor";
+            if (id.includes("/node_modules/") && /\/(jspdf|fflate|fast-png|iobuffer|pako|canvg|core-js|dompurify|html2canvas|rgbcolor|stackblur-canvas|svg-pathdata|raf|text-segmentation|utrie|css-line-break|base64-arraybuffer)\//.test(id)) return "pdf-export";
             if (id.includes("/node_modules/three/")) return "architecture";
             if (id.includes("/node_modules/")) return "vendor";
             if (id.includes("/fixtures/") || id.includes("/specs/examples/"))

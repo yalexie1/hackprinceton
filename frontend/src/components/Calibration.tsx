@@ -1,3 +1,4 @@
+import { inputName } from "../lib/homeowner-language";
 import type { RunResult } from "../lib/types";
 import { number } from "../lib/format";
 import Warnings from "./Warnings";
@@ -59,8 +60,7 @@ export default function Calibration({ run }: { run: RunResult }) {
           </table>
         </div>
         <p className="fineprint">
-          Monthly criteria: bias within ±5%, CV(RMSE) at most 15%. A fitted
-          baseline does not guarantee future savings.
+          Monthly checks allow an average over- or under-estimate of up to 5% and an overall monthly fit error of up to 15%. Matching past bills does not guarantee future savings.
         </p>
       </details>
       {summary.moved.length > 0 && (
@@ -69,8 +69,7 @@ export default function Calibration({ run }: { run: RunResult }) {
           <ul>
             {summary.moved.map((key) => (
               <li key={key}>
-                {run.building_model?.assumptions.find((a) => a.key === key)
-                  ?.label || key}
+                {inputName(key, run.building_model?.assumptions.find((a) => a.key === key)?.label)}
               </li>
             ))}
           </ul>

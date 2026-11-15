@@ -184,3 +184,29 @@
     font-size: 2rem;
   }
 }
+
+/* Owner-approved presentation pass: leave measured values and caveats intact. */
+.evals { max-width:76rem; padding:1.5rem 0 4rem; color:#203d33; }
+.evals h2 { font-size:clamp(1.85rem,2.5vw,2.6rem); letter-spacing:-.035em; }
+.eval-intro { max-width:75ch; color:#4f645a; line-height:1.7; }
+.eval-section { margin-top:1.5rem; padding:1.6rem; background:#fff; border:1px solid #d7e3db; border-radius:18px; box-shadow:0 4px 20px #203d3305; min-width:0; }
+.eval-section h3 { font-size:1.6rem; line-height:1.25; letter-spacing:-.02em; margin-bottom:.75rem; }
+.eval-question { opacity:1; color:#4f645a; line-height:1.7; max-width:75ch; }
+.eval-figures { grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); align-items:stretch; }
+.eval-figure { background:#f4f8f4; border:1px solid #d7e3db; border-radius:12px; padding:1.25rem; min-width:0; }
+.eval-figure-value { margin:.75rem 0 .5rem; line-height:1.2; overflow-wrap:anywhere; }
+.eval-figure-note,.eval-figure-meta,.eval-figure-nominal { opacity:1; line-height:1.55; }
+.eval-caveats { border:1px solid #ddcfad; background:#fffaf0; padding:1.2rem; border-radius:12px; margin-top:1.5rem; }
+.eval-caveats h4 { margin:0 0 .75rem; color:#604718; font-size:1.2rem; }
+.eval-caveats li { line-height:1.65; margin-bottom:.65rem; }
+.evals table { max-width:none; }
+.evals th,.evals td { padding:.8rem 1rem; border-bottom:1px solid #dfe6e1; vertical-align:top; }
+.evals thead th { background:#edf3ee; white-space:normal; line-height:1.5; }
+.eval-table-scroll { border:1px solid #d7e3db; border-radius:12px; }
+.eval-provenance,.eval-note { opacity:1; color:#4f645a; line-height:1.65; }
+.eval-section-pending { background:#f3f6f4; }
+@media(max-width:640px) { .eval-section { padding:1.1rem; } .eval-section h3 { font-size:1.35rem; } .eval-figure { padding:1rem; } }
+.eval-supported { margin-top:1.5rem; padding:1.25rem; border:1px solid #d7e3db; border-radius:14px; background:#f7f9f6; }
+.eval-supported h4 { font-size:1.3rem; margin:0 0 .8rem; }
+.main-shell main .eval-figure-value { font-size:2.35rem; line-height:1.15; color:#1e4e39; }
+.main-shell main .eval-figure-value .eval-figure-unit { font-size:1.1rem; }

@@ -308,6 +308,14 @@ class LiveRun:
                     for line in provenance_warnings(parsed):      # and into RunResult.warnings
                         if line not in self._warnings:
                             self._warnings.append(line)
+            if name == "observe_interior" and isinstance(out, dict) and "error" not in out:
+                for flag in out.get("flags") or []:       # vision read no panoramas: the user is told, not left guessing
+                    if str(flag.get("key", "")).startswith("vision.note."):
+                        note = str(flag.get("message", ""))
+                        self._emit(RunEvent(type="fallback", stage=STAGE_OF.get(name), message=note,
+                                            payload={"fallback": "vision:note"}))
+                        if note and note not in self._warnings:
+                            self._warnings.append(note)
             if name == "build_building_model" and isinstance(out, dict) and "error" not in out:
                 # what the geometry had to assume (for example: no wall graph in the scan, so the walls come from
                 # the footprint) belongs to the user as a fallback of the run, not only to the model

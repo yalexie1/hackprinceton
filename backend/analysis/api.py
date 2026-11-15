@@ -56,12 +56,15 @@ from backend.analysis.model.registry import (build_registry, climate_zone, merge
 from backend.analysis.solar.roof import build_parametric_roof, refine_with_masks
 from backend.analysis.solar.shading import shade_panels
 from backend.analysis.vision import observe_interior as _vision_interior
+from backend.analysis.vision.interior import read_interior as _read_interior
 from backend.schema import (Assumption, BaselineResult, BuildingModel, EnergyUse, FinancingScenario,
                             Flag, Incentive, LayoutResult, MeasureId, MeasureResult, Plan,
                             PropertyBundle, PropertySummary, Question, Ranged, Role, RunRequest,
                             SolarDesign, Source, UtilityBills)
 
 _LOG = logging.getLogger(__name__)
+#: A flag with this key prefix on the interior reading is a run warning (vision read nothing).
+VISION_NOTE = "vision.note."
 _EXAMPLES = Path(__file__).resolve().parents[2] / "specs" / "examples"
 
 
@@ -201,8 +204,15 @@ def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Fla
         # Vision is on: whatever it returns is the answer, even when empty. A property never falls
         # back to the example's invented observations here (issue 392).
         bundle = spread_panos(bundle, config.VISION_MAX_PANOS)
-        return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"],
-                                max_panos=config.VISION_MAX_PANOS, room_fallback=True)
+        res = _read_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"],
+                             max_panos=config.VISION_MAX_PANOS, room_fallback=True)
+        _LOG.info("vision: %d panoramas returned readings (%d warnings)", len(res.readings), len(res.warnings))
+        flags = list(res.flags)
+        if not res.readings:      # said to the user as a run warning, not left as silent vintage defaults
+            reason = res.warnings[0] if res.warnings else "the scan has no panoramas with images"
+            flags.append(Flag(key=f"{VISION_NOTE}0", status="unknown",
+                              message=f"vision read no panoramas: {reason[:200]}"))
+        return res.assumptions, flags
     if not _has_example(bundle.summary.sid):      # a real property: no observations, vintage defaults carry on
         return [], []
     m = BuildingModel.model_validate(_load(_folder(bundle.summary.sid), "building_model.json"))

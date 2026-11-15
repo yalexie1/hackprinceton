@@ -821,3 +821,21 @@ def test_a_geometry_assumption_becomes_a_fallback_event_and_a_run_warning(tmp_pa
     out = run.tools["build_building_model"]()
     assert "error" not in out
     assert "the scan has no wall graph: walls were built from the footprint" in run._warnings
+
+
+def test_a_vision_note_becomes_a_fallback_event_and_a_run_warning(tmp_path):
+    from types import SimpleNamespace
+    from backend.agent.tools import Doors
+    from backend.schema import Flag
+    from backend.agent import analysis_stub
+
+    def observe(bundle):
+        return [], [Flag(key="vision.note.0", status="unknown", message="vision read no panoramas: no face image")]
+    analysis = SimpleNamespace(**{n: getattr(analysis_stub, n) for n in dir(analysis_stub) if not n.startswith("_")})
+    analysis.observe_interior = observe
+    doors = stub_doors()
+    run = live.LiveRun("run_vis", request(), live.LiveSettings(
+        runs_dir=tmp_path, doors=Doors(data=doors.data, analysis=analysis, legal=doors.legal)))
+    run.tools["get_property_bundle"](request().sid)
+    run.tools["observe_interior"]()
+    assert "vision read no panoramas: no face image" in run._warnings

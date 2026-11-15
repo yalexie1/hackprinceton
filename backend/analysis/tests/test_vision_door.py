@@ -76,3 +76,41 @@ def _example_of(flavor):
     from backend.schema import Assumption, Flag
     return ([Assumption.model_validate(a) for a in m["assumptions"]],
             [Flag.model_validate(f) for f in m["flags"]])
+
+
+def test_no_readings_adds_a_vision_note_flag_with_the_reason():
+    bundle, _ = load("house")
+    big, _ = _with_panos(bundle, 3)
+
+    def boom(path):
+        raise FileNotFoundError(path)
+    api.set_vision(ask_model=lambda *a: "{}", get_bytes=boom)
+    _, flags = api.observe_interior(big)
+    notes = [f.message for f in flags if f.key.startswith(api.VISION_NOTE)]
+    assert len(notes) == 1 and notes[0].startswith("vision read no panoramas: ") and "FileNotFoundError" in notes[0]
+
+
+def test_a_scan_with_no_panorama_images_says_so():
+    bundle, _ = load("house")
+    empty = bundle.model_copy(update={"matterport": bundle.matterport.model_copy(update={"panos": []})})
+    api.set_vision(ask_model=lambda *a: "{}", get_bytes=lambda p: b"x")
+    _, flags = api.observe_interior(empty)
+    assert [f.message for f in flags if f.key.startswith(api.VISION_NOTE)] == \
+        ["vision read no panoramas: the scan has no panoramas with images"]
+
+
+def test_readings_mean_no_vision_note():
+    bundle, _ = load("house")
+    big, _ = _with_panos(bundle, 2)
+    reply = json.dumps({"windows": {"visible": True, "count": 1, "total_area_m2": 1.2, "frame": "wood",
+                                    "panes": "single", "low_e": "unknown", "shading": "interior_blinds",
+                                    "confidence": 0.5, "note": "one window"},
+                        "hvac": {"system_type": "unknown", "cues": [], "thermostat": "none_seen",
+                                 "heating_fuel": "unknown", "age_band": "unknown", "confidence": 0.5, "note": "none"},
+                        "water_heater": {"visible": False, "type": "unknown", "fuel": "unknown",
+                                         "confidence": 0.5, "note": "none"},
+                        "lighting": {"fixture_type": "unknown", "fixture_count": 0, "confidence": 0.5,
+                                     "note": "none"}})
+    api.set_vision(ask_model=lambda *a: reply, get_bytes=lambda p: b"x")
+    _, flags = api.observe_interior(big)
+    assert not [f for f in flags if f.key.startswith(api.VISION_NOTE)]

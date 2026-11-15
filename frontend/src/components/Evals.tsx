@@ -240,6 +240,12 @@ function NotRun({ section }: { section: EvalSection }) {
   );
 }
 
+/**
+ * Studies left off the page by the team lead's call (15 Nov). The data stays in
+ * evals.json and backend/evals/out; only the rendering is skipped.
+ */
+const HIDDEN_SECTIONS = new Set(["metered_buildings"]);
+
 /** The headline results, shown first. Same figure cards as the studies below. */
 function Highlights({ section }: { section: EvalSection }) {
   const sources = section.provenance?.sources;
@@ -456,7 +462,7 @@ export default function Evals({ data, highlights }: { data?: EvalsData; highligh
         These studies compare our estimates with recorded energy use or another model. Read the limits beside each result: a model comparison does not prove savings, and these studies do not establish accuracy for your individual home.
       </p>
       {top && top.status === "ok" && <Highlights section={top} />}
-      {Object.entries(loaded).map(([key, section]) =>
+      {Object.entries(loaded).filter(([key]) => !HIDDEN_SECTIONS.has(key)).map(([key, section]) =>
         section.status !== "ok" ? (
           <NotRun key={key} section={section} />
         ) : section.headline ? (

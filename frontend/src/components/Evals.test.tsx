@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import Evals, { columnLabel, type EvalsData } from "./Evals";
 
 const data: EvalsData = {
-  metered_buildings: {
+  metered_study: {
     status: "ok",
     title: "Metered buildings",
     question: "How close is our predicted annual electricity to a real meter?",
@@ -74,7 +74,7 @@ describe("evals page", () => {
 
   it("renders every caveat on the page rather than hiding them behind a disclosure", () => {
     const html = renderToStaticMarkup(<Evals data={data} />);
-    for (const caveat of data.metered_buildings.caveats ?? []) {
+    for (const caveat of data.metered_study.caveats ?? []) {
       expect(html).toContain(caveat);
     }
     expect(html).not.toContain("<details");
@@ -98,7 +98,7 @@ describe("evals page", () => {
     const html = renderToStaticMarkup(<Evals data={data} />);
     expect(html).toContain("38.1");
     expect(html).toContain("44.3");
-    expect(html).toContain(data.metered_buildings.bins_note as string);
+    expect(html).toContain(data.metered_study.bins_note as string);
   });
 });
 
@@ -215,7 +215,7 @@ describe("evals table reads as plain English", () => {
 describe("published climate subset", () => {
   it("renders the supplied subset beside the full headline without hiding its limitation", () => {
     const withSubset = structuredClone(data);
-    withSubset.metered_buildings.supported_zones = {
+    withSubset.metered_study.supported_zones = {
       title:"Supported climate zones only", n:96, n_sites:1, sites:["Panther"], zones:["2A","3B"],
       headline:[{label:"Median absolute error",value:56.7,unit:"%",nominal:null,ci90:null,n:96,note:""}],
       bins:{above_high:76}, note:"Restricted to supported climates.", ci_note:"Only one site; no confidence interval is reported.",
@@ -256,5 +256,13 @@ describe("evals highlights", () => {
   it("is left out when there is nothing to show", () => {
     const html = renderToStaticMarkup(<Evals data={data} highlights={{ status: "not_run", title: "x", question: "y" }} />);
     expect(html).not.toContain("The results we stand behind");
+  });
+});
+
+describe("hidden studies", () => {
+  it("leaves the metered-buildings study off the page", () => {
+    const html = renderToStaticMarkup(<Evals data={{ metered_buildings: data.metered_study }} />);
+    expect(html).not.toContain("Metered buildings");
+    expect(html).not.toContain("Interval coverage");
   });
 });

@@ -45,10 +45,9 @@ export default function Warnings({ warnings }: { warnings: string[] }) {
 /**
  * The first paragraph that says something, and the rest of the report.
  *
- * The report is 2,800 to 3,000 characters across seven to nine paragraphs. On the plan page a
- * reader wants the short version; the detail belongs where they go looking for it. The split is
- * on the report's own paragraphs, and not one word is rewritten - the numbers in it are the
- * backend's, and the specs are the record.
+ * The plan page uses the opening summary; individual recommendation cards and
+ * the check-before-deciding section provide the detail without repeating the
+ * backend's full technical narrative.
  */
 export function splitNarrative(text: string): { lead: string; rest: string } {
   const paragraphs = text.split(/\n{2,}/).filter((p) => p.trim());
@@ -58,6 +57,23 @@ export function splitNarrative(text: string): { lead: string; rest: string } {
     lead: paragraphs.slice(0, first + 1).join("\n\n"),
     rest: paragraphs.slice(first + 1).join("\n\n"),
   };
+}
+
+export function homeownerReport(text: string): string {
+  let inChecks = false;
+  return text.split("\n").map((line) => {
+    if (/^#{1,6}\s+Audit summary \(real analysis\)/i.test(line.trim()))
+      return "## Your energy audit";
+    if (/^Warnings and fallbacks in this run:\s*$/i.test(line.trim())) {
+      inChecks = true;
+      return "What to check before deciding:";
+    }
+    if (inChecks && /^\s*[-*]\s+/.test(line)) {
+      return `- ${warningText(line.replace(/^\s*[-*]\s+/, ""))}`;
+    }
+    if (inChecks && /^#{1,6}\s/.test(line)) inChecks = false;
+    return line;
+  }).join("\n");
 }
 
 export function AuditNarrative({
@@ -70,24 +86,18 @@ export function AuditNarrative({
   concise?: boolean;
 }) {
   const fallback =
-    "Read the selected measures and their evidence before you start work.";
-  const { lead, rest } = splitNarrative(text || fallback);
+    "Review the recommended improvements and confirm the details before you start work.";
+  const { lead } = splitNarrative(homeownerReport(text || fallback));
   const content = concise ? (
     <>
       <DocumentText variant="report" text={readableText(lead)} />
-      {rest && (
-        <details className="narrative-rest">
-          <summary>Read the rest of the report</summary>
-          <DocumentText variant="report" text={readableText(rest)} />
-        </details>
-      )}
       <p className="fineprint">
         Every input behind these numbers is in the Assumptions tab, with where
         it came from.
       </p>
     </>
   ) : (
-    <DocumentText variant="report" text={readableText(text || fallback)} />
+    <DocumentText variant="report" text={readableText(homeownerReport(text || fallback))} />
   );
   return warnings.some((warning) => warning.startsWith("re-run:")) ? (
     <>

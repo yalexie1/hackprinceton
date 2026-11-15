@@ -62,8 +62,8 @@ export default function WorkspaceNavigation({
             <strong>{propertyName}</strong>
           </div>
           <nav className="property-navigation-links" aria-label="Property analysis">
-            {views.filter((item) => !publicViews.has(item.id)).map(link)}
             {link({ id: "audit", label: "Audit trail", icon: CheckCircle2 })}
+            {views.filter((item) => !publicViews.has(item.id)).map(link)}
           </nav>
         </div>
       ) : hasRun ? (

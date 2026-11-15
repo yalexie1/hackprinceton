@@ -41,6 +41,7 @@ describe("workspace navigation availability", () => {
     expect(html).toContain('aria-label="Property analysis"');
     for (const label of ["Energy plan", "Solar &amp; roof", "Workspace", "Assumptions", "Documents", "Audit trail", "A finished property"])
       expect(html).toContain(label);
+    expect(html.indexOf("Audit trail")).toBeLessThan(html.indexOf("Energy plan"));
     expect((html.match(/aria-current="page"/g) || []).length).toBe(1);
     expect(html).not.toContain("disabled");
   });

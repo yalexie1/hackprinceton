@@ -41,6 +41,13 @@ describe("homeowner wording", () => {
     const unknown = warningText("tariff eia/retail-sales (fallback): EIA state average retail price, 2026-08");
     expect(unknown).not.toMatch(/for (homes|businesses)/);
   });
+  it("explains solar installation checks without internal cost-method text", () => {
+    const electrical = warningText("Main panel not visible in any panorama; two-prong outlets seen. Added cost: project judgement: has no published installation price for a service upgrade; 3,000 U.S. dollars expected cost with the documented method range rule.");
+    expect(electrical).toContain("licensed electrician");
+    expect(electrical).toContain("quote");
+    expect(electrical).not.toContain("documented method");
+    expect(warningText("No cue on the roof structure yet: unknown.")).toContain("support solar panels");
+  });
   it("folds consecutive identical activity rows and keeps the latest index", () => {
     const rows = ["a", "b", "b", "b", "c", "b"];
     const out = collapseActivity(rows, (x) => x);

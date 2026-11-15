@@ -27,7 +27,6 @@ export default function Geometry({
   const [roofView, setRoofView] = useState<RoofView | null>(null);
   const [roofError, setRoofError] = useState("");
   const [imageFailed, setImageFailed] = useState(false);
-  const [showDetections, setShowDetections] = useState(false);
   const [showPanels, setShowPanels] = useState(true);
   useEffect(() => {
     setRoofView(null);
@@ -61,7 +60,6 @@ export default function Geometry({
   );
   const panels = roofView?.panels || solar?.panels || [];
   const panelPolys = panels.map((p) => polygon(p.polygon_wkt));
-  const detections = roofView?.detections || [];
   const ortho = roofView?.ortho;
   const bounds = ortho?.bounds;
   const validBounds =
@@ -83,7 +81,6 @@ export default function Geometry({
     : [
         ...roofPolys,
         ...panelPolys,
-        ...detections.map((d) => polygon(d.bbox_wkt)),
         ...(validBounds
           ? [
               [
@@ -167,16 +164,6 @@ export default function Geometry({
             />
             Solar proposal
           </label>
-          {detections.length > 0 && (
-            <label>
-              <input
-                type="checkbox"
-                checked={showDetections}
-                onChange={(event) => setShowDetections(event.target.checked)}
-              />
-              Automatic outline candidates
-            </label>
-          )}
           {roofView && (
             <span>
               {roofView.panels_selected
@@ -347,24 +334,6 @@ export default function Geometry({
                       </polygon>
                     ),
                 )}
-              {showDetections &&
-                detections.map((detection, i) => {
-                  const outline = polygon(
-                    detection.mask_wkt || detection.bbox_wkt,
-                  );
-                  return outline.length ? (
-                    <polygon
-                      key={`detection-${i}`}
-                      points={pts(outline)}
-                      fill="none"
-                      stroke="#b35b20"
-                      strokeWidth="2"
-                      strokeDasharray="6 4"
-                    >
-                      <title>{`${readableText(detection.label)} candidate ${i + 1}: model match score ${number(detection.confidence * 100)}%. ${detection.mask_area_m2 == null ? "Outlined area unavailable." : `Outlined area ${number(detection.mask_area_m2, 1)} m².`} The enclosing box is not the roof boundary.`}</title>
-                    </polygon>
-                  ) : null;
-                })}
             </>
           )}
           <path
@@ -384,38 +353,12 @@ export default function Geometry({
         <p className="section-description roof-facing">
           The proposed panels face {facing.label} (
           {Math.round(facing.azimuthDeg)}° from north; north is at the top of
-          the map). The design fills the side of the roof with the most
-          modelled sunlight first, and when two sides are within about 1% of
-          each other it uses the western one.
+          the map). An installer should confirm the panel position and expected
+          sunlight before installation.
         </p>
       )}
-      {!layout && detections.length > 0 && (
-        <section className="roof-confidence-explainer">
-          <h3>Why do some roof scores look low?</h3>
-          <p>These percentages are the image model’s match scores for individual outline candidates. They are not the chance that your roof exists, a measured roof-survey accuracy, or confidence in energy savings.</p>
-          <p>For this image, {detections.length} candidates have scores from {number(Math.min(...detections.map(d => d.confidence)) * 100)}% to {number(Math.max(...detections.map(d => d.confidence)) * 100)}%. The roof model can return overlapping pieces of the same roof. A higher-scoring piece can also belong to a different structure, so the analysis checks location and area rather than simply choosing the highest score.</p>
-          {roofs.some(r => r.geometry_source === "vexcel_parametric") && <p>The roof slope and roof sections are estimated from the aerial outline and roof shape. They are not a measured 3D roof survey. The assumed ridge direction and space around roof features also need checking.</p>}
-          <p>The scores alone cannot tell us why an individual match is weak. We have not calibrated them against a surveyed roof at this property. Confirm the roof boundary, slope, usable space and obstructions with an installer before relying on the proposed layout.</p>
-        <details className="roof-detections">
-          <summary>Inspect {detections.length} automatic outline candidates</summary>
-          <p>
-            Boxes locate findings; their area is not the detected roof area.
-            Each feature’s outlined area comes directly from the data source.
-            Overlapping areas are not added together.
-          </p>
-          <ul>
-            {detections.map((detection, i) => (
-              <li key={i}>
-                {readableText(detection.label)} candidate {i + 1} · {number(detection.confidence * 100)}%
-                model match score ·{" "}
-                {detection.mask_area_m2 == null
-                  ? "outlined area unavailable"
-                  : `${number(detection.mask_area_m2, 1)} m² outlined area`}
-              </li>
-            ))}
-          </ul>
-        </details>
-        </section>
+      {!layout && roofs.some(r => r.geometry_source === "vexcel_parametric") && (
+        <p className="fineprint">Roof slope and sections are estimated from the aerial outline and roof shape. An installer should confirm the boundary, slope, clearances and obstructions before installation.</p>
       )}
       {unsupported && (
         <p className="inline-note">

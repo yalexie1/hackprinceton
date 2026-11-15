@@ -31,7 +31,7 @@ const homeRooms: {
     name: "Living room",
     title: "A more comfortable everyday.",
     detail:
-      "Look through the living space. Windows, lighting, and insulation all shape how a home feels — and how much energy it uses.",
+      "Look through the living space. Windows, lighting, and heating all shape how a home feels — and how much energy it uses.",
     icon: "01",
   },
   {
@@ -39,7 +39,7 @@ const homeRooms: {
     name: "Bedroom",
     title: "Small details. Better rest.",
     detail:
-      "Explore the upper floor. A well-insulated envelope keeps bedrooms comfortable through warm afternoons and cooler nights.",
+      "Explore the upper floor. Efficient heating and cooling keep bedrooms comfortable through warm afternoons and cooler nights.",
     icon: "02",
   },
   {

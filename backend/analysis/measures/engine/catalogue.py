@@ -4,6 +4,8 @@ Constants local to this package (workplan 2.6); `backend/config.py` holds none o
 """
 from __future__ import annotations
 
+import os
+
 from dataclasses import dataclass
 from typing import Literal, get_args
 
@@ -62,6 +64,25 @@ CATALOGUE: dict[str, CatalogueEntry] = {e.measure_id: e for e in (
 )}
 
 assert set(CATALOGUE) == set(get_args(MeasureId)), "catalogue out of step with the contract"
+
+# Measures not offered (team lead's call, 2026-11-15): their savings rest on inputs a scan cannot
+# observe (insulation levels, duct and air leakage, existing controls and schedules) or on assumed
+# percentages, and none has been checked against measured results. They stay in the catalogue and the
+# contract so they can come back; set LETO_ENABLE_RETIRED_MEASURES=1 to offer them again.
+RETIRED_ENV = "LETO_ENABLE_RETIRED_MEASURES"
+RETIRED_MEASURES: frozenset[str] = frozenset({
+    "ENV_WALL", "ENV_ATTIC", "ENV_AIRSEAL", "HVAC_DUCT", "WIN_FILM", "WIN_SHADE", "LAYOUT",
+    "PLUG_MGMT", "HVAC_ECON", "CTRL_TSTAT",
+})
+assert RETIRED_MEASURES <= set(CATALOGUE)
+
+
+def offered(measure_id: str) -> bool:
+    """Whether a plan may consider this measure. Retired measures are left out entirely, not
+    listed as skipped, unless LETO_ENABLE_RETIRED_MEASURES is truthy."""
+    if measure_id not in RETIRED_MEASURES:
+        return True
+    return os.environ.get(RETIRED_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
 
 _HOME_USES = {"single_family", "multifamily_unit"}
 _PLACE = {"single_family": "a single-family home", "multifamily_unit": "a home in a multifamily building",

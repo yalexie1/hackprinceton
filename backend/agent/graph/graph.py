@@ -32,6 +32,10 @@ HOME_MEASURES = ("ENV_ATTIC", "ENV_WALL", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FIL
                  "HVAC_HP", "HVAC_DUCT", "DHW_HPWH", "LGT_LED", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
 OFFICE_MEASURES = ("ENV_ATTIC", "ENV_AIRSEAL", "WIN_REPLACE", "WIN_FILM", "WIN_SHADE", "ROOF_COOL", "HVAC_RTU",
                    "HVAC_ECON", "LGT_LED", "LGT_CTRL", "PLUG_MGMT", "CTRL_TSTAT", "PV_ROOF", "LAYOUT")
+# Retired measures (#467) are not offered unless LETO_ENABLE_RETIRED_MEASURES is set; the agent must not ask for them.
+from backend.analysis.measures.engine import offered as _offered  # noqa: E402
+HOME_MEASURES = tuple(m for m in HOME_MEASURES if _offered(m))
+OFFICE_MEASURES = tuple(m for m in OFFICE_MEASURES if _offered(m))
 
 _MEASURES_TEXT = (f"Homes (single family, multifamily unit): {', '.join(HOME_MEASURES)}. "
                   f"Offices and other commercial: {', '.join(OFFICE_MEASURES)}.")

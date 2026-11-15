@@ -99,7 +99,23 @@ def test_the_measure_lists_are_the_engines_flows():
     from backend.analysis.measures import engine
     home = {m for m, e in engine.CATALOGUE.items() if "home" in e.flows}
     office = {m for m, e in engine.CATALOGUE.items() if "office" in e.flows}
-    assert set(HOME_MEASURES) == home and set(OFFICE_MEASURES) == office
+    # The lists are filtered at import; the test env may turn retired measures on only afterwards.
+    assert set(HOME_MEASURES) in (home, home - engine.RETIRED_MEASURES)
+    assert set(OFFICE_MEASURES) in (office, office - engine.RETIRED_MEASURES)
+
+
+def test_retired_measures_are_not_offered_to_the_agent(monkeypatch):
+    import importlib
+    from backend.agent.graph import graph
+    from backend.analysis.measures import engine
+    monkeypatch.delenv(engine.RETIRED_ENV, raising=False)
+    try:
+        g = importlib.reload(graph)
+        assert not set(g.HOME_MEASURES + g.OFFICE_MEASURES) & engine.RETIRED_MEASURES
+        assert "LGT_LED" in g.HOME_MEASURES and "PV_ROOF" in g.OFFICE_MEASURES
+    finally:
+        monkeypatch.undo()
+        importlib.reload(graph)
 
 
 def test_the_run_prompt_names_the_task_and_what_finishes_it():

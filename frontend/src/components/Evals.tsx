@@ -38,6 +38,10 @@ export type EvalSection = {
   provenance?: Record<string, unknown>;
   rows?: Array<Record<string, unknown>>;
   note?: string;
+  supported_zones?: {
+    title: string; headline: Headline[]; bins: Record<string, number>;
+    n: number; n_sites: number; zones: string[]; sites: string[]; note: string; ci_note: string;
+  };
 };
 
 export type EvalsData = Record<string, EvalSection>;
@@ -167,6 +171,30 @@ export function formatCell(key: string, value: unknown): string {
   return String(value);
 }
 
+function evidenceProse(text: string) {
+  return text.replace(/PV-10/g, "The solar comparison")
+    .replace(/pct_diff/g, "the displayed difference")
+    .replace(/mountingplace/g, "mounting method")
+    .replace(/free vs building/g, "free-standing versus roof-mounted panels")
+    .replace(/PropertySummary.state admits only those two/g, "this prototype supports those two states")
+    .replace(/Inside the IQR/g, "Inside the middle half of market prices")
+    .replace(/cross-sectional error distribution/g, "comparison across different buildings")
+    .replace(/Guideline 14 time-series fit/g, "check against monthly bills under Guideline 14")
+    .replace(/effective N/g, "number of independent observations")
+    .replace(/CIs/g, "Confidence intervals")
+    .replace(/CI is/g, "confidence interval is")
+    .replace(/DEF default tables/g, "published building assumptions")
+    .replace(/Irradiance/g, "Sunlight data")
+    .replace(/irradiance/g, "sunlight")
+    .replace(/BOTH arms/g, "both comparisons")
+    .replace(/arm difference/g, "difference between comparisons")
+    .replace(/single zone at a single storey/g, "one shared heating-and-cooling space on one floor")
+    .replace(/surface-to-volume ratio/g, "amount of exterior wall and roof relative to indoor space")
+    .replace(/office or residential defaults/g, "typical office or home assumptions")
+    .replace(/site-clustered/g, "site-based")
+    .replace(/bootstrap over one cluster/g, "statistical resampling of a single site");
+}
+
 function Figure({ item }: { item: Headline }) {
   return (
     <li className="eval-figure">
@@ -177,7 +205,7 @@ function Figure({ item }: { item: Headline }) {
       </p>
       {item.nominal !== null && (
         <p className="eval-figure-nominal">
-          against a nominal {item.nominal}
+          against a nominal target of {item.nominal}
           {item.unit}
         </p>
       )}
@@ -185,7 +213,7 @@ function Figure({ item }: { item: Headline }) {
         {item.ci90 ? `90% confidence ${item.ci90[0]}–${item.ci90[1]}${item.unit}, ` : ""}
         {item.n} buildings
       </p>
-      <p className="eval-figure-note">{item.note}</p>
+      <p className="eval-figure-note">{item.note ? evidenceProse(item.note) : ""}</p>
     </li>
   );
 }
@@ -263,12 +291,20 @@ function Metered({ section }: { section: EvalSection }) {
           <h4>What this does not tell you</h4>
           <ul>
             {(section.caveats ?? []).map((caveat) => (
-              <li key={caveat}>{caveat}</li>
+              <li key={caveat}>{evidenceProse(caveat)}</li>
             ))}
           </ul>
         </div>
       )}
 
+      {section.supported_zones && <section className="eval-supported">
+        <h4>{section.supported_zones.title}</h4>
+        <p>{evidenceProse(section.supported_zones.note)}</p>
+        <p><strong>{section.supported_zones.n} buildings from {section.supported_zones.n_sites} site</strong> · Climate zones {section.supported_zones.zones.join(" and ")}</p>
+        <ul className="eval-figures">{section.supported_zones.headline.map(item => <Figure key={item.label} item={item}/>)}</ul>
+        <table><tbody>{Object.entries(section.supported_zones.bins).map(([label,value]) => <tr key={label}><th scope="row">{BIN_LABEL[label] || humanise(label)}</th><td>{value}%</td></tr>)}</tbody></table>
+        <p className="eval-note">{evidenceProse(section.supported_zones.ci_note)}</p>
+      </section>}
       <p className="eval-provenance">
         {String(p.dataset ?? "")}
         {p.year ? `, ${String(p.year)}` : ""}. {String(p.n_scored ?? "")} buildings
@@ -322,7 +358,7 @@ function Rows({ section }: { section: EvalSection }) {
           <h4>What this does not tell you</h4>
           <ul>
             {(section.caveats ?? []).map((caveat) => (
-              <li key={caveat}>{caveat}</li>
+              <li key={caveat}>{evidenceProse(caveat)}</li>
             ))}
           </ul>
         </div>
@@ -349,27 +385,26 @@ export default function Evals({ data }: { data?: EvalsData }) {
 
   if (failed) {
     return (
-      <main className="evals">
+      <section className="evals">
         <h2>How accurate is this?</h2>
         <p>The results could not be loaded. Nothing is shown rather than a guess.</p>
-      </main>
+      </section>
     );
   }
   if (!loaded) {
     return (
-      <main className="evals">
+      <section className="evals">
         <h2>How accurate is this?</h2>
         <p>Loading the measured results…</p>
-      </main>
+      </section>
     );
   }
 
   return (
-    <main className="evals">
+    <section className="evals">
       <h2>How accurate is this?</h2>
       <p className="eval-intro">
-        Every number below is measured against data we did not choose after the fact.
-        Where we do badly, it says so.
+        These studies compare our estimates with recorded energy use or another model. Read the limits beside each result: a model comparison does not prove savings, and these studies do not establish accuracy for your individual home.
       </p>
       {Object.entries(loaded).map(([key, section]) =>
         section.status !== "ok" ? (
@@ -380,6 +415,6 @@ export default function Evals({ data }: { data?: EvalsData }) {
           <Rows key={key} section={section} />
         ),
       )}
-    </main>
+    </section>
   );
 }

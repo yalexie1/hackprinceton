@@ -1,3 +1,4 @@
+import { readableText } from "../lib/homeowner-language";
 import type { RunEvent } from "../lib/types";
 
 export default function AuditTasks({
@@ -19,7 +20,7 @@ export default function AuditTasks({
       {tasks.map((task, i) => (
         <li key={i}>
           <span className="status-dot" />
-          {String(task.content || "Audit task")}
+          {readableText(String(task.content || "Audit task"))}
           {!finished && !archived && (
             <small>
               {String(task.status || "pending").replaceAll("_", " ")}

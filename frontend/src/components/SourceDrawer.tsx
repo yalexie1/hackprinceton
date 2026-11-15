@@ -1,3 +1,4 @@
+import { evidenceText, inputName, readableText, warningText } from "../lib/homeowner-language";
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import type { Assumption, MeasureResult } from "../lib/types";
@@ -124,7 +125,7 @@ export function SourceDrawer({
         <section>
           <h4>The cost</h4>
           {cost ? (
-            <p>{cost}</p>
+            <p>{readableText(cost)}</p>
           ) : (
             <p className="fineprint">
               No cost source was recorded for this measure.
@@ -141,9 +142,9 @@ export function SourceDrawer({
                   {i.name}
                   <small>
                     {" "}
-                    — {i.status}
+                    — {readableText(i.status)}
                     {i.eligibility
-                      ? `, eligibility ${i.eligibility.replaceAll("_", " ")}`
+                      ? `, eligibility ${readableText(i.eligibility)}`
                       : ""}
                   </small>
                 </li>
@@ -153,38 +154,37 @@ export function SourceDrawer({
         )}
 
         <section>
-          <h4>The physics</h4>
+          <h4>How the estimate was made</h4>
           {groups.length === 0 ? (
             <p className="fineprint">
-              No formula entries were recorded for this measure.
+              No calculation methods were recorded for this upgrade.
             </p>
           ) : (
             <ul>
               {groups.map((g) => (
                 <li key={g.spec}>
-                  <code>{g.ids.join(", ")}</code>
-                  <small> — {g.spec}</small>
+                  {g.spec.includes("01-solar") ? "Sunlight, roof space and solar panel output" : g.spec.includes("02-thermal") ? "Heat flow, heating, cooling and everyday electricity use" : g.spec.includes("03-daylight") ? "Daylight and indoor conditions" : g.spec.includes("04-economics") ? "Installation costs, energy prices and savings over time" : "A calculation method whose description was not recorded"}
                 </li>
               ))}
             </ul>
           )}
           <p className="fineprint">
-            Each entry is a derivation in the spec, with its sources and the
-            values it uses.
+            These methods combine the recorded building details with weather, equipment assumptions and energy prices. They produce estimates, not guaranteed savings.
           </p>
         </section>
 
         {used.length > 0 && (
           <section>
-            <h4>What it assumed</h4>
+            <h4>Building details recorded in this audit</h4>
+            <p className="fineprint">This is a selection of the audit’s sourced inputs, not a list of exact dependencies for this upgrade. The Assumptions page contains all recorded inputs.</p>
             <ul>
               {used.slice(0, 8).map((a) => (
                 <li key={a.key}>
-                  {a.label || a.key}
+                  {inputName(a.key, a.label)}
                   <small>
                     {" "}
                     — {SOURCE_WORDS[a.source] ?? a.source}
-                    {a.evidence?.[0]?.ref ? ` (${a.evidence[0].ref})` : ""}
+                    {a.evidence?.[0] ? ` · ${evidenceText(a.evidence[0])}` : ""}
                   </small>
                 </li>
               ))}
@@ -197,7 +197,7 @@ export function SourceDrawer({
             <h4>Caveats the analysis recorded</h4>
             <ul>
               {measure.warnings.map((w, n) => (
-                <li key={n}>{w}</li>
+                <li key={n}>{warningText(w)}</li>
               ))}
             </ul>
           </section>

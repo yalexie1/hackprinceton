@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Info, Pencil, RotateCcw } from "lucide-react";
 import type { Assumption, RunResult } from "../lib/types";
-import { number, ranged } from "../lib/format";
+import { assumptionDisplay, evidenceText, isPercentageInput, friendlyUnit, inputName, readableText } from "../lib/homeowner-language";
 import { hasPlaceholderEvidence } from "../lib/real-audit";
 /**
  * A readable name for an assumption.
@@ -12,11 +12,7 @@ import { hasPlaceholderEvidence } from "../lib/real-audit";
  * already reads as a sentence is left exactly as it is.
  */
 export function readableLabel(label: string, key: string): string {
-  const raw = hasPlaceholderEvidence({ label }) ? key : label || key;
-  if (raw.includes(" ")) return raw;
-  const words = raw.replaceAll(".", " ").replaceAll("_", " ").trim();
-  if (!words) return raw;
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return inputName(key, hasPlaceholderEvidence({ label }) ? "" : label);
 }
 
 const sourceNames: Record<string, string> = {
@@ -50,7 +46,7 @@ export default function Assumptions({
       hasPlaceholderEvidence(a)
         ? ""
         : typeof a.value === "object"
-          ? String(a.value.expected)
+          ? String(a.value.expected * (isPercentageInput(a.key) ? 100 : 1))
           : String(a.value),
     );
   }
@@ -75,9 +71,7 @@ export default function Assumptions({
           values and may need checking on site.
         </p>
         <p>
-          COP, EER and SEER are cooling-efficiency ratings: higher values mean
-          more cooling for the electricity used. W/m²K describes heat transfer
-          through a building surface; lower values mean better insulation.
+          Efficiency ratings describe how much useful heating or cooling equipment delivers. Higher ratings usually mean less energy is needed. Heat-transfer ratings describe how easily heat escapes through a wall, roof or window; lower values mean better insulation. Temperatures are in degrees Celsius and areas are in square metres.
         </p>
       </details>
       {demo && (
@@ -118,20 +112,12 @@ export default function Assumptions({
                 <strong>
                   {hasPlaceholderEvidence(a)
                     ? "Needs confirmation"
-                    : typeof a.value === "object"
-                      ? `${number(a.value.expected, 2)} ${a.value.unit}`
-                      : typeof a.value === "boolean"
-                        ? a.value
-                          ? "Yes"
-                          : "No"
-                        : String(a.value).replaceAll("_", " ")}
+                    : assumptionDisplay(a).value}
                 </strong>
                 <small>
                   {hasPlaceholderEvidence(a)
                     ? "No verified value is available for this detail."
-                    : typeof a.value === "object"
-                      ? ranged(a.value)
-                      : "Current setting"}
+                    : assumptionDisplay(a).range}
                 </small>
               </div>
               <div className="confidence">
@@ -150,7 +136,7 @@ export default function Assumptions({
                 <p className="fineprint" key={i}>
                   {hasPlaceholderEvidence({ evidence: [e] })
                     ? "This detail needs a property measurement or a confirmed record."
-                    : `${e.kind.replaceAll("_", " ")}: ${e.ref}${e.note ? ` · ${e.note}` : ""}`}
+                    : evidenceText(e)}
                 </p>
               ))}
             </details>
@@ -161,7 +147,7 @@ export default function Assumptions({
                   event.preventDefault();
                   const next =
                     typeof a.value === "object"
-                      ? Number(value)
+                      ? Number(value) / (isPercentageInput(a.key) ? 100 : 1)
                       : typeof a.value === "boolean"
                         ? value === "true"
                         : value;
@@ -173,6 +159,7 @@ export default function Assumptions({
               >
                 <label>
                   New {readableLabel(a.label, a.key).toLowerCase()}
+                  {typeof a.value === "object" && ` (${isPercentageInput(a.key) ? "%" : friendlyUnit(a.value.unit) || "ratio"})`}
                   {typeof a.value === "boolean" ? (
                     <select
                       value={value}

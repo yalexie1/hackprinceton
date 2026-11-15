@@ -1,3 +1,4 @@
+import { readableText, warningText } from "../lib/homeowner-language";
 import { useEffect, useState } from "react";
 import { Compass, Info, Sun } from "lucide-react";
 import type { RoofView, RunResult } from "../lib/types";
@@ -70,7 +71,14 @@ export default function Geometry({
     ) &&
     bounds.east > bounds.west &&
     bounds.north > bounds.south;
-  const points = layout
+  const roofPoints = [...roofPolys, ...panelPolys].flat();
+  // Use the real photo's width and centre the crop on the roof. A tall parcel
+  // photograph otherwise collapses into a narrow strip inside a landscape map.
+  const roofCentreY = roofPoints.length ? (Math.min(...roofPoints.map(p => p[1])) + Math.max(...roofPoints.map(p => p[1]))) / 2 : validBounds ? (bounds.south+bounds.north)/2 : 0;
+  const imageHalfHeight = validBounds ? (bounds.east-bounds.west) * Math.cos(roofCentreY*Math.PI/180) * 1000/680/2 : 0;
+  const imageCorners = validBounds ? [[bounds.west, roofCentreY-imageHalfHeight], [bounds.east, roofCentreY+imageHalfHeight]] : [];
+  const canvasHeight = !layout && validBounds ? 1000 : 430;
+  const points = !layout && validBounds ? imageCorners : layout
     ? candidates.map((p) => [p.x, p.y])
     : [
         ...roofPolys,
@@ -118,12 +126,12 @@ export default function Geometry({
   const longitudeScale =
     !layout && roofView ? Math.cos((((minY + maxY) / 2) * Math.PI) / 180) : 1;
   const scale = Math.min(
-    510 / ((maxX - minX) * longitudeScale || 1),
-    290 / (maxY - minY || 1),
+    (layout ? 510 : 680) / ((maxX - minX) * longitudeScale || 1),
+    (layout ? 290 : canvasHeight) / (maxY - minY || 1),
   );
   const xy = (p: number[]) => [
-    85 + (p[0] - minX) * longitudeScale * scale,
-    365 - (p[1] - minY) * scale,
+    340 + (p[0] - (minX + maxX) / 2) * longitudeScale * scale,
+    canvasHeight / 2 - (p[1] - (minY + maxY) / 2) * scale,
   ];
   const pts = (poly: number[][]) => poly.map((p) => xy(p).join(",")).join(" ");
   const current = candidates[selected];
@@ -139,7 +147,7 @@ export default function Geometry({
             {layout ? "WORK WITH YOUR SPACE" : "ENERGY FROM ABOVE"}
           </span>
           <h2>
-            {layout ? "Explore your workspace." : "Your roof has potential."}
+            {layout ? "Explore your workspace." : "Your roof, clearly explained."}
           </h2>
         </div>
         <Compass size={26} />
@@ -147,7 +155,7 @@ export default function Geometry({
       <p className="section-description">
         {layout
           ? "Select a position to explore daylight calculated from room geometry and a sky model. These comparisons are exploratory and have not been validated against measurements. They do not establish comfort or a best desk position."
-          : "Explore the roof planes and proposed solar modules returned by the analysis."}
+          : "Explore your aerial photograph and the estimated panel layout. Switch the overlays on or off to see the roof underneath. This is an initial proposal, not an installation drawing."}
       </p>
       {!layout && (
         <div className="roof-layer-controls">
@@ -166,7 +174,7 @@ export default function Geometry({
                 checked={showDetections}
                 onChange={(event) => setShowDetections(event.target.checked)}
               />
-              Detected roof features
+              Automatic outline candidates
             </label>
           )}
           {roofView && (
@@ -202,15 +210,14 @@ export default function Geometry({
       )}
       {roofError && (
         <p className="inline-note">
-          Aerial view unavailable: {roofError} Showing the run’s supplied
-          geometry.
+          The aerial view could not be loaded. Showing the roof outlines saved with this audit instead.
         </p>
       )}
       {ortho && (
         <p className="inline-note">
           {ortho.bounds_source === "parcel_bbox"
             ? "Approximate aerial alignment using the parcel boundary."
-            : "Aerial alignment recovered from the detection boxes."}{" "}
+            : "Aerial alignment estimated from the image outlines."}{" "}
           {(!ortho.image_available || imageFailed) &&
             "The aerial image is not cached or could not be loaded; only the supplied geometry is shown."}
         </p>
@@ -221,9 +228,9 @@ export default function Geometry({
           geometry is shown.
         </p>
       )}
-      <div className="geometry-canvas">
+      <div className={`geometry-canvas ${layout ? "" : "roof-photo-canvas"}`}>
         <svg
-          viewBox="0 0 680 430"
+          viewBox={`0 0 680 ${canvasHeight}`}
           role={layout ? "group" : "img"}
           aria-label={
             layout
@@ -246,8 +253,8 @@ export default function Geometry({
               />
             </pattern>
           </defs>
-          <rect width="680" height="430" fill="#e8eddf" />
-          <rect width="680" height="430" fill="url(#geo-grid)" />
+          <rect width="680" height={canvasHeight} fill="#e8eddf" />
+          <rect width="680" height={canvasHeight} fill="url(#geo-grid)" />
           {!layout && validBounds && ortho?.image_available && !imageFailed && (
             <image
               href={assetUrl(ortho.path)}
@@ -354,7 +361,7 @@ export default function Geometry({
                       strokeWidth="2"
                       strokeDasharray="6 4"
                     >
-                      <title>{`${detection.label}: ${number(detection.confidence * 100)}% confidence. ${detection.mask_area_m2 == null ? "Mask area unavailable." : `Mask area ${number(detection.mask_area_m2, 1)} m².`} Box outlines are not mask footprints.`}</title>
+                      <title>{`${readableText(detection.label)} candidate ${i + 1}: model match score ${number(detection.confidence * 100)}%. ${detection.mask_area_m2 == null ? "Outlined area unavailable." : `Outlined area ${number(detection.mask_area_m2, 1)} m².`} The enclosing box is not the roof boundary.`}</title>
                     </polygon>
                   ) : null;
                 })}
@@ -366,18 +373,13 @@ export default function Geometry({
             fill="none"
             strokeWidth="2"
           />
-          <text x="626" y="37" textAnchor="middle" fontSize="16" fill="#344c3d">
+          <text x="626" y="37" textAnchor="middle" fontSize="30" fill="#344c3d">
             {layout ? "+y" : "N"}
           </text>
-          <text x="28" y="405" fill="#344c3d" fontSize="16">
-            {demo
-              ? "Illustrative geometry · not to scale"
-              : layout
-                ? "Model coordinates · candidate map, not a floor plan"
-                : "Map-coordinate polygons · geographic projection may distort scale"}
-          </text>
+
         </svg>
       </div>
+      <p className="fineprint">{layout ? "Exploratory positions in the model, not a measured floor plan." : "Aerial survey with estimated outlines. Image alignment is approximate; verify dimensions before installation."}</p>
       {facing && showPanels && (
         <p className="section-description roof-facing">
           The proposed panels face {facing.label} (
@@ -388,8 +390,14 @@ export default function Geometry({
         </p>
       )}
       {!layout && detections.length > 0 && (
+        <section className="roof-confidence-explainer">
+          <h3>Why do some roof scores look low?</h3>
+          <p>These percentages are the image model’s match scores for individual outline candidates. They are not the chance that your roof exists, a measured roof-survey accuracy, or confidence in energy savings.</p>
+          <p>For this image, {detections.length} candidates have scores from {number(Math.min(...detections.map(d => d.confidence)) * 100)}% to {number(Math.max(...detections.map(d => d.confidence)) * 100)}%. The roof model can return overlapping pieces of the same roof. A higher-scoring piece can also belong to a different structure, so the analysis checks location and area rather than simply choosing the highest score.</p>
+          {roofs.some(r => r.geometry_source === "vexcel_parametric") && <p>The roof slope and roof sections are estimated from the aerial outline and roof shape. They are not a measured 3D roof survey. The assumed ridge direction and space around roof features also need checking.</p>}
+          <p>The scores alone cannot tell us why an individual match is weak. We have not calibrated them against a surveyed roof at this property. Confirm the roof boundary, slope, usable space and obstructions with an installer before relying on the proposed layout.</p>
         <details className="roof-detections">
-          <summary>Inspect {detections.length} roof detections</summary>
+          <summary>Inspect {detections.length} automatic outline candidates</summary>
           <p>
             Boxes locate findings; their area is not the detected roof area.
             Each feature’s outlined area comes directly from the data source.
@@ -398,8 +406,8 @@ export default function Geometry({
           <ul>
             {detections.map((detection, i) => (
               <li key={i}>
-                {detection.label} · {number(detection.confidence * 100)}%
-                confidence ·{" "}
+                {readableText(detection.label)} candidate {i + 1} · {number(detection.confidence * 100)}%
+                model match score ·{" "}
                 {detection.mask_area_m2 == null
                   ? "outlined area unavailable"
                   : `${number(detection.mask_area_m2, 1)} m² outlined area`}
@@ -407,6 +415,7 @@ export default function Geometry({
             ))}
           </ul>
         </details>
+        </section>
       )}
       {unsupported && (
         <p className="inline-note">
@@ -481,12 +490,12 @@ export default function Geometry({
                 </strong>
               </div>
             </div>
-            {roofs.map((roof) => (
+            {roofs.map((roof, i) => (
               <p className="fineprint" key={roof.id}>
-                {roof.id} · {number(roof.area_m2)} m² ·{" "}
+                Roof section {i + 1} · {number(roof.area_m2)} m² ·{" "}
                 {number(roof.usable_area_m2)} m² usable · tilt{" "}
                 {ranged(roof.tilt_deg)}° ·{" "}
-                {roof.geometry_source.replaceAll("_", " ")}
+                {readableText(roof.geometry_source)}
               </p>
             ))}
             {[solar.electrical, solar.structural].map((flag) => (
@@ -494,11 +503,11 @@ export default function Geometry({
                 <Info size={14} />
                 <span>
                   <strong>
-                    {flag.key.replaceAll(".", " ")} ·{" "}
-                    {flag.status.replaceAll("_", " ")}
+                    {flag === solar.electrical ? "Electrical review" : "Structural review"} ·{" "}
+                    {readableText(flag.status)}
                   </strong>
                   <br />
-                  {flag.message}
+                  {warningText(flag.message)}
                 </span>
               </p>
             ))}

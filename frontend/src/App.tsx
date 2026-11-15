@@ -28,7 +28,7 @@ import type {
 } from "./lib/types";
 import { SCHEMA_VERSION } from "./lib/types";
 import { api, streamRun } from "./lib/api";
-import { auditStageLabel, download, money, number } from "./lib/format";
+import { auditStageLabel, money, number } from "./lib/format";
 import Find from "./components/Find";
 import Tour from "./components/Tour";
 import PlanView from "./components/Plan";
@@ -51,6 +51,7 @@ import {
 import PropertyPreview from "./components/PropertyPreview";
 import { requireRealAudit, RealAuditRequired } from "./lib/real-audit";
 import WorkspaceNavigation, { publicViews, views, type View } from "./components/WorkspaceNavigation";
+import { auditEventText, readableText, warningText } from "./lib/homeowner-language";
 import { auditIdFromUrl, auditUrl, restoreAudit } from "./lib/audit-link";
 function bills(text: string): number[] | undefined {
   if (!text.trim()) return undefined;
@@ -66,6 +67,8 @@ function bills(text: string): number[] | undefined {
 }
 export default function App() {
   const demo = false;
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   const [connecting, setConnecting] = useState(true);
   const [serviceReady, setServiceReady] = useState(false);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
@@ -783,8 +786,8 @@ export default function App() {
                       ? "YOUR APPROVAL IS REQUIRED"
                       : "A QUICK QUESTION"}
                   </span>
-                  <h3>{question.prompt}</h3>
-                  <p>{question.impact_note}</p>
+                  <h3>{readableText(question.prompt)}</h3>
+                  <p>{readableText(question.impact_note)}</p>
                   {approval && (
                     <p className="inline-note">
                       Draft request:{" "}
@@ -825,7 +828,7 @@ export default function App() {
                         key={i}
                         onClick={() => void answer(choice.value)}
                       >
-                        {choice.label}
+                        {readableText(choice.label)}
                         <ArrowRight size={14} />
                       </button>
                     ))}
@@ -871,14 +874,7 @@ export default function App() {
                             {auditStageLabel(event.stage || event.type)}
                           </small>
                           <p>
-                            {event.type === "todo"
-                              ? "Audit checklist update"
-                              : event.message ||
-                              String(
-                                event.payload.detail ||
-                                  event.payload.fallback ||
-                                  "Audit update",
-                              )}
+                            {auditEventText(event)}
                           </p>
                           {!done &&
                             i === events.length - 1 &&
@@ -896,7 +892,7 @@ export default function App() {
                             !event.message.includes(event.payload.detail) && (
                               <details>
                                 <summary>Data source detail</summary>
-                                <p>{event.payload.detail}</p>
+                                <p>{warningText(event.payload.detail)}</p>
                               </details>
                             )}
                           {event.type === "todo" && (
@@ -975,24 +971,29 @@ export default function App() {
                 </div>
                 <button
                   className="secondary-button"
-                  onClick={() =>
-                    download(
-                      `${run.run_id}-report.json`,
-                      JSON.stringify(run, null, 2),
-                      "application/json",
-                    )
-                  }
+                  disabled={exporting}
+                  onClick={async () => {
+                    setExporting(true);
+                    setExportError("");
+                    try {
+                      const { exportAuditPdf } = await import("./lib/report-pdf");
+                      await exportAuditPdf(run);
+                    } catch {
+                      setExportError("The PDF could not be created. Please try exporting again.");
+                    } finally { setExporting(false); }
+                  }}
                 >
                   <Download size={16} />
-                  Export report
+                  {exporting ? "Creating PDF…" : "Export report (PDF)"}
                 </button>
               </div>
-              <div className="result-grid">
+              {exportError && <p className="inline-note" role="alert">{exportError}</p>}
+              <div className={`result-grid ${view === "roof" ? "roof-result-grid" : ""}`}>
                 <div className="result-main">
                   {/* The audit's own account of the building, in the main column: it
                       explains the numbers beside it, so it reads before them rather than
                       beside them in a sidebar. */}
-                  <section className="insight-card insight-main">
+                  {view !== "roof" && <section className="insight-card insight-main">
                     <Sparkles size={19} />
                     <span className="eyebrow">
                       {demo ? "SAVED EXAMPLE REPORT" : "THE AUDIT’S TAKE"}
@@ -1015,7 +1016,7 @@ export default function App() {
                       See the assumptions
                       <ArrowRight size={14} />
                     </button>
-                  </section>
+                  </section>}
                   {view === "plan" && (
                     <>
                       <Calibration run={run} />

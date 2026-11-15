@@ -211,3 +211,17 @@ describe("evals table reads as plain English", () => {
     expect(html).toContain("unknown-scan-id");
   });
 });
+
+describe("published climate subset", () => {
+  it("renders the supplied subset beside the full headline without hiding its limitation", () => {
+    const withSubset = structuredClone(data);
+    withSubset.metered_buildings.supported_zones = {
+      title:"Supported climate zones only", n:96, n_sites:1, sites:["Panther"], zones:["2A","3B"],
+      headline:[{label:"Median absolute error",value:56.7,unit:"%",nominal:null,ci90:null,n:96,note:""}],
+      bins:{above_high:76}, note:"Restricted to supported climates.", ci_note:"Only one site; no confidence interval is reported.",
+    };
+    const html = renderToStaticMarkup(<Evals data={withSubset}/>);
+    for (const text of ["494","96","56.7","76","Only one site"]) expect(html).toContain(text);
+    expect(html).not.toContain("<details");
+  });
+});

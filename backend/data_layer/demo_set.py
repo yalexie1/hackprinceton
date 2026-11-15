@@ -94,8 +94,9 @@ def already_warm(root: Optional[Path] = None) -> set[str]:
     task 2 report.
     """
     base = Path(root) if root is not None else cache.cache_root()
-    if not base.is_dir():
-        return set()
+    # `Path.glob` on a directory that does not exist yet (a fresh checkout's
+    # `data/cache/`) returns nothing rather than raising, so there is no separate
+    # case to handle here.
     return {p.parent.name for p in base.glob("*/bundle.json")}
 
 

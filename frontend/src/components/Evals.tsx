@@ -85,6 +85,10 @@ const COLUMN_LABEL: Record<string, string> = {
   median_usd_per_w: "Market median",
   p75_usd_per_w: "Market upper quartile",
   pct_vs_median: "Against the market median",
+  // "With a year of utility bills" (#437): plain headings, not "Without bills pct".
+  measure: "Measure",
+  without_bills_pct: "Without bills",
+  with_bills_pct: "With a year of bills",
   n_systems: "Systems compared",
   indicative: "Thin benchmark",
 };

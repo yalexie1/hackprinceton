@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import Evals, { type EvalsData } from "./Evals";
+import Evals, { columnLabel, type EvalsData } from "./Evals";
 
 const data: EvalsData = {
   metered_buildings: {
@@ -223,5 +223,13 @@ describe("published climate subset", () => {
     const html = renderToStaticMarkup(<Evals data={withSubset}/>);
     for (const text of ["494","96","56.7","76","Only one site"]) expect(html).toContain(text);
     expect(html).not.toContain("<details");
+  });
+});
+
+describe("with-bills table headings", () => {
+  it("labels the comparison columns in plain words", () => {
+    expect(columnLabel("without_bills_pct")).toBe("Without bills");
+    expect(columnLabel("with_bills_pct")).toBe("With a year of bills");
+    expect(columnLabel("measure")).toBe("Measure");
   });
 });

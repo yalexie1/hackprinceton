@@ -26,7 +26,10 @@
       "value": 14.8,
       "unit": "%",
       "nominal": null,
-      "ci90": [11.9, 28.9],
+      "ci90": [
+        11.9,
+        28.9
+      ],
       "n": 49,
       "note": "Annual energy use per square foot against the City of Los Angeles building benchmarking data, with no bills. A typical-office benchmark scores 16.5% on the same buildings."
     },
@@ -43,6 +46,7 @@
   "caveats": [
     "The solar comparison is model against model, not a measured meter, and almost every roof was flat, so panel direction was barely tested.",
     "Calibration to bills succeeds for 44 of 283 buildings today; the 4.1% applies to those 44.",
+    "Without bills, tuning the model's assumptions cannot make totals precise: even a correction fitted to the answers left most buildings more than 25% off. A year of the building's own bills is what makes it precise.",
     "On offices we are only slightly better than a typical-office benchmark. Without bills, the model's value is which upgrades fit a building, not its total energy.",
     "Savings from individual upgrades have not yet been checked against measured results."
   ],

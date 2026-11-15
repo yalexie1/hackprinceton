@@ -47,10 +47,22 @@ the defaults do the work.
 
 `PropertySummary.state` is `Literal["CA", "TX"]` in `backend/schema.py`, so every eval
 building is labelled `CA` regardless of where it is. State feeds the eGRID subregion for
-emissions, the tariff defaults, and the incentive registry — none of which feed the
-energy physics (the `DEF` tables key off vintage and climate zone; roof code setbacks
-need Vexcel, which is absent here). So the kWh are sound and the dollars and kilograms
-are not. **Do not publish a validated cost or CO2 figure on the strength of this eval.**
+emissions, the tariff defaults, and the incentive registry. So the dollars and kilograms
+are not validated here: **do not publish a cost or CO2 figure on the strength of this
+eval.**
+
+**Correction (2026-11-15).** An earlier version of this file said the forced `CA` label
+"does not touch the energy physics". That is true of the `state` field itself and
+**false in effect**, because of the climate zone that travels with it.
+`backend/analysis/model/registry/tables.py` defines `CLIMATES = ("2A", "3B")`, and
+`registry.py` silently blends or defaults anything else to `3B`. Our five sites are 3C
+(Bear), 6A (Cockatoo), 2B (Fox), 4A (Rat) and 2A (Panther) — so only Panther's 96
+buildings get their stated zone, and the other **398 of 494 run on a fallback table**.
+Weather is still site-specific, so this does not touch the hourly temperatures or
+irradiance; it means the DEF envelope and equipment defaults are drawn from the wrong
+climate. Found by @vinayak-sinha's independent audit. Every run now records
+`effective_climate_zone` and `zone_source` (`stated` / `unsupported_fallback`) per
+building rather than implying the stated zone was honoured.
 
 This Literal is also what limited the eval to five US sites: BDG2's UK and Canadian
 sites cannot be represented at all. A wider Literal would let the eval cover more
@@ -81,6 +93,10 @@ These are generated into every scorecard and must not drift from this list:
   area, so a tall building's surface-to-volume ratio is wrong by construction.
 - Non-office uses (Education, Lodging, Entertainment, Public services, Healthcare) are
   run on office or residential defaults; type mismatch is inside the reported error.
+- 398 of 494 buildings sit in a climate zone the DEF tables do not carry and fall back
+  to a 3B/2A blend; `zone_source` records which.
+- 37% of the sample buys chilled water, steam or hot water from a district plant, so
+  their electricity meter does not contain the cooling (or heating) our model predicts.
 - Irradiance is Open-Meteo in BOTH arms (BDG2 ships none), so the arm difference
   isolates temperature error only, not irradiance error.
 

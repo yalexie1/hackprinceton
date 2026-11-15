@@ -9,6 +9,13 @@ Five US sites. Zero model refusals. Run on 2026-11-15.
 > "off by 2x" statistic counted only overpredictions. The wind fix barely moved the
 > headline (coverage 17.6 -> 17.0%, median absolute error 55.5 -> 55.9%). The metric fix
 > did: the true two-sided 2x figure is **43.5%**, not the 19.6% first published.
+>
+> **Revised again (second audit round).** @vinayak-sinha also found that the adapter let
+> the golden example's CoStar record ride along into every eval building — including a
+> hard-coded 4 storeys, which `build_geometry` actually consumes. Fixing it changed a
+> headline conclusion: the median signed error was **not** −0.5% but **−17.1%**. The
+> claim that the model is "unbiased in the median, just scattered" was an artifact of my
+> own bug. It underpredicts.
 
 Scope and limits: [SCOPE.md](SCOPE.md). Inputs and checksums:
 [manifests/bdg2.yaml](manifests/bdg2.yaml). Reproduce in about eight minutes with
@@ -22,22 +29,25 @@ not know that.**
 
 | | Value | Nominal |
 |---|---|---|
-| Median absolute error | **55.9%** | — |
-| Median signed error | −0.5% | 0% |
-| Within ±25% | 23.1% of buildings | — |
-| Overpredicted by 2× or more | 19.6% of buildings | — |
-| Underpredicted by 2× or more | 23.9% of buildings | — |
-| **Off by 2× either way** | **43.5% of buildings** | — |
-| **Interval coverage** | **17.0%** (90% CI 13.1–22.0) | **80%** |
-| Band width | 40.9% of expected | — |
+| Median absolute error | **52.9%** | — |
+| Median signed error | **−17.1%** | 0% |
+| Within ±25% | 21.9% of buildings | — |
+| Overpredicted by 2× or more | 14.0% of buildings | — |
+| Underpredicted by 2× or more | 28.1% of buildings | — |
+| **Off by 2× either way** | **42.1% of buildings** | — |
+| **Interval coverage** | **12.8%** (90% CI 10.7–15.5) | **80%** |
+| Band width | 31.1% of expected | — |
 
-The median signed error is essentially zero while the median absolute error is 55.9%.
-The model is not systematically high or low. It is **scattered**.
+The model **underpredicts by about 17% at the median** and is scattered by about 53%.
+An earlier version of this report said the median signed error was near zero and that the
+model was "not systematically high or low" — that was wrong, and it was wrong because of
+a defect in our own eval adapter, not a change in the model. Both things are true at once:
+there is a real low bias *and* a large spread, and they need different fixes.
 
 ## The interval is the real finding
 
 We publish every result as low / expected / high and call it a 10th-to-90th percentile
-band (`UNC-01`). On 494 metered buildings that band contained the truth **17.0%** of the
+band (`UNC-01`). On 494 metered buildings that band contained the truth **12.8%** of the
 time. It should have been 80%.
 
 Where the metered total actually fell:
@@ -112,14 +122,16 @@ By site, median absolute error ranges 36.3% (Rat) to 77.1% (Bear). Coverage is b
 12.0% and 26.8% everywhere: no site is calibrated.
 
 The single-storey simplification costs about ten points: buildings of four or more
-storeys show 61.7% median absolute error against 52.2% for single-storey ones. Real,
+storeys show 65.8% median absolute error against 49.7% for single-storey ones — a
+16-point gap, wider than first reported, because floor counts are now the building's own
+rather than a value inherited from the example bundle. Real,
 but not the main term.
 
 ## What this does and does not license us to say
 
 **Can say:** that we measured ourselves against 494 real meters; that our expected value
-is unbiased in the median and scattered by about 56%, with 43.5% of buildings off by a
-factor of two or more in one direction or the other; that our uncertainty band is
+underpredicts by about 17% at the median and is scattered by about 53%, with 42.1% of
+buildings off by a factor of two or more in one direction or the other; that our uncertainty band is
 overconfident by a factor of roughly four and we know by how much; that we can attribute
 part of the error to the weather source and part to the single-zone geometry.
 

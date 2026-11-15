@@ -1,0 +1,80 @@
+[
+ {
+  "id": "ASK_SPECIAL_LOADS",
+  "assumption_key": "plug.ppd",
+  "prompt": "Does the building have a server room, laboratory, commercial kitchen, or data closet?",
+  "choices": [
+   {"label": "None of these — ordinary offices or classrooms", "value": 6.5},
+   {"label": "A small server or data closet", "value": 12.0},
+   {"label": "A commercial kitchen", "value": 16.0},
+   {"label": "Laboratory or research space", "value": 24.0},
+   {"label": "I don't know", "value": null}
+  ],
+  "impact_note": "Plug load is the single largest part of our electricity estimate (median 41% of it), and it is the one thing floor area and vintage cannot tell us. A lab or kitchen can run several times the plug density of an office of the same size, so this question moves the answer more than any other."
+ },
+ {
+  "id": "ASK_LIGHTING_TYPE",
+  "assumption_key": "lighting.lpd",
+  "prompt": "What are most of the lights?",
+  "choices": [
+   {"label": "Mostly LED", "value": 6.5},
+   {"label": "A mix of LED and fluorescent", "value": 10.8},
+   {"label": "Mostly fluorescent tubes", "value": 15.1},
+   {"label": "Mostly older fittings (halogen, incandescent, metal halide)", "value": 19.5},
+   {"label": "I don't know", "value": null}
+  ],
+  "impact_note": "Lighting is a median 32% of our electricity estimate. Vintage is a poor guide here because relamping is cheap and common: a 1960s building can be fully LED. Answering this also tells us whether an LED retrofit is still on the table."
+ },
+ {
+  "id": "ASK_OCCUPANCY_HOURS",
+  "assumption_key": "occupancy.count",
+  "prompt": "Roughly how many people use the building, and when?",
+  "choices": [
+   {"label": "Lightly used, normal business hours", "value": 0.6},
+   {"label": "Normal business hours, typically full", "value": 1.0},
+   {"label": "Long hours or six/seven days a week", "value": 1.5},
+   {"label": "Occupied around the clock", "value": 2.2},
+   {"label": "I don't know", "value": null}
+  ],
+  "impact_note": "Occupancy sets both the internal heat gain and the hours everything else runs for. A building open around the clock uses roughly twice the energy of the same building on business hours."
+ },
+ {
+  "id": "ASK_DISTRICT_SERVICE",
+  "assumption_key": "systems.district_service",
+  "prompt": "Do you buy chilled water, steam, or hot water from a campus or district plant, rather than making it in the building?",
+  "choices": [
+   {"label": "No — all heating and cooling is made in the building", "value": "none"},
+   {"label": "Chilled water is bought in", "value": "chilled_water"},
+   {"label": "Steam or hot water is bought in", "value": "steam_or_hot_water"},
+   {"label": "Both are bought in", "value": "both"},
+   {"label": "I don't know", "value": null}
+  ],
+  "impact_note": "This changes what the electricity bill contains, not just its size. If cooling is bought in, it is not on the electricity meter at all, and comparing our estimate against that bill overstates us. In our own validation 37% of buildings were on district service."
+ },
+ {
+  "id": "ASK_ANNUAL_ELECTRICITY",
+  "assumption_key": "bills.annual_electricity_kwh",
+  "prompt": "Do you know the building's annual electricity use, or roughly what it costs in a year?",
+  "choices": [
+   {"label": "I can upload 12 months of bills", "value": "upload"},
+   {"label": "I know the annual kWh", "value": "annual_kwh"},
+   {"label": "I know roughly the annual spend", "value": "annual_usd"},
+   {"label": "I know a typical summer month and a typical winter month", "value": "two_months"},
+   {"label": "I don't have any of these", "value": null}
+  ],
+  "impact_note": "This is the one answer that changes the result more than every other question combined. Measured on 494 metered buildings, knowing the building type and its operating context takes our median error from 56% to about 36%, and no further question gets below that — the rest depends on what is actually plugged in and running. A meter reading closes it. With 12 months we calibrate the model properly (ASHRAE Guideline 14 Option D); with a single annual figure we can still correct the overall level; with one summer and one winter month we can separate the base load from the weather-driven part."
+ },
+ {
+  "id": "ASK_STOREYS",
+  "assumption_key": "geometry.storeys",
+  "prompt": "How many floors does the building have?",
+  "choices": [
+   {"label": "One", "value": 1},
+   {"label": "Two or three", "value": 2.5},
+   {"label": "Four to seven", "value": 5.5},
+   {"label": "Eight or more", "value": 10},
+   {"label": "I don't know", "value": null}
+  ],
+  "impact_note": "Floor count sets how much outside wall and roof the building has for its floor area: a tall building loses heat through walls where a wide one loses it through the roof. In our validation, buildings of four or more storeys came out at 61.7% median error against 52.2% for single-storey ones, so this is worth about ten percentage points of accuracy."
+ }
+]

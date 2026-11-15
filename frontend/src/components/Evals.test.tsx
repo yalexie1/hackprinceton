@@ -72,12 +72,11 @@ describe("evals page", () => {
     expect(html).toContain("22.2");
   });
 
-  it("renders every caveat on the page rather than hiding them behind a disclosure", () => {
+  it("keeps study notes without the repeated caveat panel", () => {
     const html = renderToStaticMarkup(<Evals data={data} />);
-    for (const caveat of data.metered_study.caveats ?? []) {
-      expect(html).toContain(caveat);
-    }
-    expect(html).not.toContain("<details");
+    expect(html).toContain("How often the metered annual fell inside");
+    expect(html).toContain("these studies do not establish accuracy for your individual home");
+    expect(html).not.toContain("What this does not tell you");
   });
 
   it("marks an eval that has not run as not run, never as a zero", () => {
@@ -249,8 +248,8 @@ describe("evals highlights", () => {
     const html = renderToStaticMarkup(<Evals data={data} highlights={highlights} />);
     expect(html.indexOf("The results we stand behind")).toBeLessThan(html.indexOf("Metered buildings"));
     expect(html).toContain("4.1");
-    expect(html).toContain("44 of 283");
-    expect(html).toContain("What these do not tell you");
+    expect(html).toContain("Scored on a year the model never saw");
+    expect(html).not.toContain("What these do not tell you");
   });
 
   it("is left out when there is nothing to show", () => {

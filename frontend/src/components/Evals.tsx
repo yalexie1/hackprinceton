@@ -261,16 +261,6 @@ function Highlights({ section }: { section: EvalSection }) {
           <Figure key={item.label} item={item} />
         ))}
       </ul>
-      {(section.caveats ?? []).length > 0 && (
-        <div className="eval-caveats">
-          <h4>What these do not tell you</h4>
-          <ul>
-            {(section.caveats ?? []).map((caveat) => (
-              <li key={caveat}>{caveat}</li>
-            ))}
-          </ul>
-        </div>
-      )}
       {sources ? <p className="eval-provenance">{String(sources)}.</p> : null}
     </section>
   );
@@ -331,17 +321,6 @@ function Metered({ section }: { section: EvalSection }) {
         </div>
       )}
 
-      {(section.caveats ?? []).length > 0 && (
-        <div className="eval-caveats">
-          <h4>What this does not tell you</h4>
-          <ul>
-            {(section.caveats ?? []).map((caveat) => (
-              <li key={caveat}>{evidenceProse(caveat)}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {section.supported_zones && <section className="eval-supported">
         <h4>{section.supported_zones.title}</h4>
         <p>{evidenceProse(section.supported_zones.note)}</p>
@@ -396,16 +375,6 @@ function Rows({ section }: { section: EvalSection }) {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-      {(section.caveats ?? []).length > 0 && (
-        <div className="eval-caveats">
-          <h4>What this does not tell you</h4>
-          <ul>
-            {(section.caveats ?? []).map((caveat) => (
-              <li key={caveat}>{evidenceProse(caveat)}</li>
-            ))}
-          </ul>
         </div>
       )}
     </section>

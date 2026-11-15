@@ -1,4 +1,4 @@
-import { readableText, warningText } from "../lib/homeowner-language";
+import { readableText } from "../lib/homeowner-language";
 import { useEffect, useState } from "react";
 import { Compass, Info, Sun } from "lucide-react";
 import type { RoofView, RunResult } from "../lib/types";
@@ -431,19 +431,6 @@ export default function Geometry({
                 {number(roof.usable_area_m2)} m² usable · tilt{" "}
                 {ranged(roof.tilt_deg)}° ·{" "}
                 {readableText(roof.geometry_source)}
-              </p>
-            ))}
-            {[solar.electrical, solar.structural].map((flag) => (
-              <p className="inline-note" key={flag.key}>
-                <Info size={14} />
-                <span>
-                  <strong>
-                    {flag === solar.electrical ? "Electrical review" : "Structural review"} ·{" "}
-                    {readableText(flag.status)}
-                  </strong>
-                  <br />
-                  {warningText(flag.message)}
-                </span>
               </p>
             ))}
           </>

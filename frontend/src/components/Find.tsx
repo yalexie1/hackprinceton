@@ -116,13 +116,16 @@ export default function Find({
           measured-versus-estimated distinction now. */}
       <div className="property-grid">
         {orderedProperties.map((p, i) => (
-          <button
+          // The card is an article, not a button: its preview holds its own Map / Aerial /
+          // 3D model buttons, and a button inside a button is invalid HTML. The whole card
+          // stays clickable with a mouse; keyboard and screen-reader users get the real
+          // button on the property name.
+          <article
             className="property-card"
             key={p.sid}
-            aria-label={`Explore ${p.name}${p.city ? ` in ${p.city}` : ""}`}
             onClick={() => onSelect(p)}
           >
-            <div className="property-image" aria-hidden="true">
+            <div className="property-image">
               <PropertyPreview property={p} allowListedLocation={!demo} />
               <span className="property-type">
                 {p.segment === "commercial" ? (
@@ -138,8 +141,20 @@ export default function Find({
             </div>
             <div className="property-copy">
               <div>
-                <h3>{p.name}</h3>
-                <ArrowRight size={20} />
+                <h3>
+                  <button
+                    type="button"
+                    className="property-open"
+                    aria-label={`Explore ${p.name}${p.city ? ` in ${p.city}` : ""}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelect(p);
+                    }}
+                  >
+                    {p.name}
+                  </button>
+                </h3>
+                <ArrowRight size={20} aria-hidden="true" />
               </div>
               <p>
                 <MapPin size={14} />
@@ -179,10 +194,10 @@ export default function Find({
                 </span>
               </div>
               <span className="property-action">
-                Explore this property <ArrowRight size={14} />
+                Explore this property <ArrowRight size={14} aria-hidden="true" />
               </span>
             </div>
-          </button>
+          </article>
         ))}
       </div>
       {properties.length > 0 && (

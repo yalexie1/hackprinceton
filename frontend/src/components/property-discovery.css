@@ -268,3 +268,20 @@
   text-align: center;
   padding: 0 16px;
 }
+
+/* Property cards are articles (they contain the preview's own buttons); the name is the
+   accessible button and the whole card stays clickable with a mouse. */
+.property-grid > .property-card {
+  cursor: pointer;
+}
+.property-card .property-open {
+  all: unset;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.property-card .property-open:focus-visible {
+  outline: 2px solid #19543d;
+  outline-offset: 3px;
+  border-radius: 2px;
+}

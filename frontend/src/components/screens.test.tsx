@@ -282,7 +282,10 @@ describe("shared contract screen compatibility", () => {
     expect(html).toContain(
       'aria-label="Explore Culver Connect in Los Angeles"',
     );
-    expect(html).toContain('class="property-image" aria-hidden="true"');
+    // the card holds the preview's own buttons, so it must not itself be a button
+    expect(html).not.toMatch(/<button[^>]*class="property-card"/);
+    expect(html).toMatch(/<article class="property-card"/);
+    expect(html).toMatch(/<button type="button" class="property-open"/);
   });
   it("requires approval before drafting and restricts residential/commercial document choices", () => {
     const home = renderToStaticMarkup(<Documents run={house} demo />);

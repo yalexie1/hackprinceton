@@ -401,11 +401,6 @@ export default function PlanView({
           <small>kilograms of carbon dioxide each year</small>
         </div>
       </div>
-      <p className="estimate-note">
-        These figures are estimates for planning, not guaranteed savings.
-        {plan.total_annual_savings_usd.low < 0 &&
-          " In some scenarios, the improvements could increase your energy bills. Check your bills and get firm quotes before deciding."}
-      </p>
       {plan.total_upfront_usd.high > plan.budget_usd && (
         <p className="inline-note budget-warning">
           <Info size={15} />

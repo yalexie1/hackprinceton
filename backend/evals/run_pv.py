@@ -30,17 +30,28 @@ PROPERTIES = ("office", "house", "office_houston")
 # 4-5% (1754 vs 1677 kWh/kWp at Los Angeles), so a row without it is not reproducible.
 MOUNTINGPLACE = "free"
 
+# The product sizes PV two ways and both are legitimate:
+#  - standalone: the PV_ROOF card alone passes no budget (api._describe_pv reads
+#    _PV_BUDGET, which is None outside a plan), so the roof and our own modelled
+#    annual consumption stop the fill.
+#  - in a plan: build_plan sets a budget, which is what the demo recording shows.
+# Capacity differs a lot between them, so the eval runs both and says which is which.
+# PV-10 compares kWh/kW, which is scale-invariant, so the two are still comparable.
+DEMO_BUDGET_USD = 10000.0
+
 
 def pv_row(sid: str, annual_kwh: float | None, system_kw_dc: float | None,
            pvgis_kwh_per_kw: float | None, mountingplace: str | None,
            tolerance: float | None = None, within: bool | None = None,
-           deviation: float | None = None, warnings: list[str] | None = None) -> dict:
+           deviation: float | None = None, warnings: list[str] | None = None,
+           constraint: str = "roof_and_consumption", panel_count: int | None = None) -> dict:
     """One property's comparison. Copies PV-10's verdict; computes only the raw ratio."""
     if not mountingplace:
         raise ValueError("mountingplace is required: PVGIS free vs building moves the "
                          "reference yield by 4-5%, so a row without it is not reproducible")
 
-    row: dict = {"sid": sid, "mountingplace": mountingplace,
+    row: dict = {"sid": sid, "mountingplace": mountingplace, "constraint": constraint,
+                 "panel_count": panel_count,
                  "system_kw_dc": system_kw_dc, "annual_kwh": annual_kwh,
                  "pvgis_kwh_per_kw": pvgis_kwh_per_kw,
                  "kwh_per_kw": None, "pct_diff": None,
@@ -87,24 +98,29 @@ def main() -> int:
         try:
             model = api.build_building_model(bundle)
             baseline = api.run_baseline(bundle, model)
-            design = api.design_pv(bundle, model, baseline)
-            warnings, check = check_pv(design, model.roof_planes, bundle.climate,
-                                       weather_csv=api._weather_csv(bundle))
-            rows.append(pv_row(sid=sid,
-                               annual_kwh=design.annual_kwh.expected if design else None,
-                               system_kw_dc=design.system_kw_dc if design else None,
-                               pvgis_kwh_per_kw=bundle.climate.pvgis_annual_kwh_per_kw,
-                               mountingplace=MOUNTINGPLACE,
-                               tolerance=check.tolerance, within=check.within,
-                               deviation=check.deviation, warnings=warnings))
+            for constraint, budget in (("roof_and_consumption", None),
+                                       (f"budget_{int(DEMO_BUDGET_USD)}", DEMO_BUDGET_USD)):
+                design = api.design_pv(bundle, model, baseline, budget)
+                warnings, check = check_pv(design, model.roof_planes, bundle.climate,
+                                           weather_csv=api._weather_csv(bundle))
+                rows.append(pv_row(sid=sid,
+                                   annual_kwh=design.annual_kwh.expected if design else None,
+                                   system_kw_dc=design.system_kw_dc if design else None,
+                                   panel_count=design.panel_count if design else None,
+                                   pvgis_kwh_per_kw=bundle.climate.pvgis_annual_kwh_per_kw,
+                                   mountingplace=MOUNTINGPLACE, constraint=constraint,
+                                   tolerance=check.tolerance, within=check.within,
+                                   deviation=check.deviation, warnings=warnings))
         except Exception as exc:
             rows.append(pv_row(sid=sid, annual_kwh=None, system_kw_dc=None,
                                pvgis_kwh_per_kw=bundle.climate.pvgis_annual_kwh_per_kw,
                                mountingplace=MOUNTINGPLACE,
                                warnings=[f"{type(exc).__name__}: {exc}"]))
-        print(f"{name}: {rows[-1]['status']} "
-              f"{rows[-1].get('kwh_per_kw')} vs PVGIS {rows[-1]['pvgis_kwh_per_kw']} "
-              f"({rows[-1].get('pct_diff')}%)", flush=True)
+            continue
+        for r in rows[-2:]:
+            print(f"{name:15s} {r['constraint']:22s} {str(r.get('panel_count')):>4s} panels "
+                  f"{str(r.get('kwh_per_kw')):>8s} kWh/kW vs PVGIS {r['pvgis_kwh_per_kw']} "
+                  f"({r.get('pct_diff')}%)  PV-10 within={r.get('pv10_within')}", flush=True)
 
     checked = [r for r in rows if r["status"] == "checked"]
     payload = {

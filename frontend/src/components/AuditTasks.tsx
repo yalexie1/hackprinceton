@@ -36,7 +36,8 @@ export default function AuditTasks({
       </summary>
       <p>
         This is a saved checklist from an earlier point in the audit. Follow the
-        activity below for subsequent results.
+        activity for subsequent results. Counts and questions in this checklist
+        describe that earlier plan, not the final audit.
       </p>
       {list}
     </details>

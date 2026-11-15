@@ -950,7 +950,9 @@ export default function App() {
                             {auditStageLabel(event.stage || event.type)}
                           </small>
                           <p>
-                            {event.message ||
+                            {event.type === "todo"
+                              ? "Audit checklist update"
+                              : event.message ||
                               String(
                                 event.payload.detail ||
                                   event.payload.fallback ||

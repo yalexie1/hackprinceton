@@ -17,19 +17,24 @@ function noteHeading(note: string) {
 export default function Warnings({ warnings }: { warnings: string[] }) {
   const unique = [...new Set(warnings.filter(Boolean))];
   if (!unique.length) return null;
+  const groups = new Map<string, string[]>();
+  for (const warning of unique) {
+    const heading = noteHeading(warning);
+    groups.set(heading, [...(groups.get(heading) || []), warning]);
+  }
   return (
     <section
       className="run-warnings"
       aria-label="Audit warnings and data quality"
     >
       <h3>What to check before deciding</h3>
-      {unique.map((warning) => (
-        <details className="warning-detail" key={warning}>
+      {[...groups].map(([heading, notes]) => (
+        <details className="warning-detail" key={heading}>
           <summary>
             <Info size={18} />
-            {noteHeading(warning)} <span>Read full note</span>
+            {heading} <span>{notes.length > 1 ? `Read ${notes.length} notes` : "Read full note"}</span>
           </summary>
-          <p>{warning}</p>
+          {notes.map((note) => <p key={note}>{note}</p>)}
         </details>
       ))}
     </section>

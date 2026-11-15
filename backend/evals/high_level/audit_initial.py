@@ -18,6 +18,31 @@ import subprocess
 from .metrics import score
 
 
+def normalize_runs(data: object) -> tuple[list[dict], list[str]]:
+    """Accept the full private run export or the owner's trimmed public export.
+
+    Preserve metadata for diagnostics; never synthesize a missing prediction.
+    """
+    if isinstance(data, dict):
+        return data["runs"], data.get("arms", ["bdg2temp", "openmeteo"])
+    if not isinstance(data, list):
+        raise ValueError("Expected a run export object or per-building list")
+    arms = ["bdg2temp", "openmeteo"]
+    return [{**r, "truth_elec_kwh": r["measured_elec_kwh"],
+             "arms": {a: {"elec": r[a]} if r.get(a) is not None else {}
+                      for a in arms}} for r in data], arms
+
+
+def grouped_metrics(rows: list[dict], arms: list[str]) -> dict:
+    """Descriptive groups of an already-inspected cohort, not held-out tests."""
+    result = {}
+    for key in ("site_id", "usage", "segment", "climate_zone"):
+        values = sorted({str(r.get(key, "unknown")) for r in rows})
+        result[key] = {v: {a: score([r for r in rows if str(r.get(key, "unknown")) == v], a)
+                           for a in arms} for v in values}
+    return result
+
+
 def audit(source_root: Path, runs_path: Path | None = None) -> dict:
     source = source_root / "backend/evals/score_eval.py"
     spec = importlib.util.spec_from_file_location("delivered_score_eval", source)
@@ -31,6 +56,8 @@ def audit(source_root: Path, runs_path: Path | None = None) -> dict:
     }}}} for r in ratios]
     independent = score(rows, "test")
     delivered = module.describe([100 * (r - 1) for r in ratios])
+    metric_key = "off_by_2x_either_way" if "off_by_2x_either_way" in delivered else "factor_2_plus"
+    delivered_factor = delivered.get(metric_key)
     result = {
         "audit_scope": "initial source/metric audit; no model tuning",
         "source_revision": subprocess.check_output(
@@ -40,9 +67,10 @@ def audit(source_root: Path, runs_path: Path | None = None) -> dict:
             "evidence_type": "synthetic arithmetic counterexample, not building evidence",
             "prediction_truth_ratios": ratios,
             "correct_factor_two_or_more_pct": independent["factor_two_or_more_pct"],
-            "delivered_factor_2_plus_pct": delivered.get("factor_2_plus"),
-            "finding": "Delivered factor_2_plus is not a symmetric factor-of-two metric"
-                if delivered.get("factor_2_plus") != independent["factor_two_or_more_pct"]
+            "delivered_metric_key": metric_key,
+            "delivered_factor_two_pct": delivered_factor,
+            "finding": "Delivered factor-of-two metric fails the symmetric counterexample"
+                if delivered_factor != independent["factor_two_or_more_pct"]
                 else "No discrepancy in this counterexample",
         },
         "building_metrics": {"status": "blocked", "reason": "Per-building output not provided; aggregate headlines not independently reproduced"},
@@ -50,8 +78,7 @@ def audit(source_root: Path, runs_path: Path | None = None) -> dict:
     if runs_path:
         content = runs_path.read_bytes()
         data = json.loads(content)
-        rows = data["runs"]
-        arms = data.get("arms", ["bdg2temp", "openmeteo"])
+        rows, arms = normalize_runs(data)
         paired = [r for r in rows if all("elec" in r.get("arms", {}).get(a, {}) for a in arms)]
         result["building_metrics"] = {
             "status": "scored_owner_outputs_not_model_reproduction",
@@ -59,6 +86,7 @@ def audit(source_root: Path, runs_path: Path | None = None) -> dict:
             "n_output_rows": len(rows), "n_common_success": len(paired),
             "per_arm_all_available": {a: score(rows, a) for a in arms},
             "paired": {a: score(paired, a) for a in arms},
+            "descriptive_groups": grouped_metrics(rows, arms),
         }
     return result
 

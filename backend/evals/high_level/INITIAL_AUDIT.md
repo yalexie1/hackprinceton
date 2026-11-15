@@ -4,9 +4,34 @@ Tracking: #405, stage 0 of #400. Source inspected: initial #403 commit `081a433f
 
 ## Status
 
-The owner explicitly delivered the initial results, manifest, scope and reproduction commands. OpenSolar is procedure-only/not run and PVWatts unavailable, as disclosed. That delivery opened independent review in the approved `backend/evals/high_level/` scope. **Vignesha subsequently confirmed both concrete bugs and withdrew the initial headline numbers pending a corrected rerun. New scored/model experiments wait for that revised final delivery.** Frontend integration remains the priority before larger experiments.
+The owner delivered corrected initial results in #403 at `d65ad172dcd87424a80378316c1e6349cf280555`, now merged to main. Both concrete issues below were confirmed and fixed by the owner. The gate is open for independent review in the approved `backend/evals/high_level/` scope. OpenSolar remains procedure-only/not run. The owner's PVWatts attempt was unavailable; Yale subsequently reported cases using a different host, which have not been independently reproduced here. Frontend integration remains the priority before larger experiments.
 
-**Actual 494-building headline metrics have not been independently reproduced.** Corrected per-building outputs and immutable generated weather inputs have been requested from the owner. All four raw BDG2 files are independently downloaded and SHA256/size verified against the delivered manifest; see out/public_input_receipt.json. Raw bytes stay outside Git. Refetching an unversioned weather API would be a new input version, not exact reproduction. The following verified findings are source/arithmetic/input-unit checks, not accuracy results on a new building cohort.
+**The corrected 494-building outputs have been independently rescored, and raw-meter truth/cohort membership reconciled. The model itself has not yet been rerun independently.** Exact generated weather inputs and end-use/model-area diagnostics are pending the owner's promised handoff. All four raw BDG2 files were independently downloaded and SHA256/size verified against the delivered manifest; see out/public_input_receipt.json. Raw bytes stay outside Git. Refetching an unversioned weather API would be a new input version, not exact reproduction.
+
+## Corrected output and truth reconciliation
+
+`out/corrected_rescore.json` pins the per-building artifact hash and independent scorer results. Both arms score all 494 buildings with no missing prediction. Corrected factor-of-two arithmetic passes the independent 75% boundary counterexample.
+
+| Independent metric | BDG2 temperature | Open-Meteo temperature |
+| --- | ---: | ---: |
+| Median absolute percentage error | 55.90% | 55.64% |
+| Median signed percentage error | -0.47% | -1.80% |
+| Aggregate signed energy error | -11.69% | -12.55% |
+| Weighted absolute percentage error | 56.61% | 56.49% |
+| Two-sided factor-of-two misses | 43.52% | 43.72% |
+| Fraction within displayed bounds | 17.00% | 16.19% |
+
+These confirm the owner's rounded headline numbers while exposing aggregate underprediction that the median signed percentage hides. They are diagnostics on an already-inspected cohort, not fresh held-out results or retrofit-savings accuracy.
+
+`out/truth_check.json` independently reconciles all 494 annual electricity truths against the hashed raw meter CSV: 530 metadata-eligible buildings become 494 after completeness/positive-total checks; the owner output contains exactly that set. The calendar contains all 8,760 unique 2017 hourly timestamps, with no duplicates. Maximum absolute total difference is below 0.000001 kWh (floating-point summation order). This makes a wrong truth total/cohort an unlikely explanation for the observed errors; it does not validate meter boundaries or the building model.
+
+## New actionable input defects
+
+1. **Unsupported climate zones silently fall back to CA/3B.** `registry.climate_zone()` accepts only `T.CLIMATES = ('2A', '3B')`. Four site labels (3C, 6A, 2B, 4A; 398/494 buildings) are not supported and fall back to the forced CA state. Only Panther/2A remains as requested. Site weather is still supplied, but the claim that forced CA cannot affect energy defaults is false for these inputs. Proposed owner action: disclose requested/effective zones and expand appropriately sourced tables or explicitly limit scope. No guessed substitute zone is evidence for the real one.
+2. **The adapter carries unrelated example evidence into each model.** `scaled_bundle()` scales Matterport x/y dimensions and changes year/use/site/weather but retains the office example's CoStar tenancies (including post-2017 move-ins), class A, four stories, gross area 10,600.9 m2, and Vexcel roof records. The registry consumes those fields; `build_building_model()` also passes Vexcel and CoStar stories into geometry. Consequently this is not purely an area/vintage/defaults-only experiment, nor necessarily a flat one-storey model as its prose describes. Owner action: strip unrelated evidence, distinguish a generated geometric proxy from real data, then inspect resulting geometry and assumptions before rerunning.
+3. **Whole-building residential meters use a dwelling-unit model.** All 73 Lodging/residential properties become `multifamily_unit` with a scaled house's unchanged bedroom labels. Registry occupancy and appliance/hot-water formulas depend on bedroom count, so an enlarged dormitory still has a single dwelling's bedroom/appliance structure. This group has median and aggregate errors of -84.1% and -83.1%, respectively. Do not infer an occupancy count or dwelling count by fitting to these meters; use independently sourced metadata or report the mapping unsupported.
+
+These were sent to Vignesha and Yale in Message Board comment #6889126586. Vignesha owns adapter/archetype/meter-scope corrections; Yale owns registry/model changes. Their causal contribution and any improvement have **not** been measured. Wider ranges affect coverage, not the expected prediction's accuracy; that work needs a separate assessment.
 
 ## Verified findings
 
@@ -44,13 +69,20 @@ python -m backend.evals.high_level.audit_initial \
 python -m pytest backend/evals/high_level/tests -q
 ```
 
-If the owner provides the exact `runs.json`, add `--runs /private/path/to/runs.json`. The output will independently score both the common successful cohort and all available predictions per arm, retaining missing-prediction counts and the input hash. Its status explicitly distinguishes rescoring owner outputs from rerunning the model. Do not commit per-building inputs or experiment caches.
+Add `--runs /path/to/backend/evals/out/per_building.json` to rescore the corrected public output, or supply the owner's original full `runs.json`. Both schemas retain missing predictions and the input hash. Its status explicitly distinguishes rescoring owner outputs from rerunning the model. No new raw/per-building input copies are committed here.
 
-Fourteen targeted tests passed: nine arithmetic tests and five acquisition safeguards. The acquire_bdg2 module downloads the four public inputs into a caller-selected cache, verifies the delivered byte counts and hashes, and rejects LFS pointers, truncated/changed files and oversized responses. It never trusts or overwrites mismatched existing inputs. No production source, model parameter, cached sponsor data or displayed financial result was changed by this audit.
+```bash
+python -m backend.evals.high_level.audit_truth \
+  --cache-dir /private/path/to/bdg2 \
+  --predictions backend/evals/out/per_building.json \
+  --output /tmp/truth-check.json
+```
+
+Twenty targeted tests cover arithmetic, export/refusal preservation, acquisition safeguards and calendar/completeness failures. The acquire_bdg2 module downloads the four public inputs into a caller-selected cache, verifies the delivered byte counts and hashes, and rejects LFS pointers, truncated/changed files and oversized responses. It never trusts or overwrites mismatched existing inputs. No production source, model parameter, cached sponsor data or displayed financial result was changed by this audit.
 
 ## Next checkpoint
 
-1. Receive the owner's response and pin the corrected initial revision, preserving this historical audit.
-2. Acquire permitted exact per-building outputs and weather hashes, or label a separately hashed public-data rerun as a new input version. Reconcile truth, cohort selection and all reported metric denominators before quoting independently reproduced accuracy.
+1. Receive the promised exact weather/end-use handoff and independently rerun the corrected original model; preserve the original and corrected baselines before owner fixes.
+2. Have the responsible owners fix input provenance, climate/archetype scope and meter boundaries. Compare controlled diagnostic changes individually on the existing development cohort; do not call this a blind test or replace the original report with improved numbers.
 3. Freeze eligibility, mappings, development/test splits and intended-use acceptance criteria before scoring new cohorts. RECS anonymization and aggregate geography may permit only cohort comparisons; do not invent precise geometry or weather to create a property-level test.
 4. Resume the six-track plan after the required frontend integrations, without tuning on the already-inspected initial evaluation set.

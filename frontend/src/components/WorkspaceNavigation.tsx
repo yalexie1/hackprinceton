@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BookOpen, CheckCircle2, ClipboardList, FileText, Home, Layers3, LoaderCircle, MapPin, Settings2, Sun } from "lucide-react";
+import { BookOpen, CheckCircle2, ClipboardList, FileText, Home, LoaderCircle, MapPin, Settings2, Sun } from "lucide-react";
 import "./workspace-navigation.css";
 
 export type View = "find" | "setup" | "audit" | "plan" | "roof" | "layout" | "assumptions" | "documents" | "how" | "evals" | "solar-map";
@@ -8,7 +8,6 @@ export const views: { id: View; label: string; icon: typeof Home }[] = [
   { id: "find", label: "Properties", icon: Home },
   { id: "plan", label: "Energy plan", icon: ClipboardList },
   { id: "roof", label: "Solar & roof", icon: Sun },
-  { id: "layout", label: "Workspace", icon: Layers3 },
   { id: "assumptions", label: "Assumptions", icon: Settings2 },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "solar-map", label: "Solar map", icon: MapPin },

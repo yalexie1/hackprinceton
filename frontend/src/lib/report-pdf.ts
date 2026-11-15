@@ -60,9 +60,6 @@ export function createAuditPdf(run: RunResult): jsPDF {
     heading("Other findings");
     for (const item of run.plan.skipped) text(`${readableText(item.measure_id)}: ${readableText(item.detail)}`);
   }
-  heading("What to check before deciding");
-  for (const warning of [...new Set(run.warnings)]) text(warningText(warning));
-  text("Confirm roof dimensions and condition, electrical capacity, hidden insulation, actual utility prices and installation costs with the appropriate professional. Obtain firm quotes before committing.");
   heading("Building details and their sources");
   text("The following source summaries accompany the recorded inputs. Open Assumptions in the app for individual photo observations and complete source notes.");
   for (const a of run.building_model?.assumptions || []) {

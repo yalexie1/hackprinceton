@@ -66,4 +66,5 @@
  .assumption-body { display:block; }
  .assumption-body .confidence { margin-top:.75rem; }
 }
-.roof-photo-canvas { max-width:420px; margin:1.2rem auto; }
+.roof-photo-canvas { max-width:760px; margin:1.2rem auto; }
+.roof-photo-canvas.roof-photo-portrait { max-width:560px; }

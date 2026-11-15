@@ -27,6 +27,20 @@ success. `probe` does not re-decide that; it just reports what that call decided
 network error surfaces the same way through whatever `post` does). `probe` catches
 per sid and keeps going, because the whole point of probing several sids is that a
 single 403 should not hide whether the other four are reachable.
+
+**Zero results is a failure, not a vacuous pass.** `probe` has nothing to iterate
+when `index.summaries()` is empty, and `all()` over an empty sequence is `True` -
+so a gate built on that line alone would exit 0 having checked nothing. `main`
+special-cases an empty result list and exits 1.
+
+**`DATA_LAYER_CACHE_DIR` does not redirect the CoStar kit.** It only overrides
+`cache.cache_root()` (where fetched payloads and bundles land). The kit mirror
+`index.summaries()` reads from is `costar.kit_dir()`, which resolves
+`<repo>/data/cache/costar/kit` from this module's own repo root and is overridden
+only by `COSTAR_KIT_DIR`. Running this gate from a git worktree - which has no
+`data/cache/` of its own - needs **both** env vars set, or `index.summaries()`
+comes back empty, `uncached_sids` comes back empty, and `probe` silently checks
+nothing. That is exactly the trap behind the zero-results case above.
 """
 from __future__ import annotations
 
@@ -96,8 +110,25 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if args.probe is not None:
         results = probe(args.probe)
+        if not results:
+            print(
+                "probed 0 sids - index.summaries() returned nothing, most likely "
+                "because the CoStar kit mirror is not reachable (both "
+                "DATA_LAYER_CACHE_DIR and COSTAR_KIT_DIR need to point at it; see "
+                "the module docstring). Treating this as a failure: a gate that "
+                "checks nothing has not proven anything.",
+                file=sys.stderr,
+            )
+            return 1
         for sid, reachable, detail in results:
             print(f"{sid}: {'reachable' if reachable else 'UNREACHABLE'} ({detail})")
+        if len(results) < args.probe:
+            print(
+                f"note: only {len(results)} of the requested {args.probe} sids were "
+                "available to probe (the uncached pool is smaller than N) - not "
+                "treated as a failure on its own.",
+                file=sys.stderr,
+            )
         return 0 if all(reachable for _, reachable, _ in results) else 1
 
     parser.print_help()

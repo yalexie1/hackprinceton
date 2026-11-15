@@ -106,3 +106,16 @@ def test_probe_does_not_force_a_refresh_when_a_transport_is_injected(monkeypatch
     monkeypatch.setattr(warm.matterport, "get_matterport_data_with_notes", fake_get_with_notes)
     warm.probe(1, post=fake_post_ok)
     assert calls == [("SID_A", fake_post_ok, False)]
+
+
+# ---------- main ----------
+
+def test_main_probe_exits_nonzero_on_zero_results(monkeypatch, capsys):
+    """`all()` over an empty sequence is `True`, so without a special case a kit
+    mirror that is not reachable (`index.summaries()` empty) would make the gate
+    exit 0 having checked nothing. Zero probed sids must be a failure."""
+    monkeypatch.setattr(warm.index, "summaries", lambda: ())
+    rc = warm.main(["--probe", "5"])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "probed 0 sids" in err

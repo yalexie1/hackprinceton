@@ -14,7 +14,7 @@ describe("auditProgress", () => {
     );
     expect(p.complete).toBe(2);
     expect(p.total).toBe(8);
-    expect(p.label).toBe("Reading the roof");
+    expect(p.label).toBe("Reviewing building images");
   });
 
   it("reports the last stage reached, so a long stage does not look stalled at the previous one", () => {

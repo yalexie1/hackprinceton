@@ -47,7 +47,9 @@ nothing in particular.
 """
 from __future__ import annotations
 
+import argparse
 import random
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional
@@ -193,3 +195,225 @@ def select(
             spares.extend(chosen[keep:need])
 
     return target + spares
+
+
+# ---------------------------------------------------------------------------
+# The committed manifest (task 3)
+#
+# `select()` is pure on purpose - two teammates generating this manifest on
+# different laptops must get the exact same 75 from the same index, or the
+# "committed" part of "committed manifest" is a lie. That means it cannot look
+# at local cache state itself. But the task 2 plan still wants the ten
+# properties this machine already warmed (three `specs/examples/` fixtures plus
+# seven others with a `bundle.json`) to win their buckets, because they are
+# already proven and already paid for. Generation - a one-off development
+# action whose *output* is what every reader shares - is the only place that
+# can know both things at once, so `main --generate` is the one caller that
+# passes `prefer=already_warm()` into `select()`. Every other caller of
+# `select()` (tests, and any future caller) stays pure.
+# ---------------------------------------------------------------------------
+
+#: The three fixtures `specs/examples/` ships (house, office, office_houston) -
+#: see their `property_summary.json` files. `demo_transfer.DEMO_SIDS` lists the
+#: same three sids; it is duplicated here rather than imported for the same
+#: reason `already_warm` duplicates `warm`'s primitive instead of importing it -
+#: this module must stay free to be imported by whichever of the two needs the
+#: other later, and a one-way dependency now would pick that direction by accident.
+_GOLDEN_SIDS: frozenset[str] = frozenset({"zvKHR9DHNjJ", "ZSPaQbkGcJJ", "L3266YcPPvd"})
+
+
+def _reason(summary: PropertySummary) -> str:
+    """"<use_type>/<state>", suffixed "/golden" when `summary` is one of the three
+    sids `specs/examples/` already ships a fixture for - those three are already
+    proven to work regardless of what this laptop has cached."""
+    base = f"{summary.use_type}/{summary.state}"
+    return f"{base}/golden" if summary.sid in _GOLDEN_SIDS else base
+
+
+def _generate() -> tuple[tuple[str, str], ...]:
+    """What `--generate` writes: `select()` against the live index, with
+    `already_warm()` as `prefer` so this machine's already-fetched properties win
+    their bucket (see the section note above), each stamped with its reason."""
+    chosen = select(prefer=already_warm())
+    return tuple((summary.sid, _reason(summary)) for summary in chosen)
+
+
+#: The frozen output of `_generate()`, written back into this file by
+#: `python -m backend.data_layer.demo_set --generate`. 75 `(sid, reason)` pairs,
+#: the first 50 the target demo set and the last 25 spares in replacement order -
+#: see `select()`'s docstring for what "replacement order" means. Every reader at
+#: runtime reads only this literal; generating it is the only step that needs the
+#: kit mirror, which is why `pytest backend -q` can exercise `resolve()` without one.
+#
+# DEMO_SET-GENERATED-BEGIN
+DEMO_SET: tuple[tuple[str, str], ...] = (
+    ("L3266YcPPvd", "office/TX/golden"),
+    ("XSC8HVkwJH2", "office/TX"),
+    ("ThfCq6T7tLX", "office/TX"),
+    ("ebSqaFMntwv", "office/TX"),
+    ("7uM5JKssTED", "office/TX"),
+    ("ydzXab1mZt5", "office/TX"),
+    ("4HiyM1Eqfce", "office/TX"),
+    ("4VqcKP8VSXX", "office/TX"),
+    ("ZSPaQbkGcJJ", "office/CA/golden"),
+    ("jfiEvosX974", "office/CA"),
+    ("A2dg4xeLX4j", "office/CA"),
+    ("XVPPwqqbFdB", "office/CA"),
+    ("kpdF1dt7jo2", "office/CA"),
+    ("EJdgXvCPTr3", "office/CA"),
+    ("tsaz3uu9Nk9", "office/CA"),
+    ("kSVfr4gKUhM", "retail/TX"),
+    ("gjMWcj8oz4B", "retail/TX"),
+    ("ZwxqzRQzs2r", "retail/TX"),
+    ("qUemqJ6WYv8", "retail/TX"),
+    ("KT7w4e1moiZ", "retail/TX"),
+    ("C3JYiY97kaX", "retail/CA"),
+    ("9JVEYsUzXcy", "retail/CA"),
+    ("2wKwkYGbkPc", "retail/CA"),
+    ("7uN3XX6U5Un", "retail/CA"),
+    ("VHxVaDxPiub", "retail/CA"),
+    ("PmUgz1kP1xu", "multifamily_unit/TX"),
+    ("5UXkjV5TyQa", "multifamily_unit/TX"),
+    ("TK8wtSvDWia", "multifamily_unit/TX"),
+    ("TSpwHx7D8yC", "multifamily_unit/TX"),
+    ("EKTSt6W4aWv", "multifamily_unit/TX"),
+    ("AmmeKd2ddDh", "multifamily_unit/CA"),
+    ("YnQBU9JUQWC", "multifamily_unit/CA"),
+    ("2u5aEeXan5U", "multifamily_unit/CA"),
+    ("itLHNpaCLeb", "multifamily_unit/CA"),
+    ("b9kNytWmz5k", "multifamily_unit/CA"),
+    ("XFTP8epsP4E", "single_family/TX"),
+    ("ddKZEats5Np", "single_family/TX"),
+    ("ktcrR9s3PVL", "single_family/TX"),
+    ("iqNJy5KMKGW", "single_family/TX"),
+    ("NhdS6VJypGE", "single_family/TX"),
+    ("zvKHR9DHNjJ", "single_family/CA/golden"),
+    ("DhTEXLfCtiH", "single_family/CA"),
+    ("VJ8SigddfDf", "single_family/CA"),
+    ("burWoXUMoTf", "single_family/CA"),
+    ("ChKhSEUvPKE", "single_family/CA"),
+    ("9oebYSRx5QD", "other/TX"),
+    ("5FyvmAZAhRg", "other/TX"),
+    ("wdjyrTtBBHT", "other/TX"),
+    ("5RYmbtMAuEV", "other/CA"),
+    ("M4PzRXV6bFG", "other/CA"),
+    ("jtfVRiouTPW", "office/TX"),
+    ("1J9YKR5rPqk", "office/TX"),
+    ("NLpW1UAp1HJ", "office/TX"),
+    ("K6X5Tk8UBn9", "office/CA"),
+    ("122gc4639J7", "office/CA"),
+    ("pMe3VYvpCCU", "office/CA"),
+    ("59U6s4YUbrP", "office/CA"),
+    ("BoqDzrD8JLh", "retail/TX"),
+    ("zKgykpJUQ69", "retail/TX"),
+    ("nYvgTdxFHsT", "retail/TX"),
+    ("43hNG6RhgjM", "retail/CA"),
+    ("7LuW15YPx4r", "retail/CA"),
+    ("5yDW81CsybP", "multifamily_unit/TX"),
+    ("44ABXz8TMfA", "multifamily_unit/TX"),
+    ("HdRHXqSHohe", "multifamily_unit/TX"),
+    ("dtHoajDQgmY", "multifamily_unit/CA"),
+    ("2Aaw7drsvrT", "multifamily_unit/CA"),
+    ("8VF48HG3wMH", "single_family/TX"),
+    ("Xxfv2EZsgFB", "single_family/TX"),
+    ("C1BgHc2TDsC", "single_family/TX"),
+    ("PTz2GeBccjR", "single_family/CA"),
+    ("tUQSvpRoXLj", "single_family/CA"),
+    ("bJg9wSAeFAe", "other/TX"),
+    ("2tv5N4fK91i", "other/CA"),
+    ("5V9hTd7N5dg", "other/CA"),
+)
+# DEMO_SET-GENERATED-END
+
+
+def sids(n: int = 50) -> tuple[str, ...]:
+    """The first `n` sids of `DEMO_SET` - defaults to the target fifty, the part of
+    the manifest Task 4 warms before falling back to `spares()`."""
+    return tuple(sid for sid, _ in DEMO_SET[:n])
+
+
+def spares() -> tuple[str, ...]:
+    """The 25 sids beyond the target fifty, in replacement order."""
+    return tuple(sid for sid, _ in DEMO_SET[50:])
+
+
+class ManifestStale(RuntimeError):
+    """A sid `DEMO_SET` carries is no longer in `index.by_sid()` - the kit mirror
+    was re-mirrored or trimmed since the manifest was generated. `resolve()` raises
+    this by name rather than letting a bare `KeyError` escape, because "which sid"
+    is exactly what whoever re-runs `--generate` needs to know."""
+
+
+def resolve() -> list[PropertySummary]:
+    """Every `DEMO_SET` sid looked up in `index.by_sid()`, in manifest order.
+
+    Raises `ManifestStale` naming the first sid the index no longer has, instead of
+    letting that lookup's `KeyError` escape - a stale manifest should fail loudly and
+    by name, not with a traceback that makes the caller go find which sid it was."""
+    table = index.by_sid()
+    out: list[PropertySummary] = []
+    for sid, _ in DEMO_SET:
+        try:
+            out.append(table[sid])
+        except KeyError:
+            raise ManifestStale(
+                f"{sid}: in DEMO_SET but not in the live index - re-run "
+                "`python -m backend.data_layer.demo_set --generate`"
+            ) from None
+    return out
+
+
+def _format_entries(entries: Iterable[tuple[str, str]]) -> str:
+    return "\n".join(f'    ("{sid}", "{reason}"),' for sid, reason in entries)
+
+
+#: The sentinel comments bracketing the `DEMO_SET` literal above. Matched as plain
+#: strings, not a regex over surrounding code: the previous attempt at this used a
+#: regex anchored only on `DEMO_SET: tuple[...] = (` and the next bare `)\n`, which
+#: for an *empty* placeholder tuple (no entries between the parens) skipped straight
+#: past that empty pair and matched the next unrelated `)` at column zero later in
+#: this very file - deleting everything in between. Exact sentinel strings have no
+#: such ambiguity: there is exactly one place in the file each one appears.
+_MANIFEST_BEGIN = "# DEMO_SET-GENERATED-BEGIN"
+_MANIFEST_END = "# DEMO_SET-GENERATED-END"
+
+
+def _write_manifest(entries: tuple[tuple[str, str], ...]) -> None:
+    """Rewrite this module's own `DEMO_SET` literal in place, replacing everything
+    strictly between the `_MANIFEST_BEGIN`/`_MANIFEST_END` sentinel lines (exclusive)
+    with a fresh `DEMO_SET = (...)` block. Everything outside those sentinels -
+    docstrings, the comment introducing the block, every other function - survives
+    byte-for-byte."""
+    path = Path(__file__)
+    text = path.read_text()
+    begin = text.index(_MANIFEST_BEGIN) + len(_MANIFEST_BEGIN)
+    end = text.index(_MANIFEST_END, begin)
+    body = (
+        "\nDEMO_SET: tuple[tuple[str, str], ...] = (\n"
+        + _format_entries(entries)
+        + "\n)\n"
+    )
+    new_text = text[:begin] + body + text[end:]
+    path.write_text(new_text)
+
+
+def main(argv: Optional[list[str]] = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--generate",
+        action="store_true",
+        help="regenerate the committed DEMO_SET literal from the live index",
+    )
+    args = parser.parse_args(argv)
+    if not args.generate:
+        parser.print_help()
+        return
+
+    entries = _generate()
+    _write_manifest(entries)
+    golden = sum(1 for _, reason in entries if reason.endswith("/golden"))
+    print(f"wrote {len(entries)} entries ({golden} /golden) to {Path(__file__)}")
+
+
+if __name__ == "__main__":
+    main()

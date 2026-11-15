@@ -9,12 +9,23 @@ a shortage (`THIN_RETAIL`) say so by name.
 """
 from __future__ import annotations
 
+import re
 from collections import Counter
 
 import pytest
 
 from backend.data_layer import demo_set, index
-from backend.data_layer.demo_set import QUOTAS, SelectionShort, already_warm, select
+from backend.data_layer.demo_set import (
+    DEMO_SET,
+    QUOTAS,
+    ManifestStale,
+    SelectionShort,
+    already_warm,
+    resolve,
+    select,
+    sids,
+    spares,
+)
 from backend.schema import PropertySummary
 
 
@@ -102,3 +113,33 @@ def test_no_kit_mirror_raises_rather_than_returning_short():   # Review Focus 1
 def test_a_bucket_short_of_its_quota_names_the_bucket():       # Review Focus 2
     with pytest.raises(SelectionShort, match="retail"):
         select(rows=THIN_RETAIL)
+
+
+# ---------------------------------------------------------------------------
+# The committed manifest (task 3)
+# ---------------------------------------------------------------------------
+
+def test_manifest_holds_seventy_five_entries():
+    assert len(DEMO_SET) == 75
+
+
+def test_manifest_carries_ids_and_reasons_only():
+    for sid, reason in DEMO_SET:
+        assert re.fullmatch(r"[A-Za-z0-9]{11}", sid)
+        assert re.fullmatch(r"[a-z_]+/(TX|CA)(/golden)?", reason)
+
+
+def test_sids_defaults_to_the_target_fifty():
+    assert len(sids()) == 50
+    assert sids()[0] == DEMO_SET[0][0]
+
+
+def test_spares_is_the_trailing_twenty_five():
+    assert spares() == tuple(sid for sid, _ in DEMO_SET[50:])
+
+
+def test_resolve_names_a_sid_the_index_no_longer_has(monkeypatch):   # Review Focus 4
+    monkeypatch.setattr(demo_set, "DEMO_SET", (("MISSINGSID1", "office/TX"),))
+    monkeypatch.setattr(index, "by_sid", lambda: {})
+    with pytest.raises(ManifestStale, match="MISSINGSID1"):
+        resolve()

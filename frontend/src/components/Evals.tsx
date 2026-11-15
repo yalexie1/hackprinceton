@@ -163,7 +163,12 @@ function Metered({ section }: { section: EvalSection }) {
 
 function Rows({ section }: { section: EvalSection }) {
   const rows = section.rows ?? [];
-  const keys = rows.length ? Object.keys(rows[0]).filter((k) => k !== "warnings") : [];
+  // Union of keys across every row, not just the first: rows are ragged (a
+  // not_checked row carries `reason`, a checked one carries `pct_diff`), and
+  // taking the first row's keys would print the literal "undefined" for the rest.
+  const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))].filter(
+    (k) => k !== "warnings",
+  );
   return (
     <section className="eval-section">
       <h3>{section.title}</h3>
@@ -184,7 +189,11 @@ function Rows({ section }: { section: EvalSection }) {
               {rows.map((row, i) => (
                 <tr key={i}>
                   {keys.map((k) => (
-                    <td key={k}>{row[k] === null ? "—" : String(row[k])}</td>
+                    <td key={k}>
+                      {row[k] === null || row[k] === undefined || row[k] === ""
+                        ? "—"
+                        : String(row[k])}
+                    </td>
                   ))}
                 </tr>
               ))}

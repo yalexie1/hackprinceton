@@ -43,9 +43,12 @@ def market_stats(rows: list[tuple[float, float]], min_year_rows: int = 1) -> dic
     A non-positive size or price is a reporting artefact, not a free system; dropped.
     """
     per_w = [price / (kw * 1000.0) for kw, price in rows if kw > 0 and price > 0]
-    if len(per_w) < min_year_rows or not per_w:
+    # Below four systems there are no quartiles. Returning min/max labelled p25/p75
+    # would be a far wider band than an IQR, so almost any price would read as
+    # inside_iqr - a false pass. No band is better than a flattering one.
+    if len(per_w) < max(min_year_rows, 4):
         return None
-    q = st.quantiles(per_w, n=4) if len(per_w) >= 4 else [min(per_w), st.median(per_w), max(per_w)]
+    q = st.quantiles(per_w, n=4)
     return {"p25": round(q[0], 3), "median": round(st.median(per_w), 3),
             "p75": round(q[2], 3), "n": len(per_w)}
 

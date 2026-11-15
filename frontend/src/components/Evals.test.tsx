@@ -101,3 +101,25 @@ describe("evals page", () => {
     expect(html).toContain(data.metered_buildings.bins_note as string);
   });
 });
+
+describe("evals table with ragged rows", () => {
+  const ragged: EvalsData = {
+    pv_crosscheck: {
+      status: "ok",
+      title: "PV yield vs PVGIS",
+      question: "Does it agree?",
+      rows: [
+        { sid: "a", pct_diff: -2.7, reason: "" },
+        { sid: "b", pct_diff: null, note_only_on_this_row: "late key" },
+      ],
+    },
+  };
+
+  it("never prints the literal string undefined when rows have different keys", () => {
+    const html = renderToStaticMarkup(<Evals data={ragged} />);
+    expect(html).not.toContain("undefined");
+    // The key that appears only on the second row must still get a column.
+    expect(html).toContain("note only on this row");
+    expect(html).toContain("late key");
+  });
+});

@@ -48,10 +48,11 @@ def test_no_price_of_our_own_is_not_checked():
 
 def test_market_stats_drops_non_positive_prices_and_sizes():
     # A zero-price or zero-size row is a data artefact, not a $0/W system.
-    rows = [(10.0, 30000.0), (0.0, 30000.0), (10.0, 0.0), (10.0, -5.0), (20.0, 80000.0)]
-    stats = market_stats(rows, min_year_rows=1)
-    assert stats["n"] == 2
-    assert stats["median"] == pytest.approx(3.5, abs=0.26)
+    good = [(10.0, 20000.0), (10.0, 30000.0), (10.0, 40000.0), (10.0, 50000.0)]
+    junk = [(0.0, 30000.0), (10.0, 0.0), (10.0, -5.0), (-2.0, 30000.0)]
+    stats = market_stats(good + junk, min_year_rows=1)
+    assert stats["n"] == 4
+    assert stats["median"] == pytest.approx(3.5, abs=0.01)
 
 
 def test_market_stats_is_none_when_nothing_survives():
@@ -68,3 +69,13 @@ def test_segment_codes_pool_non_residential_and_exclude_unreported():
     # "-1" is "not reported" and must never be counted as either segment.
     for codes in SEGMENT_CODES.values():
         assert "-1" not in codes
+
+
+def test_market_stats_refuses_to_call_min_and_max_an_iqr():
+    # With fewer than 4 systems there are no quartiles. Returning min/max labelled
+    # p25/p75 would be a far wider band than an IQR, so almost any price would read
+    # as inside_iqr - a false pass on a credibility check.
+    assert market_stats([(10.0, 30000.0), (10.0, 60000.0)], min_year_rows=1) is None
+    four = market_stats([(10.0, 20000.0), (10.0, 30000.0),
+                         (10.0, 40000.0), (10.0, 50000.0)], min_year_rows=1)
+    assert four is not None and four["p25"] < four["median"] < four["p75"]

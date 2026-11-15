@@ -147,13 +147,16 @@ def build(city: str) -> dict:
             "assumptions": [f"{SYSTEM_KW:g} kW DC rooftop system, fixed 20 degree tilt facing south, 14 % losses (PVGIS ERA5)",
                             f"{SELF_USE:.0%} of the output used on site at the retail rate; the rest valued at zero",
                             "retail rate: OpenEI 2020 zip-level residential rate scaled to the current EIA state average "
-                            f"(x{scale:.2f}); one rate per utility service area, not per street. Zips with no listed "
-                            f"rate (deregulated retail market) use the EIA {state} state average" if any(
-                                r["rate_source"] == "state_average" for r in rows) else
-                            "every zip has a listed utility rate",
-                            "cost and incentives from the finance module (PV_ROOF, residential); no financing, "
-                            "degradation or rate escalation",
-                            "payback is simple payback: net upfront cost divided by first-year savings"],
+                            f"(x{scale:.2f}); one rate per utility service area, not per street",
+                            (f"zips with no listed rate (deregulated retail market) use the EIA {state} state average"
+                             if any(r["rate_source"] == "state_average" for r in rows)
+                             else "every zip has a listed utility rate"),
+                            "this differs from a property audit, which uses the EIA state average rate and the utility's "
+                            "net-metering rules for exports; here exports earn nothing, so these paybacks are a "
+                            "conservative screening estimate, not a quote",
+                            "cost from the finance module (PV_ROOF, residential); no incentives apply in 2026, no "
+                            "financing, degradation or rate escalation",
+                            "payback is simple payback: cost divided by first-year savings"],
             "rows": rows}
 
 

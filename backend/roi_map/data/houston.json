@@ -6,9 +6,11 @@
  "assumptions": [
   "6 kW DC rooftop system, fixed 20 degree tilt facing south, 14 % losses (PVGIS ERA5)",
   "70% of the output used on site at the retail rate; the rest valued at zero",
-  "retail rate: OpenEI 2020 zip-level residential rate scaled to the current EIA state average (x1.43); one rate per utility service area, not per street. Zips with no listed rate (deregulated retail market) use the EIA TX state average",
-  "cost and incentives from the finance module (PV_ROOF, residential); no financing, degradation or rate escalation",
-  "payback is simple payback: net upfront cost divided by first-year savings"
+  "retail rate: OpenEI 2020 zip-level residential rate scaled to the current EIA state average (x1.43); one rate per utility service area, not per street",
+  "zips with no listed rate (deregulated retail market) use the EIA TX state average",
+  "this differs from a property audit, which uses the EIA state average rate and the utility's net-metering rules for exports; here exports earn nothing, so these paybacks are a conservative screening estimate, not a quote",
+  "cost from the finance module (PV_ROOF, residential); no incentives apply in 2026, no financing, degradation or rate escalation",
+  "payback is simple payback: cost divided by first-year savings"
  ],
  "rows": [
   {

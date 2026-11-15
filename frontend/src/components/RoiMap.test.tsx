@@ -25,7 +25,9 @@ describe("ROI map helpers", () => {
   });
   it("colours short paybacks green and long ones red, grey when there is none", () => {
     const b = paybackBreaks(rows);
+    expect(b).toEqual([10, 12, 15, 20]);                 // the same bands for every city
     expect(paybackColor(8, b)).toBe(ROI_COLORS[0]);
+    expect(paybackColor(25, b)).toBe(ROI_COLORS[4]);
     expect(paybackColor(99, b)).toBe(ROI_COLORS[4]);
     expect(paybackColor(null, b)).toBe("#7a7a7a");
   });

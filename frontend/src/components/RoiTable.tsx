@@ -12,7 +12,7 @@ export default function RoiTable({ rows, limit = 15 }: { rows: RoiRow[]; limit?:
           <th>Zip</th>
           <th>Payback</th>
           <th>Saves per year</th>
-          <th>Cost after incentives</th>
+          <th>Cost (no incentives)</th>
         </tr>
       </thead>
       <tbody>

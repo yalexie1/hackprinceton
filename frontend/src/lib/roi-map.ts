@@ -20,20 +20,16 @@ export type RoiMapData = {
   rows: RoiRow[];
 };
 
-// Short payback is good: green; long is red. Bins are quintiles of the city's own range, so the map shows
-// which areas are better than the rest of the same city.
+// Short payback is good: green; long is red. The same absolute bands are used for every city, so a colour means the
+// same number of years on both maps.
 export const ROI_COLORS = ["#1a7f4b", "#6aa84f", "#d6b400", "#e07b00", "#b3261e"];
+export const ROI_BREAKS = [10, 12, 15, 20];
 
-export function paybackBreaks(rows: RoiRow[]): number[] {
-  const v = rows
-    .map((r) => r.payback_years)
-    .filter((x): x is number => x !== null)
-    .sort((a, b) => a - b);
-  if (!v.length) return [];
-  return [0.2, 0.4, 0.6, 0.8].map((q) => v[Math.min(v.length - 1, Math.floor(q * v.length))]);
+export function paybackBreaks(_rows?: RoiRow[]): number[] {
+  return ROI_BREAKS;
 }
 
-export function paybackColor(years: number | null, breaks: number[]): string {
+export function paybackColor(years: number | null, breaks: number[] = ROI_BREAKS): string {
   if (years === null) return "#7a7a7a";
   const i = breaks.findIndex((b) => years < b);
   return ROI_COLORS[i === -1 ? ROI_COLORS.length - 1 : i];

@@ -13,8 +13,8 @@ const CITIES = [
 function popup(r: RoiRow): string {
   const rate = r.rate_source === "zip_utility" ? r.utility : "state average rate (no utility listed for this zip)";
   return (
-    `<strong>${r.zip}</strong><br/>Estimated payback: ${r.payback_years ?? "none"} years<br/>` +
-    `Saves about ${usd(r.annual_savings_usd)} a year<br/>Cost after incentives: ${usd(r.net_upfront_usd)}<br/>` +
+    `<strong>${r.zip}</strong><br/>${r.payback_years === null ? "No payback" : `Estimated payback: ${r.payback_years} years`}<br/>` +
+    `Saves about ${usd(r.annual_savings_usd)} a year<br/>Cost: ${usd(r.net_upfront_usd)} (no incentives applied)<br/>` +
     `Rate used: $${r.rate_usd_per_kwh.toFixed(2)} per kWh (${rate})<br/><em>Estimate for a typical home, not an audit.</em>`
   );
 }

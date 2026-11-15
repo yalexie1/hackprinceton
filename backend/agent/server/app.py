@@ -72,6 +72,15 @@ def create_app() -> FastAPI:
         from backend.legal import api as legal
         return legal.list_templates(state, segment)
 
+    @app.get("/api/roi-map")
+    def get_roi_map(city: str):
+        """Estimated rooftop-solar payback per zip for a typical home (`la` or `houston`). Not an audit."""
+        from backend.roi_map import roi_map
+        out = roi_map(city)
+        if out is None:
+            raise ApiError(404, "roi_map_not_found", f"no ROI map for city {city!r}")
+        return out
+
     @app.get("/api/properties/search", response_model=list[PropertySummary])
     def search(q: Optional[str] = None, segment: Optional[Segment] = None,
                use_type: Optional[UseType] = None, lat: Optional[float] = None,

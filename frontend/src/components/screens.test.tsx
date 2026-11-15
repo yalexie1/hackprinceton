@@ -14,7 +14,14 @@ import sharedHouse from "../../../specs/examples/house/run_result.json";
 import sharedOffice from "../../../specs/examples/office/run_result.json";
 import HouseViewer from "./HouseViewer";
 import AuditTasks from "./AuditTasks";
+import { UNCAPPED_BUDGET_USD } from "../lib/budget-phase";
 const house = demoRun(sharedHouse.property.sid, sharedHouse.request.budget_usd);
+function uncapped(run: ReturnType<typeof demoRun>) {
+  const clone = structuredClone(run);
+  clone.request.budget_usd = UNCAPPED_BUDGET_USD;
+  clone.plan!.budget_usd = UNCAPPED_BUDGET_USD;
+  return clone;
+}
 const office = demoRun(
   sharedOffice.property.sid,
   sharedOffice.request.budget_usd,
@@ -303,5 +310,51 @@ describe("shared contract screen compatibility", () => {
         <MeasureCard measure={measure} onFocus={() => {}} />,
       ),
     ).toContain("Cost unavailable");
+  });
+  it("shows what applies to the building with no budget language before a budget is given", () => {
+    const html = renderToStaticMarkup(
+      <PlanView run={uncapped(house)} onFocus={() => {}} onDocuments={() => {}} />,
+    );
+    expect(html).not.toContain("100,000,000");
+    expect(html).not.toMatch(/budget/i);
+    expect(html).not.toContain("Needs more budget");
+    expect(html).toContain("Other findings");
+    expect(html).toContain("apply to your building");
+  });
+  it("restores the three budget tabs once a budget exists", () => {
+    const html = renderToStaticMarkup(
+      <PlanView run={house} onFocus={() => {}} onDocuments={() => {}} />,
+    );
+    expect(html).toContain("Needs more budget");
+    expect(html).toContain("cash budget");
+  });
+  it("blames a too-small budget rather than the building when nothing is selected", () => {
+    const run = structuredClone(house);
+    run.request.budget_usd = 0;
+    run.plan!.budget_usd = 0;
+    run.plan!.selected = [];
+    const html = renderToStaticMarkup(<PlanView run={run} onFocus={() => {}} onDocuments={() => {}} />);
+    expect(html).toMatch(/budget/i);
+    expect(html).not.toContain("apply to your building");
+  });
+  it("gives an empty state with no budget language when nothing applies to the building", () => {
+    const run = uncapped(house);
+    run.plan!.selected = [];
+    run.plan!.financeable = [];
+    const html = renderToStaticMarkup(<PlanView run={run} onFocus={() => {}} onDocuments={() => {}} />);
+    expect(html).not.toMatch(/budget/i);
+  });
+  it("says so if the uncapped run could have been truncated by the sentinel", () => {
+    const run = uncapped(house);
+    run.plan!.total_upfront_usd.high = UNCAPPED_BUDGET_USD;
+    const html = renderToStaticMarkup(<PlanView run={run} onFocus={() => {}} onDocuments={() => {}} />);
+    expect(html).toContain("may not be complete");
+  });
+  it("sends a person to the budget before offering contractor documents", () => {
+    const html = renderToStaticMarkup(
+      <PlanView run={uncapped(house)} onFocus={() => {}} onDocuments={() => {}} />,
+    );
+    expect(html).toContain("disabled");
+    expect(html).not.toContain("Prepare documents");
   });
 });

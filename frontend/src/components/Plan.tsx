@@ -22,6 +22,7 @@ import type {
   RunResult,
 } from "../lib/types";
 import { readableText, warningText } from "../lib/homeowner-language";
+import { hasBudget, sentinelBinds } from "../lib/budget-phase";
 import { SourceDrawer } from "./SourceDrawer";
 import { REASON_DETAIL, REASON_LABELS, measureName } from "./FindingReason";
 import { money, number, ranged } from "../lib/format";
@@ -460,6 +461,7 @@ export default function PlanView({
   onDocuments: () => void;
 }) {
   const plan = run.plan;
+  const budgeted = hasBudget(run.request.budget_usd);
   const [tab, setTab] = useState<"selected" | "financeable" | "skipped">(
     "selected",
   );
@@ -513,7 +515,7 @@ export default function PlanView({
             Cost to get started
           </span>
           <Range value={plan.total_upfront_usd} currency />
-          <small>of {money(plan.budget_usd)} cash budget</small>
+          {budgeted && <small>of {money(plan.budget_usd)} cash budget</small>}
         </div>
         <div className="metric">
           <span>
@@ -524,7 +526,7 @@ export default function PlanView({
           <small>kilograms of carbon dioxide each year</small>
         </div>
       </div>
-      {plan.total_upfront_usd.high > plan.budget_usd && (
+      {budgeted && plan.total_upfront_usd.high > plan.budget_usd && (
         <p className="inline-note budget-warning">
           <Info size={15} />
           {plan.total_upfront_usd.expected > plan.budget_usd
@@ -541,16 +543,19 @@ export default function PlanView({
           <span className="count-pill">{plan.selected.length} upgrades</span>
         </div>
         <p className="section-description">
-          Start with the improvements that offer the best value for your budget.
-          Open any recommendation to see what it costs, what it could save, and
-          what needs checking before you hire a contractor.
+          {budgeted
+            ? "Start with the improvements that offer the best value for your budget. Open any recommendation to see what it costs, what it could save, and what needs checking before you hire a contractor."
+            : "These are the upgrades that apply to your building. Open any recommendation to see what it costs, what it could save, and what needs checking before you hire a contractor."}
         </p>
         <div
           className="tabs plan-tabs"
           role="tablist"
           aria-label="Retrofit recommendations"
         >
-          {(["selected", "financeable", "skipped"] as const).map((t) => (
+          {(budgeted
+            ? (["selected", "financeable", "skipped"] as const)
+            : (["selected", "skipped"] as const)
+          ).map((t) => (
             <button
               key={t}
               id={`${tabsId}-${t}`}
@@ -562,17 +567,21 @@ export default function PlanView({
               tabIndex={tab === t ? 0 : -1}
               onClick={() => setTab(t)}
               onKeyDown={(event) => {
-                const order = ["selected", "financeable", "skipped"] as const;
+                const order: readonly ("selected" | "financeable" | "skipped")[] =
+                  budgeted
+                    ? ["selected", "financeable", "skipped"]
+                    : ["selected", "skipped"];
                 const index = order.indexOf(t);
+                const last = order.length - 1;
                 const next =
                   event.key === "ArrowRight"
-                    ? order[(index + 1) % 3]
+                    ? order[(index + 1) % order.length]
                     : event.key === "ArrowLeft"
-                      ? order[(index + 2) % 3]
+                      ? order[(index + last) % order.length]
                       : event.key === "Home"
                         ? order[0]
                         : event.key === "End"
-                          ? order[2]
+                          ? order[last]
                           : null;
                 if (!next) return;
                 event.preventDefault();
@@ -592,9 +601,11 @@ export default function PlanView({
                 <Info size={20} />
               )}
               {t === "selected"
-                ? plan.total_upfront_usd.expected > plan.budget_usd
-                  ? "Selected upgrades"
-                  : "In your plan"
+                ? budgeted
+                  ? plan.total_upfront_usd.expected > plan.budget_usd
+                    ? "Selected upgrades"
+                    : "In your plan"
+                  : "Applies to your building"
                 : t === "financeable"
                   ? "Needs more budget"
                   : "Other findings"}
@@ -612,14 +623,18 @@ export default function PlanView({
           <div className={`category-explanation ${tab}`}>
             <h3>
               {tab === "selected"
-                ? "Included in your current plan"
+                ? budgeted
+                  ? "Included in your current plan"
+                  : "Upgrades that apply to your building"
                 : tab === "financeable"
                   ? "Options beyond the current cash budget"
                   : "Why other upgrades were left out"}
             </h3>
             <p>
               {tab === "selected"
-                ? "These upgrades contribute to the savings totals above. Expand an upgrade to see its costs, estimated savings and supporting evidence."
+                ? budgeted
+                  ? "These upgrades contribute to the savings totals above. Expand an upgrade to see its costs, estimated savings and supporting evidence."
+                  : "These upgrades apply to your building and clear the cost-effectiveness test. Enter what you can spend next to see which of these fit your plan."
                 : tab === "financeable"
                   ? "These upgrades pass the analysis’s cost-effectiveness test but are outside your current plan. Their savings are not included in your totals. More budget or suitable financing may make them possible."
                   : "These findings may not apply to your building, may depend on another upgrade, or may not justify their cost. Each item shows the reason from the analysis."}
@@ -668,15 +683,23 @@ export default function PlanView({
               <Check />
               <p>
                 {tab === "selected"
-                  ? plan.financeable.length
-                    ? "No upgrades are included in the current plan. Check Needs more budget for additional options."
-                    : "No upgrades are included in the current plan. Open Other findings to see why they were left out."
+                  ? budgeted
+                    ? plan.financeable.length
+                      ? "No upgrades are included in the current plan. Check Needs more budget for additional options."
+                      : "No upgrades are included in the current plan. Open Other findings to see why they were left out."
+                    : "Nothing applies to this building yet. Open Other findings to see why."
                   : "No upgrades in this category."}
               </p>
             </div>
           )}
         </div>
       </section>
+      {!budgeted && sentinelBinds(plan) && (
+        <p className="fineprint">
+          This list may not be complete: some upgrades beyond an extremely
+          high cost ceiling were not evaluated.
+        </p>
+      )}
       {plan.value_uplift && (
         <section className="value-uplift">
           <span className="eyebrow">PROPERTY VALUE CONTEXT</span>
@@ -707,11 +730,31 @@ export default function PlanView({
           <Leaf size={23} />
         </span>
         <div>
-          <h3>Turn a good plan into a real project.</h3>
-          <p>Review the scope and prepare a draft for your contractor.</p>
+          <h3>
+            {budgeted
+              ? "Turn a good plan into a real project."
+              : "Enter what you can spend before drafting documents."}
+          </h3>
+          <p>
+            {budgeted
+              ? "Review the scope and prepare a draft for your contractor."
+              : "Contractor documents need a spending limit set first."}
+          </p>
         </div>
-        <button className="text-button" onClick={onDocuments}>
-          Prepare documents <ArrowRight size={16} />
+        <button
+          className="text-button"
+          disabled={!budgeted}
+          onClick={onDocuments}
+        >
+          {budgeted ? (
+            <>
+              Prepare documents <ArrowRight size={16} />
+            </>
+          ) : (
+            <>
+              Set a spending limit <ArrowRight size={16} />
+            </>
+          )}
         </button>
       </div>
     </>

@@ -15,7 +15,7 @@ import type { RunEvent } from "../lib/types";
 const STAGES: { id: string; label: string }[] = [
   { id: "S1", label: "Locating" },
   { id: "S2", label: "Fetching data" },
-  { id: "S3", label: "Reading the roof" },
+  { id: "S3", label: "Reviewing building images" },
   { id: "S4", label: "Building the model" },
   { id: "S5", label: "Baseline" },
   { id: "S6", label: "Measures" },

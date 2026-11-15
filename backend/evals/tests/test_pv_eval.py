@@ -42,3 +42,26 @@ def test_no_pvgis_reference_is_not_checked():
                  pvgis_kwh_per_kw=None, mountingplace="free")
     assert row["status"] == "not_checked"
     assert row["pct_diff"] is None
+
+
+def test_pv_row_records_which_design_constraint_produced_it():
+    # The product sizes PV two ways: standalone (roof/consumption limited, what the
+    # PV_ROOF card alone does) and inside a plan (also budget limited, what the demo
+    # shows). A cross-check that does not say which one it measured is unreadable.
+    row = pv_row(sid="x", annual_kwh=1676.75, system_kw_dc=1.0, pvgis_kwh_per_kw=1676.75,
+                 mountingplace="free", constraint="roof_and_consumption")
+    assert row["constraint"] == "roof_and_consumption"
+    budgeted = pv_row(sid="x", annual_kwh=1676.75, system_kw_dc=1.0, pvgis_kwh_per_kw=1676.75,
+                      mountingplace="free", constraint="budget_10000")
+    assert budgeted["constraint"] == "budget_10000"
+
+
+def test_kwh_per_kw_is_scale_invariant_so_both_constraints_are_comparable():
+    # PV-10 compares yield per kW, so a budget-limited array and a roof-limited one
+    # are directly comparable even though their capacities differ.
+    small = pv_row(sid="x", annual_kwh=3353.5, system_kw_dc=2.0, pvgis_kwh_per_kw=1676.75,
+                   mountingplace="free", constraint="budget_10000")
+    big = pv_row(sid="x", annual_kwh=167675.0, system_kw_dc=100.0, pvgis_kwh_per_kw=1676.75,
+                 mountingplace="free", constraint="roof_and_consumption")
+    assert small["kwh_per_kw"] == big["kwh_per_kw"] == 1676.75
+    assert small["pct_diff"] == big["pct_diff"] == 0.0

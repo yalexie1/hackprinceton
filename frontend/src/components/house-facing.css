@@ -1,0 +1,23 @@
+/* #396: which way the recommended solar array faces, beside the 3D north arrow. */
+.house-facing {
+  position: absolute;
+  left: 28px;
+  top: 96px;
+  max-width: 260px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  background: #f7f5efd9;
+  border: 1px solid #dcded0;
+  border-radius: 6px;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .house-facing {
+    left: 17px;
+    right: 17px;
+    max-width: none;
+  }
+}

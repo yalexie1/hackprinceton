@@ -15,7 +15,9 @@ import {
 import type { HouseController, HouseMode, HouseRoom } from "../lib/house-scene";
 import type { EnergyPart, EnergyPoint } from "../lib/energy-explorer";
 import type { RunResult } from "../lib/types";
+import { panelFacing } from "../lib/panel-orientation";
 import EnergyOverlay from "./EnergyOverlay";
+import "./house-facing.css";
 
 const homeRooms: {
   id: HouseRoom;
@@ -98,6 +100,8 @@ export default function HouseViewer({
     "loading",
   );
   const rooms = office ? officeRooms : homeRooms;
+  const facing = compact ? null : panelFacing(run);
+  const facingDeg = facing?.azimuthDeg ?? null;
   const selected = rooms.find((r) => r.id === room);
   const current = useRef({ mode, rotating });
   current.current = { mode, rotating };
@@ -119,6 +123,7 @@ export default function HouseViewer({
           onUnavailable: () => setStatus("unavailable"),
           onHover: (part) => energyHover.current?.(part),
           onProject: (points) => energyProject.current?.(points),
+          panelAzimuthDeg: facingDeg,
         });
         controller.current = scene;
         scene.setMode(compact ? "exterior" : current.current.mode, true);
@@ -144,7 +149,7 @@ export default function HouseViewer({
       controller.current?.dispose();
       controller.current = null;
     };
-  }, [compact, office]);
+  }, [compact, office, facingDeg]);
 
   function changeMode(next: HouseMode) {
     setMode(next);
@@ -244,10 +249,12 @@ export default function HouseViewer({
               projectRef={energyProject}
             />
           )}
-          <div className="scene-compass" aria-hidden="true">
-            <span>N</span>
-            <div>↗</div>
-          </div>
+          {facing && ready && (
+            <p className="house-facing">
+              Solar panels face {facing.label} ({Math.round(facing.azimuthDeg)}°
+              from north). The arrow on the ground points north.
+            </p>
+          )}
           <div className="scene-tools" role="group" aria-label="Model controls">
             <button
               title={rotating ? "Pause rotation" : "Auto rotate"}

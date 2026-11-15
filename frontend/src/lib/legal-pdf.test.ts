@@ -40,7 +40,9 @@ ${"The owner and contractor should review the completed scope, schedule, price, 
 describe("legal PDF draft", () => {
   it("renders a complete multi-page PDF with readable blanks and vector checkbox squares", () => {
     expect(legalText("{{subcontractor_yes_box}} Yes [[BLANK: owner_mailing_address, value required]]"))
-      .toBe("[] Yes ____________________ [owner_mailing_address, value required]");
+      .toBe("[] Yes ____________________ (Owner's mailing address)");
+    expect(legalText("[[BLANK: stat_ca_right_to_cancel_notice, insert verbatim statutory text]]"))
+      .toContain("California right-to-cancel notice; exact legal wording required");
     const pdf = createLegalPdf(draft);
     expect(pdf.getNumberOfPages()).toBeGreaterThan(1);
     const bytes = pdf.output("arraybuffer");

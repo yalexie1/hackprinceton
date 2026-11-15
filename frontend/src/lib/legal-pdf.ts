@@ -8,26 +8,99 @@ const bottom = 254;
 const ink: [number, number, number] = [29, 42, 39];
 const muted: [number, number, number] = [83, 98, 92];
 
+const blankLabels: Record<string, string> = {
+  owner_mailing_address: "Owner's mailing address",
+  buyer_signature_date: "Date the owner signs",
+  contractor_business_address: "Contractor's business address",
+  contractor_cancellation_email: "Contractor's cancellation email address",
+  contractor_phone: "Contractor's telephone number",
+  contractor_license_number: "Contractor's California license number",
+  contract_price_usd: "Total contract price in dollars and cents",
+  progress_payment_table: "Progress payment schedule",
+  payment_due_days: "Number of days allowed for payment",
+  start_date: "Approximate start date",
+  completion_date: "Approximate completion date",
+  workmanship_warranty_years: "Length of the workmanship warranty in years",
+  incentive_paperwork_choice: "Party responsible for incentive paperwork",
+  work_hours: "Permitted work hours",
+  contractor_signatory_name: "Name of the person signing for the contractor",
+  contractor_signatory_title: "Title of the person signing for the contractor",
+  contractor_signature_date: "Date the contractor signs",
+  cancel_title: "Title of the applicable cancellation notice",
+  schedule_a_rows: "Description of each improvement, its materials, and its completion test",
+  schedule_c_table: "Estimated costs and savings for each improvement",
+  stat_ca_entitled_to_copy: "California notice about receiving a completed copy of the contract",
+  stat_ca_downpayment_cap: "California down-payment notice",
+  stat_ca_progress_payment_notice: "California progress-payment notice",
+  stat_ca_change_order_note: "California change-order notice",
+  stat_ca_cgl_statement: "California commercial general liability insurance statement",
+  stat_ca_workers_comp_statement: "California workers' compensation insurance statement",
+  stat_ca_mechanics_lien_warning: "California mechanics lien warning",
+  stat_ca_cslb_notice: "California Contractors State License Board notice",
+  stat_ca_right_to_cancel_notice: "California right-to-cancel notice",
+  stat_ca_notice_of_cancellation_form: "California Notice of Cancellation form",
+};
+
+function blankLabel(key: string): string {
+  const clean = key.trim();
+  if (blankLabels[clean]) return blankLabels[clean];
+  const words = clean.replace(/^stat_ca_/, "California ").replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function blankText(key: string): string {
+  const label = blankLabel(key);
+  return `____________________ (${label}${key.trim().startsWith("stat_ca_") ? "; exact legal wording required" : ""})`;
+}
+
 function plain(value: string): string {
   return value.normalize("NFKD")
     .replace(/[\u2010-\u2015\u2212]/g, "-")
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201c\u201d]/g, '"')
+    .replace(/\u2264/g, "no more than")
+    .replace(/\u2265/g, "at least")
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)")
     .replace(/\*\*/g, "")
+    .replace(/`/g, "")
     .replace(/<[^>]+>/g, "")
-    .replace(/[^\x20-\x7E\n]/g, "");
+    .replace(/[^\x20-\x7E\xA7\n]/g, "");
 }
 
 export function legalText(value: string): string {
   return plain(value
     .replace(/\[\[BLANK:\s*([^\]]+)\]\]/g, (_match, detail: string) =>
-      detail.split(",")[0].trim().endsWith("_box") ? "[]" : `____________________ [${detail.trim()}]`,
+      detail.split(",")[0].trim().endsWith("_box") ? "[]" : blankText(detail.split(",")[0]),
     )
     .replace(/\{\{([^}]+)\}\}/g, (_match, key: string) =>
-      key.trim().endsWith("_box") ? "[]" : `____________________ [${key.trim()}]`,
+      key.trim().endsWith("_box") ? "[]" : blankText(key),
     )
     .replace(/\[(?: |x|X)\]/g, "[]"));
+}
+
+function finishedText(value: string): string {
+  return value
+    .replace(/\*\[Unverified: which energy-code verifications apply to each measure, see section 8\.\]\*/gi, "")
+    .replace(/\*\*First-page block\*\* \(B&P §7159\(c\)\(3\)\(B\); Civ\. Code §1689\.7\(b\); type no smaller than the body\)/gi, "**Contract information**")
+    .replace(/One row per measure\. Columns: improvement, location in the home, work to be done, significant materials and equipment, completion test\./gi, "Each improvement is described below by location, work, significant materials and equipment, and the test for completion.")
+    .replace(/Same table as 4\.6\./gi, "The progress payment stages appear in Section 4.6.")
+    .replace(/Generated from `Plan`\./gi, "This schedule summarizes the energy analysis prepared for the Property.")
+    .replace(/\*\*Notice of Cancellation\*\* \(attached in duplicate, easily detachable; B&P §7159\(e\)\(6\)\. Civ\. Code §1689\.7\(c\) does not apply: it excludes §7151\.2 contracts\)/gi, "**Notice of Cancellation** (two detachable copies must be attached before signing)")
+    .replace(/licence classification\(s\)\s*,/gi, "licence classification(s) ____________________ (Contractor's license classification),");
+}
+
+function reviewText(value: string): string {
+  return value
+    .replace(/`/g, "")
+    .replace(/Every stat_ placeholder filled from the verbatim statute file/gi, "Each required California notice contains the exact statutory wording")
+    .replace(/a statutory text is still a blank/gi, "Required statutory wording remains to be inserted")
+    .replace(/software cannot verify/gi, "Verification is required before signing")
+    .replace(/software cannot confirm/gi, "This duty must be confirmed at signing")
+    .replace(/first-page block missing or has blanks/gi, "First-page information remains incomplete")
+    .replace(/type size enforced only in export/gi, "The required type size is applied in this PDF")
+    .replace(/applies only when financing_contingent = yes; the draft does not record it/gi, "Confirm whether the agreement depends on financing before signing")
+    .replace(/\bCA-(?:R|HIC|FIN|PAY|LIC|ARB|CXL)-\d+[a-z]?\s*:\s*/gi, "")
+    .replace(/\b[a-z]+(?:_[a-z0-9]+)+\b/g, (key) => blankLabel(key));
 }
 
 type Block = { kind: "heading" | "paragraph" | "list" | "quote" | "rule" | "table"; text: string; level?: number; rows?: string[][]; format?: string };
@@ -143,32 +216,35 @@ export function createLegalPdf(draft: DocumentDraft): jsPDF {
   disclaimerLines.forEach((line, index) => pdf.text(line, margin + 4, y + index * 5));
   y += disclaimerHeight + 5;
 
-  // Preserve authored legal language and statutory notices. Only presentation changes here.
+  // Remove only drafting annotations from the export; substantive clauses remain authored by legal.
   for (const block of blocks(draft.markdown)) {
+    const text = finishedText(block.text);
+    if (block.kind === "quote" && legalText(text) === disclaimerText) continue;
     if (block.kind === "rule") {
       ensure(8); pdf.setDrawColor(184, 193, 188); pdf.line(margin, y + 2, pageWidth - margin, y + 2); y += 8;
     } else if (block.kind === "heading") {
       const level = block.level ?? 3;
       const size = level === 1 ? 15 : level === 2 ? 12.5 : 11.5;
       y += level <= 2 ? 4 : 2;
-      write(block.text, { size, bold: true, after: 3.5, keep: 18 });
+      write(text, { size, bold: true, after: 3.5, keep: 38 });
       if (level <= 2) { pdf.setDrawColor(177, 193, 183); pdf.line(margin, y - 1, pageWidth - margin, y - 1); y += 2; }
     } else if (block.kind === "paragraph" || block.kind === "quote") {
       const isNotice = /bold|boxed/i.test(block.format ?? "");
       const size = /12pt/i.test(block.format ?? "") ? 12 : 10.5;
       const start = y;
-      const boldLead = block.text.match(/^\*\*([^*]+)\*\*(?:\s+|$)(.*)$/s);
+      const boldLead = text.match(/^\*\*([^*]+)\*\*(?:\s+|$)(.*)$/s);
       if (boldLead && !isNotice) {
+        if (boldLead[2]) ensure(29);
         write(boldLead[1], { size, bold: true, indent: block.kind === "quote" ? 5 : 0, after: boldLead[2] ? 1.2 : 3.2, keep: 12 });
         if (boldLead[2]) write(boldLead[2], { size, indent: block.kind === "quote" ? 5 : 0, after: 3.2 });
       } else {
-        write(block.text, { size, bold: isNotice, indent: block.kind === "quote" ? 5 : 0, after: 3.2 });
+        write(text, { size, bold: isNotice, indent: block.kind === "quote" ? 5 : 0, after: 3.2 });
       }
       if (/boxed/i.test(block.format ?? "") && start >= 25 && y < bottom) {
         pdf.setDrawColor(83, 98, 92); pdf.rect(margin - 2, start - 4, contentWidth + 4, y - start + 5);
       }
     } else if (block.kind === "list") {
-      write(block.text, { indent: 5, after: 1.8 });
+      write(text, { indent: 5, after: 1.8 });
     } else if (block.kind === "table" && block.rows?.length) {
       const rows = block.rows;
       const columns = Math.max(...rows.map((row) => row.length));
@@ -198,28 +274,40 @@ export function createLegalPdf(draft: DocumentDraft): jsPDF {
     }
   }
 
+  page();
+  write("ATTORNEY REVIEW SCHEDULE", { size: 14, bold: true, after: 3, keep: 26 });
+  write("This schedule is for review and completion before the agreement is signed. It does not form part of the agreement.", { size: 10.5, after: 6 });
   if (draft.unfilled_placeholders.length) {
-    y += 4;
-    write("Information still needed before signing", { size: 12.5, bold: true, keep: 20 });
+    write("Terms and notices to complete", { size: 12.5, bold: true, keep: 20 });
     for (const key of [...new Set(draft.unfilled_placeholders)].filter((key) => !key.endsWith("_box"))) {
-      write(`- ${key}: ____________________`, { size: 10, after: 1.5 });
+      write(`${blankLabel(key)}: ____________________${key.startsWith("stat_ca_") ? " (exact legal wording must be inserted)" : ""}`, { size: 10, after: 1.5 });
     }
   }
   y += 4;
-  write("Legal requirements review", { size: 12.5, bold: true, keep: 20 });
+  write("Legal requirements for counsel to review", { size: 12.5, bold: true, keep: 20 });
   if (!draft.statutory_checks.length) {
     write("Statutory requirements have not been checked for this draft.", { size: 10.5 });
   }
+  const reviewItems = new Map<string, { satisfied: boolean; title: string; citations: Set<string>; notes: Set<string> }>();
   for (const check of draft.statutory_checks) {
-    const title = `${check.satisfied ? "Confirmed" : "Pending"} - ${check.requirement_id ? `${check.requirement_id}: ` : ""}${check.requirement}`;
-    const explanation = `${check.citation}${check.note ? ` - ${check.note}` : ""}`;
+    const title = reviewText(check.requirement);
+    const key = `${check.satisfied}:${title}`;
+    const item = reviewItems.get(key) ?? { satisfied: check.satisfied, title, citations: new Set<string>(), notes: new Set<string>() };
+    const citation = reviewText(check.citation);
+    if (citation && !/^this file\b/i.test(citation)) item.citations.add(citation);
+    if (check.note) item.notes.add(reviewText(check.note));
+    reviewItems.set(key, item);
+  }
+  for (const item of reviewItems.values()) {
+    const title = `${item.satisfied ? "Present in draft" : "To be completed"} - ${item.title}`;
+    const explanation = [...item.citations, ...item.notes].join("; ");
     style(10.5, true);
     const titleHeight = (pdf.splitTextToSize(legalText(title), contentWidth) as string[]).length * 10.5 * 0.45;
     style(10);
     const explanationHeight = (pdf.splitTextToSize(legalText(explanation), contentWidth - 5) as string[]).length * 10 * 0.45;
     ensure(titleHeight + explanationHeight + 3);
-    write(title, { size: 10.5, bold: true, color: check.satisfied ? [35, 89, 58] : [124, 69, 29], after: 0.8 });
-    write(explanation, { size: 10, color: muted, indent: 5, after: 2 });
+    write(title, { size: 10.5, bold: true, color: item.satisfied ? [35, 89, 58] : [124, 69, 29], after: 0.8 });
+    if (explanation) write(explanation, { size: 10, color: muted, indent: 5, after: 2 });
   }
 
   const pages = pdf.getNumberOfPages();

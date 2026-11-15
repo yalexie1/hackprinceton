@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box, MapPin, Mountain, Satellite } from "lucide-react";
 import type { PropertySummary } from "../lib/types";
 import type { PropertyImagery, PropertyOblique } from "../lib/property-imagery";
+import MatterportViewer from "./MatterportViewer";
 import {
   aerialAttribution,
   aerialImageUrl,
@@ -198,11 +199,6 @@ export default function PropertyViews({
   const view = views[index];
   const obliques = views.filter((v) => v.kind === "oblique");
   const failed = useRef(new Set<string>());
-  // Reset when the viewer leaves the tab: the frame unmounts, so the next visit boots again.
-  const [modelReady, setModelReady] = useState(false);
-  useEffect(() => {
-    if (view?.kind !== "model") setModelReady(false);
-  }, [view?.kind]);
 
   if (!view)
     return (
@@ -224,34 +220,8 @@ export default function PropertyViews({
       className={`property-geospatial${view.kind === "oblique" ? " has-oblique" : ""}`}
     >
       {view.kind === "model" ? (
-        <>
-          {/* Showcase boots its own bundle, model metadata and first panorama after the document
-              loads, which is seconds on a cold profile - and because the frame only exists once
-              the tab is chosen, the viewer pays all of it at click time. An empty dark frame for
-              several seconds reads as broken, so say what is happening until it paints.
-              `loading="lazy"` was previously on this iframe and was actively harmful: the
-              element is created only when selected, so there is nothing to defer, and the
-              attribute just delayed the request behind the browser's lazy-load bookkeeping. */}
-          {!modelReady && (
-            <div className="property-model-loading">
-              <Box size={22} aria-hidden="true" />
-              <span>Loading the interior scan…</span>
-            </div>
-          )}
-          <iframe
-            className="property-model-frame"
-            title={`Interior scan of ${property.name}`}
-            allow="fullscreen; xr-spatial-tracking"
-            referrerPolicy="no-referrer"
-            onLoad={() => setModelReady(true)}
-            src={`https://my.matterport.com/show?${new URLSearchParams({
-              m: property.sid,
-              play: "0",
-              title: "0",
-              ...(modelKey ? { applicationKey: modelKey } : {}),
-            })}`}
-          />
-        </>
+        <MatterportViewer key={property.sid} sid={property.sid}
+          name={property.name} sdkKey={modelKey!} />
       ) : (
         <img
           key={view.url}

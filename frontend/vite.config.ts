@@ -6,6 +6,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, root, "");
   return {
     plugins: [react()],
+    // Pre-bundle the lazily imported libraries at dev-server start. Otherwise the first PDF
+    // export (jspdf) or Solar map visit (leaflet) makes Vite discover a new dependency and
+    // reload the whole page mid-demo, which then reopens the audit from the URL.
+    optimizeDeps: { include: ["jspdf", "leaflet"] },
     // Only the browser-scoped Showcase key is exposed; API credentials stay server-side.
     define: {
       __MATTERPORT_SDK_KEY__: JSON.stringify(

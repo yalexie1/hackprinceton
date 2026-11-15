@@ -51,7 +51,7 @@ import {
 import PropertyPreview from "./components/PropertyPreview";
 import { requireRealAudit, RealAuditRequired } from "./lib/real-audit";
 import WorkspaceNavigation, { publicViews, views, type View } from "./components/WorkspaceNavigation";
-import { auditEventText, readableText, warningText } from "./lib/homeowner-language";
+import { auditEventText, collapseActivity, readableText, warningText } from "./lib/homeowner-language";
 import { auditIdFromUrl, auditUrl, restoreAudit } from "./lib/audit-link";
 function bills(text: string): number[] | undefined {
   if (!text.trim()) return undefined;
@@ -857,7 +857,10 @@ export default function App() {
                     aria-live="polite"
                     aria-relevant="additions"
                   >
-                    {events.map((event, i) => (
+                    {collapseActivity(
+                      events,
+                      (e) => `${e.type}|${auditStageLabel(e.stage || e.type)}|${auditEventText(e)}`,
+                    ).map(({ event, count, index: i }) => (
                       <div className={`event ${event.type}`} key={i}>
                         <span className="event-dot">
                           {event.type === "fallback" ||
@@ -875,6 +878,9 @@ export default function App() {
                           </small>
                           <p>
                             {auditEventText(event)}
+                            {count > 1 && (
+                              <span className="event-count"> ({count} steps)</span>
+                            )}
                           </p>
                           {!done &&
                             i === events.length - 1 &&

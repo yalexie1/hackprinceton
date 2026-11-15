@@ -217,3 +217,67 @@ def test_supported_zone_section_is_empty_but_shaped_when_nothing_qualifies():
     assert out["n"] == 0
     assert out["sites"] == []
     assert out["l3_electricity"]["bdg2temp"] == {"n": 0}
+
+
+# --- skill against a naive baseline (#446) ---------------------------------------
+# An error figure alone is not an accuracy claim. These pin the comparison that
+# answers "better than what?", which the published 52.9% never did.
+from backend.evals.score_eval import constant_eui_errors, skill_section  # noqa: E402
+
+
+def srow(truth: float, expected: float, sqm: float, usage: str = "Office",
+         site: str = "S") -> dict:
+    return {"site_id": site, "usage": usage, "sqm": sqm, "truth_elec_kwh": truth,
+            "arms": {"a": {"elec": {"low": expected * 0.8, "expected": expected,
+                                    "high": expected * 1.2}}}}
+
+
+def test_constant_predictor_uses_the_cohort_median_intensity():
+    # Truth intensities 10, 20, 30 kWh/m2 -> median 20. The constant predicts
+    # 20 * area for everyone, so the middle building is exact.
+    rows = [srow(100.0, 1.0, 10.0), srow(200.0, 1.0, 10.0), srow(300.0, 1.0, 10.0)]
+    errs = constant_eui_errors(rows)
+    assert len(errs) == 3
+    assert errs[1] == 0.0                      # 20 * 10 = 200, exactly the meter
+    assert errs[0] > 0 and errs[2] < 0         # over the small one, under the big one
+
+
+def test_constant_predictor_skips_rows_it_cannot_score():
+    rows = [srow(100.0, 1.0, 10.0), srow(0.0, 1.0, 10.0), srow(100.0, 1.0, 0.0)]
+    assert len(constant_eui_errors(rows)) == 1
+
+
+def test_skill_section_reports_the_model_and_the_baseline_side_by_side():
+    rows = [srow(100.0, 110.0, 10.0), srow(200.0, 220.0, 10.0), srow(300.0, 330.0, 10.0)]
+    out = skill_section(rows, "a")
+    assert out["model"]["median_abs_pct"] == 10.0
+    assert "constant_eui" in out
+    assert out["constant_eui"]["n"] == 3
+
+
+def test_skill_section_names_the_winner_rather_than_leaving_it_to_the_reader():
+    """The whole point: a number with no comparator reads as an accuracy claim."""
+    # A model that is exact must beat the constant on this spread-out cohort.
+    rows = [srow(100.0, 100.0, 10.0), srow(200.0, 200.0, 10.0), srow(300.0, 300.0, 10.0)]
+    out = skill_section(rows, "a")
+    assert out["beats_constant"] is True
+    assert "constant" in out["verdict"].lower()
+
+
+def test_skill_section_says_so_when_the_baseline_wins():
+    # Model is wildly wrong; the constant is exact for the middle building.
+    rows = [srow(100.0, 1000.0, 10.0), srow(200.0, 2000.0, 10.0), srow(300.0, 3000.0, 10.0)]
+    out = skill_section(rows, "a")
+    assert out["beats_constant"] is False
+    assert out["margin_pct_points"] < 0
+
+
+def test_skill_section_is_computed_per_group_not_only_pooled():
+    """Pooled error cancels between groups biased in opposite directions, so a model
+    can look adequate overall while being beaten in every single class."""
+    rows = ([srow(100.0, 300.0, 10.0, usage="Office") for _ in range(3)]
+            + [srow(100.0, 10.0, 10.0, usage="Lodging/residential") for _ in range(3)])
+    out = skill_section(rows, "a")
+    assert set(out["by_usage"]) == {"Office", "Lodging/residential"}
+    for group in out["by_usage"].values():
+        assert "beats_constant" in group

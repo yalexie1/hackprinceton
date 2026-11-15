@@ -11,6 +11,7 @@ This is a diagnosis document, not a scorecard. The published numbers live in
 
 | Claim | Evidence |
 |---|---|
+| **The model does not beat a predictor with no model in it** | A constant scores 42.5% against our 52.9%, and wins in **every** usage class (section 10) |
 | Our "we underpredict by 17%" is mostly one archetype bug | Removing 73 lodging buildings moves the median from -17.1% to -2.6% |
 | Tuning the default tables cannot take us below ~38% | An *oracle* per-class bias correction, fitted on the truth, only reaches 37.7% |
 | The uncertainty band cannot be fixed by widening | 80% coverage needs 20-30x the current width, i.e. +/-400-600% |
@@ -28,6 +29,18 @@ our median EUI    16.2 kWh/m2
 metered           87.6 kWh/m2      we predict 1/5.4 of reality
 median error     -84.4%            median absolute 84.4%
 ```
+
+**Measured since: fixed in #443, verified 2026-11-15.** Two full 494-building runs,
+control `origin/main` 667f25e against `origin/lodging-archetype` 1914c2e (main plus
+that one commit), same inputs and weather. Lodging median absolute error went
+**84.4% -> 43.7%**, within 25% **0.0% -> 28.8%**, coverage **2.7% -> 37.0%**, and the
+predicted median EUI rose 16.2 -> 60.9 against 87.6 metered. The headline moved
+52.9% -> 46.0% and coverage 12.8% -> 17.8%. A per-building diff of all 494
+predictions found 422 identical and 72 changed, **all 72 lodging, none outside it**,
+confirming the author's claim that one dwelling reproduces the old calculation
+exactly. The residual ~30% under-prediction is the common-area load (corridors,
+lifts, laundry) that the change deliberately does not model. Note it still does not
+clear the bar in section 10: the constant scores 39.2% on this class against 43.7%.
 
 A hotel modelled as a scaled-up house has no corridors, no lobby, no commercial
 laundry or kitchen, no lifts, and carries single-family lighting and plug
@@ -198,3 +211,57 @@ takes the median of `truth / predicted` within each class and re-scores; the
 widening of section 3 scales `low` and `high` about `expected` and re-counts
 containment. The district-service flag in section 4 is the presence of any of
 `hotwater`, `chilledwater`, `steam` in BDG2 `metadata.csv` - 185 of 494, 37%.
+
+## 10. The model does not beat a predictor with no model in it
+
+This is the finding that should have come first, and it went unnoticed for hours
+because nobody asked the prior question. We published "median absolute error 52.9%",
+stratified it, bootstrapped it, and wrote sections 1 to 6 explaining *why* it was
+52.9% - without ever establishing what a predictor containing no physics scores.
+
+**The constant predictor.** Give every building the cohort's median intensity times
+its own floor area. One number, one input, no model.
+
+| Cohort | Our model | Constant | |
+|---|---|---|---|
+| **All 494** | 52.9% | **42.5%** | constant wins by 10.4 points |
+| Education (234) | 47.7% | **46.1%** | constant wins |
+| Lodging (73) | 84.4% | **39.2%** | constant wins |
+| Office (61) | 44.1% | **38.2%** | constant wins |
+| Entertainment (53) | 50.8% | **49.4%** | constant wins |
+| Public services (41) | 32.1% | **24.5%** | constant wins |
+
+It wins pooled, and in every single class.
+
+**The fair version, because the constant above is an oracle.** It is fitted on the
+same truth it is scored against, so it is a harder floor than anything deployable.
+The honest comparator is a *published* reference median. Using CBECS 2018 office
+median electricity EUI by climate group - a public table, no knowledge of our test
+set - on the 61 BDG2 offices:
+
+| | Median absolute | Within 25% |
+|---|---|---|
+| Our physics model | 44.1% | 18.0% |
+| **CBECS p50 x area (public, deployable)** | **39.8%** | **26.2%** |
+| Cohort median x area (oracle) | 38.2% | 27.9% |
+
+A published lookup table beats our physics, and the oracle is only 1.6 points better
+than the public table, so the finding is not an artifact of the oracle's advantage.
+
+**Independently reproduced.** @Sri-SriPod hit the same wall on the LA EBEWE cohort -
+a different dataset, a different truth source, a different baseline construction. On
+his 20-office vision arm the constant scored 12.2%, better than both the defaults arm
+(13.2%) and the vision arm (17.2%). Two evals, same verdict.
+
+**What this does and does not mean.** It does not mean the physics is worthless: the
+model produces an end-use breakdown, a measure plan and a sensitivity analysis that a
+constant cannot, and those are the product. It does mean that **our annual-total
+prediction has no demonstrated skill**, and that any sentence of the form "our median
+error is X%" invites "better than what?" - to which the honest answer today is "worse
+than median-intensity-times-area".
+
+**Now enforced in code.** `score_eval.skill_section` computes this on every run,
+pooled and per usage class, and names the winner rather than leaving it to the
+reader. It is in the printed summary and in `scorecard.json` under `skill`, and the
+caveat list says so. The reason it went unnoticed was that checking required someone
+to remember to check; it no longer does.

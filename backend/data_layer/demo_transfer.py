@@ -1,11 +1,15 @@
 """Move the private demo cache from one teammate's laptop to another.
 
-Why this exists. The three demonstration properties only show their real imagery - the side
-angles, the overhead orthophoto - on a laptop that has fetched them. A teammate who clones the
-repository and pulls `main` gets the code and nothing else, because sponsor payloads are
+Why this exists. The demo set's properties only show their real imagery - the side angles, the
+overhead orthophoto - on a laptop that has fetched them. A teammate who clones the repository
+and pulls `main` gets the code and nothing else, because sponsor payloads are
 hackathon-licensed and this repository is public, so `data/cache/` is git-ignored and must stay
 that way. The result on their screen is a property card with only the basemap, and a view
 toggle missing its Side angle and Aerial tabs. That looks like a bug and is not one.
+
+The demo set grew from 3 properties to 50 (`backend/data_layer/demo_set.py`'s committed
+manifest), which grows the archive from a few MB to roughly 75 MB - and every teammate needs
+one now, not just whoever is presenting.
 
 So the bytes have to travel outside the repository: laptop to laptop over AirDrop, a USB stick
 or a direct transfer, deleted after the event. That is the lead's rule and this tool does not
@@ -31,10 +35,17 @@ import tarfile
 from pathlib import Path
 from typing import Iterable, Optional, Sequence
 
+from backend.data_layer import demo_set
 from backend.data_layer.cache import cache_root
 
-#: The three properties the demo shows. Overridable, so this is useful after the event too.
-DEMO_SIDS: tuple[str, ...] = ("zvKHR9DHNjJ", "ZSPaQbkGcJJ", "L3266YcPPvd")
+#: The demo set this laptop should carry, read from the committed manifest
+#: (`demo_set.sids()`) rather than hard-coded - the three sids this used to be are
+#: still in there (now `golden` entries), alongside the other 47. `demo_set.sids()`
+#: needs no kit mirror, which matters here specifically: a teammate who clones the
+#: repository and has never run `python -m backend.data_layer.mirror` still gets a
+#: usable default. Overridable (both `check` and `pack` take `sids` as a parameter),
+#: so this stays useful after the event too.
+DEMO_SIDS: tuple[str, ...] = demo_set.sids()
 
 #: What each cached artefact is for, in the words a teammate needs when a tab is missing.
 _FEATURE = {
@@ -60,29 +71,49 @@ def _entries(root: Path, sid: str) -> list[Path]:
 
 
 def check(sids: Sequence[str] = DEMO_SIDS, root: Optional[Path] = None) -> dict:
-    """What is here, and what each absence costs on screen."""
+    """What is here, and what each absence costs on screen.
+
+    At 3 properties `missing` alone was a list a human could read top to bottom. At
+    50 it is not, so this also buckets each sid with something missing into exactly
+    one of two lists: `not_warmed` (nothing cached for it at all - the laptop never
+    fetched it) or `incomplete` (something is cached, but a bundle, the orthophoto
+    or an oblique is still absent). `missing` stays populated as the union of the
+    two, in the same per-line, per-feature form it always had, so no existing
+    caller of this key breaks.
+    """
     root = Path(root) if root else cache_root()
     missing: list[str] = []
+    not_warmed: list[str] = []
+    incomplete: list[str] = []
     present: dict[str, int] = {}
     for sid in sids:
         files = _entries(root, sid)
         present[sid] = len(files)
-        names = [p.name for p in files]
+        sid_missing: list[str] = []
         if not (root / sid / "bundle.json").is_file():
-            missing.append(f"{sid}: no cached bundle - disables {_FEATURE['bundle']}")
+            sid_missing.append(f"{sid}: no cached bundle - disables {_FEATURE['bundle']}")
         if not any("-ortho" in str(p.parent) for p in files):
-            missing.append(f"{sid}: no orthophoto - disables {_FEATURE['ortho']}")
+            sid_missing.append(f"{sid}: no orthophoto - disables {_FEATURE['ortho']}")
         directions = {
             d for d in ("north", "south", "east", "west")
             if any(f"-oblique-{d}" in str(p.parent) for p in files)
         }
         if len(directions) < 4:
             have = ", ".join(sorted(directions)) or "none"
-            missing.append(
+            sid_missing.append(
                 f"{sid}: {len(directions)} of 4 obliques ({have}) - disables {_FEATURE['oblique']}"
             )
-        del names
-    return {"root": str(root), "ready": not missing, "missing": missing, "files": present}
+        if sid_missing:
+            missing.extend(sid_missing)
+            (incomplete if files else not_warmed).append(sid)
+    return {
+        "root": str(root),
+        "ready": not missing,
+        "missing": missing,
+        "not_warmed": not_warmed,
+        "incomplete": incomplete,
+        "files": present,
+    }
 
 
 def pack(archive: Path | str, sids: Sequence[str] = DEMO_SIDS,
@@ -173,15 +204,26 @@ def redirect_warning() -> Optional[str]:
 
 
 def _report(result: dict) -> int:
+    """Print `check`'s result. At 50 properties a reader cannot eyeball a flat
+    per-file listing the way they could with 3, so this leads with the
+    `not_warmed`/`incomplete` counts `check` now buckets sids into, before the
+    full per-feature detail that `missing` still carries."""
     print(f"cache root: {result['root']}")
     warning = redirect_warning()
     if warning:
         print(f"warning: {warning}")
+    total = len(result.get("files", {}))
     for sid, n in result.get("files", {}).items():
         print(f"  {sid}: {n} cached file(s)")
     if result["ready"]:
-        print("ready: the three properties have their bundle, orthophoto and four obliques.")
+        print(f"ready: all {total} properties have their bundle, orthophoto and four obliques.")
         return 0
+    not_warmed = result.get("not_warmed", [])
+    incomplete = result.get("incomplete", [])
+    print(
+        f"\n{len(not_warmed)} of {total} not warmed at all, {len(incomplete)} incomplete "
+        "(cached but missing a bundle, the orthophoto, or an oblique)."
+    )
     print("\nmissing, and what it costs on screen:")
     for line in result["missing"]:
         print(f"  - {line}")

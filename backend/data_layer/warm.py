@@ -1,0 +1,587 @@
+"""Live reach probe (task 1 of the demo-warm-50 plan).
+
+The plan pre-warms 50 varied properties into the local cache so a demo is instant,
+and the weighting that picks those 50 depends on drawing from the *whole* indexed
+pool, not just the ones already cached. Today that pool is 42 already-cached scans
+plus whatever the shared Matterport key can still reach. If the key cannot reach
+anything new, the pool collapses back to those 42 and the plan is not deliverable
+as specified - so this module proves reachability first, cheaply, before Task 2
+spends any effort on selection.
+
+`probe` draws its sample from `uncached_sids`, not from the index at large: a sid
+with an assembled bundle already proves nothing about whether the key can still
+reach it. That alone is not enough to guarantee a live call, though - see the
+`refresh` note on `probe` below: without it, a sid this probe already reached
+once answers "reachable" from the Matterport payload cache on every later run,
+which is not what Task 1 is for.
+
+**Honouring the shared rate limit.** `MIN_INTERVAL_S` (0.25 s) is a key shared with
+every other team at the hackathon, so this module never posts GraphQL directly -
+every reachability check goes through
+`matterport.get_matterport_data_with_notes`, which already throttles and already
+turns a response with both `errors` and a populated model into a documented
+success. `probe` does not re-decide that; it just reports what that call decided.
+
+**One bad sid does not end the probe.** `get_matterport_data_with_notes` raises
+`LookupError` only when `data.model` is unusable (a dead sid, an auth failure, a
+network error surfaces the same way through whatever `post` does). `probe` catches
+per sid and keeps going, because the whole point of probing several sids is that a
+single 403 should not hide whether the other four are reachable.
+
+**Zero results is a failure, not a vacuous pass.** `probe` has nothing to iterate
+when `index.summaries()` is empty, and `all()` over an empty sequence is `True` -
+so a gate built on that line alone would exit 0 having checked nothing. `main`
+special-cases an empty result list and exits 1.
+
+**`DATA_LAYER_CACHE_DIR` does not redirect the CoStar kit.** It only overrides
+`cache.cache_root()` (where fetched payloads and bundles land). The kit mirror
+`index.summaries()` reads from is `costar.kit_dir()`, which resolves
+`<repo>/data/cache/costar/kit` from this module's own repo root and is overridden
+only by `COSTAR_KIT_DIR`. Running this gate from a git worktree - which has no
+`data/cache/` of its own - needs **both** env vars set, or `index.summaries()`
+comes back empty, `uncached_sids` comes back empty, and `probe` silently checks
+nothing. That is exactly the trap behind the zero-results case above.
+
+**`--all`: the warm pass itself (task 4).** Beyond `warm_all`, the command does three
+things the pass alone cannot:
+
+* it reach-checks one sid first (`_preflight`), so an unsourced `.env` is named in the
+  first second instead of surfacing an hour later as `SparesExhausted: 0 of 50`;
+* it prints the result - including a partial one carried out of `SparesExhausted` -
+  because an unattended run's operator may have no scrollback left;
+* it reports the per-property notes the pass collected - a tolerated check failure
+  (`TOLERATED_CHECKS`) or a short oblique fetch, neither of which costs a spare;
+* it writes the pass's substitutions back into the committed manifest through
+  `demo_set.apply_replacements`, which is what makes `demo_transfer pack` archive the
+  50 properties that actually warmed rather than the 50 that were planned.
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+from typing import Callable, Optional
+
+from . import api, demo_check, demo_set, imagery, index, matterport
+from .demo_check import Check
+from .matterport import Poster
+
+#: `assemble`/`verify` signatures `warm_one` calls by default and that an injected
+#: replacement in a test must match closely enough to stand in for.
+Assembler = Callable[..., object]
+Verifier = Callable[..., list[Check]]
+#: `api.get_obliques`'s shape: `(sid, *, live=...) -> ({direction: path}, records)`.
+ObliqueFetcher = Callable[..., tuple[dict, list]]
+
+#: The four directions `demo_transfer.check` requires before it calls a property
+#: complete rather than `incomplete` - **aliased from `imagery`, never re-spelled
+#: here.** The first version of this module wrote its own `("north", "south", "east",
+#: "west")`, but the service names them `"oblique-north"` and so on, which is what
+#: `api.get_obliques` keys its mapping by and what `data/cache/vexcel-image/
+#: <sid>-oblique-<dir>/` is named after. Every lookup missed, so the real 50-property
+#: run logged "0 of 4 obliques" for all fifty - including the 33 that had all four on
+#: disk - a false alarm pointing a teammate at imagery that was never broken. One
+#: definition, in the module that does the fetching, cannot drift from itself.
+_OBLIQUE_DIRECTIONS = imagery.OBLIQUE_DIRECTIONS
+
+#: Check names the warm pass records but does **not** disqualify a property over.
+#:
+#: `market` is "fewer than ten sale comps, so `plan_value_uplift` returns `None`".
+#: That is a real quality bar for the three hand-picked golden properties, and
+#: `demo_check` is right to call it a `fail` - but it does not mean the property
+#: cannot be shown to a judge, only that one figure will not compute. The first real
+#: `--all` run disqualified 19 of 50 properties on it alone, out of 43 total against
+#: 25 spares: it drained two buckets dry and left 2 slots unfilled. Tolerating it
+#: here spends no spare and costs one number on one card.
+#:
+#: **`demo_check`'s own verdict is deliberately unchanged.** It is the pre-demo
+#: rehearsal tool the presenter runs, and its bar stays exactly as strict as it is;
+#: this set is the warm pass's own, narrower question - "is this property worth a
+#: cache slot" - not a re-grading of the checks. Anything tolerated still reaches the
+#: operator as a per-property note, because "which of the 50 will have no uplift
+#: figure" is something they have to be able to read off the summary.
+TOLERATED_CHECKS: frozenset[str] = frozenset({"market"})
+
+
+def uncached_sids(n: int, *, root: Optional[Path] = None) -> list[str]:
+    """Up to `n` indexed sids with no `bundle.json` yet under the cache root.
+
+    "Cached" here means the assembled bundle `api.py` writes to
+    `<root>/<sid>/bundle.json` - the same marker `demo_transfer.py` uses to decide
+    what a laptop already has - not the raw Matterport payload cache, because the
+    question this answers is "does warming this sid still do useful work", and a
+    bundle already on disk is the one case where it would not.
+
+    Delegates the "has a `bundle.json`" check to `demo_set.already_warm` - task 2
+    had to duplicate that primitive here because `warm.py` did not yet import
+    `demo_set` and the other direction would have been circular. Task 4 makes this
+    module import `demo_set` anyway (for `sids`/`spares`/`resolve`), so the
+    duplication is reconciled here; `demo_set.already_warm` keeps its own
+    docstring and is still called directly by `demo_set._generate`, which this
+    module does not touch.
+    """
+    warmed = demo_set.already_warm(root)
+    out: list[str] = []
+    for summary in index.summaries():
+        if summary.sid in warmed:
+            continue
+        out.append(summary.sid)
+        if len(out) >= n:
+            break
+    return out
+
+
+def probe(n: int = 5, *, post: Optional[Poster] = None) -> list[tuple[str, bool, str]]:
+    """Reach-check `n` uncached sids. One `(sid, reachable, detail)` per sid.
+
+    Never raises on an individual sid: a 403 or a dead model is recorded, not
+    thrown, so the caller sees every result even when some are unreachable.
+
+    On the default transport (`post is None`), `get_matterport_data_with_notes`
+    passes `use_cache=True` - its cache is keyed by sid alone, with no notion of
+    "uncached for this plan's purposes," so a sid this probe reached once would
+    answer "reachable" from disk on every later run without the key being asked
+    anything. That defeats the one thing this module exists to prove, so the live
+    path forces `refresh=True`: skip the read, always call Matterport, write the
+    fresh response over whatever was there. An injected `post` already bypasses
+    the cache entirely (`use_cache=post is None`), so `refresh` is a no-op there
+    and is left `False` for it.
+    """
+    results: list[tuple[str, bool, str]] = []
+    for sid in uncached_sids(n):
+        try:
+            matterport.get_matterport_data_with_notes(sid, post=post, refresh=post is None)
+        except Exception as exc:  # noqa: BLE001 - reported, not swallowed
+            results.append((sid, False, str(exc)))
+        else:
+            results.append((sid, True, "ok"))
+    return results
+
+
+def _verify_without_refetch(sid: str, **kwargs) -> list[Check]:
+    """The default `verify` for `warm_one`: `demo_check.check_property` with
+    `refresh=False`.
+
+    `check_property`'s *own* default (`refresh=True`) is correct for `demo_check`'s
+    purpose - it measures cold worst-case fetch timings, which is the number worth
+    knowing before a demo. But `warm_one` calls `verify` immediately after `assemble`
+    has already fetched this same property live; taking that default here would
+    fetch every property twice, doubling the cost of a pass that can already run up
+    to an hour against Matterport keys shared with every other team at the
+    hackathon. `refresh=False` serves the "bundle" check from the bundle `assemble`
+    just wrote instead of fetching it again.
+    """
+    return demo_check.check_property(sid, refresh=False, **kwargs)
+
+
+def _fetch_obliques(sid: str, obliques: ObliqueFetcher) -> Optional[str]:
+    """Warm `sid`'s four oblique crops. Returns `None` when all four landed, or a
+    note describing what is short - never raises, and never disqualifies the
+    property.
+
+    **The mapping is keyed `"oblique-north"`, not `"north"`.** That is what
+    `api.get_obliques` returns (from `imagery.OBLIQUE_DIRECTIONS`, via either the
+    cache lookup or `vexcel.oblique_directions`'s `product-type` values), and what
+    the cache folders are named after. The keys are read through the alias at the
+    top of this module rather than re-spelled, because the first version spelled
+    them short and silently matched nothing for all fifty properties. The note
+    *prints* them short, since a human reading "2 of 4 obliques (north, south)"
+    does not need the prefix repeated twice.
+
+    **Why the warm pass fetches obliques at all.** `api._with_imagery` deliberately
+    does not: the lead's decision (board, 2026-11-14) is that bundle assembly skips
+    them because nothing reads `oblique_paths`, they cost about 2.88 s plus a 0.13 s
+    coverage call, and `oriented/extract` is the endpoint most prone to 429. That
+    decision is about *assembly*. Demo warming is the other case: `demo_transfer.check`
+    requires four of four obliques before a sid counts as complete rather than
+    `incomplete`, and `demo_transfer` exists precisely to carry those crops to every
+    teammate's laptop. Without this call a flawless hour-long pass would produce 50
+    bundles, 50 orthophotos, zero obliques, and 50 lines of "0 of 4 obliques" - the
+    exact symptom the transfer tool was written to cure. Across 50 properties the
+    whole addition costs roughly 2.5 minutes.
+
+    **A short or failed fetch is a note, not a disqualification.** The bundle is
+    already assembled and verified and the orthophoto is already on disk; throwing
+    the property away over a 429 at the most rate-limited endpoint in the lane would
+    spend a spare to fix something that costs one tab. `get_obliques` itself already
+    leaves out a direction that 403s, 404s or 429s rather than failing the other
+    three, so "fewer than four" is a normal outcome worth reporting, not an error.
+
+    Unpacking the result and reading the directions out of it sit *inside* the
+    `try`, not just the call: a fetcher that returns successfully but malformed
+    (not a two-tuple, or a mapping that is not one) would otherwise raise a bare
+    `TypeError`/`AttributeError` after the call returned, and `warm_all` has nothing
+    wrapped around this - that exception would abort the whole pass, which is the
+    one thing this function must never do. Same reasoning as `warm_one`'s verify
+    block.
+    """
+    try:
+        found, _records = obliques(sid, live=True)
+        have = sorted(d for d in _OBLIQUE_DIRECTIONS if found.get(d))
+    except Exception as exc:  # noqa: BLE001 - noted, never a disqualification
+        return f"obliques unavailable ({type(exc).__name__}: {exc})"
+    if len(have) == len(_OBLIQUE_DIRECTIONS):
+        return None
+    short = ", ".join(d.removeprefix("oblique-") for d in have) or "none"
+    return (
+        f"{len(have)} of {len(_OBLIQUE_DIRECTIONS)} obliques "
+        f"({short}) - the Side angle tab will be short"
+    )
+
+
+def warm_one(
+    sid: str,
+    *,
+    assemble: Optional[Assembler] = None,
+    verify: Optional[Verifier] = None,
+    obliques: Optional[ObliqueFetcher] = None,
+) -> tuple[bool, str]:
+    """Assemble `sid` live and verify it. `(True, detail)` on success; `(False, reason)`
+    on any disqualification - this never raises, because `warm_all` calls it once per
+    property across a pass that may already have run for most of an hour, and one bad
+    sid (a dead model, an `IncompleteBundle` with no georeference, a failed check) must
+    not abort the rest.
+
+    `assemble` defaults to `api.get_property_bundle`, called with `live=True` - the
+    offline default returns a replayed fixture, which would make every property in a
+    real pass "succeed" against data nobody fetched. `refresh=False` because a bundle
+    already warmed earlier in this same pass (or by a previous run) should not be
+    re-fetched for nothing; the point of warming is that the second read is free.
+
+    `verify` defaults to `_verify_without_refetch` (see its docstring), called with
+    `run_analysis=True` per the plan - a warmed property is meant to drive a demo end
+    to end, not just sit in cache. Only a `fail` status disqualifies; a `warn` (an
+    unresolved utility, a thin scan) is normal even on the golden three and must not
+    throw away a property over it. A `fail` whose check name is in
+    `TOLERATED_CHECKS` becomes a note instead of a disqualification - see that
+    constant for which checks, why, and why `demo_check`'s own verdict is left
+    strict.
+
+    Everything after `assemble` succeeds - calling `verify`, reading `.status` off
+    each result, reading `.name`/`.detail` off the first failure - stays inside one
+    `try`, not just the `verify(...)` call itself. A `verify` that returns
+    successfully but malformed (not a `list[Check]`, or an item missing an attribute)
+    would otherwise raise a bare `TypeError`/`AttributeError` *after* the call
+    returned, which `warm_all` has nothing wrapped around - that exception would
+    abort the whole pass exactly as badly as an un-caught `verify` exception would,
+    which defeats the entire point of this function never raising.
+
+    `obliques` defaults to `api.get_obliques` and runs only after assembly and
+    verification have both passed - see `_fetch_obliques` for why the warm pass
+    fetches them when assembly does not, and why a short fetch is reported rather
+    than disqualifying.
+
+    On success the detail is `"ok"` when there is nothing to say, or every note this
+    property earned joined by `"; "` - a tolerated check failure, a short oblique
+    fetch, or both. `warm_all` turns any detail other than `"ok"` into a
+    per-property note in its summary.
+    """
+    assemble = assemble if assemble is not None else api.get_property_bundle
+    verify = verify if verify is not None else _verify_without_refetch
+    obliques = obliques if obliques is not None else api.get_obliques
+
+    try:
+        assemble(sid, live=True, refresh=False)
+    except Exception as exc:  # noqa: BLE001 - a disqualification, not a crash
+        return False, str(exc)
+
+    try:
+        checks = verify(sid, run_analysis=True)
+        fails = [c for c in checks if c.status == "fail"]
+        blocking = [c for c in fails if c.name not in TOLERATED_CHECKS]
+        if blocking:
+            return False, f"{blocking[0].name}: {blocking[0].detail}"
+        # Every tolerated failure is kept, not just the first: a property can be
+        # short on more than one of them, and the operator is deciding what each of
+        # the 50 cards will be missing on screen.
+        notes = [f"{c.name}: {c.detail}" for c in fails]
+    except Exception as exc:  # noqa: BLE001 - same: reported, not raised
+        return False, str(exc)
+
+    oblique_note = _fetch_obliques(sid, obliques)
+    if oblique_note:
+        notes.append(oblique_note)
+    return True, "; ".join(notes) if notes else "ok"
+
+
+class SparesExhausted(RuntimeError):
+    """Raised by `warm_all` when the spare pool ran out before the target count could
+    be met. Carries the shortfall by name - `"<warmed> of <len(target)>"` - rather
+    than a bare "ran out", because a pass that silently warmed fewer than planned is
+    exactly the failure mode over-provisioning (see `demo_set`'s module docstring)
+    exists to catch.
+
+    **It also carries the partial result.** `warm_all` raises this only at the very
+    end of a pass that may have run for most of an hour, and `warmed`/`replaced`/
+    `notes` are the only structured record of which properties are good and which
+    substitutions were made. Discarding them with the raise left the operator of an
+    unattended run with nothing but terminal scrollback they may not still have, so
+    `result` is attached and `main --all` prints it (and applies the manifest
+    write-back for the slots that did fill) before returning 1. The scalar `warmed`
+    stays an `int` for the message and for every existing caller; the list lives on
+    `result["warmed"]`."""
+
+    def __init__(self, warmed: int, target: int, result: Optional[dict] = None):
+        self.warmed = warmed
+        self.target = target
+        #: `{"warmed": [...], "replaced": [...], "notes": [...]}` - the same shape a
+        #: successful `warm_all` returns, for the slots that did fill.
+        self.result: dict = result if result is not None else {
+            "warmed": [], "replaced": [], "notes": [],
+        }
+        super().__init__(
+            f"spares exhausted: only {warmed} of {target} warmed"
+        )
+
+
+def warm_all(
+    sids: Optional[list[str]] = None,
+    spares: Optional[list[str]] = None,
+    *,
+    assemble: Optional[Assembler] = None,
+    verify: Optional[Verifier] = None,
+    obliques: Optional[ObliqueFetcher] = None,
+    log: Callable[[str], None] = print,
+) -> dict:
+    """Warm every sid in `sids` (default `demo_set.sids()`), replacing any
+    disqualification with the next *same-bucket* sid from `spares` (default
+    `demo_set.spares()`, already in replacement order - see `demo_set.select`'s
+    docstring).
+
+    **A replacement must come from the failed target's own bucket and state.**
+    `demo_set.select`'s "a spare is adjacent to the target slot of its own bucket
+    and state" guarantee is positional - true of the 75-entry tuple's row order,
+    not of a flat FIFO pop over bare sids. Popping the spare pool's *head*
+    regardless of bucket would hand (say) an `office/TX` spare to a failed
+    `multifamily_unit/TX` target the moment failures land out of bucket order -
+    plausible, since Task 1 established failures are order-independent - silently
+    inflating one bucket and starving another while `{"warmed": [...]}` still
+    reports fifty names and looks like success. `demo_set.buckets()` is the
+    accessor that recovers each bare sid's `"<use_type>/<state>"` key from the
+    manifest, so the replacement search can filter the spare pool down to sids
+    that share the *original* target's bucket (every hop of a chain fills the
+    same slot, so the bucket is fixed per target, not re-derived per hop).
+
+    If no same-bucket spare remains, that target's slot is short - full stop, not
+    a silent substitution from a different bucket. It counts toward the
+    `SparesExhausted` shortfall below exactly like a target with no spares left
+    at all.
+
+    `demo_set.resolve()` runs first and its `ManifestStale` is let through unchanged:
+    a sid the manifest carries but the live index no longer has must surface in the
+    first second, not after an hour spent warming the other forty-nine.
+
+    Returns `{"warmed": [...], "replaced": [(disqualified_sid, next_sid), ...],
+    "notes": [(sid, note), ...]}`. `replaced` records every hop of a chain, not just
+    the first: if a spare itself fails and a second spare is drawn, both hops appear,
+    so a reader can see exactly which sid a warmed slot actually came from.
+    `notes` carries anything that warmed but not perfectly - today only a short or
+    failed oblique fetch, which by design never disqualifies a property (see
+    `_fetch_obliques`) but which the operator still has to be able to see without
+    reading an hour of scrollback.
+
+    `replaced` is also exactly the input `demo_set.apply_replacements` needs, which
+    is how a pass's substitutions reach the committed manifest instead of dying in
+    the terminal - `main --all` does that write-back. `warm_all` itself stays
+    read-only on the manifest so a test (and any future caller) can run a pass
+    without rewriting a committed source file.
+
+    Logs one line per sid tried (not per target slot), because a pass over fifty
+    properties at a measured 2 s to 76 s each runs up to an hour, and a silent process
+    that long looks hung.
+
+    Raises `SparesExhausted` if some target slot cannot be filled - either the
+    whole spare pool ran dry, or what remains of it shares no bucket with that
+    slot's original target - before every target slot is filled. A shrunk demo
+    set should be loud, not discovered by counting bundles afterwards.
+    """
+    demo_set.resolve()
+
+    target = list(sids) if sids is not None else list(demo_set.sids())
+    spare_pool = list(spares) if spares is not None else list(demo_set.spares())
+    bucket_of = demo_set.buckets()
+
+    warmed: list[str] = []
+    replaced: list[tuple[str, str]] = []
+    notes: list[tuple[str, str]] = []
+
+    for i, original in enumerate(target, start=1):
+        # `None` for a sid outside the committed manifest (every test fixture, and
+        # any future caller passing ad-hoc sids): two such sids compare equal under
+        # `==`, so the search below still finds a match rather than refusing one
+        # for a reason it cannot name.
+        bucket = bucket_of.get(original)
+        current = original
+        ok, detail = warm_one(current, assemble=assemble, verify=verify, obliques=obliques)
+        while not ok:
+            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - "
+                f"drawing a same-bucket spare")
+            match_at = next(
+                (j for j, s in enumerate(spare_pool) if bucket_of.get(s) == bucket),
+                None,
+            )
+            if match_at is None:
+                break
+            replacement = spare_pool.pop(match_at)
+            replaced.append((current, replacement))
+            current = replacement
+            ok, detail = warm_one(current, assemble=assemble, verify=verify, obliques=obliques)
+
+        if ok:
+            warmed.append(current)
+            if detail != "ok":
+                notes.append((current, detail))
+            log(f"[{i}/{len(target)}] {current}: warmed ({detail})")
+        else:
+            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - "
+                f"no same-bucket spare left")
+
+    result = {"warmed": warmed, "replaced": replaced, "notes": notes}
+    if len(warmed) < len(target):
+        raise SparesExhausted(len(warmed), len(target), result)
+
+    return result
+
+
+def _preflight() -> Optional[str]:
+    """Reach-check one sid before `--all` commits to an hour. `None` when the pass
+    may proceed, otherwise the reason to abort.
+
+    Without `.env` sourced, every one of the 75 sids fails with
+    `MatterportAuthMissing`, the pass runs its full length fetching nothing and ends
+    `SparesExhausted: 0 of 50` - loud, but it names the wrong cause, and the operator
+    of an unattended run reads that an hour later. One `probe(1)` costs a single
+    GraphQL call and names the real reason in the first second.
+
+    An *empty* probe is not an abort: `probe` draws from `uncached_sids`, which is
+    empty both when the kit mirror is missing and when every indexed sid is already
+    warm, and the second of those is a perfectly good state to start a pass in. The
+    first is caught a moment later by `demo_set.resolve()`, which raises
+    `ManifestStale` against an empty index.
+    """
+    results = probe(1)
+    if not results:
+        print(
+            "preflight: nothing uncached to reach-check (every indexed sid is "
+            "already warm, or the kit mirror is missing - resolve() will say which). "
+            "Proceeding.",
+            file=sys.stderr,
+        )
+        return None
+    sid, reachable, detail = results[0]
+    if reachable:
+        return None
+    return (
+        f"preflight failed: {sid} is unreachable ({detail}). Not starting an "
+        "hour-long pass - check that .env is sourced and the Matterport key is live."
+    )
+
+
+def _report_all(result: dict) -> None:
+    """Print a `warm_all` result - warmed count, replacements, per-property notes.
+
+    Shared by the success path and the `SparesExhausted` path, because a partial
+    result is exactly as worth reading as a complete one.
+    """
+    print(f"\nwarmed {len(result['warmed'])} properties")
+    if result.get("replaced"):
+        print("replacements:")
+        for old, new in result["replaced"]:
+            print(f"  {old} -> {new}")
+    if result.get("notes"):
+        print("notes (warmed, but not complete - these do not disqualify):")
+        for sid, note in result["notes"]:
+            print(f"  {sid}: {note}")
+
+
+def _write_back(result: dict) -> None:
+    """Persist the pass's substitutions into the committed manifest.
+
+    Wrapped so a refused or failed write cannot swallow the report of an hour's
+    work: the write is the last thing `--all` does, and its failure is printed
+    rather than raised over the result that was already shown.
+    """
+    if not result.get("replaced"):
+        print("manifest unchanged: no replacements were made.")
+        return
+    try:
+        demo_set.apply_replacements(result["replaced"])
+    except Exception as exc:  # noqa: BLE001 - reported next to the result it belongs to
+        print(
+            f"could not rewrite the manifest ({type(exc).__name__}: {exc}). The "
+            "replacements above are the record - apply them by hand.",
+            file=sys.stderr,
+        )
+        return
+    print(
+        f"rewrote demo_set.DEMO_SET: {len(result['replaced'])} replacement(s) "
+        "promoted into the target block, each failed sid demoted into the spares.\n"
+        "backend/data_layer/demo_set.py is now modified - commit it, or the next "
+        "teammate's `demo_transfer pack` still packs the properties that failed."
+    )
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--probe", type=int, metavar="N",
+        help="reach-check N uncached sids against the live Matterport key",
+    )
+    parser.add_argument(
+        "--all", action="store_true",
+        help="warm and verify the full 50-property demo set, replacing failures "
+             "from the 25 spares (up to an hour against the live keys)",
+    )
+    args = parser.parse_args(list(sys.argv[1:] if argv is None else argv))
+
+    if args.all:
+        abort = _preflight()
+        if abort:
+            print(abort, file=sys.stderr)
+            return 1
+        try:
+            result = warm_all()
+        except demo_set.ManifestStale as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        except SparesExhausted as exc:
+            # A partial pass still produced the only record of which properties are
+            # good, and the slots that *did* fill still have to reach the manifest -
+            # otherwise `demo_transfer pack` packs the failures and omits the spares.
+            print(str(exc), file=sys.stderr)
+            _report_all(exc.result)
+            _write_back(exc.result)
+            return 1
+        _report_all(result)
+        _write_back(result)
+        return 0
+
+    if args.probe is not None:
+        results = probe(args.probe)
+        if not results:
+            print(
+                "probed 0 sids - index.summaries() returned nothing, most likely "
+                "because the CoStar kit mirror is not reachable (both "
+                "DATA_LAYER_CACHE_DIR and COSTAR_KIT_DIR need to point at it; see "
+                "the module docstring). Treating this as a failure: a gate that "
+                "checks nothing has not proven anything.",
+                file=sys.stderr,
+            )
+            return 1
+        for sid, reachable, detail in results:
+            print(f"{sid}: {'reachable' if reachable else 'UNREACHABLE'} ({detail})")
+        if len(results) < args.probe:
+            print(
+                f"note: only {len(results)} of the requested {args.probe} sids were "
+                "available to probe (the uncached pool is smaller than N) - not "
+                "treated as a failure on its own.",
+                file=sys.stderr,
+            )
+        return 0 if all(reachable for _, reachable, _ in results) else 1
+
+    parser.print_help()
+    return 1
+
+
+if __name__ == "__main__":  # pragma: no cover - entry point
+    raise SystemExit(main())

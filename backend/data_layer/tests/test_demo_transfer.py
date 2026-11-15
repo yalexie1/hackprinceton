@@ -10,10 +10,59 @@ from pathlib import Path
 
 import pytest
 
-from backend.data_layer import demo_transfer as dt
+from backend.data_layer import demo_set, demo_transfer as dt
 
 
 SIDS = ("zvKHR9DHNjJ", "ZSPaQbkGcJJ", "L3266YcPPvd")
+
+
+# ---------- task 5: DEMO_SIDS is the manifest ----------
+
+def test_demo_sids_is_the_manifest():
+    """`demo_transfer` used to hard-code its own three sids; after task 5 the
+    committed manifest (`demo_set.sids()`, the 50) is the single source of truth."""
+    assert tuple(dt.DEMO_SIDS) == demo_set.sids()
+
+
+def test_check_separates_not_warmed_from_warmed_and_broken(tmp_path):
+    """At 50 properties a flat `missing` list is not something a human can eyeball,
+    so `check` also buckets each sid into exactly one of `not_warmed` (nothing
+    cached at all) or `incomplete` (something is cached, but a bundle, the
+    orthophoto, or an oblique is still missing)."""
+    root = tmp_path / "cache"
+    for sid in ("SID_A", "SID_C"):
+        (root / sid).mkdir(parents=True)
+        (root / sid / "bundle.json").write_text("{}")
+    for name in ("ortho", "oblique-north", "oblique-south", "oblique-east", "oblique-west"):
+        d = root / "vexcel-image" / f"SID_A-{name}"
+        d.mkdir(parents=True)
+        (d / "a.jpg").write_bytes(b"\xff\xd8\xff\xe0")
+    # SID_B: nothing cached at all. SID_C: a bundle, but no imagery.
+
+    out = dt.check(["SID_A", "SID_B", "SID_C"], root=root)
+
+    assert out["not_warmed"] == ["SID_B"]
+    assert out["incomplete"] == ["SID_C"]
+    # `missing` is kept populated as the union, in its existing per-feature form,
+    # so no caller reading that key breaks.
+    joined = " ".join(out["missing"])
+    assert "SID_B" in joined and "SID_C" in joined
+    assert "SID_A" not in joined
+
+
+def test_pack_at_fifty_properties_lists_every_one(tmp_path):
+    """The real `demo_transfer` lets the archive be built from a committed manifest
+    at full scale; this pins that `pack`/`contents` can round-trip all 50 sids
+    without silently dropping any, using a synthetic 50-sid cache rather than the
+    real (git-ignored, not-present-in-CI) one."""
+    fifty = tuple(f"SID{i:03d}" for i in range(50))
+    root = tmp_path / "cache"
+    for sid in fifty:
+        (root / sid).mkdir(parents=True)
+        (root / sid / "bundle.json").write_text("{}")
+
+    archive = dt.pack(tmp_path / "out" / "d.tgz", sids=fifty, root=root)
+    assert len(dt.contents(archive)) >= 50
 
 
 @pytest.fixture

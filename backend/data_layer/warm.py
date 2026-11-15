@@ -134,6 +134,15 @@ def warm_one(
     in cache. Only a `fail` status disqualifies; a `warn` (an unresolved utility, a
     thin scan) is normal even on the golden three and must not throw away a property
     over it.
+
+    Everything after `assemble` succeeds - calling `verify`, reading `.status` off
+    each result, reading `.name`/`.detail` off the first failure - stays inside one
+    `try`, not just the `verify(...)` call itself. A `verify` that returns
+    successfully but malformed (not a `list[Check]`, or an item missing an attribute)
+    would otherwise raise a bare `TypeError`/`AttributeError` *after* the call
+    returned, which `warm_all` has nothing wrapped around - that exception would
+    abort the whole pass exactly as badly as an un-caught `verify` exception would,
+    which defeats the entire point of this function never raising.
     """
     assemble = assemble if assemble is not None else api.get_property_bundle
     verify = verify if verify is not None else demo_check.check_property
@@ -145,12 +154,12 @@ def warm_one(
 
     try:
         checks = verify(sid, run_analysis=True)
+        fails = [c for c in checks if c.status == "fail"]
+        if fails:
+            return False, f"{fails[0].name}: {fails[0].detail}"
     except Exception as exc:  # noqa: BLE001 - same: reported, not raised
         return False, str(exc)
 
-    fails = [c for c in checks if c.status == "fail"]
-    if fails:
-        return False, f"{fails[0].name}: {fails[0].detail}"
     return True, "ok"
 
 
@@ -178,8 +187,28 @@ def warm_all(
     log: Callable[[str], None] = print,
 ) -> dict:
     """Warm every sid in `sids` (default `demo_set.sids()`), replacing any
-    disqualification with the next sid from `spares` (default `demo_set.spares()`,
-    already in replacement order - see `demo_set.select`'s docstring).
+    disqualification with the next *same-bucket* sid from `spares` (default
+    `demo_set.spares()`, already in replacement order - see `demo_set.select`'s
+    docstring).
+
+    **A replacement must come from the failed target's own bucket and state.**
+    `demo_set.select`'s "a spare is adjacent to the target slot of its own bucket
+    and state" guarantee is positional - true of the 75-entry tuple's row order,
+    not of a flat FIFO pop over bare sids. Popping the spare pool's *head*
+    regardless of bucket would hand (say) an `office/TX` spare to a failed
+    `multifamily_unit/TX` target the moment failures land out of bucket order -
+    plausible, since Task 1 established failures are order-independent - silently
+    inflating one bucket and starving another while `{"warmed": [...]}` still
+    reports fifty names and looks like success. `demo_set.buckets()` is the
+    accessor that recovers each bare sid's `"<use_type>/<state>"` key from the
+    manifest, so the replacement search can filter the spare pool down to sids
+    that share the *original* target's bucket (every hop of a chain fills the
+    same slot, so the bucket is fixed per target, not re-derived per hop).
+
+    If no same-bucket spare remains, that target's slot is short - full stop, not
+    a silent substitution from a different bucket. It counts toward the
+    `SparesExhausted` shortfall below exactly like a target with no spares left
+    at all.
 
     `demo_set.resolve()` runs first and its `ManifestStale` is let through unchanged:
     a sid the manifest carries but the live index no longer has must surface in the
@@ -194,24 +223,38 @@ def warm_all(
     properties at a measured 2 s to 76 s each runs up to an hour, and a silent process
     that long looks hung.
 
-    Raises `SparesExhausted` if the spare pool runs dry before every target slot is
-    filled - a shrunk demo set should be loud, not discovered by counting bundles
-    afterwards.
+    Raises `SparesExhausted` if some target slot cannot be filled - either the
+    whole spare pool ran dry, or what remains of it shares no bucket with that
+    slot's original target - before every target slot is filled. A shrunk demo
+    set should be loud, not discovered by counting bundles afterwards.
     """
     demo_set.resolve()
 
     target = list(sids) if sids is not None else list(demo_set.sids())
     spare_pool = list(spares) if spares is not None else list(demo_set.spares())
+    bucket_of = demo_set.buckets()
 
     warmed: list[str] = []
     replaced: list[tuple[str, str]] = []
 
     for i, original in enumerate(target, start=1):
+        # `None` for a sid outside the committed manifest (every test fixture, and
+        # any future caller passing ad-hoc sids): two such sids compare equal under
+        # `==`, so the search below still finds a match rather than refusing one
+        # for a reason it cannot name.
+        bucket = bucket_of.get(original)
         current = original
         ok, detail = warm_one(current, assemble=assemble, verify=verify)
-        while not ok and spare_pool:
-            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - drawing a spare")
-            replacement = spare_pool.pop(0)
+        while not ok:
+            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - "
+                f"drawing a same-bucket spare")
+            match_at = next(
+                (j for j, s in enumerate(spare_pool) if bucket_of.get(s) == bucket),
+                None,
+            )
+            if match_at is None:
+                break
+            replacement = spare_pool.pop(match_at)
             replaced.append((current, replacement))
             current = replacement
             ok, detail = warm_one(current, assemble=assemble, verify=verify)
@@ -220,7 +263,8 @@ def warm_all(
             warmed.append(current)
             log(f"[{i}/{len(target)}] {current}: warmed ({detail})")
         else:
-            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - no spares left")
+            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - "
+                f"no same-bucket spare left")
 
     if len(warmed) < len(target):
         raise SparesExhausted(len(warmed), len(target))

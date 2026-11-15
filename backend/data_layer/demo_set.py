@@ -339,6 +339,25 @@ def spares() -> tuple[str, ...]:
     return tuple(sid for sid, _ in DEMO_SET[50:])
 
 
+def buckets() -> dict[str, str]:
+    """`sid` -> its "<use_type>/<state>" bucket key, from the manifest's own `reason`
+    field with any "/golden" suffix stripped.
+
+    `select()`'s guarantee that "a spare is adjacent to the target slot of its own
+    bucket and state" is a *positional* invariant inside the 75-entry tuple - true
+    of the manifest's row order, not something a caller holding only a bare sid
+    (`warm.warm_all`, replacing one disqualified target) can recover by itself.
+    This is the accessor that closes that gap: a failed target's bucket key, looked
+    up here, is exactly what its replacement must match - drawing from a different
+    bucket's spares would silently skew the 15/10/10/10/5 quota the whole plan is
+    built around.
+    """
+    return {
+        sid: reason[: -len("/golden")] if reason.endswith("/golden") else reason
+        for sid, reason in DEMO_SET
+    }
+
+
 class ManifestStale(RuntimeError):
     """A sid `DEMO_SET` carries is no longer in `index.by_sid()` - the kit mirror
     was re-mirrored or trimmed since the manifest was generated. `resolve()` raises

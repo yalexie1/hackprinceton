@@ -185,7 +185,30 @@ def test_incomplete_bundle_disqualifies_without_raising():
     assert ok is False and "no georeference" in detail
 
 
-def test_a_failure_is_replaced_from_the_same_bucket_spare(monkeypatch):
+def test_malformed_verify_result_disqualifies_without_raising():
+    """`verify` returning *successfully* but with something that is not a
+    `list[Check]` (here, an object with no `.status`) must disqualify the sid, not
+    raise a bare `AttributeError` out of `warm_one` - that attribute access used to
+    sit outside the function's only `try`, and would have aborted `warm_all`'s
+    whole pass exactly like an un-caught `verify` exception."""
+
+    class NotACheck:
+        pass
+
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble, verify=lambda s, **k: [NotACheck()],
+    )
+    assert ok is False
+
+
+def test_a_failure_is_replaced_by_the_next_spare(monkeypatch):
+    """Neither "BAD1" nor "SPARE1" is in the real committed manifest, so
+    `demo_set.buckets()` maps both to `None` and the bucket-matching search below
+    finds SPARE1 by that trivial match - this only pins that a single disqualified
+    target with one available spare gets replaced at all. It does NOT exercise
+    bucket-matching itself (both sids have no bucket to match); that is
+    `test_replacement_only_draws_from_the_failed_targets_own_bucket` below, which
+    puts real bucket keys in play via a monkeypatched manifest."""
     monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
     out = warm.warm_all(
         ["BAD1"], ["SPARE1"], assemble=fail_then_ok, verify=ok_verify,
@@ -193,6 +216,51 @@ def test_a_failure_is_replaced_from_the_same_bucket_spare(monkeypatch):
     )
     assert out["warmed"] == ["SPARE1"]
     assert out["replaced"] == [("BAD1", "SPARE1")]
+
+
+#: A tiny manifest with two buckets in play, used by the tests below to pin that a
+#: replacement is drawn from the failed target's own bucket/state, never just the
+#: next sid in the spare list regardless of bucket.
+_TWO_BUCKET_MANIFEST = (
+    ("BAD1", "office/TX"),
+    ("WRONG_BUCKET_SPARE", "retail/CA"),
+    ("RIGHT_BUCKET_SPARE", "office/TX"),
+)
+
+
+def test_replacement_only_draws_from_the_failed_targets_own_bucket(monkeypatch):
+    """`fail_then_ok` would happily succeed on WRONG_BUCKET_SPARE if it were ever
+    tried (it only fails for "BAD1") - so if this picked it, the FIFO bug this test
+    guards against (drawing whichever spare is first regardless of bucket) would
+    pass silently. Asserting the exact replacement pins that WRONG_BUCKET_SPARE
+    (retail/CA) is skipped in favour of RIGHT_BUCKET_SPARE (office/TX), the one
+    sharing BAD1's own bucket/state."""
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    monkeypatch.setattr(warm.demo_set, "DEMO_SET", _TWO_BUCKET_MANIFEST)
+    out = warm.warm_all(
+        ["BAD1"], ["WRONG_BUCKET_SPARE", "RIGHT_BUCKET_SPARE"],
+        assemble=fail_then_ok, verify=ok_verify, log=lambda *_: None,
+    )
+    assert out["warmed"] == ["RIGHT_BUCKET_SPARE"]
+    assert out["replaced"] == [("BAD1", "RIGHT_BUCKET_SPARE")]
+
+
+def test_no_same_bucket_spare_is_a_shortfall_not_a_cross_bucket_substitution(monkeypatch):
+    """OTHER_BUCKET_SPARE (retail/CA) must never fill BAD1's office/TX slot, even
+    though it is the only spare available - a short bucket is a real shortfall,
+    reported by `SparesExhausted`, not something papered over by borrowing a
+    different bucket's spare."""
+    manifest = (
+        ("BAD1", "office/TX"),
+        ("OTHER_BUCKET_SPARE", "retail/CA"),
+    )
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    monkeypatch.setattr(warm.demo_set, "DEMO_SET", manifest)
+    with pytest.raises(warm.SparesExhausted, match="0 of 1"):
+        warm.warm_all(
+            ["BAD1"], ["OTHER_BUCKET_SPARE"],
+            assemble=always_fail, verify=ok_verify, log=lambda *_: None,
+        )
 
 
 def test_exhausted_spares_report_short_and_do_not_claim_fifty(monkeypatch):

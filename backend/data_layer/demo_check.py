@@ -33,12 +33,22 @@ Usage:
     python -m backend.data_layer.demo_check --analysis          # also run the plan
     python -m backend.data_layer.demo_check --keep-cache        # use the real cache
 
+**What the default costs.** The default set grew from the 3 `specs/examples/` fixtures
+to the full 50-property manifest, and every check here is live with `refresh=True`, so
+nothing is served from cache even on a fully warmed laptop. At the measured 2 s to 76 s
+per bundle that is roughly **an hour** and 50 cold fetch cycles against sponsor keys
+shared with every other team at the hackathon - not something to start ten minutes
+before a rehearsal, and not something two people should run at once. Naming sids
+explicitly, or checking just the three `golden_sids()`, is the two-minute version and
+is the right one for a quick smoke check.
+
 Exit status is 1 if any check **failed**, 0 if the worst was a warning, so it can gate
 a demo rehearsal.
 """
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -454,6 +464,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     keep_cache = "--keep-cache" in argv
     sids = [a for a in argv if not a.startswith("--")]
 
+    # Both overrides are process-global, so both are put back in the `finally`
+    # below: this is a command, but it is also an ordinary function a test or a
+    # script can call, and leaving `DATA_LAYER_LIVE=1` (or a cache pointed at a
+    # directory this function just deleted) behind would silently change what
+    # anything running afterwards in the same process does.
+    _previous_live = os.environ.get("DATA_LAYER_LIVE")
+    _previous_cache_dir = os.environ.get("DATA_LAYER_CACHE_DIR")
     os.environ["DATA_LAYER_LIVE"] = "1"
     temporary = None
     if not keep_cache:
@@ -463,29 +480,45 @@ def main(argv: Optional[list[str]] = None) -> int:
         temporary = tempfile.mkdtemp(prefix="demo-check-cache-")
         os.environ["DATA_LAYER_CACHE_DIR"] = temporary
 
-    if not sids:
-        sids = demo_sids()
+    try:
+        if not sids:
+            sids = demo_sids()
 
-    print(f"demo-day checks on {len(sids)} propert{'y' if len(sids) == 1 else 'ies'}: "
-          f"{', '.join(sids)}")
-    print(f"cache: {temporary or 'the real one (--keep-cache)'}"
-          f"{'' if run_analysis else '   [analysis skipped; pass --analysis]'}\n")
+        print(f"demo-day checks on {len(sids)} propert{'y' if len(sids) == 1 else 'ies'}: "
+              f"{', '.join(sids)}")
+        print(f"cache: {temporary or 'the real one (--keep-cache)'}"
+              f"{'' if run_analysis else '   [analysis skipped; pass --analysis]'}\n")
 
-    worst: Status = "ok"
-    for sid in sids:
-        print(f"--- {sid}")
-        for check in check_property(sid, run_analysis=run_analysis):
-            print(f"  {_SYMBOL[check.status]}  {check.name:17} {check.detail}")
-            if check.status == "fail":
-                worst = "fail"
-            elif check.status == "warn" and worst == "ok":
-                worst = "warn"
-        print()
+        worst: Status = "ok"
+        for sid in sids:
+            print(f"--- {sid}")
+            for check in check_property(sid, run_analysis=run_analysis):
+                print(f"  {_SYMBOL[check.status]}  {check.name:17} {check.detail}")
+                if check.status == "fail":
+                    worst = "fail"
+                elif check.status == "warn" and worst == "ok":
+                    worst = "warn"
+            print()
 
-    print({"ok": "All checks passed.",
-           "warn": "Passed with warnings - read them before the demo.",
-           "fail": "FAILURES above. These will show on stage."}[worst])
-    return 1 if worst == "fail" else 0
+        print({"ok": "All checks passed.",
+               "warn": "Passed with warnings - read them before the demo.",
+               "fail": "FAILURES above. These will show on stage."}[worst])
+        return 1 if worst == "fail" else 0
+    finally:
+        if temporary is not None:
+            # The temporary cache holds a full cold fetch of every sid checked -
+            # about 1.5 MB per property, so roughly 75 MB for the 50-property
+            # default, left behind on every run of a command that is meant to be
+            # run before each rehearsal. `ignore_errors` because a leftover
+            # directory is a far smaller problem than a cleanup error masking the
+            # check results this function exists to report.
+            shutil.rmtree(temporary, ignore_errors=True)
+            os.environ.pop("DATA_LAYER_CACHE_DIR", None)
+            if _previous_cache_dir is not None:
+                os.environ["DATA_LAYER_CACHE_DIR"] = _previous_cache_dir
+        os.environ.pop("DATA_LAYER_LIVE", None)
+        if _previous_live is not None:
+            os.environ["DATA_LAYER_LIVE"] = _previous_live
 
 
 if __name__ == "__main__":        # pragma: no cover - entry point

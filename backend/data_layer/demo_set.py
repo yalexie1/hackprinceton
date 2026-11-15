@@ -235,7 +235,15 @@ def _reason(summary: PropertySummary) -> str:
 def _generate() -> tuple[tuple[str, str], ...]:
     """What `--generate` writes: `select()` against the live index, with
     `already_warm()` as `prefer` so this machine's already-fetched properties win
-    their bucket (see the section note above), each stamped with its reason."""
+    their bucket (see the section note above), each stamped with its reason.
+
+    **Not reproducible on another laptop, by design.** `select()` itself is pure and
+    stays that way, but `already_warm()` is machine-local - it reads whatever this
+    cache root happens to hold - so regenerating on a second machine yields a
+    different 75. The committed `DEMO_SET` literal, not this function, is the
+    authoritative demo set; `--generate` is a one-off development action whose
+    *output* is the thing teammates share.
+    """
     chosen = select(prefer=already_warm())
     return tuple((summary.sid, _reason(summary)) for summary in chosen)
 
@@ -356,6 +364,96 @@ def buckets() -> dict[str, str]:
         sid: reason[: -len("/golden")] if reason.endswith("/golden") else reason
         for sid, reason in DEMO_SET
     }
+
+
+#: How many entries of `DEMO_SET` are the target set; the rest are spares.
+_TARGET_N = 50
+
+
+def with_replacements(
+    entries: tuple[tuple[str, str], ...],
+    replacements: Iterable[tuple[str, str]],
+    *,
+    target_n: int = _TARGET_N,
+) -> tuple[tuple[str, str], ...]:
+    """`entries` with every `(disqualified_sid, replacement_sid)` hop applied, as a
+    swap between the target block and the spare block. Pure - it writes nothing.
+
+    Each hop moves the replacement into the exact target slot the disqualified sid
+    occupied, and demotes the disqualified sid into the exact spare slot the
+    replacement vacated. A swap, not an insert-and-append, because `select()`'s
+    "a spare is adjacent to the target slot of its own bucket and state" guarantee
+    is positional: appending would push every later spare one place along and quietly
+    break that adjacency for the next run, while both blocks' lengths (50 and 25)
+    must stay exactly what every reader of `sids()`/`spares()` assumes.
+
+    Chains are applied in order, so `[(BAD, S1), (S1, S2)]` - a spare that itself
+    failed and was replaced again - ends with S2 in the target slot and both BAD and
+    S1 demoted, each in the spare slot its own successor vacated.
+
+    Whole `(sid, reason)` rows move, never bare sids: a property's
+    `"<use_type>/<state>"` bucket does not change by being promoted or demoted, and
+    the `/golden` suffix must follow its own sid rather than its slot. Keeping the
+    rows intact is what makes both of those true by construction.
+
+    Raises `ValueError` naming the sid when a hop does not describe a
+    target-to-spare move (the disqualified sid is not currently a target, or the
+    replacement is not currently a spare) - a hop that cannot be applied means the
+    caller's record and the manifest disagree, and writing a half-applied manifest
+    over a committed one is strictly worse than refusing.
+    """
+    rows = list(entries)
+    for old, new in replacements:
+        try:
+            i = next(j for j in range(min(target_n, len(rows))) if rows[j][0] == old)
+        except StopIteration:
+            raise ValueError(
+                f"{old}: recorded as a disqualified target but it is not in the "
+                f"first {target_n} manifest entries"
+            ) from None
+        try:
+            k = next(j for j in range(target_n, len(rows)) if rows[j][0] == new)
+        except StopIteration:
+            raise ValueError(
+                f"{new}: recorded as a replacement but it is not in the manifest's "
+                "spare block"
+            ) from None
+        rows[i], rows[k] = rows[k], rows[i]
+    return tuple(rows)
+
+
+def apply_replacements(
+    replacements: Iterable[tuple[str, str]], path: Optional[Path] = None
+) -> tuple[tuple[str, str], ...]:
+    """Persist `warm.warm_all`'s replacements into the committed manifest, so the
+    first 50 entries are the 50 properties that actually warmed.
+
+    Without this step a warm pass's substitutions live only in the operator's
+    terminal: `demo_transfer pack` would build the archive from `sids()` - omitting
+    every spare that warmed and including every target that failed - `demo_transfer
+    check` would report those failures as `not_warmed` forever, and the demo would
+    offer a judge a property proven not to assemble. `--generate` cannot repair that
+    either: it re-selects from scratch against this machine's live `already_warm()`,
+    producing a *different* 75 rather than the corrected one.
+
+    Goes through `_write_manifest`, so the `_assert_still_whole` AST guard and the
+    atomic `os.replace` apply unchanged - this is not a second writer.
+
+    **A slot that no spare could fill keeps its failed target.** That case has no
+    hop to apply - `warm_all` records a replacement only when it actually drew a
+    spare - so the sid stays where it is and the target block stays 50 long. The
+    alternative, demoting it to leave 49 targets and 26 spares, would break the
+    fixed split every reader of `sids()`/`spares()` assumes in order to hide a
+    shortfall that `SparesExhausted` is there to shout about. The operator sees the
+    non-zero exit and the named shortfall; the manifest is not the place to bury it.
+
+    The in-process `DEMO_SET` literal is deliberately *not* rebound: this module's
+    source on disk is the manifest, and a caller that needs the new one re-imports.
+    Returns the entries written so a caller can report them without re-reading.
+    """
+    entries = with_replacements(DEMO_SET, replacements)
+    _write_manifest(entries, path)
+    return entries
 
 
 class ManifestStale(RuntimeError):
@@ -493,7 +591,10 @@ def main(argv: Optional[list[str]] = None) -> None:
     parser.add_argument(
         "--generate",
         action="store_true",
-        help="regenerate the committed DEMO_SET literal from the live index",
+        help="regenerate the committed DEMO_SET literal from the live index. The "
+             "committed literal is authoritative: generation prefers whatever this "
+             "laptop has already warmed, so running --generate on another machine "
+             "will not reproduce it.",
     )
     args = parser.parse_args(argv)
     if not args.generate:

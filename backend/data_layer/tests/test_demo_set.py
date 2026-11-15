@@ -243,3 +243,108 @@ def test_manifest_sentinels_appear_exactly_once_in_source():
     source = Path(demo_set.__file__).read_text()
     assert source.count(demo_set._MANIFEST_BEGIN) == 1
     assert source.count(demo_set._MANIFEST_END) == 1
+
+
+# ---------------------------------------------------------------------------
+# `with_replacements` / `apply_replacements` - the warm pass's write-back.
+#
+# Without it a warm pass's substitutions lived only in the operator's terminal:
+# `demo_transfer pack` builds its archive from `sids()`, so the archive would omit
+# every spare that actually warmed and carry every target that failed, and
+# `demo_transfer check` would report those failures as `not_warmed` forever. These
+# tests use a synthetic 3-target/3-spare manifest so the ordering and the reason
+# strings can be asserted exactly, without the real 75-entry literal.
+# ---------------------------------------------------------------------------
+
+_SYNTHETIC = (
+    ("T1", "office/TX/golden"),
+    ("T2", "office/TX"),
+    ("T3", "retail/CA"),
+    ("S1", "office/TX"),
+    ("S2", "retail/CA"),
+    ("S3", "office/TX/golden"),
+)
+
+
+def test_with_replacements_swaps_the_slot_and_keeps_both_block_sizes():
+    """A promoted spare takes the failed target's exact slot and the failed target
+    takes the spare's exact slot - a swap, not an insert-and-append, so the 50/25
+    split and the positional spare adjacency `select()` builds both survive."""
+    out = demo_set.with_replacements(_SYNTHETIC, [("T2", "S1")], target_n=3)
+    assert out == (
+        ("T1", "office/TX/golden"),
+        ("S1", "office/TX"),
+        ("T3", "retail/CA"),
+        ("T2", "office/TX"),
+        ("S2", "retail/CA"),
+        ("S3", "office/TX/golden"),
+    )
+
+
+def test_with_replacements_carries_each_sids_own_reason_including_golden():
+    """A sid's `<use_type>/<state>` does not change by being promoted or demoted, and
+    `/golden` belongs to the sid, not to the slot - whole rows move, so both hold by
+    construction."""
+    out = demo_set.with_replacements(_SYNTHETIC, [("T1", "S3")], target_n=3)
+    assert out[0] == ("S3", "office/TX/golden")
+    assert out[5] == ("T1", "office/TX/golden")
+
+
+def test_with_replacements_applies_a_chain_demoting_every_failed_sid():
+    """A spare that itself failed and was replaced again: `warm_all` records both
+    hops, and both failed sids must end up in the spare block with the final
+    survivor in the target slot."""
+    out = demo_set.with_replacements(_SYNTHETIC, [("T2", "S1"), ("S1", "S3")], target_n=3)
+    assert [sid for sid, _ in out[:3]] == ["T1", "S3", "T3"]
+    assert sorted(sid for sid, _ in out[3:]) == ["S1", "S2", "T2"]
+
+
+def test_with_replacements_refuses_a_hop_it_cannot_apply():
+    """A hop whose sids are not where the manifest says they are means the caller's
+    record and the manifest disagree; writing a half-applied manifest over a
+    committed one is strictly worse than refusing."""
+    with pytest.raises(ValueError, match="NOPE"):
+        demo_set.with_replacements(_SYNTHETIC, [("NOPE", "S1")], target_n=3)
+    with pytest.raises(ValueError, match="T3"):
+        # T3 is a target, not a spare - it cannot be promoted into T2's slot.
+        demo_set.with_replacements(_SYNTHETIC, [("T2", "T3")], target_n=3)
+
+
+def test_with_replacements_is_pure():
+    before = tuple(_SYNTHETIC)
+    demo_set.with_replacements(_SYNTHETIC, [("T2", "S1")], target_n=3)
+    assert _SYNTHETIC == before
+
+
+def test_apply_replacements_writes_through_the_guarded_writer(tmp_path, monkeypatch):
+    """`apply_replacements` must not be a second writer: it goes through
+    `_write_manifest`, so the `_assert_still_whole` AST guard and the atomic
+    `os.replace` apply unchanged. Written to a throwaway fake module, never the real
+    `demo_set.py`."""
+    path = tmp_path / "fake_demo_set.py"
+    path.write_text(_fake_module())
+    manifest = tuple(("T%d" % i, "office/TX") for i in range(1, 51)) + (
+        ("S1", "retail/CA"),
+    )
+    monkeypatch.setattr(demo_set, "DEMO_SET", manifest)
+
+    written = demo_set.apply_replacements([("T7", "S1")], path=path)
+
+    assert written[6] == ("S1", "retail/CA")
+    assert written[50] == ("T7", "office/TX")
+    text = path.read_text()
+    assert '("S1", "retail/CA"),' in text
+    compile(text, str(path), "exec")   # the guard's own invariant, end to end
+
+
+def test_apply_replacements_refuses_rather_than_writing_a_half_applied_manifest(
+    tmp_path, monkeypatch
+):
+    path = tmp_path / "fake_demo_set.py"
+    original = _fake_module()
+    path.write_text(original)
+    monkeypatch.setattr(demo_set, "DEMO_SET", _SYNTHETIC)
+
+    with pytest.raises(ValueError):
+        demo_set.apply_replacements([("T2", "S1")], path=path)   # target_n is 50 here
+    assert path.read_text() == original

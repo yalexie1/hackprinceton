@@ -32,6 +32,19 @@ def fake_index(monkeypatch):
     )
 
 
+@pytest.fixture(autouse=True)
+def no_live_obliques(monkeypatch):
+    """`warm_one`'s oblique fetch defaults to `api.get_obliques`, which is live.
+    Every test in this module that does not inject its own `obliques` would
+    otherwise reach Vexcel, and `pytest backend -q` must make no network call. The
+    stub answers with all four directions, i.e. the uneventful case; tests about
+    the oblique behaviour itself inject their own."""
+    monkeypatch.setattr(
+        warm.api, "get_obliques",
+        lambda sid, **kwargs: ({d: f"{sid}-{d}.jpg" for d in warm._OBLIQUE_DIRECTIONS}, []),
+    )
+
+
 def fake_post_ok(query: str, variables: dict) -> dict:
     return {"data": {"model": {"id": variables["id"]}}}
 
@@ -333,23 +346,104 @@ def test_warm_all_logs_per_property_progress(monkeypatch):
 
 
 # ---------- main --all (task 4) ----------
+#
+# `main --all` now does two things besides `warm_all`: a `probe(1)` credential
+# preflight, and - afterwards - a manifest write-back through
+# `demo_set.apply_replacements`, which rewrites `demo_set.py` on disk. Every test
+# below patches both, so none of them touches the network or the committed source
+# file.
 
-def test_main_all_reports_warmed_and_replacements(monkeypatch, capsys):
+
+@pytest.fixture
+def reachable_preflight(monkeypatch):
+    monkeypatch.setattr(warm, "probe", lambda n=1: [("SID_A", True, "ok")])
+
+
+@pytest.fixture
+def recorded_write_back(monkeypatch):
+    """`demo_set.apply_replacements` replaced by a recorder - calling the real one
+    would rewrite the committed `demo_set.py` during a test run."""
+    written = []
+    monkeypatch.setattr(
+        warm.demo_set, "apply_replacements",
+        lambda replacements, path=None: written.append(list(replacements)),
+    )
+    return written
+
+
+def test_main_all_reports_warmed_and_replacements(
+    monkeypatch, capsys, reachable_preflight, recorded_write_back
+):
     """Wiring only - `warm_all` itself is exercised directly above. `main --all`
     must never call the real `warm_all` here, so this patches it out rather than
     letting it fall through to the live defaults."""
     monkeypatch.setattr(
         warm, "warm_all",
-        lambda: {"warmed": ["A", "B"], "replaced": [("BAD1", "A")]},
+        lambda: {"warmed": ["A", "B"], "replaced": [("BAD1", "A")],
+                 "notes": [("B", "3 of 4 obliques (east, north, south)")]},
     )
     rc = warm.main(["--all"])
     assert rc == 0
     out = capsys.readouterr().out
     assert "warmed 2" in out
     assert "BAD1 -> A" in out
+    assert "3 of 4 obliques" in out
 
 
-def test_main_all_exits_nonzero_on_manifest_stale(monkeypatch, capsys):
+def test_main_all_writes_the_replacements_back_into_the_manifest(
+    monkeypatch, capsys, reachable_preflight, recorded_write_back
+):
+    """The critical gap: a pass's substitutions existed only in the operator's
+    terminal. `demo_transfer pack` builds its archive from `demo_set.sids()`, so
+    without this write-back the archive omits every spare that warmed and carries
+    every target that failed - a judge would be offered a property proven not to
+    assemble."""
+    monkeypatch.setattr(
+        warm, "warm_all",
+        lambda: {"warmed": ["S1"], "replaced": [("BAD1", "S1")], "notes": []},
+    )
+    assert warm.main(["--all"]) == 0
+    assert recorded_write_back == [[("BAD1", "S1")]]
+    assert "rewrote demo_set.DEMO_SET" in capsys.readouterr().out
+
+
+def test_main_all_leaves_the_manifest_alone_when_nothing_was_replaced(
+    monkeypatch, capsys, reachable_preflight, recorded_write_back
+):
+    """A clean pass must not rewrite a committed source file for no reason - a
+    no-op diff on `demo_set.py` after every run would make a real substitution
+    harder to spot in review."""
+    monkeypatch.setattr(
+        warm, "warm_all",
+        lambda: {"warmed": ["A"], "replaced": [], "notes": []},
+    )
+    assert warm.main(["--all"]) == 0
+    assert recorded_write_back == []
+    assert "manifest unchanged" in capsys.readouterr().out
+
+
+def test_main_all_survives_a_write_back_that_refuses(
+    monkeypatch, capsys, reachable_preflight
+):
+    """`apply_replacements` refuses a hop it cannot apply, and `_write_manifest`
+    refuses a rewrite that would drop a required name. Either one raising *after* an
+    hour of warming must not take the result report down with it - the printed
+    replacements are then the operator's record."""
+    def boom(replacements, path=None):
+        raise ValueError("BAD1: not in the first 50 manifest entries")
+
+    monkeypatch.setattr(warm.demo_set, "apply_replacements", boom)
+    monkeypatch.setattr(
+        warm, "warm_all",
+        lambda: {"warmed": ["S1"], "replaced": [("BAD1", "S1")], "notes": []},
+    )
+    assert warm.main(["--all"]) == 0
+    captured = capsys.readouterr()
+    assert "BAD1 -> S1" in captured.out
+    assert "could not rewrite the manifest" in captured.err
+
+
+def test_main_all_exits_nonzero_on_manifest_stale(monkeypatch, capsys, reachable_preflight):
     def boom():
         raise warm.demo_set.ManifestStale("SID_X: in DEMO_SET but not in the live index")
 
@@ -359,7 +453,9 @@ def test_main_all_exits_nonzero_on_manifest_stale(monkeypatch, capsys):
     assert "SID_X" in capsys.readouterr().err
 
 
-def test_main_all_exits_nonzero_on_spares_exhausted(monkeypatch, capsys):
+def test_main_all_exits_nonzero_on_spares_exhausted(
+    monkeypatch, capsys, reachable_preflight, recorded_write_back
+):
     def boom():
         raise warm.SparesExhausted(48, 50)
 
@@ -367,3 +463,207 @@ def test_main_all_exits_nonzero_on_spares_exhausted(monkeypatch, capsys):
     rc = warm.main(["--all"])
     assert rc == 1
     assert "48 of 50" in capsys.readouterr().err
+
+
+def test_main_all_prints_and_persists_the_partial_result_of_an_exhausted_pass(
+    monkeypatch, capsys, reachable_preflight, recorded_write_back
+):
+    """An hour of work must not vanish into a one-line stderr message. The slots that
+    filled are still the record of which properties are good, and the substitutions
+    among them still have to reach the manifest - otherwise `demo_transfer pack`
+    packs the failures and omits the spares exactly as it would after a silent
+    success."""
+    def boom():
+        raise warm.SparesExhausted(
+            1, 2,
+            {"warmed": ["S1"], "replaced": [("BAD1", "S1")],
+             "notes": [("S1", "obliques unavailable (HTTPError: 429)")]},
+        )
+
+    monkeypatch.setattr(warm, "warm_all", boom)
+    assert warm.main(["--all"]) == 1
+    captured = capsys.readouterr()
+    assert "warmed 1 properties" in captured.out
+    assert "BAD1 -> S1" in captured.out
+    assert "429" in captured.out
+    assert recorded_write_back == [[("BAD1", "S1")]]
+
+
+# ---------- the credential preflight (review finding 8) ----------
+
+def test_main_all_aborts_before_warming_when_the_preflight_cannot_reach(monkeypatch, capsys):
+    """Without `.env` sourced every sid fails with `MatterportAuthMissing`, the pass
+    runs its full length fetching nothing and ends `SparesExhausted: 0 of 50` - loud,
+    but naming the wrong cause, an hour late. One probe names the real one."""
+    monkeypatch.setattr(
+        warm, "probe",
+        lambda n=1: [("SID_A", False, "MatterportAuthMissing: no MATTERPORT_API_TOKEN")],
+    )
+
+    def tripwire():
+        raise AssertionError("warm_all must not run after a failed preflight")
+
+    monkeypatch.setattr(warm, "warm_all", tripwire)
+    assert warm.main(["--all"]) == 1
+    assert "MatterportAuthMissing" in capsys.readouterr().err
+
+
+def test_an_empty_preflight_does_not_abort_the_pass(monkeypatch, capsys, recorded_write_back):
+    """`probe` draws from `uncached_sids`, which is empty both when the kit mirror is
+    missing *and* when every indexed sid is already warm. The second is a fine state
+    to start a pass in, and the first is caught a moment later by `resolve()`, so an
+    empty probe must not be read as an unreachable key."""
+    monkeypatch.setattr(warm, "probe", lambda n=1: [])
+    monkeypatch.setattr(
+        warm, "warm_all", lambda: {"warmed": ["A"], "replaced": [], "notes": []},
+    )
+    assert warm.main(["--all"]) == 0
+    assert "nothing uncached to reach-check" in capsys.readouterr().err
+
+
+# ---------- obliques (review finding 2) ----------
+#
+# `api._with_imagery` deliberately fetches only the ortho during bundle assembly
+# (the lead's decision, board 2026-11-14). `demo_transfer.check` nevertheless
+# requires four of four obliques before a sid counts as complete, so without a
+# separate fetch here a flawless hour-long pass would end with 50 bundles, 50
+# orthophotos and 50 lines of "0 of 4 obliques" on every teammate's laptop.
+
+
+def test_default_assemble_is_live_and_does_not_refresh(monkeypatch):
+    """The production default had no test at all: every other test injects an
+    `assemble` that swallows `**kwargs` without asserting them. If `live=True` were
+    ever dropped, `api.get_property_bundle` falls back to `_fixture_bundle`, the
+    hour-long run "warms" 50 replayed fixtures, every check passes and nothing says
+    so. `refresh=False` matters the other way - taking the refreshing default would
+    re-fetch a bundle this same pass already warmed. This pins both, the way
+    `test_default_verify_does_not_force_a_refresh` already pins the verifier."""
+    calls = []
+
+    def recording_bundle(sid, **kwargs):
+        calls.append((sid, kwargs))
+        return object()
+
+    monkeypatch.setattr(warm.api, "get_property_bundle", recording_bundle)
+    ok, _ = warm.warm_one("SID_A", verify=ok_verify)
+    assert ok is True
+    assert calls == [("SID_A", {"live": True, "refresh": False})]
+
+
+def test_default_oblique_fetch_is_live(monkeypatch):
+    """`get_obliques`'s own `live` default reads `DATA_LAYER_LIVE` from the
+    environment; a warming pass must not depend on that being set, or it quietly
+    fetches nothing from disk-only mode while reporting success."""
+    calls = []
+
+    def recording_obliques(sid, **kwargs):
+        calls.append((sid, kwargs))
+        return {d: f"{d}.jpg" for d in warm._OBLIQUE_DIRECTIONS}, []
+
+    monkeypatch.setattr(warm.api, "get_obliques", recording_obliques)
+    ok, detail = warm.warm_one("SID_A", assemble=ok_assemble, verify=ok_verify)
+    assert (ok, detail) == (True, "ok")
+    assert calls == [("SID_A", {"live": True})]
+
+
+def test_obliques_are_not_fetched_for_a_disqualified_property():
+    """No point paying the most rate-limited endpoint in the lane for a property
+    that is not going into the demo set."""
+    calls = []
+
+    def recording_obliques(sid, **kwargs):
+        calls.append(sid)
+        return {}, []
+
+    ok, _ = warm.warm_one(
+        "SID_A", assemble=raises_incomplete, obliques=recording_obliques,
+    )
+    assert ok is False and calls == []
+
+
+def test_a_failed_oblique_fetch_is_a_note_not_a_disqualification():
+    """429 is the expected failure at `oriented/extract`. The bundle is assembled and
+    verified and the orthophoto is on disk; spending a spare to replace a property
+    over one missing tab would be strictly worse than shipping the note."""
+    def boom(sid, **kwargs):
+        raise RuntimeError("429 Too Many Requests")
+
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble, verify=ok_verify, obliques=boom,
+    )
+    assert ok is True
+    assert "429" in detail and "obliques unavailable" in detail
+
+
+def test_a_short_oblique_fetch_is_reported_by_direction():
+    """`get_obliques` leaves out a direction that 403s, 404s or 429s rather than
+    failing the three that worked, so "fewer than four" is an ordinary outcome - and
+    it is exactly what `demo_transfer check` will later call `incomplete`, so the
+    operator should learn it now rather than on a teammate's laptop."""
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble, verify=ok_verify,
+        obliques=lambda sid, **k: ({"north": "n.jpg", "south": "s.jpg"}, []),
+    )
+    assert ok is True
+    assert "2 of 4 obliques (north, south)" in detail
+
+
+def test_warm_all_collects_oblique_notes_without_dropping_the_property(monkeypatch):
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    out = warm.warm_all(
+        ["OK1"], [], assemble=ok_assemble, verify=ok_verify,
+        obliques=lambda sid, **k: ({"north": "n.jpg"}, []),
+        log=lambda *_: None,
+    )
+    assert out["warmed"] == ["OK1"]
+    assert out["notes"] == [
+        ("OK1", "1 of 4 obliques (north) - the Side angle tab will be short")
+    ]
+
+
+def test_a_complete_pass_records_no_notes(monkeypatch):
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    out = warm.warm_all(
+        ["OK1"], [], assemble=ok_assemble, verify=ok_verify, log=lambda *_: None,
+    )
+    assert out["notes"] == []
+
+
+# ---------- SparesExhausted carries the partial result (review finding 3) ----------
+
+def test_spares_exhausted_carries_the_warmed_and_replaced_record(monkeypatch):
+    """The raise happens at the end of a pass that may have run for most of an hour.
+    Discarding `warmed`/`replaced` left the operator of an unattended run with
+    nothing but terminal scrollback they may not still have."""
+    def fails_every_bad(sid, **kwargs):
+        if sid.startswith("BAD"):
+            raise RuntimeError(f"{sid}: dead model")
+        return object()
+
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    monkeypatch.setattr(
+        warm.demo_set, "DEMO_SET",
+        (("BAD1", "office/TX"), ("BAD2", "office/TX"), ("SPARE1", "office/TX")),
+    )
+    with pytest.raises(warm.SparesExhausted) as caught:
+        warm.warm_all(
+            ["BAD1", "BAD2"], ["SPARE1"], assemble=fails_every_bad, verify=ok_verify,
+            log=lambda *_: None,
+        )
+    # BAD1 is replaced by SPARE1, which warms; BAD2 has no spare left, so the pass is
+    # one short - and that partial record is exactly what must survive the raise.
+    assert caught.value.result["warmed"] == ["SPARE1"]
+    assert caught.value.result["replaced"] == [("BAD1", "SPARE1")]
+
+
+def test_a_malformed_oblique_result_is_a_note_not_a_crash():
+    """Unpacking the fetcher's result sits inside `_fetch_obliques`'s own `try` for
+    the same reason `warm_one`'s `.status` reads do: a `TypeError` raised *after* a
+    successful call has nothing wrapped around it in `warm_all` and would abort the
+    whole pass."""
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble, verify=ok_verify,
+        obliques=lambda sid, **k: "not a two-tuple",
+    )
+    assert ok is True
+    assert "obliques unavailable" in detail

@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import type { Ranged, RunResult } from "./types";
 import { money, number } from "./format";
-import { assumptionDisplay, evidenceText, inputName, readableText, warningText } from "./homeowner-language";
+import { assumptionDisplay, assumptionSummary, inputName, readableText, warningText } from "./homeowner-language";
 import { hasPlaceholderEvidence } from "./real-audit";
 
 // Built entirely in the browser; no audit or imagery is sent to a report service.
@@ -64,11 +64,12 @@ export function createAuditPdf(run: RunResult): jsPDF {
   for (const warning of [...new Set(run.warnings)]) text(warningText(warning));
   text("Confirm roof dimensions and condition, electrical capacity, hidden insulation, actual utility prices and installation costs with the appropriate professional. Obtain firm quotes before committing.");
   heading("Building details and their sources");
+  text("The following source summaries accompany the recorded inputs. Open Assumptions in the app for individual photo observations and complete source notes.");
   for (const a of run.building_model?.assumptions || []) {
     ensure(26);
     const value = hasPlaceholderEvidence(a) ? "Needs confirmation - no verified value" : `${assumptionDisplay(a).value} (${assumptionDisplay(a).range})`;
     text(`${inputName(a.key,a.label)}: ${value}`,11,true);
-    for (const e of a.evidence) text(hasPlaceholderEvidence({evidence:[e]}) ? "A property measurement or confirmed record is needed." : evidenceText(e),10);
+    text(hasPlaceholderEvidence(a) ? "A property measurement or confirmed record is needed." : assumptionSummary(a),10);
   }
   const pages = pdf.getNumberOfPages();
   for (let page=1;page<=pages;page++) { pdf.setPage(page); pdf.setDrawColor(205,218,209); pdf.line(left,281,192,281); pdf.setFont("helvetica","normal"); pdf.setFontSize(9); pdf.setTextColor(80,98,88); pdf.text("LETO | Estimates for review before installation",left,287); pdf.text(`${page} / ${pages}`,192,287,{align:"right"}); }

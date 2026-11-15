@@ -94,6 +94,9 @@ export function readableText(input: string): string {
   return text ? text[0].toUpperCase() + text.slice(1) : text;
 }
 export function warningText(text: string): string {
+  if (/Uses the LED efficacy ratio/i.test(text)) return "Lighting savings depend on the assumed efficiency of the existing bulbs and replacement LEDs. These efficiencies are model inputs, not measurements of the installed lamps.";
+  if (/Assumes 2x4 wood framing at 16 in/i.test(text)) return "The insulation estimate assumes wood framing made from two-by-four studs spaced 16 inches apart. The predicted heat transfer uses a published wall example, rather than a measurement of this wall.";
+
   if (/No splat/i.test(text)) return "A detailed 3D roof scan is unavailable. The roof estimate uses aerial survey information instead.";
   if (/quaternion sense not decidable/i.test(text)) return "The interior scan and aerial outline do not uniquely confirm the building’s direction. Check its orientation before relying on sunlight or panel-placement estimates.";
   if (/vexcel property\/extract:structure/i.test(text)) {
@@ -136,6 +139,22 @@ export function evidenceText(e: EvidenceRef): string {
     .replace(/; cues:/g, "; visible signs:");
   return `${source}${note ? `: ${readableText(note)}` : "."}`;
 }
+export function assumptionSummary(a: Assumption): string {
+  const sources = [...new Set(a.evidence.map(e => SOURCES[e.kind] || readableText(e.kind)))].join("; ");
+  const notes = a.evidence.map(e => e.note || "").join(" ");
+  let explanation = "Full source observations are available on the Assumptions page in the app.";
+  if (a.key === "geometry.north_offset_deg" && /cannot tell|quaternion|not decidable/i.test(notes)) explanation = "The scan and aerial outline allow more than one building direction. Confirm the orientation before relying on sunlight or solar placement.";
+  else if (a.key === "electrical.service_amps" && /panel not visible|no panel/i.test(notes)) explanation = "The main electrical panel was not visible. Capacity is inferred from indirect clues, not a verified panel rating. An electrician must confirm it.";
+  else if (a.key === "roof.tilt_deg" && a.evidence.some(e => e.ref === "ROOF-03")) explanation = "Slope is estimated from the roof shape and a published range, not measured at this property.";
+  else if (a.key === "roof.ridge_direction" && a.evidence.some(e => e.ref === "ROOF-05")) explanation = "The ridge direction is assumed and needs an on-site check. Changing it can turn the roof sections by 90 degrees.";
+  else if (a.key === "roof.obstruction_allowance_m2" && a.evidence.some(e => e.ref === "ROOF-04")) explanation = a.evidence.filter(e => /^roof-objects\..+\.count$/.test(e.ref)).map(evidenceText).join(" ") + " Space reserved around these objects is an estimate; confirm it with an installer.";
+  else if (a.key === "roof.fire_setbacks" && a.evidence.some(e => e.ref === "ROOF-06")) explanation = "Roof access space uses an initial interpretation of fire-code requirements. The local fire authority must confirm it.";
+  else if (a.source === "vision") explanation = "Inferred from photographs. Image observations can be incomplete or disagree; confirm this detail on site before relying on it.";
+  else if (["vintage_default", "published_default"].includes(a.source)) explanation = "Uses a published reference or stated estimate, rather than a measurement of this equipment or building detail. Confirm it before final design.";
+  else if (a.key === "geometry.ceiling_height_m" && /have no height/.test(notes)) explanation = "Some rooms have no recorded ceiling height. Their height is estimated from the average of measured rooms.";
+  return `${sources || "No source recorded"}. ${explanation}`;
+}
+
 const TOOLS: Record<string, string> = {
   get_property_bundle: "Gathering the property record, interior scan and aerial survey",
   detect_roof_elements: "Reviewing the roof outline and possible roof features",

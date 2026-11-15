@@ -97,3 +97,31 @@ def test_a_scan_with_neither_location_still_refuses(sources, monkeypatch):
     monkeypatch.setattr(dix, "by_sid", lambda: {})
     with pytest.raises(api.IncompleteBundle):
         api._assemble(SID)
+
+
+# --- the retry that must not happen (@yalexie1's review of #442) -----------------
+def test_no_second_parcel_query_at_the_same_point(sources, monkeypatch):
+    """With no georeference, the 'retry at the georeference' path has nothing to retry.
+
+    #442 moved the retry's point from the georeference to `site_lat/site_lon`. When the
+    georeference is absent those ARE the CoStar address, so the retry re-queries the
+    identical point and files a record saying the georeference was used. That is a
+    wasted call and, worse, a provenance line that is not true: a reader would believe
+    the parcel came from the scan's own location.
+    """
+    calls = []
+
+    def record(point, locator, costar, plate):
+        calls.append((point, locator))
+        return None, []                      # no parcel anywhere, to force the retry
+
+    monkeypatch.setattr(api, "_parcel_at", record)
+    bundle = api._assemble(SID)
+
+    assert len(calls) == 1, f"queried the same point twice: {calls}"
+    assert calls[0][1] == "CoStar address"
+    claimed = [r for r in bundle.provenance
+               if r.what == "property/extract:locator"]
+    assert not claimed, (
+        "a record claims the georeference was used, but there is no georeference: "
+        f"{[r.detail for r in claimed]}")

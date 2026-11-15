@@ -549,12 +549,17 @@ def _assemble(sid: str) -> PropertyBundle:
     if site_lat is not None and site_lon is not None:
         vexcel, vnotes = _parcel_at(at, locator, costar, plate)
         provenance += vnotes
-        if vexcel is None and locator != "georeference":
+        # The retry needs a georeference that actually exists and is a DIFFERENT point.
+        # #442 changed this to site_lat/site_lon, but where there is no georeference
+        # those are the CoStar address itself, so the retry re-queried the identical
+        # point and filed a record saying the georeference was used - a wasted call and
+        # a provenance line that is not true. @yalexie1 caught it in review.
+        if vexcel is None and locator != "georeference" and lat is not None and lon is not None:
             # A geocode can land off the parcel, and then there is no parcel at all to
             # work from. The georeference is physically at the building because the
             # scan was taken there, so it is the right second try - and saying so
             # matters, since the building is then whatever is under the scan.
-            vexcel, gnotes = _parcel_at((site_lat, site_lon), "georeference", costar, plate)
+            vexcel, gnotes = _parcel_at((lat, lon), "georeference", costar, plate)
             provenance.append(FetchRecord(
                 layer="vexcel", what="property/extract:locator", status="fallback",
                 detail=(f"no parcel at the CoStar address point, so the georeference was "

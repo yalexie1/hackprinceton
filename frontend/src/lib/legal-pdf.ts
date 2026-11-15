@@ -47,6 +47,7 @@ function blocks(markdown: string): Block[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) { flush(); continue; }
+    if (/^[-*+]$/.test(line)) { flush(); continue; }
     if (/^<!--/.test(line)) {
       flush();
       const match = line.match(/fmt:\s*(.*?)\s*-->/i);
@@ -156,7 +157,13 @@ export function createLegalPdf(draft: DocumentDraft): jsPDF {
       const isNotice = /bold|boxed/i.test(block.format ?? "");
       const size = /12pt/i.test(block.format ?? "") ? 12 : 10.5;
       const start = y;
-      write(block.text, { size, bold: isNotice, indent: block.kind === "quote" ? 5 : 0, after: 3.2 });
+      const boldLead = block.text.match(/^\*\*([^*]+)\*\*(?:\s+|$)(.*)$/s);
+      if (boldLead && !isNotice) {
+        write(boldLead[1], { size, bold: true, indent: block.kind === "quote" ? 5 : 0, after: boldLead[2] ? 1.2 : 3.2, keep: 12 });
+        if (boldLead[2]) write(boldLead[2], { size, indent: block.kind === "quote" ? 5 : 0, after: 3.2 });
+      } else {
+        write(block.text, { size, bold: isNotice, indent: block.kind === "quote" ? 5 : 0, after: 3.2 });
+      }
       if (/boxed/i.test(block.format ?? "") && start >= 25 && y < bottom) {
         pdf.setDrawColor(83, 98, 92); pdf.rect(margin - 2, start - 4, contentWidth + 4, y - start + 5);
       }
@@ -204,8 +211,15 @@ export function createLegalPdf(draft: DocumentDraft): jsPDF {
     write("Statutory requirements have not been checked for this draft.", { size: 10.5 });
   }
   for (const check of draft.statutory_checks) {
-    write(`${check.satisfied ? "Confirmed" : "Pending"} - ${check.requirement_id ? `${check.requirement_id}: ` : ""}${check.requirement}`, { size: 10.5, bold: true, color: check.satisfied ? [35, 89, 58] : [124, 69, 29], after: 1 });
-    write(`${check.citation}${check.note ? ` - ${check.note}` : ""}`, { size: 10, color: muted, indent: 5, after: 3 });
+    const title = `${check.satisfied ? "Confirmed" : "Pending"} - ${check.requirement_id ? `${check.requirement_id}: ` : ""}${check.requirement}`;
+    const explanation = `${check.citation}${check.note ? ` - ${check.note}` : ""}`;
+    style(10.5, true);
+    const titleHeight = (pdf.splitTextToSize(legalText(title), contentWidth) as string[]).length * 10.5 * 0.45;
+    style(10);
+    const explanationHeight = (pdf.splitTextToSize(legalText(explanation), contentWidth - 5) as string[]).length * 10 * 0.45;
+    ensure(titleHeight + explanationHeight + 3);
+    write(title, { size: 10.5, bold: true, color: check.satisfied ? [35, 89, 58] : [124, 69, 29], after: 0.8 });
+    write(explanation, { size: 10, color: muted, indent: 5, after: 2 });
   }
 
   const pages = pdf.getNumberOfPages();

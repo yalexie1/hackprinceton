@@ -16,6 +16,8 @@ describe("homeowner demo", () => {
     expect(html).not.toContain("Connect API");
     expect(html).toContain("Choose a property below");
     expect(html).toContain("Connecting");
+    expect(html).not.toContain('class="sidebar');
+    expect(html).not.toContain('aria-label="Property analysis"');
   });
   it("does not display a numeric value for an explicitly unsourced assumption", () => {
     const run = structuredClone(house) as RunResult;

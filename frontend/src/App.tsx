@@ -1,29 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  BookOpen,
   ArrowLeft,
   ArrowRight,
   Building2,
   Check,
   CheckCircle2,
-  ChevronRight,
   CircleHelp,
-  ClipboardList,
   Download,
-  FileText,
-  Home,
   Info,
-  Layers3,
   Leaf,
   LoaderCircle,
   MapPin,
-  PanelLeftClose,
   Play,
   RotateCcw,
   Search,
   Settings2,
   Sparkles,
-  Sun,
   X,
 } from "lucide-react";
 import type {
@@ -58,30 +50,7 @@ import {
 } from "./lib/recorded-budget";
 import PropertyPreview from "./components/PropertyPreview";
 import { requireRealAudit, RealAuditRequired } from "./lib/real-audit";
-type View =
-  | "find"
-  | "setup"
-  | "audit"
-  | "plan"
-  | "roof"
-  | "layout"
-  | "assumptions"
-  | "documents"
-  | "how"
-  | "evals"
-  | "solar-map";
-const publicViews: ReadonlySet<View> = new Set(["find", "how", "evals", "solar-map"]);
-const views: { id: View; label: string; icon: typeof Home }[] = [
-  { id: "find", label: "Properties", icon: Home },
-  { id: "plan", label: "Energy plan", icon: ClipboardList },
-  { id: "roof", label: "Solar & roof", icon: Sun },
-  { id: "layout", label: "Workspace", icon: Layers3 },
-  { id: "assumptions", label: "Assumptions", icon: Settings2 },
-  { id: "documents", label: "Documents", icon: FileText },
-  { id: "solar-map", label: "Solar map", icon: MapPin },
-  { id: "evals", label: "Accuracy & evidence", icon: CheckCircle2 },
-  { id: "how", label: "How it works", icon: BookOpen },
-];
+import WorkspaceNavigation, { publicViews, views, type View } from "./components/WorkspaceNavigation";
 function bills(text: string): number[] | undefined {
   if (!text.trim()) return undefined;
   const values = text
@@ -119,7 +88,6 @@ export default function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [focus, setFocus] = useState<string>();
-  const [mobileNav, setMobileNav] = useState(false);
   const [help, setHelp] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const epoch = useRef(0);
@@ -231,7 +199,6 @@ export default function App() {
   function navigate(v: View) {
     if (!publicViews.has(v) && !done) return;
     setView(v);
-    setMobileNav(false);
     setError("");
   }
   function choose(p: PropertySummary) {
@@ -441,9 +408,6 @@ export default function App() {
     "assumptions",
     "documents",
   ];
-  const title =
-    views.find((v) => v.id === view)?.label ||
-    (view === "setup" ? "Set up your audit" : "Building audit");
   const questionEvent = [...events]
     .reverse()
     .find(
@@ -457,126 +421,28 @@ export default function App() {
       ? (questionEvent.payload.approval as Record<string, unknown> | undefined)
       : undefined;
   return (
-    <div className="app-shell">
-      <aside className={`sidebar ${mobileNav ? "is-open" : ""}`}>
-        <a
-          className="brand"
-          href="#"
-          onClick={(event) => {
-            event.preventDefault();
-            setView("find");
-            setMobileNav(false);
+    <div className="app-shell horizontal-workspace">
+      <div className="main-shell">
+        <WorkspaceNavigation
+          view={view}
+          complete={done}
+          hasRun={!!run}
+          busy={busy}
+          needsInput={!!question}
+          propertyName={run?.property.name || property?.name}
+          onNavigate={(next) => {
+            if (next === "audit" && run) setView("audit");
+            else navigate(next);
           }}
         >
-          <span>
-            <img className="brand-logo" src="/leto-logo.png" alt="Leto" />
-            <span>BUILDING INTELLIGENCE</span>
-          </span>
-        </a>
-        <button
-          className="mobile-close icon-button"
-          aria-label="Close navigation"
-          onClick={() => setMobileNav(false)}
-        >
-          <X size={20} />
-        </button>
-        <div className="workspace-label">YOUR WORKSPACE</div>
-        <nav aria-label="Main navigation">
-          {views.map((item) => (
-            <button
-              key={item.id}
-              disabled={!publicViews.has(item.id) && !done}
-              aria-current={view === item.id ? "page" : undefined}
-              className={`nav-item ${view === item.id ? "active" : ""}`}
-              onClick={() => navigate(item.id)}
-            >
-              <item.icon size={18} />
-              {item.label}
-              {view === item.id && <span className="nav-active-dot" />}
-            </button>
-          ))}
-        </nav>
-        {run && (
-          <button
-            className={`audit-nav ${view === "audit" ? "active" : ""}`}
-            onClick={() => setView("audit")}
-          >
-            {busy ? (
-              <LoaderCircle className="spin" size={16} />
-            ) : (
-              <CheckCircle2 size={16} />
-            )}{" "}
-            {busy
-              ? "Audit in progress"
-              : question
-                ? "Your input needed"
-                : done
-                  ? "View audit trail"
-                  : "Reconnect audit"}
-          </button>
-        )}
-        <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <Leaf size={22} />
-            <h3>
-              Small changes.
-              <br />
-              Lasting impact.
-            </h3>
-            <p>A clearer path to a more efficient building.</p>
+          <div className="connection-state" role="status">
+            <span className={`status-dot ${serviceReady ? "" : "pending"}`} />
+            {connecting ? "Connecting…" : serviceReady ? "Building service connected" : "Connection needed"}
+            {!connecting && !serviceReady && (
+              <button onClick={() => setConnectionAttempt((attempt) => attempt + 1)}>Try again</button>
+            )}
           </div>
-          <button className="help-button" onClick={() => setHelp(true)}>
-            <CircleHelp size={17} />
-            How it works
-            <ArrowRight size={15} />
-          </button>
-          <div className="profile">
-            <Home size={22} />
-            <div>
-              Your home energy plan<small>Understand your next step</small>
-            </div>
-          </div>
-        </div>
-      </aside>
-      {mobileNav && (
-        <button
-          className="nav-backdrop"
-          aria-label="Close navigation"
-          onClick={() => setMobileNav(false)}
-        />
-      )}
-      <div className="main-shell">
-        <header className="topbar">
-          <div className="breadcrumbs">
-            <button
-              className="icon-button mobile-menu"
-              aria-label="Open navigation"
-              onClick={() => setMobileNav(true)}
-            >
-              <PanelLeftClose size={20} />
-            </button>
-            <span>Workspace</span>
-            <ChevronRight size={13} />
-            <strong>{title}</strong>
-          </div>
-          <div className="topbar-right">
-            <div className="connection-state" role="status">
-              <span className={`status-dot ${serviceReady ? "" : "pending"}`} />
-              {connecting
-                ? "Connecting…"
-                : serviceReady
-                  ? "Building service connected"
-                  : "Connection needed"}
-              {!connecting && !serviceReady && (
-                <button
-                  onClick={() => setConnectionAttempt((attempt) => attempt + 1)}
-                >
-                  Try again
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
+        </WorkspaceNavigation>
         <main>
           <div className={`mode-notice ${demo ? "" : "live"}`}>
             <span className="status-dot" />

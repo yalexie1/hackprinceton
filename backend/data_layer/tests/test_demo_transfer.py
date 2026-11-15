@@ -24,7 +24,7 @@ def test_demo_sids_is_the_manifest():
     assert tuple(dt.DEMO_SIDS) == demo_set.sids()
 
 
-def test_check_separates_not_warmed_from_warmed_and_broken(tmp_path, monkeypatch):
+def test_check_separates_not_warmed_from_warmed_and_broken(tmp_path):
     """At 50 properties a flat `missing` list is not something a human can eyeball,
     so `check` also buckets each sid into exactly one of `not_warmed` (nothing
     cached at all) or `incomplete` (something is cached, but a bundle, the
@@ -50,7 +50,7 @@ def test_check_separates_not_warmed_from_warmed_and_broken(tmp_path, monkeypatch
     assert "SID_A" not in joined
 
 
-def test_pack_at_fifty_properties_lists_every_one(tmp_path, monkeypatch):
+def test_pack_at_fifty_properties_lists_every_one(tmp_path):
     """The real `demo_transfer` lets the archive be built from a committed manifest
     at full scale; this pins that `pack`/`contents` can round-trip all 50 sids
     without silently dropping any, using a synthetic 50-sid cache rather than the

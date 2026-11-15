@@ -57,3 +57,11 @@ def test_an_empty_download_is_refused_and_a_refused_query_raises(root):
 def test_defurnished_faces_are_not_offered(root):
     with pytest.raises(LookupError):
         api.get_pano_faces(SID, "p1", True, post=lambda q, v: _reply(), download=lambda u: b"x")
+
+
+def test_one_model_query_serves_every_panorama_of_a_run(monkeypatch):
+    matterport._FACE_URLS.clear()
+    queries = []
+    monkeypatch.setattr(matterport, "_default_post", lambda q, v: queries.append(v) or _reply())
+    assert matterport.pano_face_urls(SID) == matterport.pano_face_urls(SID) and len(queries) == 1
+    matterport._FACE_URLS.clear()

@@ -61,3 +61,12 @@ def test_get_bytes_uses_get_pano_faces_for_panorama_paths_once_per_pano_and_get_
     assert get("data/cache/SID1/bundle.json") == b"asset:data/cache/SID1/bundle.json"
     old = make_get_bytes(SimpleNamespace(get_asset=lambda p: b"a"))
     assert old("data/cache/S/panos/p/face0.jpg") == b"a"
+
+
+def test_defurnished_paths_fall_back_to_the_furnished_faces_when_the_data_layer_has_none():
+    def fetch(sid, pano, defurnished):
+        if defurnished:
+            raise LookupError("not fetched")
+        return [bytes([i]) for i in range(6)]
+    get = make_get_bytes(SimpleNamespace(get_asset=lambda p: b"", get_pano_faces=fetch))
+    assert get("data/cache/S/defurnished/panos/p/face2.jpg") == b"\x02"

@@ -79,7 +79,16 @@ def make_get_bytes(data) -> Callable[[str], bytes]:
             return data.get_asset(path)
         key = (m["sid"], m["pano"], bool(m["mid"]))
         if key not in faces:
-            faces[key] = fetch(m["sid"], m["pano"], bool(m["mid"]))
+            try:
+                faces[key] = fetch(m["sid"], m["pano"], bool(m["mid"]))
+            except LookupError:
+                if not m["mid"]:
+                    raise
+                # defurnished faces are not fetched: the furnished panorama is the fallback (policy lives here)
+                furnished = (m["sid"], m["pano"], False)
+                if furnished not in faces:
+                    faces[furnished] = fetch(m["sid"], m["pano"], False)
+                faces[key] = faces[furnished]
         return faces[key][int(m["i"])]
 
     return get

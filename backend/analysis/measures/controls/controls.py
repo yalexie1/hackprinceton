@@ -21,6 +21,7 @@ and cooling (LGT-03) slightly. CTRL_TSTAT sets `Systems.heating_setback_c` and
 from __future__ import annotations
 
 import math
+import os
 from typing import Optional
 
 from backend.schema import (Anchor, Assumption, BaselineResult, BuildingModel, EvidenceRef,
@@ -67,6 +68,19 @@ _DAYS = {"weekday": 260, "saturday": 52, "other": 53}
 TSTAT_SETBACK = {"office": {"heat": (13.9, 15.6, 17.2), "cool": (25.6, 26.7, 28.9)},
                  "home": {"heat": (15.6, 17.8, 19.4), "cool": (26.7, 27.8, 29.4)}}
 SMART_THERMOSTATS = ("smart", "connected", "learning")   # hvac.thermostat_type values = already done
+
+# CTRL_TSTAT on homes is switched OFF by default. The home baseline holds one setpoint all year
+# (zone constants SETPOINTS["home"], no setback), while the measure sets back on the unsourced
+# HOME_SETBACK_HOURS (about 63 % of the week), so the saving compares an ideal schedule against a
+# household that never turns the heat down: on the golden house it read about a third of the gas.
+# Offices are unaffected (their baseline already has the DEF-08/DEF-09 setback schedule).
+# Set LETO_HOME_TSTAT=1 (or true/yes/on) to switch the home measure back on.
+HOME_TSTAT_ENV = "LETO_HOME_TSTAT"
+
+
+def home_tstat_enabled() -> bool:
+    """Whether CTRL_TSTAT is offered to homes (off unless LETO_HOME_TSTAT is set truthy)."""
+    return os.environ.get(HOME_TSTAT_ENV, "").strip().lower() in ("1", "true", "yes", "on")
 
 # Quantities finance prices (backend/analysis/finance/costs, _PARAM_KEYS):
 M2_PER_FIXTURE = 8.0         # LGT_CTRL "fixtures": one 4-ft troffer per 8 m2, the fixtures' luminaire
@@ -302,6 +316,9 @@ def ctrl_tstat_check(bundle: PropertyBundle, model: BuildingModel) -> Optional[t
     kind = _text(model, "hvac.thermostat_type")
     if kind in SMART_THERMOSTATS:
         return ("already_done", f"a {kind} thermostat is installed.")
+    if not _is_office(model) and not home_tstat_enabled():
+        return ("not_supported", "Home thermostat savings are not offered yet: the home baseline assumes "
+                                 "the heat is never turned down, which would overstate the saving.")
     return None
 
 

@@ -179,12 +179,24 @@ def _approval_question(proposal: dict) -> Question:
         impact_note="Nothing is drafted until you approve.")
 
 
+def enable_real_vision(doors: Doors) -> bool:
+    """Real panorama reading (A7) for live and real-analysis runs only: replay and re-plans never call it, and a
+    property then never falls back to the example's invented observations. AGENT_VISION=0 turns it off; no
+    ANTHROPIC_API_KEY means no vision (vintage defaults)."""
+    if doors.degraded or os.environ.get("AGENT_VISION", "1") == "0":
+        return False
+    from backend.agent.vision_client import enable_vision
+    return enable_vision(doors.analysis, doors.data)
+
+
 class LiveRun:
     def __init__(self, run_id: str, request: RunRequest, settings: LiveSettings):
         self.run_id, self.request = run_id, request
         self.store = RunStore(settings.runs_dir or DEFAULT_RUNS_DIR)
         self.files = self.store.files(run_id)
         self.doors = settings.doors or default_doors()
+        if settings.doors is None:
+            enable_real_vision(self.doors)
         self.events: list[RunEvent] = []
         self.docs: dict[str, DocumentDraft] = {}
         self.active = True               # a segment is executing (the saved result is stale)

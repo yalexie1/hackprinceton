@@ -24,6 +24,7 @@ import functools
 import hashlib
 import importlib
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
@@ -35,6 +36,7 @@ from backend.analysis.finance.economics import financial_breakdown
 from backend.analysis.finance.plan import PriceGroup, select_plan
 from backend.analysis.finance.sensitivity import sensitivity as _ask_questions
 from backend.analysis.finance.value import home_pv_uplift, plan_value_uplift
+from backend import config
 from backend.analysis import layout
 from backend.analysis.measures import engine
 from backend.analysis.measures.pv import evaluate_pv
@@ -59,6 +61,7 @@ from backend.schema import (Assumption, BaselineResult, BuildingModel, EnergyUse
                             PropertyBundle, PropertySummary, Question, Ranged, Role, RunRequest,
                             SolarDesign, Source, UtilityBills)
 
+_LOG = logging.getLogger(__name__)
 _EXAMPLES = Path(__file__).resolve().parents[2] / "specs" / "examples"
 
 
@@ -171,11 +174,35 @@ def set_vision(ask_model: Optional[Callable] = None, get_bytes: Optional[Callabl
     _VISION["ask_model"], _VISION["get_bytes"] = ask_model, get_bytes
 
 
+def spread_panos(bundle: PropertyBundle, cap: int) -> PropertyBundle:
+    """The bundle with its panoramas reordered round-robin by room, so that the first `cap` the reader takes
+    (one per room first, then the rest in this order) are spread across rooms. The set is unchanged. Logs how
+    many will be read."""
+    from backend.analysis.vision.interior import pano_room
+    m = bundle.matterport
+    held = [p for p in m.panos if p.face_paths]
+    by_room: dict[str, list] = {}
+    for p in held:
+        r = pano_room(p, m.rooms)
+        by_room.setdefault(r.id if r else f"pano:{p.id}", []).append(p)
+    ordered, queues = [], list(by_room.values())
+    while queues:
+        ordered += [q.pop(0) for q in queues]
+        queues = [q for q in queues if q]
+    ordered += [p for p in m.panos if not p.face_paths]
+    _LOG.info("vision: reading %d of %d panoramas for %s", min(cap, len(held)), len(held), bundle.summary.sid)
+    return bundle.model_copy(update={"matterport": m.model_copy(update={"panos": ordered})})
+
+
 @_with_state
 def observe_interior(bundle: PropertyBundle) -> tuple[list[Assumption], list[Flag]]:
     """REAL (A7) when `set_vision` has been called; otherwise the example's observations."""
     if _VISION["ask_model"] is not None and _VISION["get_bytes"] is not None:
-        return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"], room_fallback=True)
+        # Vision is on: whatever it returns is the answer, even when empty. A property never falls
+        # back to the example's invented observations here (issue 392).
+        bundle = spread_panos(bundle, config.VISION_MAX_PANOS)
+        return _vision_interior(bundle, _VISION["ask_model"], _VISION["get_bytes"],
+                                max_panos=config.VISION_MAX_PANOS, room_fallback=True)
     if not _has_example(bundle.summary.sid):      # a real property: no observations, vintage defaults carry on
         return [], []
     m = BuildingModel.model_validate(_load(_folder(bundle.summary.sid), "building_model.json"))

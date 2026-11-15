@@ -814,7 +814,7 @@ def _select(bundle: PropertyBundle, model: BuildingModel, request: RunRequest,
     ranges."""
     summary = bundle.summary
     ids = [m for m, entry in engine.CATALOGUE.items()
-           if engine.flow_of(summary) in entry.flows
+           if engine.flow_of(summary) in entry.flows and engine.offered(m)
            and (m in engine.REGISTRY.plugins or _measure(summary.sid, m) is not None)]
 
     def evaluate(measure_id, state, size=None):

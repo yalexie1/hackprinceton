@@ -83,7 +83,6 @@ export default function App() {
   const [electricBills, setElectricBills] = useState("");
   const [gasBills, setGasBills] = useState("");
   const [firstMonth, setFirstMonth] = useState("");
-  const [desks, setDesks] = useState("");
   const [run, setRun] = useState<RunResult | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [question, setQuestion] = useState<Question | null>(null);
@@ -262,7 +261,6 @@ export default function App() {
     setElectricBills("");
     setGasBills("");
     setFirstMonth("");
-    setDesks("");
   }
   async function watch(id: string, current: number) {
     const abort = new AbortController();
@@ -351,12 +349,6 @@ export default function App() {
         !/^\d{4}-(0[1-9]|1[0-2])$/.test(firstMonth)
       )
         throw new Error("Choose a valid first billing month.");
-      if (
-        !demo &&
-        desks &&
-        (!Number.isInteger(Number(desks)) || Number(desks) < 1)
-      )
-        throw new Error("Enter a positive whole number of desks.");
       const request: RunRequest = {
         sid: property.sid,
         budget_usd: budget,
@@ -364,7 +356,6 @@ export default function App() {
         ...(!demo && auditMethod === "analysis"
           ? { mode: "analysis" as const }
           : {}),
-        ...(!demo && desks ? { desks_requested: Number(desks) } : {}),
         ...(electricity
           ? {
               bills: {
@@ -454,7 +445,6 @@ export default function App() {
   const resultViews: View[] = [
     "plan",
     "roof",
-    "layout",
     "assumptions",
     "documents",
   ];
@@ -680,19 +670,6 @@ export default function App() {
                         />
                       </label>
                     </details>
-                  )}
-                  {!demo && office && (
-                    <label>
-                      Desk positions requested (optional)
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={desks}
-                        onChange={(event) => setDesks(event.target.value)}
-                        placeholder="Number of desks"
-                      />
-                    </label>
                   )}
                   <div className="audit-includes">
                     <span>
@@ -1021,9 +998,6 @@ export default function App() {
                     </>
                   )}{" "}
                   {view === "roof" && <Geometry run={run} demo={demo} />}{" "}
-                  {view === "layout" && (
-                    <Geometry run={run} demo={demo} layout />
-                  )}{" "}
                   {view === "assumptions" && (
                     <Assumptions
                       run={run}

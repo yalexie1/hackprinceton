@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import WorkspaceNavigation from "./WorkspaceNavigation";
+import WorkspaceNavigation, { views } from "./WorkspaceNavigation";
 
 const base = {
   view: "find" as const,
@@ -45,5 +45,11 @@ describe("workspace navigation availability", () => {
     expect(html.indexOf("Audit trail")).toBeLessThan(html.indexOf("Energy plan"));
     expect((html.match(/aria-current="page"/g) || []).length).toBe(1);
     expect(html).not.toContain("disabled");
+  });
+});
+
+describe("retired desk layout", () => {
+  it("has no Workspace destination", () => {
+    expect(views.map((v) => v.label)).not.toContain("Workspace");
   });
 });

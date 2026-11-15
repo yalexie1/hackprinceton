@@ -233,3 +233,28 @@ describe("with-bills table headings", () => {
     expect(columnLabel("measure")).toBe("Measure");
   });
 });
+
+describe("evals highlights", () => {
+  it("shows the headline results first, with their limits beside them", () => {
+    const highlights = {
+      status: "ok",
+      title: "The results we stand behind",
+      question: "Four measured results.",
+      headline: [
+        { label: "Median error with a year of utility bills", value: 4.1, unit: "%", nominal: null, ci90: null, n: 44, note: "Scored on a year the model never saw." },
+      ],
+      caveats: ["Calibration succeeds for 44 of 283 buildings today."],
+      provenance: { sources: "Building Data Genome Project 2" },
+    };
+    const html = renderToStaticMarkup(<Evals data={data} highlights={highlights} />);
+    expect(html.indexOf("The results we stand behind")).toBeLessThan(html.indexOf("Metered buildings"));
+    expect(html).toContain("4.1");
+    expect(html).toContain("44 of 283");
+    expect(html).toContain("What these do not tell you");
+  });
+
+  it("is left out when there is nothing to show", () => {
+    const html = renderToStaticMarkup(<Evals data={data} highlights={{ status: "not_run", title: "x", question: "y" }} />);
+    expect(html).not.toContain("The results we stand behind");
+  });
+});

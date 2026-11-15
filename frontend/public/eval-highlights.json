@@ -1,0 +1,52 @@
+{
+  "status": "ok",
+  "title": "The results we stand behind",
+  "question": "Four measured results, each scored against data the model did not see. The full studies, including where the model does poorly, follow below.",
+  "headline": [
+    {
+      "label": "Solar output within 10% of an independent model",
+      "value": 100,
+      "unit": "%",
+      "nominal": null,
+      "ci90": null,
+      "n": 76,
+      "note": "Our predicted annual output per kilowatt for 76 scanned Los Angeles roofs, against PVGIS, the European Commission's solar model. The median difference is +2%."
+    },
+    {
+      "label": "Median error with a year of utility bills",
+      "value": 4.1,
+      "unit": "%",
+      "nominal": null,
+      "ci90": null,
+      "n": 44,
+      "note": "Calibrated on 2016 bills and scored on 2017, a year the model never saw. The same buildings were 18.1% off without bills."
+    },
+    {
+      "label": "Median error on Los Angeles offices, from our own scans",
+      "value": 14.8,
+      "unit": "%",
+      "nominal": null,
+      "ci90": [11.9, 28.9],
+      "n": 49,
+      "note": "Annual energy use per square foot against the City of Los Angeles building benchmarking data, with no bills. A typical-office benchmark scores 16.5% on the same buildings."
+    },
+    {
+      "label": "Real scans that produced a full result",
+      "value": 116,
+      "unit": " of 150",
+      "nominal": null,
+      "ci90": null,
+      "n": 150,
+      "note": "Every failure is counted, not dropped. 31 of the 34 failures were one data error, fixed tonight and being rerun; 2 are a known solver limit."
+    }
+  ],
+  "caveats": [
+    "The solar comparison is model against model, not a measured meter, and almost every roof was flat, so panel direction was barely tested.",
+    "Calibration to bills succeeds for 44 of 283 buildings today; the 4.1% applies to those 44.",
+    "On offices we are only slightly better than a typical-office benchmark. Without bills, the model's value is which upgrades fit a building, not its total energy.",
+    "Savings from individual upgrades have not yet been checked against measured results."
+  ],
+  "provenance": {
+    "sources": "Building Data Genome Project 2 (bills result); City of Los Angeles EBEWE benchmarking and PVGIS (offices, solar and scans), run on 15 November 2026"
+  }
+}

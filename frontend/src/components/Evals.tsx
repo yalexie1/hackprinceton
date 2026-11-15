@@ -1,4 +1,5 @@
 import "../evals.css";
+import "../eval-highlights.css";
 import React from "react";
 
 /**
@@ -8,6 +9,10 @@ import React from "react";
  * backend/evals/out/*.json via backend/evals/publish.py, so the page cannot
  * disagree with the scorecard. If a figure is not in the JSON it does not
  * belong here.
+ *
+ * The highlights section at the top reads public/eval-highlights.json: four
+ * results copied from the scored runs (BDG2 calibrated, LA EBEWE, PVGIS), each
+ * with its limits beside it. If that file fails to load, the section is left out.
  */
 
 export type Headline = {
@@ -235,6 +240,33 @@ function NotRun({ section }: { section: EvalSection }) {
   );
 }
 
+/** The headline results, shown first. Same figure cards as the studies below. */
+function Highlights({ section }: { section: EvalSection }) {
+  const sources = section.provenance?.sources;
+  return (
+    <section className="eval-section eval-highlights" aria-label={section.title}>
+      <h3>{section.title}</h3>
+      <p className="eval-question">{section.question}</p>
+      <ul className="eval-figures">
+        {(section.headline ?? []).map((item) => (
+          <Figure key={item.label} item={item} />
+        ))}
+      </ul>
+      {(section.caveats ?? []).length > 0 && (
+        <div className="eval-caveats">
+          <h4>What these do not tell you</h4>
+          <ul>
+            {(section.caveats ?? []).map((caveat) => (
+              <li key={caveat}>{caveat}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {sources ? <p className="eval-provenance">{String(sources)}.</p> : null}
+    </section>
+  );
+}
+
 function Metered({ section }: { section: EvalSection }) {
   const bins = section.bins ?? {};
   const w = section.weather_decomposition;
@@ -371,9 +403,22 @@ function Rows({ section }: { section: EvalSection }) {
   );
 }
 
-export default function Evals({ data }: { data?: EvalsData }) {
+export default function Evals({ data, highlights }: { data?: EvalsData; highlights?: EvalSection }) {
   const [loaded, setLoaded] = React.useState<EvalsData | null>(data ?? null);
   const [failed, setFailed] = React.useState(false);
+  const [top, setTop] = React.useState<EvalSection | null>(highlights ?? null);
+
+  React.useEffect(() => {
+    if (highlights) return;
+    let live = true;
+    fetch("/eval-highlights.json")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d: EvalSection) => live && setTop(d))
+      .catch(() => undefined); // optional: the full studies still render without it
+    return () => {
+      live = false;
+    };
+  }, [highlights]);
 
   React.useEffect(() => {
     if (data) return;
@@ -410,6 +455,7 @@ export default function Evals({ data }: { data?: EvalsData }) {
       <p className="eval-intro">
         These studies compare our estimates with recorded energy use or another model. Read the limits beside each result: a model comparison does not prove savings, and these studies do not establish accuracy for your individual home.
       </p>
+      {top && top.status === "ok" && <Highlights section={top} />}
       {Object.entries(loaded).map(([key, section]) =>
         section.status !== "ok" ? (
           <NotRun key={key} section={section} />

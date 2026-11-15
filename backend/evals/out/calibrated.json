@@ -1,0 +1,28 @@
+{
+ "status": "ok",
+ "title": "With a year of utility bills",
+ "question": "Given one year of bills, how close is our prediction of the next year?",
+ "rows": [
+  {"measure": "Median error", "without_bills_pct": 18.1, "with_bills_pct": 4.1},
+  {"measure": "Within 25% of the meter", "without_bills_pct": 61.4, "with_bills_pct": 93.2},
+  {"measure": "Off by 2x either way", "without_bills_pct": 6.8, "with_bills_pct": 2.3},
+  {"measure": "Median bias", "without_bills_pct": 12.7, "with_bills_pct": 1.1},
+  {"measure": "Range contained the meter", "without_bills_pct": 43.2, "with_bills_pct": 45.5}
+ ],
+ "caveats": [
+  "Calibrated on 2016 bills, tested on 2017, a year the model never saw; same 44 buildings in both columns.",
+  "Only 44 of 283 eligible buildings (16%) calibrate today; the rest are excluded, not shown at their uncalibrated values.",
+  "The 44 were already our closest (18% error without bills vs 49% across all 283), so this shows bills finishing the job on buildings we nearly fit, not a 53%-to-4% improvement.",
+  "The ranges barely improve even when the estimate does: the range problem is in how ranges are built."
+ ],
+ "provenance": {
+  "dataset": "Building Data Genome Project 2",
+  "fit_year": 2016,
+  "test_year": 2017,
+  "n_eligible_both_years": 283,
+  "n_calibrated": 44,
+  "method": "ASHRAE Guideline 14 / IPMVP Option D, MV-04 tolerances; buildings that do not converge abstain",
+  "produced_by": "backend/evals/run_calibrated.py",
+  "note": "Aggregate only. The per-building output stays in the git-ignored cache at data/cache/evals/out/calibrated.json."
+ }
+}

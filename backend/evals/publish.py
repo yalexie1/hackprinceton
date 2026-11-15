@@ -7,6 +7,12 @@ then disagree with `score_eval.py` the first time either changed.
 Writes:
   backend/evals/out/metered_buildings.json   the metered-building eval alone
   frontend/public/evals.json                 all evals merged, for Evals.tsx
+
+Reads, if present: pv_crosscheck.json, cost_check.json, opensolar_spotcheck.json
+and calibrated.json, all committed under backend/evals/out/. The calibrated arm
+(#430) is committed as AGGREGATE ROWS ONLY: run_calibrated.py writes its
+per-building output to the git-ignored cache, and the per-building calibration of
+a named BDG2 building is more than the page needs to make the point.
 """
 from __future__ import annotations
 
@@ -164,10 +170,13 @@ def _slot(payload: dict | None, title: str, question: str) -> dict:
 
 
 def merge_site_payload(metered: dict | None, pv: dict | None, cost: dict | None,
-                       opensolar: dict | None) -> dict:
+                       opensolar: dict | None, calibrated: dict | None) -> dict:
     return {
         "metered_buildings": _slot(metered, "Metered buildings",
                                    "How close is our predicted annual electricity to a real meter?"),
+        "calibrated_bills": _slot(calibrated, "With a year of utility bills",
+                                  "Given one year of bills, how close is our prediction of the "
+                                  "next year?"),
         "pv_crosscheck": _slot(pv, "PV yield vs PVGIS",
                                "Does our modelled PV yield agree with an independent estimate?"),
         "cost_check": _slot(cost, "Installed cost vs Tracking the Sun",
@@ -196,7 +205,8 @@ def main() -> int:
     site = merge_site_payload(metered=metered,
                               pv=_read(OUT / "pv_crosscheck.json"),
                               cost=_read(OUT / "cost_check.json"),
-                              opensolar=_read(OUT / "opensolar_spotcheck.json"))
+                              opensolar=_read(OUT / "opensolar_spotcheck.json"),
+                              calibrated=_read(OUT / "calibrated.json"))
     SITE_JSON.parent.mkdir(parents=True, exist_ok=True)
     SITE_JSON.write_text(json.dumps(site, indent=1))
 

@@ -1,0 +1,61 @@
+{
+ "status": "ok",
+ "title": "PV yield vs PVGIS",
+ "question": "Does our modelled PV yield agree with PVGIS, an independent estimate of the same system at the same site?",
+ "entry": "PV-10",
+ "mountingplace": "free",
+ "pvwatts": {
+  "status": "unavailable",
+  "note": "developer.nrel.gov does not resolve from this environment ([Errno -5] No address associated with hostname); PVGIS is the only reference used. Matches specs/physics.md section 5."
+ },
+ "n_checked": 3,
+ "rows": [
+  {
+   "sid": "ZSPaQbkGcJJ",
+   "mountingplace": "free",
+   "system_kw_dc": 218.87,
+   "annual_kwh": 357079.40762399795,
+   "pvgis_kwh_per_kw": 1676.75,
+   "kwh_per_kw": 1631.47,
+   "pct_diff": -2.7,
+   "pv10_deviation_pct": 3.21,
+   "pv10_tolerance_pct": 6.66,
+   "pv10_within": true,
+   "warnings": [],
+   "status": "checked"
+  },
+  {
+   "sid": "zvKHR9DHNjJ",
+   "mountingplace": "free",
+   "system_kw_dc": 3.44,
+   "annual_kwh": 5705.977034677438,
+   "pvgis_kwh_per_kw": 1677.42,
+   "kwh_per_kw": 1658.71,
+   "pct_diff": -1.12,
+   "pv10_deviation_pct": 1.62,
+   "pv10_tolerance_pct": 6.67,
+   "pv10_within": true,
+   "warnings": [],
+   "status": "checked"
+  },
+  {
+   "sid": "L3266YcPPvd",
+   "mountingplace": "free",
+   "system_kw_dc": 96.75,
+   "annual_kwh": 128760.89225067281,
+   "pvgis_kwh_per_kw": 1355.34,
+   "kwh_per_kw": 1330.86,
+   "pct_diff": -1.81,
+   "pv10_deviation_pct": 3.42,
+   "pv10_tolerance_pct": 9.3,
+   "pv10_within": true,
+   "warnings": [],
+   "status": "checked"
+  }
+ ],
+ "caveats": [
+  "PVGIS is a model, not a meter: agreement means two models agree, not that either is right. An empirical PV check needs metered output (e.g. the NIST campus arrays) and is not done here.",
+  "PVGIS mountingplace is recorded because free vs building moves the reference yield by 4-5%.",
+  "PV-10 compares after moving PVGIS to our plane orientation and losses; pct_diff is the raw ratio before that adjustment and will differ."
+ ]
+}

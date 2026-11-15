@@ -195,3 +195,17 @@ export function assumptionDisplay(a: Assumption): { value: string; range: string
 export function isPercentageInput(key: string): boolean {
   return ["window.shgc","roof.absorptance","hvac.heating_rating","hvac.distribution_efficiency","dhw.uef"].includes(key);
 }
+
+
+/** Consecutive activity events that read the same to a homeowner, folded into one row.
+ *  `index` is the last original index of the run, so "is this the latest event" still works. */
+export function collapseActivity<T>(events: T[], key: (event: T) => string): { event: T; count: number; index: number }[] {
+  const out: { event: T; count: number; index: number }[] = [];
+  events.forEach((event, index) => {
+    const last = out[out.length - 1];
+    if (last && key(last.event) === key(event)) {
+      out[out.length - 1] = { event, count: last.count + 1, index };
+    } else out.push({ event, count: 1, index });
+  });
+  return out;
+}

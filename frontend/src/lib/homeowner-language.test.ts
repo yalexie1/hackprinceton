@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditEventText, evidenceText, inputName, readableText, warningText } from "./homeowner-language";
+import { auditEventText, collapseActivity, evidenceText, inputName, readableText, warningText } from "./homeowner-language";
 
 describe("homeowner wording", () => {
   it("names an audit operation without leaking its function name", () => {
@@ -40,5 +40,12 @@ describe("homeowner wording", () => {
     expect(gas).toContain("delivered price for businesses");
     const unknown = warningText("tariff eia/retail-sales (fallback): EIA state average retail price, 2026-08");
     expect(unknown).not.toMatch(/for (homes|businesses)/);
+  });
+  it("folds consecutive identical activity rows and keeps the latest index", () => {
+    const rows = ["a", "b", "b", "b", "c", "b"];
+    const out = collapseActivity(rows, (x) => x);
+    expect(out.map((r) => [r.event, r.count, r.index])).toEqual([
+      ["a", 1, 0], ["b", 3, 3], ["c", 1, 4], ["b", 1, 5],
+    ]);
   });
 });

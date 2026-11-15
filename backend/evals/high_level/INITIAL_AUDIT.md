@@ -4,9 +4,9 @@ Tracking: #405, stage 0 of #400. Source inspected: initial #403 commit `081a433f
 
 ## Status
 
-The owner explicitly delivered the initial results, manifest, scope and reproduction commands. OpenSolar is procedure-only/not run and PVWatts unavailable, as disclosed. The higher-level review gate is open in the lead-approved `backend/evals/high_level/` scope. Frontend integration remains the priority before larger experiments.
+The owner explicitly delivered the initial results, manifest, scope and reproduction commands. OpenSolar is procedure-only/not run and PVWatts unavailable, as disclosed. That delivery opened independent review in the approved `backend/evals/high_level/` scope. **Vignesha subsequently confirmed both concrete bugs and withdrew the initial headline numbers pending a corrected rerun. New scored/model experiments wait for that revised final delivery.** Frontend integration remains the priority before larger experiments.
 
-**Actual 494-building headline metrics have not been independently reproduced.** Per-building outputs and immutable weather inputs are absent from this checkout; they have been requested from the owner. Public acquisition routes exist for BDG2 and historical weather, but refetching an unversioned weather API would be a new input version, not exact reproduction. The following verified findings are source/arithmetic/input-unit checks, not accuracy results on a new building cohort.
+**Actual 494-building headline metrics have not been independently reproduced.** Corrected per-building outputs and immutable generated weather inputs have been requested from the owner. All four raw BDG2 files are independently downloaded and SHA256/size verified against the delivered manifest; see out/public_input_receipt.json. Raw bytes stay outside Git. Refetching an unversioned weather API would be a new input version, not exact reproduction. The following verified findings are source/arithmetic/input-unit checks, not accuracy results on a new building cohort.
 
 ## Verified findings
 
@@ -46,7 +46,7 @@ python -m pytest backend/evals/high_level/tests -q
 
 If the owner provides the exact `runs.json`, add `--runs /private/path/to/runs.json`. The output will independently score both the common successful cohort and all available predictions per arm, retaining missing-prediction counts and the input hash. Its status explicitly distinguishes rescoring owner outputs from rerunning the model. Do not commit per-building inputs or experiment caches.
 
-Nine independent arithmetic tests passed. No production source, model parameter, cached sponsor data or displayed financial result was changed by this audit.
+Fourteen targeted tests passed: nine arithmetic tests and five acquisition safeguards. The acquire_bdg2 module downloads the four public inputs into a caller-selected cache, verifies the delivered byte counts and hashes, and rejects LFS pointers, truncated/changed files and oversized responses. It never trusts or overwrites mismatched existing inputs. No production source, model parameter, cached sponsor data or displayed financial result was changed by this audit.
 
 ## Next checkpoint
 

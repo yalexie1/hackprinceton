@@ -1,0 +1,12 @@
+.roi-map { max-width: 1100px; margin: 0 auto; padding: 16px; font-size: 18px; }
+.roi-label { font-weight: 600; color: #754500; }
+.roi-tabs { display: flex; gap: 8px; margin: 12px 0; }
+.roi-tabs button { font-size: 18px; min-height: 44px; padding: 8px 18px; border: 1px solid #23372d; border-radius: 8px; background: #fff; cursor: pointer; }
+.roi-tabs button[aria-pressed="true"] { background: #19543d; color: #fff; }
+.roi-canvas { height: 460px; border-radius: 8px; border: 1px solid #c9d3cc; }
+.roi-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; list-style: none; padding: 0; margin: 12px 0; font-size: 16px; }
+.roi-legend span { display: inline-block; width: 18px; height: 18px; margin-right: 8px; vertical-align: middle; border-radius: 50%; }
+.roi-table { border-collapse: collapse; width: 100%; font-size: 16px; }
+.roi-table caption { text-align: left; font-weight: 600; padding: 8px 0; }
+.roi-table th, .roi-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #dfe6e1; }
+.leaflet-container { font-size: 16px; }

@@ -8,6 +8,8 @@ Determine which predictions Leto can support: present energy consumption, saving
 
 **State: planned; waiting for initial results. No second-stage experiments or model tuning have started.**
 
+Yale approved `backend/evals/high_level/` for the follow-on implementation on the team board; Vignesha keeps the rest of `backend/evals/` and `Evals.tsx`. Execution is tracked in #400 so the documentation task can close independently. No further ownership approval is needed within that scope.
+
 Vignesha has reported an initial defaults-path test of 494 commercial buildings: median annual electricity absolute percentage error 55.5%, median signed percentage error -0.5%, and coverage of 17.6% for a nominal 80% interval. These are owner-reported, provisional results, not independently reproduced here. They do not validate residential retrofits, scan-derived geometry, vision, PV, bills or emissions. Near-zero median signed error does not establish accurate individual predictions; low coverage alone does not establish the cause of miscalibration.
 
 ## Start gate
@@ -70,6 +72,8 @@ Before scoring new cohorts, document what accuracy would support each intended u
 4. **First wave:** run baseline extensions, matched individual-upgrade simulation comparisons and measured solar checks. Audit NEED feasibility alongside these; do not promise a compatible measured-retrofit result until its fields are checked.
 5. **Second wave:** run eligible measured-retrofit cohorts and independent bill arithmetic. If inputs are insufficient, publish the missing requirement and the narrower conclusion available.
 6. **Report:** deliver versioned aggregate results, reproducible commands and a plain-language report describing what is supported, what failed and what remains untested. Coordinate integration into Vignesha's Evals page rather than creating a competing page.
+
+**Cut line:** the lead's hour-4 main-branch demo check-in and frontend integration of the Evals, ROI map and viewer work take priority over second-stage experiments. Do not delay those links, change the demo's environment or run an unbounded benchmark for this programme. If the check-in arrives before a validation track finishes, preserve its reproducible checkpoint, report it as incomplete and return to the required integration work. Resume after the check-in when the initial-results gate remains satisfied.
 
 Each experiment records: model revision, dataset/release/hash, evidence type, cohort definition, reference/prediction units and periods, measures, provenance/defaults, inclusion/exclusion reasons, metric definitions, uncertainty method, known limitations and reproduction command. Proposed result status values are not_run, blocked, reproduced, evaluated, or insufficient_evidence; an evaluated result also states whether predeclared criteria were met. This is a report format proposal, not a shared-schema change.
 

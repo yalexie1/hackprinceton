@@ -48,18 +48,14 @@ describe("demo autoscroll", () => {
     }
   });
 
-  it("ignores fake mousemoves at the same spot but stops when the mouse really moves", () => {
+  it("keeps going when the mouse just moves", () => {
     const { win, fire, run } = fakeWindow();
     startAutoscroll(win, { speed: 1000 });
-    fire("mousemove", { clientX: 100, clientY: 100 });
     run(100);
-    fire("mousemove", { clientX: 100, clientY: 100 });
-    run(100);
-    const moving = win.scrollY;
-    expect(moving).toBeGreaterThan(0);
+    const before = win.scrollY;
     fire("mousemove", { clientX: 140, clientY: 100 });
-    run(500);
-    expect(win.scrollY).toBe(moving);
+    run(200);
+    expect(win.scrollY).toBeGreaterThan(before);
   });
 
   it("is off with ?autoscroll=0 or reduced motion", () => {

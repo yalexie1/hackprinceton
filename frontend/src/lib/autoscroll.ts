@@ -1,7 +1,7 @@
-// Demo autoscroll: on page load, glide slowly to the bottom and back up, looping, until anyone
-// touches the mouse, keyboard, wheel or screen. Off when the system asks for reduced motion or
-// the URL has ?autoscroll=0. Programmatic scrolling makes Chrome fire "fake" mousemove events at
-// the cursor's unchanged position, so only a mousemove that actually changes position counts.
+// Demo autoscroll: on page load, glide slowly to the bottom and back up, looping, until someone
+// clicks or taps the page (a key press or the scroll wheel also stops it, so it never fights a
+// visitor). Moving the mouse does not stop it. Off when the system asks for reduced motion or the
+// URL has ?autoscroll=0.
 
 export interface AutoscrollOptions {
   speed?: number; // pixels per second
@@ -26,7 +26,6 @@ export function startAutoscroll(win: Window = window, opts: AutoscrollOptions = 
   let last: number | null = null;
   let pos: number | null = null; // fractional position; scrollTo rounds
   let raf = 0;
-  let mouse: [number, number] | null = null;
 
   const stop = () => {
     if (stopped) return;
@@ -34,11 +33,6 @@ export function startAutoscroll(win: Window = window, opts: AutoscrollOptions = 
     win.cancelAnimationFrame(raf);
     win.clearTimeout(timer);
     for (const e of STOP_EVENTS) win.removeEventListener(e, stop, true);
-    win.removeEventListener("mousemove", onMove, true);
-  };
-  const onMove = (e: MouseEvent) => {
-    if (mouse && (Math.abs(e.clientX - mouse[0]) > 2 || Math.abs(e.clientY - mouse[1]) > 2)) stop();
-    else mouse = [e.clientX, e.clientY];
   };
 
   const step = (now: number) => {
@@ -60,7 +54,6 @@ export function startAutoscroll(win: Window = window, opts: AutoscrollOptions = 
   };
 
   for (const e of STOP_EVENTS) win.addEventListener(e, stop, { capture: true, passive: true });
-  win.addEventListener("mousemove", onMove, { capture: true, passive: true });
   const timer = win.setTimeout(() => {
     if (!stopped) raf = win.requestAnimationFrame(step);
   }, opts.startDelayMs ?? 2000);

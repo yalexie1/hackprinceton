@@ -422,3 +422,28 @@ def test_a_user_price_replaces_the_range():
     r = build_registry(bundle("house"), overrides={"tariff.electricity_usd_per_kwh": 0.31})
     a = by_key(r.assumptions)["tariff.electricity_usd_per_kwh"]
     assert a.source == "user" and a.value.expected == pytest.approx(0.31)
+
+
+# ---- #439: multi-dwelling buildings ----
+
+def _as(name, use_type, scale=1.0):
+    b = bundle(name)
+    rooms = [r.model_copy(update={"area_m2": (r.area_m2 or 0) * scale}) for r in b.matterport.rooms]
+    return b.model_copy(update={
+        "summary": b.summary.model_copy(update={"use_type": use_type}),
+        "matterport": b.matterport.model_copy(update={"rooms": rooms})})
+
+
+def test_dwelling_units_only_for_large_multifamily_scans():
+    from backend.analysis.model.registry.registry import dwelling_units, scanned_floor_area_m2
+    from backend.analysis.model.registry import tables as T
+    assert dwelling_units(_as("house", "single_family", 50.0)) is None      # a big house stays one home
+    small = _as("house", "multifamily_unit")
+    assert scanned_floor_area_m2(small) <= T.MULTI_DWELLING_MIN_AREA_M2
+    assert dwelling_units(small) is None                                      # a real apartment scan
+    big = _as("house", "multifamily_unit", 50.0)
+    u = dwelling_units(big)
+    area = scanned_floor_area_m2(big)
+    lo_a, ex_a, hi_a = T.DWELLING_UNIT_AREA_M2
+    assert (u.low, u.expected, u.high) == pytest.approx((area / hi_a, area / ex_a, area / lo_a))
+    assert u.unit == "dwellings"

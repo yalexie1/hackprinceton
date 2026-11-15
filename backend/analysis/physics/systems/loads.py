@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .constants import (DEFAULT_CALENDAR_START, HOME_APPLIANCE_FRACTIONS, HOME_APPLIANCES,
+from .constants import (BEDROOMS_PER_DWELLING, DEFAULT_CALENDAR_START, HOME_APPLIANCE_FRACTIONS, HOME_APPLIANCES,
                         HOME_BEDROOMS_DEFAULT, HOME_LIGHT_A, HOME_LIGHT_B, HOME_LIGHT_MONTHLY,
                         HOME_MEL, HOME_OCC_SF, HOME_PERSON_HOURS_PER_DAY, HOME_SHARES, M2_PER_FT2,
                         OCC_LATENT_W, OCC_SENSIBLE_W, OFFICE_M2_PER_PERSON, OFFICE_SCHEDULES,
@@ -182,6 +182,16 @@ def bedrooms_for_home(bedrooms: int | None, occupants: float | None) -> tuple[fl
                                           "bedrooms assumed for hot water and plug loads")
 
 
+def bedrooms_per_dwelling(bedrooms: float | None, units: float) -> float | None:
+    """Bedrooms in one dwelling (#439). One dwelling: the count as given. Several: the count spread
+    over the dwellings when that gives at least one each, else BEDROOMS_PER_DWELLING (a whole-building
+    scan rarely labels every bedroom)."""
+    if units <= 1.0:
+        return bedrooms
+    per = (bedrooms or 0) / units
+    return per if per >= 1.0 else BEDROOMS_PER_DWELLING
+
+
 def occupant_presence(kind: str, cal: Calendar, vacant: bool = False) -> np.ndarray:
     """LGT-03 occ(h): office schedule fraction; home hourly share x 16.5 person-hours per day."""
     if kind == "home":
@@ -226,14 +236,18 @@ class EndUseProfiles:
 def end_use_profiles(*, occupancy_schedule: str, floor_area_m2: float, cal: Calendar,
                      lpd_w_m2: float, ppd_w_m2: float, occupants: float | None,
                      bedrooms: int | None = None, lpd_scale: float = 1.0,
-                     ppd_scale: float = 1.0) -> EndUseProfiles:
+                     ppd_scale: float = 1.0, dwelling_units: float = 1.0) -> EndUseProfiles:
     """Lighting, plug, appliance and occupant profiles for one set of inputs.
 
     Offices: LGT-01 and LGT-02 from the power densities and DEF-09 fractions; plug density scaled
     by head count (LGT-02) only when `occupants` comes from `Systems.occupants`.
     Homes: LGT-01 and LGT-02 annual formulas spread with DEF-09 shares; `lpd_scale` and
     `ppd_scale` (the registry's range relative to its expected value) scale the annual figures.
-    `occupants=None` runs on the schedule default (LGT-03)."""
+    `occupants=None` runs on the schedule default (LGT-03).
+
+    `dwelling_units` (homes, #439): the home formulas are per dwelling, so a multi-dwelling building
+    runs them on one dwelling's share of the floor area and `bedrooms` per dwelling, times the number
+    of dwellings. With one dwelling this is exactly the single-home calculation."""
     kind = building_kind(occupancy_schedule)
     vacant = occupancy_schedule == "office_vacant"
     warnings: list[str] = []
@@ -251,10 +265,12 @@ def end_use_profiles(*, occupancy_schedule: str, floor_area_m2: float, cal: Cale
         n_br, w = bedrooms_for_home(bedrooms, occupants)
         if w:
             warnings.append(w)
-        n_occ = occupants if occupants is not None else home_occupants_default(n_br)
-        light_w = 1000.0 * home_lighting_hourly_kwh(home_lighting_base(floor_area_m2) * lpd_scale, cal)
-        plug_w = 1000.0 * _home_daily_spread(home_misc_energy(n_br, floor_area_m2) * ppd_scale, "equipment", cal)
-        appl_w = {k: 1000.0 * _home_daily_spread(e, "equipment", cal)
+        units = max(float(dwelling_units), 1.0)
+        area_u = floor_area_m2 / units
+        n_occ = occupants if occupants is not None else home_occupants_default(n_br) * units
+        light_w = 1000.0 * home_lighting_hourly_kwh(home_lighting_base(area_u) * units * lpd_scale, cal)
+        plug_w = 1000.0 * _home_daily_spread(home_misc_energy(n_br, area_u) * units * ppd_scale, "equipment", cal)
+        appl_w = {k: 1000.0 * _home_daily_spread(e * units, "equipment", cal)
                   for k, e in home_appliance_energy(n_br).items()}
         appl = sum(appl_w.values()) / 1000.0
     gains = internal_gains(light_w, plug_w, n_occ, occupant_presence(kind, cal, vacant), kind, appl_w)

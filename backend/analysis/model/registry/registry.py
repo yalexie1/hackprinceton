@@ -19,6 +19,8 @@ import statistics
 from dataclasses import dataclass, field
 from typing import Iterable, Literal, Mapping, Optional, Sequence, Union, get_args
 
+from backend.analysis.physics.systems.constants import BEDROOMS_PER_DWELLING
+from backend.analysis.physics.systems.loads import bedrooms_per_dwelling
 from backend.schema import (
     Assumption,
     BuildingModel,
@@ -53,7 +55,7 @@ _CONSTRUCTION_COMPLETE = {"constructioncomplete", "construction_complete", "cons
 
 _UNITS: dict[str, str] = {
     "building.year_built": "year", "building.stories": "storeys", "building.gross_area_m2": "m2",
-    "building.floor_plate_m2": "m2", "occupancy.count": "people", "wall.u_value": "W/m2K",
+    "building.floor_plate_m2": "m2", "occupancy.count": "people", "dwelling.units": "dwellings", "wall.u_value": "W/m2K",
     "roof.u_value": "W/m2K", "window.u_value": "W/m2K", "window.shgc": "-", "roof.absorptance": "-",
     "infiltration.ach50": "1/h at 50 Pa", "infiltration.leakage_75pa": "L/s.m2 at 75 Pa",
     "hvac.distribution_efficiency": "-", "hvac.heating_efficiency": "-", "dhw.uef": "-",
@@ -518,6 +520,31 @@ def _roof_absorptance(material: Optional[str], btype: BuildingType) -> tuple[T.R
             "")
 
 
+def dwelling_units(bundle: PropertyBundle) -> Optional[Ranged]:
+    """Number of dwellings in a multi-dwelling building (lodging archetype, #439), or None for one.
+
+    Only a "multifamily_unit" scan larger than MULTI_DWELLING_MIN_AREA_M2 counts: a single-family
+    home or a real apartment scan stays one dwelling, so nothing changes for them."""
+    if bundle.summary.use_type != "multifamily_unit":
+        return None
+    area = scanned_floor_area_m2(bundle)
+    if area <= T.MULTI_DWELLING_MIN_AREA_M2:
+        return None
+    small, typical, large = T.DWELLING_UNIT_AREA_M2
+    return _ranged(max(1.0, area / large), max(1.0, area / typical), max(1.0, area / small), "dwellings")
+
+
+def _dwelling_units_assumption(bundle: PropertyBundle) -> Optional[Assumption]:
+    units = dwelling_units(bundle)
+    if units is None:
+        return None
+    area = scanned_floor_area_m2(bundle)
+    small, typical, large = T.DWELLING_UNIT_AREA_M2
+    return _a("dwelling.units", "Number of dwellings in the building", units, "vintage_default", 0.2,
+              [_table_ev("LGT-03", f"{area:.0f} m2 multi-dwelling building / {typical:g} m2 per dwelling "
+                                   f"({small:g} to {large:g} m2); unsourced judgment, check against RECS 2020")])
+
+
 def _occupancy_default(bundle: PropertyBundle, btype: BuildingType) -> Optional[Assumption]:
     if btype == "office":
         area = scanned_floor_area_m2(bundle)
@@ -531,6 +558,14 @@ def _occupancy_default(bundle: PropertyBundle, btype: BuildingType) -> Optional[
     kind = bundle.summary.use_type if bundle.summary.use_type in T.HOME_OCCUPANTS else "single_family"
     a, b = T.HOME_OCCUPANTS[kind]
     nbr = count_bedrooms(bundle)
+    units = dwelling_units(bundle)
+    if units is not None:                       # per dwelling, times the number of dwellings (#439)
+        per = bedrooms_per_dwelling(nbr, units.expected) or BEDROOMS_PER_DWELLING
+        n = (a * per + b) * units.expected
+        return _a("occupancy.count", "Number of occupants", _spread(n, T.OCCUPANT_DEFAULT_SPREAD, "people"),
+                  "vintage_default", 0.3,
+                  [_table_ev("LGT-03", f"({a} x {per:g} bedrooms + {b}) x {units.expected:.1f} dwellings ({kind}); "
+                                       "plus or minus 30 percent is a judgment")])
     n = a * nbr + b
     return _a("occupancy.count", "Number of occupants", _spread(n, T.OCCUPANT_DEFAULT_SPREAD, "people"),
               "vintage_default", 0.3,
@@ -662,6 +697,10 @@ def vintage_defaults(bundle: PropertyBundle, facts: Iterable[Assumption] = ()) -
     occ = _occupancy_default(bundle, btype)
     if occ is not None:
         out.append(occ)
+    if btype == "home":
+        du = _dwelling_units_assumption(bundle)
+        if du is not None:
+            out.append(du)
     out.extend(derived_assumptions({**{a.key: a for a in out}, **f}, btype))
     return out
 

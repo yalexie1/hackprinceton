@@ -201,6 +201,10 @@
 .eval-caveats li { line-height:1.65; margin-bottom:.65rem; }
 .evals table { max-width:none; }
 .evals th,.evals td { padding:.8rem 1rem; border-bottom:1px solid #dfe6e1; vertical-align:top; }
+/* Wide comparison tables (PV, cost) have 10-12 columns: tighter cells keep every column,
+   including the verdict, on screen instead of behind a sideways scroll. */
+.eval-table-scroll th,.eval-table-scroll td { padding:.7rem .55rem; }
+.eval-table-scroll td.eval-cell-name { min-width:8rem; }
 .evals thead th { background:#edf3ee; white-space:normal; line-height:1.5; }
 .eval-table-scroll { border:1px solid #d7e3db; border-radius:12px; }
 .eval-provenance,.eval-note { opacity:1; color:#4f645a; line-height:1.65; }

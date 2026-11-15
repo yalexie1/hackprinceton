@@ -9,8 +9,10 @@ SCHEMA_VERSION = "0.3.8"
 class Ranged(BaseModel):
     """A quantity with uncertainty. low <= expected <= high.
 
-    expected is the result at expected inputs; low and high are approximate
-    10th and 90th percentiles (physics UNC-01), not hard bounds.
+    expected is the result at expected inputs. For an input, low and high are
+    judged 10th and 90th percentiles. For a modelled output, low and high are
+    the range the input ranges produce (physics UNC-01, UNC-02); they are not
+    hard bounds and not a measured 80 % interval.
     """
     low: float
     expected: float

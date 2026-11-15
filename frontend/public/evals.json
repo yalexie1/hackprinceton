@@ -218,11 +218,5 @@
    "Only CA and TX are downloaded, because PropertySummary.state admits only those two.",
    "A band built from fewer than 30 systems is flagged indicative and should not be read as a verdict."
   ]
- },
- "opensolar_spotcheck": {
-  "status": "not_run",
-  "title": "OpenSolar spot check",
-  "question": "Does our system design match a tool the industry trusts?",
-  "note": "This check has not been run yet."
  }
 }

@@ -265,6 +265,11 @@ describe("hidden studies", () => {
     expect(html).not.toContain("Metered buildings");
     expect(html).not.toContain("Interval coverage");
   });
+
+  it("leaves the OpenSolar spot check off the page", () => {
+    const html = renderToStaticMarkup(<Evals data={{ opensolar_spotcheck: { status: "not_run", title: "OpenSolar spot check", question: "q" } }} />);
+    expect(html).not.toContain("OpenSolar");
+  });
 });
 
 describe("evidence kind", () => {

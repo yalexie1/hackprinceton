@@ -266,3 +266,14 @@ describe("hidden studies", () => {
     expect(html).not.toContain("Interval coverage");
   });
 });
+
+describe("evidence kind", () => {
+  it("labels what kind of evidence each highlight is", () => {
+    const highlights = {
+      status: "ok", title: "T", question: "Q",
+      headline: [{ label: "Solar", value: 100, unit: "%", nominal: null, ci90: null, n: 76, note: "", kind: "Agreement with another model" }],
+    };
+    const html = renderToStaticMarkup(<Evals data={{}} highlights={highlights} />);
+    expect(html).toContain("Agreement with another model");
+  });
+});

@@ -118,8 +118,96 @@ describe("evals table with ragged rows", () => {
   it("never prints the literal string undefined when rows have different keys", () => {
     const html = renderToStaticMarkup(<Evals data={ragged} />);
     expect(html).not.toContain("undefined");
-    // The key that appears only on the second row must still get a column.
-    expect(html).toContain("note only on this row");
+    // The key that appears only on the second row must still get a column,
+    // humanised rather than printed as the raw key.
+    expect(html).toContain("Note only on this row");
+    expect(html).not.toContain("note_only_on_this_row");
     expect(html).toContain("late key");
+  });
+});
+
+describe("evals table reads as plain English", () => {
+  const judged: EvalsData = {
+    pv_crosscheck: {
+      status: "ok",
+      title: "PV yield vs PVGIS",
+      question: "Does it agree?",
+      rows: [
+        {
+          sid: "ZSPaQbkGcJJ",
+          annual_kwh: 357079.40762399795,
+          kwh_per_kw: 1631.47,
+          pv10_tolerance_pct: 6.66,
+          pv10_within: true,
+          system_kw_dc: 218.87,
+          status: "checked",
+        },
+        { sid: "unknown-scan-id", pv10_within: false, status: "not_checked" },
+      ],
+    },
+    cost_check: {
+      status: "ok",
+      title: "Cost vs the market",
+      question: "Is the price plausible?",
+      rows: [
+        {
+          sid: "zvKHR9DHNjJ",
+          our_usd_per_w: 2.2,
+          n_systems: 2830,
+          year: 2023,
+          indicative: false,
+          verdict: "inside_iqr",
+          pct_vs_median: -25.3,
+        },
+      ],
+    },
+  };
+
+  const html = renderToStaticMarkup(<Evals data={judged} />);
+
+  it("never shows a raw snake_case key as a column heading", () => {
+    for (const key of ["pv10_within", "our_usd_per_w", "n_systems", "annual_kwh"]) {
+      expect(html).not.toContain(key);
+    }
+    expect(html).toContain("Within tolerance");
+    expect(html).toContain("Our cost per watt");
+    expect(html).toContain("Systems compared");
+  });
+
+  it("rounds and localises numbers instead of printing float noise", () => {
+    expect(html).not.toContain("357079.40762399795");
+    expect(html).toContain("357,079 kWh");
+    expect(html).toContain("1,631 kWh/kW");
+    expect(html).toContain("218.9 kW");
+    expect(html).toContain("$2.20/W");
+    expect(html).toContain("6.7%");
+    expect(html).toContain("-25.3%");
+    expect(html).toContain("2,830");
+    // A year is a label, not a quantity: never "2,023".
+    expect(html).toContain("2023");
+    expect(html).not.toContain("2,023");
+  });
+
+  it("writes booleans as Yes and No", () => {
+    expect(html).toContain(">Yes<");
+    expect(html).toContain(">No<");
+    expect(html).not.toContain(">true<");
+    expect(html).not.toContain(">false<");
+  });
+
+  it("spells out enum tokens", () => {
+    expect(html).toContain("Inside the market range");
+    expect(html).toContain("Not checked");
+    expect(html).toContain("Checked");
+    expect(html).not.toContain("inside_iqr");
+    expect(html).not.toContain("not_checked");
+  });
+
+  it("names the buildings it knows and keeps the raw id for the ones it does not", () => {
+    expect(html).toContain("Culver Connect (LA office)");
+    expect(html).toContain("Los Angeles house");
+    expect(html).not.toContain("ZSPaQbkGcJJ");
+    // No invented name for an unrecognised scan.
+    expect(html).toContain("unknown-scan-id");
   });
 });

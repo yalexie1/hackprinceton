@@ -22,6 +22,39 @@ SITE_JSON = ROOT / "frontend/public/evals.json"
 ARM = "bdg2temp"          # the measured-temperature arm is the headline
 
 
+def supported_zone_block(card: dict) -> dict:
+    """The stricter cohort, rendered beside the headline. Selected, never recomputed.
+
+    The headline stays all buildings with each one's climate zone disclosed; this
+    block is the same three metrics over only the buildings whose zone the default
+    tables actually carry. It carries no confidence interval on purpose.
+    """
+    sz = card["supported_zones"]
+    l3, l4 = sz["l3_electricity"][ARM], sz["l4_interval"][ARM]
+    return {
+        "title": "Supported climate zones only",
+        "zones": sz["zones"],
+        "n": sz["n"],
+        "sites": sz["sites"],
+        "n_sites": sz["n_sites"],
+        "headline": [
+            {"label": "Interval coverage", "value": l4["coverage_pct"], "unit": "%",
+             "nominal": l4["nominal_pct"], "ci90": None, "n": l4["n"]},
+            {"label": "Median absolute error", "value": l3["median_abs_pct"], "unit": "%",
+             "nominal": None, "ci90": None, "n": l3["n"]},
+            {"label": "Median signed error", "value": l3["median_pct"], "unit": "%",
+             "nominal": 0.0, "ci90": None, "n": l3["n"]},
+        ],
+        "bins": l4["bins_pct"],
+        "note": "Our default tables only carry two climate zones, 2A and 3B. Buildings "
+                "anywhere else are modelled on a blend of them, so these are the "
+                "buildings the model was actually built for. We show both readings: the "
+                "full sample above is the honest headline, and this narrower one is the "
+                "stricter test. It is harder, not easier.",
+        "ci_note": sz["ci_note"],
+    }
+
+
 def build_payload(card: dict) -> dict:
     """Scorecard -> the metered-building payload. Values are copied, never derived."""
     l3, l4 = card["l3_electricity"][ARM], card["l4_interval"][ARM]
@@ -54,6 +87,7 @@ def build_payload(card: dict) -> dict:
     return {
         "status": "ok",
         "title": "Metered buildings",
+        "supported_zones": supported_zone_block(card),
         "question": "How close is our predicted annual electricity to a real meter, "
                     "and does our stated uncertainty band tell the truth?",
         "headline": headline,

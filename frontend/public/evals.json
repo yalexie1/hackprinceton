@@ -2,6 +2,52 @@
  "metered_buildings": {
   "status": "ok",
   "title": "Metered buildings",
+  "supported_zones": {
+   "title": "Supported climate zones only",
+   "zones": [
+    "2A",
+    "3B"
+   ],
+   "n": 96,
+   "sites": [
+    "Panther"
+   ],
+   "n_sites": 1,
+   "headline": [
+    {
+     "label": "Interval coverage",
+     "value": 11.5,
+     "unit": "%",
+     "nominal": 80.0,
+     "ci90": null,
+     "n": 96
+    },
+    {
+     "label": "Median absolute error",
+     "value": 56.7,
+     "unit": "%",
+     "nominal": null,
+     "ci90": null,
+     "n": 96
+    },
+    {
+     "label": "Median signed error",
+     "value": -45.6,
+     "unit": "%",
+     "nominal": 0.0,
+     "ci90": null,
+     "n": 96
+    }
+   ],
+   "bins": {
+    "below_low": 12.5,
+    "low_to_expected": 11.5,
+    "expected_to_high": 0.0,
+    "above_high": 76.0
+   },
+   "note": "Our default tables only carry two climate zones, 2A and 3B. Buildings anywhere else are modelled on a blend of them, so these are the buildings the model was actually built for. We show both readings: the full sample above is the honest headline, and this narrower one is the stricter test. It is harder, not easier.",
+   "ci_note": "No site-clustered CI is reported: the qualifying buildings come from 1 site(s) (Panther), and a bootstrap over one cluster cannot produce a real interval."
+  },
   "question": "How close is our predicted annual electricity to a real meter, and does our stated uncertainty band tell the truth?",
   "headline": [
    {
@@ -449,6 +495,7 @@
    "Weather is site-level across only 5 sites, so the effective N for the weather-driven error term is 5, not the building count. CIs are bootstrapped over sites and are wide.",
    "Every building is modelled as a single zone at a single storey scaled to its floor area, so a tall building's surface-to-volume ratio is wrong by construction.",
    "Non-office uses (Education, Lodging, Entertainment, Public services, Healthcare) are run on office or residential defaults; type mismatch is inside the reported error.",
+   "The DEF default tables carry only climate zones 2A and 3B; the other four sites fall back to a blend. Each building's zone is recorded in the run record, and the supported-zone cohort is scored separately below.",
    "Irradiance is Open-Meteo in BOTH arms (BDG2 ships none), so the arm difference isolates temperature error only, not irradiance error."
   ],
   "provenance": {

@@ -7,6 +7,8 @@ mutating the function it covers and watching the test fail (see PLAN ledger, Tas
 """
 from __future__ import annotations
 
+import json
+
 import backend.evals.run_eval as run_eval
 from backend.evals.score_eval import (cluster_bootstrap, coverage, describe, err_pct)
 
@@ -155,3 +157,63 @@ def test_describe_cannot_report_an_underprediction_worse_than_total():
     # positive truth), which is exactly why abs(e) was the wrong test.
     out = describe([-90.0, -99.0])
     assert out["under_by_2x_plus"] == 100.0
+
+
+# --- supported-zone cohort (lead decision "Option A") ---------------------------
+# The DEF tables carry only 2A and 3B; every other zone silently falls back. The
+# headline stays all 494 with per-building zone disclosure, and this cohort is
+# published beside it as the stricter reading.
+from backend.evals.score_eval import SUPPORTED_ZONES, supported_zone_section  # noqa: E402
+
+
+def zrow(truth: float, zone: str, band: dict | None = BAND, site: str = "S") -> dict:
+    r = row(truth, band=band, site=site)
+    r["climate_zone"] = zone
+    r["arms"] = {"bdg2temp": r["arms"]["a"], "openmeteo": r["arms"]["a"]}
+    return r
+
+
+def test_supported_zones_are_the_two_the_def_tables_carry():
+    assert SUPPORTED_ZONES == ("2A", "3B")
+
+
+def test_supported_zone_section_keeps_only_supported_zones():
+    rows = [zrow(150.0, "2A"), zrow(150.0, "3B"), zrow(150.0, "4A"), zrow(150.0, None)]
+    out = supported_zone_section(rows)
+    assert out["n"] == 2
+    assert out["l3_electricity"]["bdg2temp"]["n"] == 2
+    assert out["l4_interval"]["bdg2temp"]["n"] == 2
+
+
+def test_supported_zone_section_metrics_match_the_same_functions_on_the_subset():
+    rows = [zrow(100.0, "2A"), zrow(300.0, "3B"), zrow(100.0, "6A")]
+    sub = [r for r in rows if r["climate_zone"] in SUPPORTED_ZONES]
+    out = supported_zone_section(rows)
+    for arm in ("bdg2temp", "openmeteo"):
+        errs = [e for e in (err_pct(r, arm) for r in sub) if e is not None]
+        assert out["l3_electricity"][arm] == describe(errs)
+        assert out["l4_interval"][arm] == coverage(sub, arm)
+
+
+def test_supported_zone_section_lists_its_sites():
+    rows = [zrow(150.0, "2A", site="Panther"), zrow(150.0, "2A", site="Panther"),
+            zrow(150.0, "4A", site="Rat")]
+    out = supported_zone_section(rows)
+    assert out["sites"] == ["Panther"]
+    assert out["n_sites"] == 1
+
+
+def test_supported_zone_section_emits_no_ci_because_it_is_one_site():
+    # A site-clustered CI over a single cluster is not computable; a number there
+    # would be a fake. The absence must be explicit, not silent.
+    out = supported_zone_section([zrow(150.0, "2A", site="Panther")])
+    assert "site_clustered_ci90" not in json.dumps(out)
+    assert "Panther" in out["ci_note"]
+    assert out["note"]
+
+
+def test_supported_zone_section_is_empty_but_shaped_when_nothing_qualifies():
+    out = supported_zone_section([zrow(150.0, "4A")])
+    assert out["n"] == 0
+    assert out["sites"] == []
+    assert out["l3_electricity"]["bdg2temp"] == {"n": 0}

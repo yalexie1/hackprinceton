@@ -42,12 +42,130 @@ export type EvalSection = {
 
 export type EvalsData = Record<string, EvalSection>;
 
+/* ---------------------------------------------------------------------------
+ * Making the raw scorecard readable.
+ *
+ * The JSON is written for machines: snake_case keys, booleans, enum tokens,
+ * opaque Matterport ids and full float precision. A judge reading the page
+ * should never see any of that. Everything below is presentation only; no
+ * number is recomputed, only rounded and labelled.
+ * ------------------------------------------------------------------------ */
+
 const BIN_LABEL: Record<string, string> = {
   below_low: "Below our low estimate",
   low_to_expected: "Between low and expected",
   expected_to_high: "Between expected and high",
   above_high: "Above our high estimate",
 };
+
+/** Plain-English column headings for the keys that actually occur. */
+const COLUMN_LABEL: Record<string, string> = {
+  sid: "Building",
+  state: "State",
+  segment: "Market segment",
+  status: "Status",
+  reason: "Reason",
+  verdict: "Verdict",
+  year: "Benchmark year",
+  mountingplace: "Mounting",
+  system_kw_dc: "System size",
+  annual_kwh: "Annual output",
+  kwh_per_kw: "Our yield",
+  pvgis_kwh_per_kw: "PVGIS yield",
+  pct_diff: "Difference from PVGIS",
+  pv10_deviation_pct: "Deviation",
+  pv10_tolerance_pct: "Tolerance",
+  pv10_within: "Within tolerance",
+  our_usd_per_w: "Our cost per watt",
+  p25_usd_per_w: "Market lower quartile",
+  median_usd_per_w: "Market median",
+  p75_usd_per_w: "Market upper quartile",
+  pct_vs_median: "Against the market median",
+  n_systems: "Systems compared",
+  indicative: "Thin benchmark",
+};
+
+/** Enum-ish string values that would otherwise print as raw tokens. */
+const VALUE_LABEL: Record<string, string> = {
+  inside_iqr: "Inside the market range",
+  above_iqr: "Above the market range",
+  below_iqr: "Below the market range",
+  not_checked: "Not checked",
+  checked: "Checked",
+};
+
+/**
+ * The three Matterport scans in the demo set. Anything else keeps its raw id:
+ * inventing a name for a building we cannot identify would be a lie on a page
+ * whose whole point is not lying.
+ */
+const SID_NAME: Record<string, string> = {
+  ZSPaQbkGcJJ: "Culver Connect (LA office)",
+  zvKHR9DHNjJ: "Los Angeles house",
+  L3266YcPPvd: "Houston office",
+};
+
+/** "note_only_on_this_row" -> "Note only on this row". Never a raw key. */
+function humanise(token: string): string {
+  const words = token.replace(/_/g, " ").trim();
+  if (!words) return token;
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+export function columnLabel(key: string): string {
+  return COLUMN_LABEL[key] ?? humanise(key);
+}
+
+function round(value: number, digits: number): string {
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
+/**
+ * The unit is inferred from the key's suffix, so a new column in the JSON gets
+ * formatted without a code change here. Order matters: `_kwh_per_kw` must be
+ * tested before `_kwh`.
+ */
+export function formatNumber(key: string, value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  const k = key.toLowerCase();
+  if (k === "year" || k.endsWith("_year")) return String(value);
+  if (k.endsWith("_per_kw")) return `${round(value, 0)} kWh/kW`;
+  if (k.endsWith("_usd_per_w")) return `$${round(value, 2)}/W`;
+  if (k.endsWith("_usd") || k.startsWith("usd_")) return `$${round(value, 0)}`;
+  if (k.endsWith("_kwh")) return `${round(value, 0)} kWh`;
+  if (k.endsWith("_pct") || k.startsWith("pct_") || k.includes("_pct_"))
+    return `${round(value, 1)}%`;
+  if (k.endsWith("_kw_dc") || k.endsWith("_kw")) return `${round(value, 1)} kW`;
+  if (k.startsWith("n_") || Number.isInteger(value)) return round(value, 0);
+  return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
+}
+
+/** Looks like a machine token (snake_case or a single lowercase word). */
+function isToken(s: string): boolean {
+  return /^[a-z0-9]+(_[a-z0-9]+)*$/.test(s);
+}
+
+export function formatCell(key: string, value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return formatNumber(key, value);
+  if (typeof value === "string") {
+    if (key === "sid") return SID_NAME[value] ?? value;
+    const mapped = VALUE_LABEL[value];
+    if (mapped) return mapped;
+    // Free text (anything with a space, or already capitalised) is left alone;
+    // only machine tokens get humanised.
+    return isToken(value) ? humanise(value) : value;
+  }
+  if (Array.isArray(value)) {
+    const parts = value.map((v) => formatCell(key, v)).filter((s) => s !== "—");
+    return parts.length > 0 ? parts.join(", ") : "—";
+  }
+  return String(value);
+}
 
 function Figure({ item }: { item: Headline }) {
   return (
@@ -180,7 +298,7 @@ function Rows({ section }: { section: EvalSection }) {
               <tr>
                 {keys.map((k) => (
                   <th key={k} scope="col">
-                    {k.replace(/_/g, " ")}
+                    {columnLabel(k)}
                   </th>
                 ))}
               </tr>
@@ -189,10 +307,8 @@ function Rows({ section }: { section: EvalSection }) {
               {rows.map((row, i) => (
                 <tr key={i}>
                   {keys.map((k) => (
-                    <td key={k}>
-                      {row[k] === null || row[k] === undefined || row[k] === ""
-                        ? "—"
-                        : String(row[k])}
+                    <td key={k} className={k === "sid" ? "eval-cell-name" : undefined}>
+                      {formatCell(k, row[k])}
                     </td>
                   ))}
                 </tr>

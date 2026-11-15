@@ -19,7 +19,7 @@ export function createAuditPdf(run: RunResult): jsPDF {
     y += 3;
   }
   function heading(title: string) { ensure(24); y += 4; text(title,16,true,[24,78,57]); }
-  const range = (r: Ranged, currency = true) => `${currency ? money(r.expected) : number(r.expected,2)} (estimated range ${currency ? money(r.low) : number(r.low,2)} to ${currency ? money(r.high) : number(r.high,2)})`;
+  const estimate = (r: Ranged, currency = true) => currency ? money(r.expected) : number(r.expected,2);
   text("LETO  /  HOME ENERGY PLAN",11,true,[24,78,57]);
   text(run.property.name,24,true);
   text([run.property.address,run.property.city,run.property.state].filter(Boolean).join(", "));
@@ -27,17 +27,17 @@ export function createAuditPdf(run: RunResult): jsPDF {
   text("Use this plan to prepare for quotes and on-site checks. Savings are estimates, not guarantees. Model ranges may miss important uncertainty; they have not been validated for this individual property.",11);
   heading("Your plan at a glance");
   if (run.plan) {
-    text(`Estimated annual bill savings: ${range(run.plan.total_annual_savings_usd)}`,12,true);
-    text(`Cash needed upfront: ${range(run.plan.total_upfront_usd)}`);
+    text(`Estimated annual bill savings: ${estimate(run.plan.total_annual_savings_usd)}`,12,true);
+    text(`Cash needed upfront: ${estimate(run.plan.total_upfront_usd)}`);
     text(`Your cash budget: ${money(run.plan.budget_usd)}`);
-    text(`Estimated annual emissions reduction: ${range(run.plan.total_co2_kg,false)} kilograms of carbon dioxide.`);
-    if (run.plan.total_annual_savings_usd.low < 0) text("The lower savings estimate is negative: energy costs could increase under that scenario. Confirm the assumptions before deciding.");
+    text(`Estimated annual emissions reduction: ${estimate(run.plan.total_co2_kg,false)} kilograms of carbon dioxide.`);
+    if (run.plan.total_annual_savings_usd.low < 0) text("Some scenarios could increase energy bills rather than save money. Confirm the assumptions before deciding.");
   } else text("A completed plan is not available in this audit.");
   heading("Current energy use");
   if (run.baseline) {
-    text(`Estimated annual electricity use: ${range(run.baseline.annual.electricity_kwh,false)} kWh.`);
-    text(`Estimated annual gas energy: ${range(run.baseline.annual.gas_kwh,false)} kWh.`);
-    text(`Estimated annual energy bill: ${range(run.baseline.annual.cost_usd)}.`);
+    text(`Estimated annual electricity use: ${estimate(run.baseline.annual.electricity_kwh,false)} kWh.`);
+    text(`Estimated annual gas energy: ${estimate(run.baseline.annual.gas_kwh,false)} kWh.`);
+    text(`Estimated annual energy bill: ${estimate(run.baseline.annual.cost_usd)}.`);
     text(run.baseline.calibrated_to_bills ? "This audit reports that its baseline was adjusted using utility bills. This does not guarantee future savings." : "This estimate was not matched to the property's utility bills.");
   } else text("Current energy use was not available.");
   heading("Included improvements");
@@ -45,7 +45,7 @@ export function createAuditPdf(run: RunResult): jsPDF {
     ensure(34); text(`${item.rank}. ${readableText(item.measure.title)}`,13,true);
     const m = item.measure; text(readableText(m.description));
     if (m.finance) {
-      text(`Upfront cost: ${range(m.finance.net_upfront_usd)}. Annual savings: ${range(m.finance.annual_savings_usd)}.`);
+      text(`Upfront cost: ${estimate(m.finance.net_upfront_usd)}. Annual savings: ${estimate(m.finance.annual_savings_usd)}.`);
       text(`Cost source: ${readableText(m.finance.cost_source || "No source recorded.")}`,10);
     }
     for (const warning of [...m.warnings,...m.flags.map(f => f.message)]) text(warningText(warning),10);
@@ -54,7 +54,7 @@ export function createAuditPdf(run: RunResult): jsPDF {
   if (run.plan?.financeable.length) {
     heading("Options needing more budget");
     text("These options are outside the selected plan. Their savings are not included in your plan totals. Financing needs separate eligibility checks.");
-    for (const m of run.plan.financeable) { text(readableText(m.title),12,true); if (m.finance) text(`Upfront cost: ${range(m.finance.net_upfront_usd)}. Annual savings: ${range(m.finance.annual_savings_usd)}.`); }
+    for (const m of run.plan.financeable) { text(readableText(m.title),12,true); if (m.finance) text(`Upfront cost: ${estimate(m.finance.net_upfront_usd)}. Annual savings: ${estimate(m.finance.annual_savings_usd)}.`); }
   }
   if (run.plan?.skipped.length) {
     heading("Other findings");

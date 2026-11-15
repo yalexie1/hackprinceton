@@ -43,6 +43,12 @@ describe("splitNarrative", () => {
 });
 
 describe("homeowner report warnings", () => {
+  it("keeps the baseline estimate without a numerical interval", () => {
+    const result = homeownerReport("Baseline: about $3,644 (range $2,864 to $4,842) a year.");
+    expect(result).toContain("about $3,644 a year");
+    expect(result).not.toContain("$2,864");
+  });
+
   it("turns technical fallback lines into homeowner checks without changing measured figures", () => {
     const report = "Baseline: 7,728 kWh.\n\nWarnings and fallbacks in this run:\n- quaternion sense not decidable from the footprint on this model\n- tariff eia/retail-sales (fallback): EIA state average retail price, CA RES, 2026-08";
     const result = homeownerReport(report);

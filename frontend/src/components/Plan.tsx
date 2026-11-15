@@ -21,7 +21,7 @@ import type {
 } from "../lib/types";
 import { readableText, warningText } from "../lib/homeowner-language";
 import { REASON_DETAIL, REASON_LABELS, measureName } from "./FindingReason";
-import { money, number, ranged } from "../lib/format";
+import { money, number } from "../lib/format";
 const reasonLabels = REASON_LABELS;
 export function FinancingTerms({
   scenario: s,
@@ -38,8 +38,7 @@ export function FinancingTerms({
       </p>
       <p>
         First-year savings after financing payments:{" "}
-        {money(s.net_cashflow_year1_usd.expected)} (
-        {ranged(s.net_cashflow_year1_usd, true)})
+        {money(s.net_cashflow_year1_usd.expected)}
       </p>
     </>
   ) : (
@@ -65,12 +64,6 @@ export function Range({
         {currency ? money(value.expected) : number(value.expected, 2)}
         {suffix}
       </strong>
-      {value.low !== value.high && (
-        <small>
-          Estimated range: {ranged(value, currency)}
-          {suffix}
-        </small>
-      )}
     </span>
   );
 }
@@ -192,7 +185,6 @@ export function MeasureCard({
                 {money(f.annual_savings_usd.expected)}
                 <small>/yr</small>
               </strong>
-              <small>{ranged(f.annual_savings_usd, true)}</small>
             </>
           )}
         </span>
@@ -257,7 +249,7 @@ export function MeasureCard({
                 {f.incentives.length ? (
                   f.incentives.map((i, index) => (
                     <p key={index}>
-                      {i.name} · {i.status} · {ranged(i.amount_usd, true)}
+                      {i.name} · {i.status} · {money(i.amount_usd.expected)}
                       <small>
                         {i.kind.replaceAll("_", " ")}
                         {i.eligibility
@@ -409,6 +401,11 @@ export default function PlanView({
           <small>kilograms of carbon dioxide each year</small>
         </div>
       </div>
+      <p className="estimate-note">
+        These figures are estimates for planning, not guaranteed savings.
+        {plan.total_annual_savings_usd.low < 0 &&
+          " In some scenarios, the improvements could increase your energy bills. Check your bills and get firm quotes before deciding."}
+      </p>
       {plan.total_upfront_usd.high > plan.budget_usd && (
         <p className="inline-note budget-warning">
           <Info size={15} />
@@ -573,9 +570,7 @@ export default function PlanView({
           {plan.value_uplift.cap_rate && (
             <p className="fineprint">
               Capitalization rate:{" "}
-              {number(plan.value_uplift.cap_rate.expected * 100, 2)}% (
-              {number(plan.value_uplift.cap_rate.low * 100, 2)}–
-              {number(plan.value_uplift.cap_rate.high * 100, 2)}%).
+              {number(plan.value_uplift.cap_rate.expected * 100, 2)}%.
             </p>
           )}
           {plan.value_uplift.notes.map((note, i) => (

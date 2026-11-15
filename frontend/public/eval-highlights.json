@@ -1,17 +1,8 @@
 {
   "status": "ok",
   "title": "The results we stand behind",
-  "question": "Four measured results, each scored against data the model did not see. The full studies follow below.",
+  "question": "Two accuracy results scored against real energy use the model did not see, one agreement check against an independent solar model, and one reliability count. The full studies follow below.",
   "headline": [
-    {
-      "label": "Solar output within 10% of an independent model",
-      "value": 100,
-      "unit": "%",
-      "nominal": null,
-      "ci90": null,
-      "n": 76,
-      "note": "Our predicted annual output per kilowatt for 76 scanned Los Angeles roofs, against PVGIS, the European Commission's solar model. The median difference is +2%."
-    },
     {
       "label": "Median error with a year of utility bills",
       "value": 4.1,
@@ -19,7 +10,8 @@
       "nominal": null,
       "ci90": null,
       "n": 44,
-      "note": "Calibrated on 2016 bills and scored on 2017, a year the model never saw. The same buildings were 18.1% off without bills."
+      "note": "Calibrated on 2016 bills and scored on 2017, a year the model never saw. The same buildings were 18.1% off without bills.",
+      "kind": "Accuracy against real energy use"
     },
     {
       "label": "Median error on Los Angeles offices, from our own scans",
@@ -31,7 +23,18 @@
         28.9
       ],
       "n": 49,
-      "note": "Annual energy use per square foot against the City of Los Angeles building benchmarking data, with no bills. A typical-office benchmark scores 16.5% on the same buildings."
+      "note": "Annual energy use per square foot against the City of Los Angeles building benchmarking data, with no bills. A typical-office benchmark scores 16.5% on the same buildings.",
+      "kind": "Accuracy against real energy use"
+    },
+    {
+      "label": "Solar output within 10% of an independent model",
+      "value": 100,
+      "unit": "%",
+      "nominal": null,
+      "ci90": null,
+      "n": 76,
+      "note": "Our predicted annual output per kilowatt for 76 scanned Los Angeles roofs, against PVGIS, the European Commission's solar model. The median difference is +2%. This shows two models agree; it is not a measured output.",
+      "kind": "Agreement with another model"
     },
     {
       "label": "Real scans that produced a full result",
@@ -40,7 +43,8 @@
       "nominal": null,
       "ci90": null,
       "n": 150,
-      "note": "Every failure is counted, not dropped. 31 of the 34 failures were one data error, fixed tonight and being rerun; 2 are a known solver limit."
+      "note": "How many real scans ran end to end. This measures reliability, not accuracy. Every failure is counted, not dropped. 31 of the 34 failures were one data error, fixed tonight and being rerun; 2 are a known solver limit.",
+      "kind": "Reliability on real scans"
     }
   ],
   "caveats": [

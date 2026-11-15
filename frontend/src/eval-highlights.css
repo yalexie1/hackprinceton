@@ -1,3 +1,5 @@
 /* Highlights on the Evals page: four cards read as a 2x2 grid, not three plus an orphan. */
 .eval-highlights .eval-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 640px) { .eval-highlights .eval-figures { grid-template-columns: minmax(0, 1fr); } }
+/* Says what kind of evidence a card is, so a model comparison or a run count is never read as accuracy. */
+.eval-figure-kind { margin: 0 0 .35rem; font-size: 1rem; font-weight: 600; color: #4f645a; letter-spacing: .01em; }

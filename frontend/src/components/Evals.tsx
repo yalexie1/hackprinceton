@@ -23,6 +23,8 @@ export type Headline = {
   ci90: [number, number] | number[] | null;
   n: number;
   note: string;
+  /** What kind of evidence this is (accuracy, model agreement, reliability), shown above the label. */
+  kind?: string;
 };
 
 export type EvalSection = {
@@ -207,6 +209,7 @@ function evidenceProse(text: string) {
 function Figure({ item }: { item: Headline }) {
   return (
     <li className="eval-figure">
+      {item.kind && <p className="eval-figure-kind">{item.kind}</p>}
       <p className="eval-figure-label">{item.label}</p>
       <p className="eval-figure-value">
         {item.value}

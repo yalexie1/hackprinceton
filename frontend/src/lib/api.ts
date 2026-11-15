@@ -69,7 +69,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  result: (id: string) => request<RunResult>(`/runs/${encodeURIComponent(id)}`),
+  result: (id: string, signal?: AbortSignal) =>
+    request<RunResult>(`/runs/${encodeURIComponent(id)}`, { signal }),
   roof: (id: string, signal?: AbortSignal) =>
     request<RoofView>(`/runs/${encodeURIComponent(id)}/roof`, { signal }),
   templates: (

@@ -21,9 +21,11 @@ export type RoiMapData = {
 };
 
 // Short payback is good: green; long is red. The same absolute bands are used for every city, so a colour means the
-// same number of years on both maps.
-export const ROI_COLORS = ["#1a7f4b", "#6aa84f", "#d6b400", "#e07b00", "#b3261e"];
-export const ROI_BREAKS = [10, 12, 15, 20];
+// same number of years on both maps. The bands are finer where homes actually sit (LA clusters at 10, 11 and 11.5 to
+// 12 years, Houston at 26.5 to 27 and 30 to 31): five coarse bands put 276 of 295 LA zips and all of Houston in one
+// colour each.
+export const ROI_COLORS = ["#1a7f4b", "#4f9a52", "#8cba5b", "#d6c43a", "#e8952b", "#d0592a", "#a3231f"];
+export const ROI_BREAKS = [10.5, 11.5, 12.5, 15, 20, 27];
 
 export function paybackBreaks(_rows?: RoiRow[]): number[] {
   return ROI_BREAKS;

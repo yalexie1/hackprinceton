@@ -1,6 +1,6 @@
 import type { RunResult } from "../lib/types";
 
-export default function RunSource({ run }: { run: RunResult }) {
+export default function RunSource({ run, restored = false }: { run: RunResult; restored?: boolean }) {
   const source = run.data_source;
   const delivery = run.served_by;
   if (run.status === "running" && source !== "live")
@@ -21,7 +21,9 @@ export default function RunSource({ run }: { run: RunResult }) {
               : "Building records not verified"}
         </strong>
         <span>
-          {delivery === "replay"
+          {restored
+            ? "Reopened audit"
+            : delivery === "replay"
             ? "Saved property audit"
             : delivery === "analysis"
               ? "New calculation"

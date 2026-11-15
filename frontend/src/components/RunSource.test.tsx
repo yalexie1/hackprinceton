@@ -6,6 +6,12 @@ import type { RunResult } from "../lib/types";
 import house from "../../../specs/examples/house/run_result.json";
 
 describe("run provenance", () => {
+  it("does not describe a reopened result as a new calculation or new audit", () => {
+    const html = renderToStaticMarkup(<RunSource run={{ ...house, data_source: "live", served_by: "analysis" } as RunResult} restored />);
+    expect(html).toContain("Reopened audit");
+    expect(html).not.toContain("New calculation");
+    expect(html).not.toContain("New audit");
+  });
   it("distinguishes computed analysis from both agent runs and recorded playback", () => {
     const html = render("live", "analysis");
     expect(html).toContain("New calculation");

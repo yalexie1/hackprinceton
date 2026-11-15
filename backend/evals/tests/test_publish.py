@@ -143,3 +143,65 @@ def test_per_building_rows_do_not_leak_hourly_series():
     for row in per_building_rows(RUNS):
         assert "monthly_elec_kwh" not in row
         assert "end_use_kwh" not in row
+
+
+# --- supported-zone cohort, published beside the headline -----------------------
+SCORECARD["supported_zones"] = {
+    "zones": ["2A", "3B"], "n": 96, "sites": ["Panther"], "n_sites": 1,
+    "l3_electricity": {
+        "bdg2temp": {"n": 96, "median_pct": -45.6, "median_abs_pct": 56.7,
+                     "mean_pct": -5.5, "p10_pct": -89.3, "p90_pct": 55.0,
+                     "within_25pct": 19.8, "within_50pct": 44.8},
+        "openmeteo": {"n": 96, "median_pct": -46.0, "median_abs_pct": 56.9},
+    },
+    "l4_interval": {
+        "bdg2temp": {"n": 96, "coverage_pct": 11.5, "nominal_pct": 80.0,
+                     "bins_pct": {"below_low": 12.5, "low_to_expected": 11.5,
+                                  "expected_to_high": 0.0, "above_high": 76.0},
+                     "mean_width_pct_of_expected": 32.5},
+        "openmeteo": {"n": 96, "coverage_pct": 11.5, "nominal_pct": 80.0,
+                      "bins_pct": {"below_low": 12.5, "low_to_expected": 11.5,
+                                   "expected_to_high": 0.0, "above_high": 76.0},
+                      "mean_width_pct_of_expected": 32.6},
+    },
+    "ci_note": "Single site (Panther), so a site-clustered CI is not computable.",
+    "note": "Only the zones the tables carry.",
+}
+
+
+def test_supported_zone_cohort_is_published_beside_the_headline():
+    out = build_payload(SCORECARD)
+    sz = out["supported_zones"]
+    assert sz["n"] == 96
+    assert sz["sites"] == ["Panther"]
+    assert sz["zones"] == ["2A", "3B"]
+    # The 494-building headline is still the headline.
+    cov = next(r for r in out["headline"] if r["label"] == "Interval coverage")
+    assert cov["value"] == 17.6 and cov["n"] == 494
+
+
+def test_supported_zone_cohort_values_are_copied_not_recomputed():
+    out = build_payload(SCORECARD)
+    flat = json.dumps(SCORECARD)
+    for r in out["supported_zones"]["headline"]:
+        assert str(r["value"]) in flat, f"{r['label']} value {r['value']} is not in the scorecard"
+
+
+def test_supported_zone_cohort_carries_the_three_comparable_metrics():
+    sz = build_payload(SCORECARD)["supported_zones"]
+    by_label = {r["label"]: r["value"] for r in sz["headline"]}
+    assert by_label["Interval coverage"] == 11.5
+    assert by_label["Median absolute error"] == 56.7
+    assert by_label["Median signed error"] == -45.6
+
+
+def test_supported_zone_cohort_publishes_no_confidence_interval():
+    sz = build_payload(SCORECARD)["supported_zones"]
+    assert all(r["ci90"] is None for r in sz["headline"])
+    assert "Panther" in sz["ci_note"]
+
+
+def test_supported_zone_cohort_explains_itself_in_plain_english():
+    sz = build_payload(SCORECARD)["supported_zones"]
+    assert len(sz["note"]) > 60
+    assert "2A" in sz["note"] and "3B" in sz["note"]

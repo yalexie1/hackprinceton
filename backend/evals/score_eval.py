@@ -28,6 +28,10 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "data/cache/evals/out"
 ARMS = ("bdg2temp", "openmeteo")
 NOMINAL_COVERAGE = 0.80
+# backend/analysis/model/registry/tables.py ships DEF tables for these zones only;
+# anything else is blended or defaulted. Mirrors run_eval.SUPPORTED_CLIMATES, kept
+# here so scoring does not depend on the runner.
+SUPPORTED_ZONES = ("2A", "3B")
 
 
 def pct(xs: list[float], q: float) -> float:
@@ -120,6 +124,37 @@ def err_pct(r: dict, arm: str) -> float | None:
     return 100 * (a["elec"]["expected"] - t) / t if t else None
 
 
+def supported_zone_section(rows: list[dict]) -> dict:
+    """The stricter cohort: only buildings in a climate zone the DEF tables carry.
+
+    Published BESIDE the all-building headline, never instead of it. Same metrics,
+    same functions, a smaller set of rows. No confidence interval: every qualifying
+    building sits at one site, and a site-clustered bootstrap over a single cluster
+    would return the point estimate dressed up as an interval.
+    """
+    sub = [r for r in rows if r.get("climate_zone") in SUPPORTED_ZONES]
+    sites = sorted({r["site_id"] for r in sub})
+    section: dict = {
+        "zones": list(SUPPORTED_ZONES),
+        "n": len(sub),
+        "sites": sites,
+        "n_sites": len(sites),
+        "l3_electricity": {},
+        "l4_interval": {},
+        "note": "Buildings whose ASHRAE climate zone (2A or 3B) is one the DEF default "
+                "tables actually carry. Every other zone in the sample falls back to a "
+                "blend, so this cohort is the model read on its own terms.",
+        "ci_note": "No site-clustered CI is reported: the qualifying buildings come from "
+                   f"{len(sites)} site(s) ({', '.join(sites) or 'none'}), and a bootstrap "
+                   "over one cluster cannot produce a real interval.",
+    }
+    for arm in ARMS:
+        errs = [e for e in (err_pct(r, arm) for r in sub) if e is not None]
+        section["l3_electricity"][arm] = describe(errs)
+        section["l4_interval"][arm] = coverage(sub, arm)
+    return section
+
+
 def main() -> int:
     data = json.loads((OUT / "runs.json").read_text())
     rows = data["runs"]
@@ -146,11 +181,15 @@ def main() -> int:
             "floor area, so a tall building's surface-to-volume ratio is wrong by construction.",
             "Non-office uses (Education, Lodging, Entertainment, Public services, Healthcare) "
             "are run on office or residential defaults; type mismatch is inside the reported error.",
+            "The DEF default tables carry only climate zones 2A and 3B; the other four "
+            "sites fall back to a blend. Each building's zone is recorded in the run "
+            "record, and the supported-zone cohort is scored separately below.",
             "Irradiance is Open-Meteo in BOTH arms (BDG2 ships none), so the arm difference "
             "isolates temperature error only, not irradiance error.",
         ],
         "l3_electricity": {},
         "l4_interval": {},
+        "supported_zones": {},
         "by_usage": {},
         "by_site": {},
         "weather_decomposition": {},
@@ -164,6 +203,9 @@ def main() -> int:
         if boot:
             cov["site_clustered_ci90"] = [round(pct(boot, 0.05), 1), round(pct(boot, 0.95), 1)]
         card["l4_interval"][arm] = cov
+
+    # The stricter reading, published beside the all-building headline, not instead.
+    card["supported_zones"] = supported_zone_section(ok)
 
     # Stratify.
     for key, field in (("by_usage", "usage"), ("by_site", "site_id")):
@@ -209,7 +251,8 @@ def main() -> int:
     (OUT / "scorecard.json").write_text(json.dumps(card, indent=1))
     print(json.dumps({k: card[k] for k in
                       ("n_scored", "refused_count", "n_sites", "l3_electricity",
-                       "l4_interval", "weather_decomposition", "storey_diagnostic")}, indent=1))
+                       "l4_interval", "supported_zones", "weather_decomposition",
+                       "storey_diagnostic")}, indent=1))
     print(f"\nwrote {OUT}/scorecard.json")
     return 0
 

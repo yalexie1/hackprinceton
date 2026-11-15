@@ -126,6 +126,12 @@
   white-space: nowrap;
 }
 
+/* Building names are prose, not figures: no tabular digits, and they may wrap. */
+.evals td.eval-cell-name {
+  font-variant-numeric: normal;
+  min-width: 12rem;
+}
+
 /* Wide tables scroll inside themselves; the page never scrolls sideways. */
 .eval-table-scroll {
   overflow-x: auto;

@@ -54,14 +54,20 @@ Where the metered total actually fell:
 
 | Position | Share |
 |---|---|
-| Below our low | 38.1% |
-| Between low and expected | 11.7% |
-| Between expected and high | 5.3% |
-| Above our high | 44.9% |
+| Below our low | 30.6% |
+| Between low and expected | 10.9% |
+| Between expected and high | 1.8% |
+| Above our high | **56.7%** |
 
-Truth falls outside on **both** sides in near-equal measure. That is the diagnostic: a
-biased model would pile up on one side. This is a **sharpness failure** — the band is
-simply far too narrow.
+Two faults at once, and they need different fixes. Nearly **nine in ten** buildings fall
+outside the range at all, which is a **sharpness** failure — the band is far too narrow.
+And they fall out lopsidedly, 56.7% above against 30.6% below, which is the same **low
+bias** the −17.1% median signed error shows.
+
+An earlier version of this report read these bins as near-symmetric and concluded the
+problem was sharpness alone. That reading came from a run where the adapter had leaked a
+hard-coded storey count into every building; with real floor counts the asymmetry is
+plain.
 
 Two structural reasons, both predictable from how `UNC-02` builds the band. It perturbs
 each uncertain input one at a time to its low and high and combines the swings in
@@ -94,9 +100,9 @@ But running both arms shows where it lands:
 | | Median shift |
 |---|---|
 | Annual electricity | **−1.0%** |
-| Heating need (thermal, pre-efficiency) | **+26.4%** |
+| Heating need (thermal, pre-efficiency) | **+20.1%** |
 
-A 25% error in heating need barely reaches the electricity meter, because these buildings
+A 20% error in heating need barely reaches the electricity meter, because these buildings
 are dominated by cooling, lighting and plug loads. **Judge a weather source against the
 end use it actually drives.** A gas or heating eval would expose this; an annual-electricity
 eval on commercial buildings largely hides it.
@@ -107,19 +113,25 @@ By use type, worst and best (full table in `out/metered_buildings.json`):
 
 | Use | n | Median signed | Median abs | Coverage |
 |---|---|---|---|---|
-| Lodging/residential | 73 | **−84.1%** | 84.1% | 2.7% |
-| Retail | 6 | +72.9% | 84.7% | 0.0% |
-| Entertainment/public assembly | 53 | +34.6% | 56.8% | 15.1% |
-| Education | 234 | +21.6% | 52.4% | 20.9% |
-| Office | 61 | +8.6% | 40.7% | 13.1% |
-| Public services | 41 | +2.0% | **26.5%** | 26.8% |
+| Lodging/residential | 73 | **−84.4%** | 84.4% | 2.7% |
+| Religious worship | 2 | +107.1% | 107.1% | 0.0% |
+| Retail | 6 | +43.1% | 61.6% | 0.0% |
+| Entertainment/public assembly | 53 | +9.4% | 50.8% | 7.5% |
+| Education | 234 | +0.7% | 47.7% | 17.5% |
+| Office | 61 | +0.6% | 44.1% | 11.5% |
+| Public services | 41 | −14.9% | **32.1%** | 17.1% |
 
-Office — the only clean type match, since non-residential buildings are run on office
-defaults — is among the best at 40.7% median absolute error. Lodging/residential is
-badly biased low at −83.4%, which is the clearest single lead for improving the defaults.
+**Public services is our best type at 32.1%**, not Office. Office is the only clean
+archetype match — every other non-residential use runs on office defaults — and it still
+comes in at 44.1%, which says the archetype is not the whole story.
 
-By site, median absolute error ranges 36.3% (Rat) to 77.1% (Bear). Coverage is between
-12.0% and 26.8% everywhere: no site is calibrated.
+Lodging/residential at **−84.4%** is the clearest single lead: a dormitory is being
+modelled as a multifamily dwelling unit, so we predict about a sixth of what it uses.
+Fixing that one archetype is worth more than any tuning.
+
+By site, median absolute error ranges 34.2% (Rat) to 67.3% (Bear). Coverage sits between
+10.1% and 17.9% everywhere: **no site is calibrated**, which is why the interval problem
+is structural rather than regional.
 
 The single-storey simplification costs about ten points: buildings of four or more
 storeys show 65.8% median absolute error against 49.7% for single-storey ones — a

@@ -222,6 +222,8 @@ export default function App() {
         setQuestion(result.status === "waiting_for_user" ? result.questions[0] || null : null);
         setRestored(true);
         setView(result.status === "done" ? "plan" : "audit");
+        if (result.status === "error")
+          setError(result.warnings.join(" ") || "This earlier audit did not complete. No new analysis was started.");
       })
       .catch((error: unknown) => {
         if (cancelled || current !== epoch.current) return;

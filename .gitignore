@@ -21,3 +21,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+
+# Understand-Anything knowledge graph: commit the graph, not the scratch folders
+.ua/tmp/
+.ua/.trash-*/
+.ua/intermediate/*
+!.ua/intermediate/scan-result.json

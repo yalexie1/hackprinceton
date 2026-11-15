@@ -1,0 +1,2749 @@
+{
+  "name": "hackprinceton",
+  "description": "A hackathon project for building energy analysis: a Python FastAPI backend (data layer for CoStar, Matterport, Vexcel, weather and tariffs; physics/solar/finance analysis; a LangGraph-based agent; legal drafting) with a React + Three.js frontend, coordinated by a GitHub-issue message board that lets teammates' coding agents hand off work. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
+  "languages": [
+    "css",
+    "csv",
+    "html",
+    "json",
+    "markdown",
+    "python",
+    "shell",
+    "typescript",
+    "yaml"
+  ],
+  "frameworks": [
+    "React",
+    "Vite",
+    "Vitest",
+    "FastAPI",
+    "Pydantic",
+    "Uvicorn",
+    "Pytest",
+    "LangGraph",
+    "LangChain",
+    "Three.js",
+    "GitHub Actions"
+  ],
+  "files": [
+    {
+      "path": ".claude/agents/data-api.md",
+      "language": "markdown",
+      "sizeLines": 75,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".claude/agents/data-cache.md",
+      "language": "markdown",
+      "sizeLines": 76,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".claude/agents/data-costar.md",
+      "language": "markdown",
+      "sizeLines": 106,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".claude/agents/data-matterport.md",
+      "language": "markdown",
+      "sizeLines": 106,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".claude/agents/data-vexcel.md",
+      "language": "markdown",
+      "sizeLines": 121,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".claude/commands/data-status.md",
+      "language": "markdown",
+      "sizeLines": 26,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".claude/commands/data-wp.md",
+      "language": "markdown",
+      "sizeLines": 49,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".claude/hooks/board-prompt.sh",
+      "language": "shell",
+      "sizeLines": 6,
+      "fileCategory": "script"
+    },
+    {
+      "path": ".claude/hooks/board-session-start.sh",
+      "language": "shell",
+      "sizeLines": 20,
+      "fileCategory": "script"
+    },
+    {
+      "path": ".claude/settings.json",
+      "language": "json",
+      "sizeLines": 27,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".env.example",
+      "language": "config",
+      "sizeLines": 26,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/message-board.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".github/workflows/frontend.yml",
+      "language": "yaml",
+      "sizeLines": 45,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "AGENTS.md",
+      "language": "markdown",
+      "sizeLines": 52,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/analysis_run.py",
+      "language": "python",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/analysis_stub.py",
+      "language": "python",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/api.py",
+      "language": "python",
+      "sizeLines": 337,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/ask/__init__.py",
+      "language": "python",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/ask/ask.py",
+      "language": "python",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/fixtures.py",
+      "language": "python",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/graph/__init__.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/graph/counsel.py",
+      "language": "python",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/graph/fallbacks.py",
+      "language": "python",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/graph/graph.py",
+      "language": "python",
+      "sizeLines": 149,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/live.py",
+      "language": "python",
+      "sizeLines": 709,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/narrative/__init__.py",
+      "language": "python",
+      "sizeLines": 4,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/narrative/narrative.py",
+      "language": "python",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/narrative/report.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/requirements.txt",
+      "language": "txt",
+      "sizeLines": 12,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/agent/roof/__init__.py",
+      "language": "python",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/roof/roof.py",
+      "language": "python",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/runtime/__init__.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/runtime/replan.py",
+      "language": "python",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/runtime/runtime.py",
+      "language": "python",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/server/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/server/app.py",
+      "language": "python",
+      "sizeLines": 193,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/tools/__init__.py",
+      "language": "python",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/agent/tools/tools.py",
+      "language": "python",
+      "sizeLines": 316,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/api.py",
+      "language": "python",
+      "sizeLines": 983,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/__init__.py",
+      "language": "python",
+      "sizeLines": 2,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/costs/__init__.py",
+      "language": "python",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/costs/costs.py",
+      "language": "python",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/costs/data/costs.json",
+      "language": "json",
+      "sizeLines": 253,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/analysis/finance/costs/data/incentives.json",
+      "language": "json",
+      "sizeLines": 567,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/analysis/finance/costs/data/useful_life.json",
+      "language": "json",
+      "sizeLines": 134,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/analysis/finance/costs/incentives.py",
+      "language": "python",
+      "sizeLines": 226,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/cpace/__init__.py",
+      "language": "python",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/cpace/cpace.py",
+      "language": "python",
+      "sizeLines": 179,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/economics/__init__.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/economics/economics.py",
+      "language": "python",
+      "sizeLines": 370,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/plan/__init__.py",
+      "language": "python",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/plan/plan.py",
+      "language": "python",
+      "sizeLines": 283,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/sensitivity/__init__.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/sensitivity/sensitivity.py",
+      "language": "python",
+      "sizeLines": 140,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/value/__init__.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/finance/value/value.py",
+      "language": "python",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/layout/__init__.py",
+      "language": "python",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/layout/measure.py",
+      "language": "python",
+      "sizeLines": 161,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/layout/placement.py",
+      "language": "python",
+      "sizeLines": 372,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/controls/__init__.py",
+      "language": "python",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/controls/controls.py",
+      "language": "python",
+      "sizeLines": 380,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/engine/__init__.py",
+      "language": "python",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/engine/catalogue.py",
+      "language": "python",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/engine/engine.py",
+      "language": "python",
+      "sizeLines": 267,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/envelope/__init__.py",
+      "language": "python",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/envelope/airseal.py",
+      "language": "python",
+      "sizeLines": 148,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/envelope/attic.py",
+      "language": "python",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/envelope/common.py",
+      "language": "python",
+      "sizeLines": 222,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/envelope/roof_cool.py",
+      "language": "python",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/hvac_dhw/__init__.py",
+      "language": "python",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/hvac_dhw/hvac_dhw.py",
+      "language": "python",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/pv/__init__.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/pv/pv.py",
+      "language": "python",
+      "sizeLines": 433,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/systems/__init__.py",
+      "language": "python",
+      "sizeLines": 31,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/systems/_common.py",
+      "language": "python",
+      "sizeLines": 165,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/systems/heat_pump.py",
+      "language": "python",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/systems/lighting.py",
+      "language": "python",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/systems/rooftop.py",
+      "language": "python",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/walls_windows/__init__.py",
+      "language": "python",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/walls_windows/common.py",
+      "language": "python",
+      "sizeLines": 148,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/walls_windows/walls.py",
+      "language": "python",
+      "sizeLines": 101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/measures/walls_windows/windows.py",
+      "language": "python",
+      "sizeLines": 378,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/benchmark/__init__.py",
+      "language": "python",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/benchmark/build_eui_tables.py",
+      "language": "python",
+      "sizeLines": 122,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/benchmark/checks.py",
+      "language": "python",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/benchmark/eui_tables.csv",
+      "language": "csv",
+      "sizeLines": 570,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/analysis/model/benchmark/eui.py",
+      "language": "python",
+      "sizeLines": 293,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/benchmark/pv.py",
+      "language": "python",
+      "sizeLines": 239,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/geometry/__init__.py",
+      "language": "python",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/geometry/build.py",
+      "language": "python",
+      "sizeLines": 680,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/geometry/north.py",
+      "language": "python",
+      "sizeLines": 350,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/geometry/walls.py",
+      "language": "python",
+      "sizeLines": 150,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/registry/__init__.py",
+      "language": "python",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/registry/registry.py",
+      "language": "python",
+      "sizeLines": 928,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/model/registry/tables.py",
+      "language": "python",
+      "sizeLines": 351,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/calibration/__init__.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/calibration/calibrate.py",
+      "language": "python",
+      "sizeLines": 700,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/calibration/changepoint.py",
+      "language": "python",
+      "sizeLines": 246,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/calibration/stats.py",
+      "language": "python",
+      "sizeLines": 85,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/calibration/uncertainty.py",
+      "language": "python",
+      "sizeLines": 93,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/climate/__init__.py",
+      "language": "python",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/climate/_spa_tables.py",
+      "language": "python",
+      "sizeLines": 380,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/climate/hourly.py",
+      "language": "python",
+      "sizeLines": 154,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/climate/irradiance.py",
+      "language": "python",
+      "sizeLines": 201,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/climate/solar_position.py",
+      "language": "python",
+      "sizeLines": 186,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/climate/spa.py",
+      "language": "python",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/climate/weather.py",
+      "language": "python",
+      "sizeLines": 181,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/__init__.py",
+      "language": "python",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/comfort.py",
+      "language": "python",
+      "sizeLines": 221,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/constants.py",
+      "language": "python",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/daylight.py",
+      "language": "python",
+      "sizeLines": 272,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/geometry.py",
+      "language": "python",
+      "sizeLines": 375,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/glare.py",
+      "language": "python",
+      "sizeLines": 134,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/lighting.py",
+      "language": "python",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/daylight/point.py",
+      "language": "python",
+      "sizeLines": 447,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/pv/__init__.py",
+      "language": "python",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/pv/chain.py",
+      "language": "python",
+      "sizeLines": 308,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/pv/constants.py",
+      "language": "python",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/pv/energy.py",
+      "language": "python",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/__init__.py",
+      "language": "python",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/baseline.py",
+      "language": "python",
+      "sizeLines": 432,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/constants.py",
+      "language": "python",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/cost.py",
+      "language": "python",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/dhw.py",
+      "language": "python",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/hvac.py",
+      "language": "python",
+      "sizeLines": 130,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/loads.py",
+      "language": "python",
+      "sizeLines": 267,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/systems/uncertainty.py",
+      "language": "python",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/zone/__init__.py",
+      "language": "python",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/zone/airflow.py",
+      "language": "python",
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/zone/constants.py",
+      "language": "python",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/zone/envelope.py",
+      "language": "python",
+      "sizeLines": 163,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/zone/model.py",
+      "language": "python",
+      "sizeLines": 527,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/zone/rc.py",
+      "language": "python",
+      "sizeLines": 194,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/physics/zone/windows.py",
+      "language": "python",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/requirements.txt",
+      "language": "txt",
+      "sizeLines": 10,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/analysis/solar/layout/__init__.py",
+      "language": "python",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/layout/layout.py",
+      "language": "python",
+      "sizeLines": 287,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/layout/packing.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/layout/region.py",
+      "language": "python",
+      "sizeLines": 242,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/roof/__init__.py",
+      "language": "python",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/roof/masks.py",
+      "language": "python",
+      "sizeLines": 388,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/roof/pitch.py",
+      "language": "python",
+      "sizeLines": 77,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/roof/planes.py",
+      "language": "python",
+      "sizeLines": 363,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/roof/setbacks.py",
+      "language": "python",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/roof/usable.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/shading/__init__.py",
+      "language": "python",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/shading/geometry.py",
+      "language": "python",
+      "sizeLines": 179,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/shading/raycast.py",
+      "language": "python",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/solar/shading/shading.py",
+      "language": "python",
+      "sizeLines": 304,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/vision/__init__.py",
+      "language": "python",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/vision/feasibility.py",
+      "language": "python",
+      "sizeLines": 309,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/analysis/vision/interior.py",
+      "language": "python",
+      "sizeLines": 786,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/config.py",
+      "language": "python",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/api.py",
+      "language": "python",
+      "sizeLines": 911,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/cache.py",
+      "language": "python",
+      "sizeLines": 343,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/costar_extra.py",
+      "language": "python",
+      "sizeLines": 336,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/costar.py",
+      "language": "python",
+      "sizeLines": 300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/demo_check.py",
+      "language": "python",
+      "sizeLines": 459,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/demo_transfer.py",
+      "language": "python",
+      "sizeLines": 224,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/external.py",
+      "language": "python",
+      "sizeLines": 587,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/imagery.py",
+      "language": "python",
+      "sizeLines": 589,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/index.py",
+      "language": "python",
+      "sizeLines": 453,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/locate.py",
+      "language": "python",
+      "sizeLines": 362,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/matterport.py",
+      "language": "python",
+      "sizeLines": 351,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/mirror.py",
+      "language": "python",
+      "sizeLines": 338,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/places.py",
+      "language": "python",
+      "sizeLines": 372,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/requirements.txt",
+      "language": "txt",
+      "sizeLines": 7,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/data_layer/screening.py",
+      "language": "python",
+      "sizeLines": 458,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/tmyx.py",
+      "language": "python",
+      "sizeLines": 462,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/data_layer/vexcel.py",
+      "language": "python",
+      "sizeLines": 361,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/api.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/checks/__init__.py",
+      "language": "python",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/checks/_data.py",
+      "language": "python",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/checks/_tx_data.py",
+      "language": "python",
+      "sizeLines": 295,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/checks/checks.py",
+      "language": "python",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/checks/commercial.py",
+      "language": "python",
+      "sizeLines": 226,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/checks/cpace.py",
+      "language": "python",
+      "sizeLines": 408,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/checks/texas.py",
+      "language": "python",
+      "sizeLines": 243,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/engine/__init__.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/engine/engine.py",
+      "language": "python",
+      "sizeLines": 181,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/engine/texas.py",
+      "language": "python",
+      "sizeLines": 272,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/legal/requirements.txt",
+      "language": "txt",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/legal/templates/ca/retrofit_contract_commercial.md",
+      "language": "markdown",
+      "sizeLines": 190,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/legal/templates/ca/retrofit_contract_residential.md",
+      "language": "markdown",
+      "sizeLines": 213,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/legal/templates/cpace/cpace_package_ca.md",
+      "language": "markdown",
+      "sizeLines": 250,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/legal/templates/cpace/cpace_package_tx.md",
+      "language": "markdown",
+      "sizeLines": 313,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/legal/templates/tx/retrofit_contract_residential.md",
+      "language": "markdown",
+      "sizeLines": 145,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "backend/schema.py",
+      "language": "python",
+      "sizeLines": 648,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/server.py",
+      "language": "python",
+      "sizeLines": 4,
+      "fileCategory": "code"
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "frontend/fixtures/house.json",
+      "language": "json",
+      "sizeLines": 6356,
+      "fileCategory": "config"
+    },
+    {
+      "path": "frontend/fixtures/office.json",
+      "language": "json",
+      "sizeLines": 6842,
+      "fileCategory": "config"
+    },
+    {
+      "path": "frontend/index.html",
+      "language": "html",
+      "sizeLines": 22,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "frontend/JUDGE_WALKTHROUGH.md",
+      "language": "markdown",
+      "sizeLines": 14,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "frontend/package.json",
+      "language": "json",
+      "sizeLines": 32,
+      "fileCategory": "config"
+    },
+    {
+      "path": "frontend/README.md",
+      "language": "markdown",
+      "sizeLines": 143,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "frontend/scripts/cache_property_photos.py",
+      "language": "python",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/scripts/check_contract.py",
+      "language": "python",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/scripts/check_integration.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/scripts/integration-requirements.txt",
+      "language": "txt",
+      "sizeLines": 7,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "frontend/scripts/make_fixtures.py",
+      "language": "python",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "language": "typescript",
+      "sizeLines": 1456,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/architecture.css",
+      "language": "css",
+      "sizeLines": 1419,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "frontend/src/components/Assumptions.tsx",
+      "language": "typescript",
+      "sizeLines": 200,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/AuditMethod.tsx",
+      "language": "typescript",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/AuditProgress.tsx",
+      "language": "typescript",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/AuditTasks.tsx",
+      "language": "typescript",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/BuildingArt.tsx",
+      "language": "typescript",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/Calibration.tsx",
+      "language": "typescript",
+      "sizeLines": 77,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/Documents.tsx",
+      "language": "typescript",
+      "sizeLines": 432,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/DocumentText.tsx",
+      "language": "typescript",
+      "sizeLines": 81,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/EnergyOverlay.tsx",
+      "language": "typescript",
+      "sizeLines": 380,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/Find.tsx",
+      "language": "typescript",
+      "sizeLines": 253,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/FindingReason.tsx",
+      "language": "typescript",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/Geometry.tsx",
+      "language": "typescript",
+      "sizeLines": 535,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/HouseViewer.tsx",
+      "language": "typescript",
+      "sizeLines": 348,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/HowItWorks.tsx",
+      "language": "typescript",
+      "sizeLines": 271,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/LetoMark.tsx",
+      "language": "typescript",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/Plan.tsx",
+      "language": "typescript",
+      "sizeLines": 680,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/property-discovery.css",
+      "language": "css",
+      "sizeLines": 270,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "frontend/src/components/PropertyPreview.tsx",
+      "language": "typescript",
+      "sizeLines": 80,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/PropertyViews.tsx",
+      "language": "typescript",
+      "sizeLines": 331,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/RunSource.tsx",
+      "language": "typescript",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/SourceDrawer.tsx",
+      "language": "typescript",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/Tour.tsx",
+      "language": "typescript",
+      "sizeLines": 213,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/Warnings.tsx",
+      "language": "typescript",
+      "sizeLines": 92,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/api.ts",
+      "language": "typescript",
+      "sizeLines": 184,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/audit-replay.ts",
+      "language": "typescript",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/energy-explorer.ts",
+      "language": "typescript",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/fixtures.ts",
+      "language": "typescript",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/format.ts",
+      "language": "typescript",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/house-scene.ts",
+      "language": "typescript",
+      "sizeLines": 968,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/property-geospatial.ts",
+      "language": "typescript",
+      "sizeLines": 92,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/property-imagery.ts",
+      "language": "typescript",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/property-readiness.ts",
+      "language": "typescript",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/recorded-budget.ts",
+      "language": "typescript",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/types.ts",
+      "language": "typescript",
+      "sizeLines": 354,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "language": "typescript",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/readability.css",
+      "language": "css",
+      "sizeLines": 1584,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "frontend/src/styles.css",
+      "language": "css",
+      "sizeLines": 3058,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "frontend/src/vite-env.d.ts",
+      "language": "typescript",
+      "sizeLines": 2,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "language": "typescript",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 80,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/data-integration.md",
+      "language": "markdown",
+      "sizeLines": 1586,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/decisions.md",
+      "language": "markdown",
+      "sizeLines": 80,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/examples/ask/building_model_narrow.json",
+      "language": "json",
+      "sizeLines": 1368,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/ask/building_model_wide.json",
+      "language": "json",
+      "sizeLines": 1368,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/ask/README.md",
+      "language": "markdown",
+      "sizeLines": 16,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/examples/house/baseline_result.json",
+      "language": "json",
+      "sizeLines": 81,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/building_model.json",
+      "language": "json",
+      "sizeLines": 1657,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/document_draft.json",
+      "language": "json",
+      "sizeLines": 60,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/document_request.json",
+      "language": "json",
+      "sizeLines": 14,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/measures.json",
+      "language": "json",
+      "sizeLines": 2364,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/plan_tenant.json",
+      "language": "json",
+      "sizeLines": 579,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/plan.json",
+      "language": "json",
+      "sizeLines": 1143,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/property_bundle.json",
+      "language": "json",
+      "sizeLines": 1007,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/property_summary.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/run_events.json",
+      "language": "json",
+      "sizeLines": 280,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/run_request_tenant.json",
+      "language": "json",
+      "sizeLines": 8,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/run_request.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/house/run_result.json",
+      "language": "json",
+      "sizeLines": 5358,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/baseline_result.json",
+      "language": "json",
+      "sizeLines": 82,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/building_model.json",
+      "language": "json",
+      "sizeLines": 1615,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/document_draft.json",
+      "language": "json",
+      "sizeLines": 74,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/document_request.json",
+      "language": "json",
+      "sizeLines": 13,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/measures.json",
+      "language": "json",
+      "sizeLines": 4063,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/plan_tenant.json",
+      "language": "json",
+      "sizeLines": 538,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/plan.json",
+      "language": "json",
+      "sizeLines": 751,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/property_bundle.json",
+      "language": "json",
+      "sizeLines": 967,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/property_summary.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/run_events.json",
+      "language": "json",
+      "sizeLines": 331,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/run_request_tenant.json",
+      "language": "json",
+      "sizeLines": 40,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/run_request.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office_houston/run_result.json",
+      "language": "json",
+      "sizeLines": 6577,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/baseline_result.json",
+      "language": "json",
+      "sizeLines": 82,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/building_model.json",
+      "language": "json",
+      "sizeLines": 2221,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/document_draft.json",
+      "language": "json",
+      "sizeLines": 105,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/document_request.json",
+      "language": "json",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/measures.json",
+      "language": "json",
+      "sizeLines": 5587,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/plan_tenant.json",
+      "language": "json",
+      "sizeLines": 911,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/plan.json",
+      "language": "json",
+      "sizeLines": 1819,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/property_bundle.json",
+      "language": "json",
+      "sizeLines": 1843,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/property_summary.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/run_events.json",
+      "language": "json",
+      "sizeLines": 347,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/run_request_tenant.json",
+      "language": "json",
+      "sizeLines": 40,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/run_request.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/office/run_result.json",
+      "language": "json",
+      "sizeLines": 9780,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/README.md",
+      "language": "markdown",
+      "sizeLines": 1048,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/examples/search_results.json",
+      "language": "json",
+      "sizeLines": 59,
+      "fileCategory": "config"
+    },
+    {
+      "path": "specs/examples/weather/build_weather_sample.py",
+      "language": "python",
+      "sizeLines": 278,
+      "fileCategory": "code"
+    },
+    {
+      "path": "specs/examples/weather/fetch_weather_sample.py",
+      "language": "python",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "specs/examples/weather/README.md",
+      "language": "markdown",
+      "sizeLines": 95,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/examples/weather/typical_year_hourly_houston.csv",
+      "language": "csv",
+      "sizeLines": 8785,
+      "fileCategory": "data"
+    },
+    {
+      "path": "specs/examples/weather/typical_year_hourly.csv",
+      "language": "csv",
+      "sizeLines": 8785,
+      "fileCategory": "data"
+    },
+    {
+      "path": "specs/handoff-plan.md",
+      "language": "markdown",
+      "sizeLines": 132,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/HANDOFF.md",
+      "language": "markdown",
+      "sizeLines": 166,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/legal.md",
+      "language": "markdown",
+      "sizeLines": 1004,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/legal/california.md",
+      "language": "markdown",
+      "sizeLines": 1187,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/legal/texas.md",
+      "language": "markdown",
+      "sizeLines": 858,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/physics.md",
+      "language": "markdown",
+      "sizeLines": 282,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/physics/01-solar-pv.md",
+      "language": "markdown",
+      "sizeLines": 1287,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/physics/02-thermal-systems.md",
+      "language": "markdown",
+      "sizeLines": 1855,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/physics/03-daylight-comfort.md",
+      "language": "markdown",
+      "sizeLines": 992,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/physics/04-economics-emissions-mv.md",
+      "language": "markdown",
+      "sizeLines": 1169,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/SPEC.md",
+      "language": "markdown",
+      "sizeLines": 1136,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "specs/workplan.md",
+      "language": "markdown",
+      "sizeLines": 859,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tools/board",
+      "language": "unknown",
+      "sizeLines": 222,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 313,
+  "filteredByIgnore": 139,
+  "estimatedComplexity": "large",
+  "importMap": {
+    ".claude/agents/data-api.md": [],
+    ".claude/agents/data-cache.md": [],
+    ".claude/agents/data-costar.md": [],
+    ".claude/agents/data-matterport.md": [],
+    ".claude/agents/data-vexcel.md": [],
+    ".claude/commands/data-status.md": [],
+    ".claude/commands/data-wp.md": [],
+    ".claude/hooks/board-prompt.sh": [],
+    ".claude/hooks/board-session-start.sh": [],
+    ".claude/settings.json": [],
+    ".env.example": [],
+    ".github/ISSUE_TEMPLATE/message-board.md": [],
+    ".github/workflows/frontend.yml": [],
+    "AGENTS.md": [],
+    "backend/__init__.py": [],
+    "backend/agent/__init__.py": [],
+    "backend/agent/analysis_run.py": [
+      "backend/agent/__init__.py",
+      "backend/agent/live.py",
+      "backend/agent/narrative/__init__.py",
+      "backend/agent/runtime/runtime.py",
+      "backend/agent/tools/__init__.py",
+      "backend/schema.py"
+    ],
+    "backend/agent/analysis_stub.py": [
+      "backend/agent/fixtures.py",
+      "backend/schema.py"
+    ],
+    "backend/agent/api.py": [
+      "backend/agent/fixtures.py",
+      "backend/agent/runtime/replan.py",
+      "backend/schema.py"
+    ],
+    "backend/agent/ask/__init__.py": [
+      "backend/agent/ask/ask.py"
+    ],
+    "backend/agent/ask/ask.py": [
+      "backend/schema.py"
+    ],
+    "backend/agent/fixtures.py": [],
+    "backend/agent/graph/__init__.py": [
+      "backend/agent/graph/counsel.py",
+      "backend/agent/graph/fallbacks.py",
+      "backend/agent/graph/graph.py"
+    ],
+    "backend/agent/graph/counsel.py": [],
+    "backend/agent/graph/fallbacks.py": [
+      "backend/schema.py"
+    ],
+    "backend/agent/graph/graph.py": [],
+    "backend/agent/live.py": [
+      "backend/agent/ask/__init__.py",
+      "backend/agent/graph/__init__.py",
+      "backend/agent/narrative/__init__.py",
+      "backend/agent/runtime/replan.py",
+      "backend/agent/runtime/runtime.py",
+      "backend/agent/tools/__init__.py",
+      "backend/schema.py"
+    ],
+    "backend/agent/narrative/__init__.py": [
+      "backend/agent/narrative/narrative.py",
+      "backend/agent/narrative/report.py"
+    ],
+    "backend/agent/narrative/narrative.py": [
+      "backend/schema.py"
+    ],
+    "backend/agent/narrative/report.py": [
+      "backend/schema.py"
+    ],
+    "backend/agent/requirements.txt": [],
+    "backend/agent/roof/__init__.py": [
+      "backend/agent/roof/roof.py"
+    ],
+    "backend/agent/roof/roof.py": [
+      "backend/schema.py"
+    ],
+    "backend/agent/runtime/__init__.py": [
+      "backend/agent/runtime/replan.py",
+      "backend/agent/runtime/runtime.py"
+    ],
+    "backend/agent/runtime/replan.py": [
+      "backend/agent/narrative/__init__.py",
+      "backend/agent/runtime/runtime.py",
+      "backend/schema.py"
+    ],
+    "backend/agent/runtime/runtime.py": [
+      "backend/schema.py"
+    ],
+    "backend/agent/server/__init__.py": [],
+    "backend/agent/server/app.py": [
+      "backend/agent/__init__.py",
+      "backend/agent/api.py",
+      "backend/agent/roof/__init__.py",
+      "backend/agent/runtime/replan.py",
+      "backend/data_layer/__init__.py",
+      "backend/schema.py"
+    ],
+    "backend/agent/tools/__init__.py": [
+      "backend/agent/tools/tools.py"
+    ],
+    "backend/agent/tools/tools.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/__init__.py": [],
+    "backend/analysis/api.py": [
+      "backend/analysis/__init__.py",
+      "backend/analysis/finance/costs/__init__.py",
+      "backend/analysis/finance/economics/__init__.py",
+      "backend/analysis/finance/plan/__init__.py",
+      "backend/analysis/finance/sensitivity/__init__.py",
+      "backend/analysis/finance/value/__init__.py",
+      "backend/analysis/layout/__init__.py",
+      "backend/analysis/measures/pv/__init__.py",
+      "backend/analysis/model/benchmark/checks.py",
+      "backend/analysis/model/geometry/__init__.py",
+      "backend/analysis/model/registry/__init__.py",
+      "backend/analysis/physics/climate/__init__.py",
+      "backend/analysis/physics/climate/weather.py",
+      "backend/analysis/physics/daylight/__init__.py",
+      "backend/analysis/physics/pv/__init__.py",
+      "backend/analysis/physics/systems/__init__.py",
+      "backend/analysis/physics/zone/__init__.py",
+      "backend/analysis/solar/layout/__init__.py",
+      "backend/analysis/solar/roof/__init__.py",
+      "backend/analysis/solar/shading/__init__.py",
+      "backend/analysis/vision/__init__.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/__init__.py": [],
+    "backend/analysis/finance/costs/__init__.py": [
+      "backend/analysis/finance/costs/costs.py",
+      "backend/analysis/finance/costs/incentives.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/costs/costs.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/costs/data/costs.json": [],
+    "backend/analysis/finance/costs/data/incentives.json": [],
+    "backend/analysis/finance/costs/data/useful_life.json": [],
+    "backend/analysis/finance/costs/incentives.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/cpace/__init__.py": [
+      "backend/analysis/finance/cpace/cpace.py"
+    ],
+    "backend/analysis/finance/cpace/cpace.py": [
+      "backend/__init__.py",
+      "backend/config.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/economics/__init__.py": [
+      "backend/analysis/finance/economics/economics.py"
+    ],
+    "backend/analysis/finance/economics/economics.py": [
+      "backend/__init__.py",
+      "backend/config.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/plan/__init__.py": [
+      "backend/analysis/finance/plan/plan.py"
+    ],
+    "backend/analysis/finance/plan/plan.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/sensitivity/__init__.py": [
+      "backend/analysis/finance/sensitivity/sensitivity.py"
+    ],
+    "backend/analysis/finance/sensitivity/sensitivity.py": [
+      "backend/__init__.py",
+      "backend/config.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/finance/value/__init__.py": [
+      "backend/analysis/finance/value/value.py"
+    ],
+    "backend/analysis/finance/value/value.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/layout/__init__.py": [
+      "backend/analysis/layout/measure.py",
+      "backend/analysis/layout/placement.py"
+    ],
+    "backend/analysis/layout/measure.py": [
+      "backend/analysis/layout/placement.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/layout/placement.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/controls/__init__.py": [
+      "backend/analysis/measures/controls/controls.py"
+    ],
+    "backend/analysis/measures/controls/controls.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/engine/__init__.py": [
+      "backend/analysis/measures/engine/catalogue.py",
+      "backend/analysis/measures/engine/engine.py"
+    ],
+    "backend/analysis/measures/engine/catalogue.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/engine/engine.py": [
+      "backend/analysis/measures/engine/catalogue.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/envelope/__init__.py": [
+      "backend/analysis/measures/envelope/airseal.py",
+      "backend/analysis/measures/envelope/attic.py",
+      "backend/analysis/measures/envelope/roof_cool.py"
+    ],
+    "backend/analysis/measures/envelope/airseal.py": [
+      "backend/analysis/measures/envelope/common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/envelope/attic.py": [
+      "backend/analysis/measures/envelope/common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/envelope/common.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/envelope/roof_cool.py": [
+      "backend/analysis/measures/envelope/common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/hvac_dhw/__init__.py": [
+      "backend/analysis/measures/hvac_dhw/hvac_dhw.py"
+    ],
+    "backend/analysis/measures/hvac_dhw/hvac_dhw.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/pv/__init__.py": [
+      "backend/analysis/measures/pv/pv.py"
+    ],
+    "backend/analysis/measures/pv/pv.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/systems/__init__.py": [
+      "backend/analysis/measures/systems/heat_pump.py",
+      "backend/analysis/measures/systems/lighting.py",
+      "backend/analysis/measures/systems/rooftop.py"
+    ],
+    "backend/analysis/measures/systems/_common.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/systems/heat_pump.py": [
+      "backend/analysis/measures/systems/_common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/systems/lighting.py": [
+      "backend/analysis/measures/systems/_common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/systems/rooftop.py": [
+      "backend/analysis/measures/systems/_common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/walls_windows/__init__.py": [
+      "backend/analysis/measures/walls_windows/walls.py",
+      "backend/analysis/measures/walls_windows/windows.py"
+    ],
+    "backend/analysis/measures/walls_windows/common.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/walls_windows/walls.py": [
+      "backend/analysis/measures/walls_windows/common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/measures/walls_windows/windows.py": [
+      "backend/analysis/measures/walls_windows/common.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/model/benchmark/__init__.py": [
+      "backend/analysis/model/benchmark/checks.py",
+      "backend/analysis/model/benchmark/eui.py",
+      "backend/analysis/model/benchmark/pv.py"
+    ],
+    "backend/analysis/model/benchmark/build_eui_tables.py": [],
+    "backend/analysis/model/benchmark/checks.py": [
+      "backend/analysis/model/benchmark/eui.py",
+      "backend/analysis/model/benchmark/pv.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/model/benchmark/eui_tables.csv": [],
+    "backend/analysis/model/benchmark/eui.py": [],
+    "backend/analysis/model/benchmark/pv.py": [],
+    "backend/analysis/model/geometry/__init__.py": [
+      "backend/analysis/model/geometry/build.py",
+      "backend/analysis/model/geometry/north.py",
+      "backend/analysis/model/geometry/walls.py"
+    ],
+    "backend/analysis/model/geometry/build.py": [
+      "backend/analysis/model/geometry/north.py",
+      "backend/analysis/model/geometry/walls.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/model/geometry/north.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/model/geometry/walls.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/model/registry/__init__.py": [
+      "backend/analysis/model/registry/registry.py"
+    ],
+    "backend/analysis/model/registry/registry.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/model/registry/tables.py": [],
+    "backend/analysis/physics/calibration/__init__.py": [
+      "backend/analysis/physics/calibration/calibrate.py",
+      "backend/analysis/physics/calibration/changepoint.py",
+      "backend/analysis/physics/calibration/stats.py",
+      "backend/analysis/physics/calibration/uncertainty.py"
+    ],
+    "backend/analysis/physics/calibration/calibrate.py": [
+      "backend/analysis/physics/calibration/changepoint.py",
+      "backend/analysis/physics/calibration/stats.py",
+      "backend/analysis/physics/calibration/uncertainty.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/calibration/changepoint.py": [],
+    "backend/analysis/physics/calibration/stats.py": [],
+    "backend/analysis/physics/calibration/uncertainty.py": [],
+    "backend/analysis/physics/climate/__init__.py": [
+      "backend/analysis/physics/climate/hourly.py",
+      "backend/analysis/physics/climate/irradiance.py",
+      "backend/analysis/physics/climate/solar_position.py",
+      "backend/analysis/physics/climate/weather.py"
+    ],
+    "backend/analysis/physics/climate/_spa_tables.py": [],
+    "backend/analysis/physics/climate/hourly.py": [
+      "backend/analysis/physics/climate/irradiance.py",
+      "backend/analysis/physics/climate/solar_position.py",
+      "backend/analysis/physics/climate/weather.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/climate/irradiance.py": [],
+    "backend/analysis/physics/climate/solar_position.py": [
+      "backend/analysis/physics/climate/spa.py"
+    ],
+    "backend/analysis/physics/climate/spa.py": [],
+    "backend/analysis/physics/climate/weather.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/daylight/__init__.py": [
+      "backend/analysis/physics/daylight/comfort.py",
+      "backend/analysis/physics/daylight/daylight.py",
+      "backend/analysis/physics/daylight/geometry.py",
+      "backend/analysis/physics/daylight/glare.py",
+      "backend/analysis/physics/daylight/lighting.py",
+      "backend/analysis/physics/daylight/point.py"
+    ],
+    "backend/analysis/physics/daylight/comfort.py": [],
+    "backend/analysis/physics/daylight/constants.py": [],
+    "backend/analysis/physics/daylight/daylight.py": [],
+    "backend/analysis/physics/daylight/geometry.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/daylight/glare.py": [
+      "backend/analysis/physics/daylight/daylight.py",
+      "backend/analysis/physics/daylight/geometry.py"
+    ],
+    "backend/analysis/physics/daylight/lighting.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/daylight/point.py": [
+      "backend/analysis/physics/daylight/comfort.py",
+      "backend/analysis/physics/daylight/daylight.py",
+      "backend/analysis/physics/daylight/geometry.py",
+      "backend/analysis/physics/daylight/glare.py",
+      "backend/analysis/physics/daylight/lighting.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/pv/__init__.py": [
+      "backend/analysis/physics/pv/chain.py",
+      "backend/analysis/physics/pv/energy.py"
+    ],
+    "backend/analysis/physics/pv/chain.py": [],
+    "backend/analysis/physics/pv/constants.py": [],
+    "backend/analysis/physics/pv/energy.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/systems/__init__.py": [
+      "backend/analysis/physics/systems/baseline.py",
+      "backend/analysis/physics/systems/cost.py",
+      "backend/analysis/physics/systems/dhw.py",
+      "backend/analysis/physics/systems/hvac.py",
+      "backend/analysis/physics/systems/loads.py",
+      "backend/analysis/physics/systems/uncertainty.py"
+    ],
+    "backend/analysis/physics/systems/baseline.py": [
+      "backend/analysis/physics/systems/constants.py",
+      "backend/analysis/physics/systems/cost.py",
+      "backend/analysis/physics/systems/dhw.py",
+      "backend/analysis/physics/systems/hvac.py",
+      "backend/analysis/physics/systems/loads.py",
+      "backend/analysis/physics/systems/uncertainty.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/systems/constants.py": [],
+    "backend/analysis/physics/systems/cost.py": [
+      "backend/analysis/physics/systems/constants.py"
+    ],
+    "backend/analysis/physics/systems/dhw.py": [
+      "backend/analysis/physics/systems/constants.py"
+    ],
+    "backend/analysis/physics/systems/hvac.py": [
+      "backend/analysis/physics/systems/constants.py"
+    ],
+    "backend/analysis/physics/systems/loads.py": [
+      "backend/analysis/physics/systems/constants.py"
+    ],
+    "backend/analysis/physics/systems/uncertainty.py": [],
+    "backend/analysis/physics/zone/__init__.py": [
+      "backend/analysis/physics/zone/airflow.py",
+      "backend/analysis/physics/zone/envelope.py",
+      "backend/analysis/physics/zone/model.py",
+      "backend/analysis/physics/zone/rc.py",
+      "backend/analysis/physics/zone/windows.py"
+    ],
+    "backend/analysis/physics/zone/airflow.py": [
+      "backend/analysis/physics/zone/rc.py"
+    ],
+    "backend/analysis/physics/zone/constants.py": [],
+    "backend/analysis/physics/zone/envelope.py": [],
+    "backend/analysis/physics/zone/model.py": [
+      "backend/analysis/physics/zone/airflow.py",
+      "backend/analysis/physics/zone/envelope.py",
+      "backend/analysis/physics/zone/rc.py",
+      "backend/analysis/physics/zone/windows.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/physics/zone/rc.py": [],
+    "backend/analysis/physics/zone/windows.py": [
+      "backend/analysis/physics/zone/envelope.py"
+    ],
+    "backend/analysis/requirements.txt": [],
+    "backend/analysis/solar/layout/__init__.py": [
+      "backend/analysis/solar/layout/layout.py",
+      "backend/analysis/solar/layout/packing.py",
+      "backend/analysis/solar/layout/region.py"
+    ],
+    "backend/analysis/solar/layout/layout.py": [
+      "backend/analysis/solar/layout/packing.py",
+      "backend/analysis/solar/layout/region.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/solar/layout/packing.py": [],
+    "backend/analysis/solar/layout/region.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/solar/roof/__init__.py": [
+      "backend/analysis/solar/roof/masks.py",
+      "backend/analysis/solar/roof/pitch.py",
+      "backend/analysis/solar/roof/planes.py",
+      "backend/analysis/solar/roof/setbacks.py",
+      "backend/analysis/solar/roof/usable.py"
+    ],
+    "backend/analysis/solar/roof/masks.py": [
+      "backend/analysis/solar/roof/planes.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/solar/roof/pitch.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/solar/roof/planes.py": [
+      "backend/analysis/solar/roof/pitch.py",
+      "backend/analysis/solar/roof/setbacks.py",
+      "backend/analysis/solar/roof/usable.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/solar/roof/setbacks.py": [],
+    "backend/analysis/solar/roof/usable.py": [
+      "backend/analysis/solar/roof/setbacks.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/solar/shading/__init__.py": [
+      "backend/analysis/solar/shading/geometry.py",
+      "backend/analysis/solar/shading/raycast.py",
+      "backend/analysis/solar/shading/shading.py"
+    ],
+    "backend/analysis/solar/shading/geometry.py": [],
+    "backend/analysis/solar/shading/raycast.py": [],
+    "backend/analysis/solar/shading/shading.py": [
+      "backend/analysis/solar/shading/geometry.py",
+      "backend/analysis/solar/shading/raycast.py",
+      "backend/schema.py"
+    ],
+    "backend/analysis/vision/__init__.py": [
+      "backend/analysis/vision/feasibility.py",
+      "backend/analysis/vision/interior.py"
+    ],
+    "backend/analysis/vision/feasibility.py": [
+      "backend/schema.py"
+    ],
+    "backend/analysis/vision/interior.py": [
+      "backend/schema.py"
+    ],
+    "backend/config.py": [],
+    "backend/data_layer/__init__.py": [],
+    "backend/data_layer/api.py": [
+      "backend/data_layer/cache.py",
+      "backend/data_layer/index.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/cache.py": [
+      "backend/schema.py"
+    ],
+    "backend/data_layer/costar_extra.py": [
+      "backend/data_layer/costar.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/costar.py": [
+      "backend/schema.py"
+    ],
+    "backend/data_layer/demo_check.py": [],
+    "backend/data_layer/demo_transfer.py": [
+      "backend/data_layer/cache.py"
+    ],
+    "backend/data_layer/external.py": [
+      "backend/data_layer/cache.py",
+      "backend/data_layer/tmyx.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/imagery.py": [
+      "backend/data_layer/cache.py",
+      "backend/data_layer/vexcel.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/index.py": [
+      "backend/data_layer/costar.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/locate.py": [
+      "backend/schema.py"
+    ],
+    "backend/data_layer/matterport.py": [
+      "backend/data_layer/cache.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/mirror.py": [],
+    "backend/data_layer/places.py": [
+      "backend/data_layer/cache.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/requirements.txt": [],
+    "backend/data_layer/screening.py": [
+      "backend/data_layer/cache.py",
+      "backend/data_layer/index.py",
+      "backend/data_layer/vexcel.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/tmyx.py": [
+      "backend/data_layer/cache.py",
+      "backend/schema.py"
+    ],
+    "backend/data_layer/vexcel.py": [
+      "backend/data_layer/cache.py",
+      "backend/schema.py"
+    ],
+    "backend/legal/__init__.py": [],
+    "backend/legal/api.py": [
+      "backend/legal/checks/__init__.py",
+      "backend/legal/engine/__init__.py",
+      "backend/legal/engine/engine.py",
+      "backend/schema.py"
+    ],
+    "backend/legal/checks/__init__.py": [
+      "backend/legal/checks/checks.py"
+    ],
+    "backend/legal/checks/_data.py": [],
+    "backend/legal/checks/_tx_data.py": [],
+    "backend/legal/checks/checks.py": [
+      "backend/legal/checks/_data.py",
+      "backend/schema.py"
+    ],
+    "backend/legal/checks/commercial.py": [
+      "backend/schema.py"
+    ],
+    "backend/legal/checks/cpace.py": [
+      "backend/schema.py"
+    ],
+    "backend/legal/checks/texas.py": [
+      "backend/legal/checks/_tx_data.py",
+      "backend/legal/checks/checks.py",
+      "backend/schema.py"
+    ],
+    "backend/legal/engine/__init__.py": [
+      "backend/legal/engine/engine.py"
+    ],
+    "backend/legal/engine/engine.py": [
+      "backend/schema.py"
+    ],
+    "backend/legal/engine/texas.py": [],
+    "backend/legal/requirements.txt": [],
+    "backend/legal/templates/ca/retrofit_contract_commercial.md": [],
+    "backend/legal/templates/ca/retrofit_contract_residential.md": [],
+    "backend/legal/templates/cpace/cpace_package_ca.md": [],
+    "backend/legal/templates/cpace/cpace_package_tx.md": [],
+    "backend/legal/templates/tx/retrofit_contract_residential.md": [],
+    "backend/schema.py": [],
+    "backend/server.py": [
+      "backend/agent/server/app.py"
+    ],
+    "CLAUDE.md": [],
+    "frontend/fixtures/house.json": [],
+    "frontend/fixtures/office.json": [],
+    "frontend/index.html": [],
+    "frontend/JUDGE_WALKTHROUGH.md": [],
+    "frontend/package.json": [],
+    "frontend/README.md": [],
+    "frontend/scripts/cache_property_photos.py": [],
+    "frontend/scripts/check_contract.py": [],
+    "frontend/scripts/check_integration.py": [],
+    "frontend/scripts/integration-requirements.txt": [],
+    "frontend/scripts/make_fixtures.py": [],
+    "frontend/src/App.tsx": [
+      "frontend/src/components/Assumptions.tsx",
+      "frontend/src/components/AuditMethod.tsx",
+      "frontend/src/components/AuditProgress.tsx",
+      "frontend/src/components/AuditTasks.tsx",
+      "frontend/src/components/Calibration.tsx",
+      "frontend/src/components/Documents.tsx",
+      "frontend/src/components/Find.tsx",
+      "frontend/src/components/Geometry.tsx",
+      "frontend/src/components/HouseViewer.tsx",
+      "frontend/src/components/HowItWorks.tsx",
+      "frontend/src/components/Plan.tsx",
+      "frontend/src/components/RunSource.tsx",
+      "frontend/src/components/Tour.tsx",
+      "frontend/src/components/Warnings.tsx",
+      "frontend/src/lib/api.ts",
+      "frontend/src/lib/audit-replay.ts",
+      "frontend/src/lib/fixtures.ts",
+      "frontend/src/lib/format.ts",
+      "frontend/src/lib/recorded-budget.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/architecture.css": [],
+    "frontend/src/components/Assumptions.tsx": [
+      "frontend/src/lib/format.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/AuditMethod.tsx": [],
+    "frontend/src/components/AuditProgress.tsx": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/AuditTasks.tsx": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/BuildingArt.tsx": [
+      "frontend/src/components/HouseViewer.tsx"
+    ],
+    "frontend/src/components/Calibration.tsx": [
+      "frontend/src/components/Warnings.tsx",
+      "frontend/src/lib/format.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/Documents.tsx": [
+      "frontend/src/components/DocumentText.tsx",
+      "frontend/src/lib/api.ts",
+      "frontend/src/lib/fixtures.ts",
+      "frontend/src/lib/format.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/DocumentText.tsx": [],
+    "frontend/src/components/EnergyOverlay.tsx": [
+      "frontend/src/lib/energy-explorer.ts",
+      "frontend/src/lib/format.ts",
+      "frontend/src/lib/house-scene.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/Find.tsx": [
+      "frontend/src/components/HouseViewer.tsx",
+      "frontend/src/components/PropertyPreview.tsx",
+      "frontend/src/lib/fixtures.ts",
+      "frontend/src/lib/property-readiness.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/FindingReason.tsx": [],
+    "frontend/src/components/Geometry.tsx": [
+      "frontend/src/components/Warnings.tsx",
+      "frontend/src/lib/api.ts",
+      "frontend/src/lib/format.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/HouseViewer.tsx": [
+      "frontend/src/components/EnergyOverlay.tsx",
+      "frontend/src/lib/energy-explorer.ts",
+      "frontend/src/lib/house-scene.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/HowItWorks.tsx": [],
+    "frontend/src/components/LetoMark.tsx": [],
+    "frontend/src/components/Plan.tsx": [
+      "frontend/src/components/FindingReason.tsx",
+      "frontend/src/components/SourceDrawer.tsx",
+      "frontend/src/lib/format.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/property-discovery.css": [],
+    "frontend/src/components/PropertyPreview.tsx": [
+      "frontend/src/components/property-discovery.css",
+      "frontend/src/components/PropertyViews.tsx",
+      "frontend/src/lib/property-imagery.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/PropertyViews.tsx": [
+      "frontend/src/lib/property-geospatial.ts",
+      "frontend/src/lib/property-imagery.ts",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/RunSource.tsx": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/SourceDrawer.tsx": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/Tour.tsx": [
+      "frontend/src/components/HouseViewer.tsx",
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/components/Warnings.tsx": [
+      "frontend/src/components/DocumentText.tsx"
+    ],
+    "frontend/src/lib/api.ts": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/lib/audit-replay.ts": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/lib/energy-explorer.ts": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/lib/fixtures.ts": [
+      "frontend/fixtures/house.json",
+      "frontend/fixtures/office.json",
+      "frontend/src/lib/types.ts",
+      "specs/examples/house/run_result.json"
+    ],
+    "frontend/src/lib/format.ts": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/lib/house-scene.ts": [
+      "frontend/src/lib/energy-explorer.ts"
+    ],
+    "frontend/src/lib/property-geospatial.ts": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/lib/property-imagery.ts": [
+      "frontend/src/lib/api.ts"
+    ],
+    "frontend/src/lib/property-readiness.ts": [
+      "frontend/src/lib/types.ts"
+    ],
+    "frontend/src/lib/recorded-budget.ts": [],
+    "frontend/src/lib/types.ts": [],
+    "frontend/src/main.tsx": [
+      "frontend/src/App.tsx",
+      "frontend/src/architecture.css",
+      "frontend/src/readability.css",
+      "frontend/src/styles.css"
+    ],
+    "frontend/src/readability.css": [],
+    "frontend/src/styles.css": [],
+    "frontend/src/vite-env.d.ts": [],
+    "frontend/tsconfig.json": [],
+    "frontend/vite.config.ts": [],
+    "README.md": [],
+    "specs/data-integration.md": [],
+    "specs/decisions.md": [],
+    "specs/examples/ask/building_model_narrow.json": [],
+    "specs/examples/ask/building_model_wide.json": [],
+    "specs/examples/ask/README.md": [],
+    "specs/examples/house/baseline_result.json": [],
+    "specs/examples/house/building_model.json": [],
+    "specs/examples/house/document_draft.json": [],
+    "specs/examples/house/document_request.json": [],
+    "specs/examples/house/measures.json": [],
+    "specs/examples/house/plan_tenant.json": [],
+    "specs/examples/house/plan.json": [],
+    "specs/examples/house/property_bundle.json": [],
+    "specs/examples/house/property_summary.json": [],
+    "specs/examples/house/run_events.json": [],
+    "specs/examples/house/run_request_tenant.json": [],
+    "specs/examples/house/run_request.json": [],
+    "specs/examples/house/run_result.json": [],
+    "specs/examples/office_houston/baseline_result.json": [],
+    "specs/examples/office_houston/building_model.json": [],
+    "specs/examples/office_houston/document_draft.json": [],
+    "specs/examples/office_houston/document_request.json": [],
+    "specs/examples/office_houston/measures.json": [],
+    "specs/examples/office_houston/plan_tenant.json": [],
+    "specs/examples/office_houston/plan.json": [],
+    "specs/examples/office_houston/property_bundle.json": [],
+    "specs/examples/office_houston/property_summary.json": [],
+    "specs/examples/office_houston/run_events.json": [],
+    "specs/examples/office_houston/run_request_tenant.json": [],
+    "specs/examples/office_houston/run_request.json": [],
+    "specs/examples/office_houston/run_result.json": [],
+    "specs/examples/office/baseline_result.json": [],
+    "specs/examples/office/building_model.json": [],
+    "specs/examples/office/document_draft.json": [],
+    "specs/examples/office/document_request.json": [],
+    "specs/examples/office/measures.json": [],
+    "specs/examples/office/plan_tenant.json": [],
+    "specs/examples/office/plan.json": [],
+    "specs/examples/office/property_bundle.json": [],
+    "specs/examples/office/property_summary.json": [],
+    "specs/examples/office/run_events.json": [],
+    "specs/examples/office/run_request_tenant.json": [],
+    "specs/examples/office/run_request.json": [],
+    "specs/examples/office/run_result.json": [],
+    "specs/examples/README.md": [],
+    "specs/examples/search_results.json": [],
+    "specs/examples/weather/build_weather_sample.py": [],
+    "specs/examples/weather/fetch_weather_sample.py": [],
+    "specs/examples/weather/README.md": [],
+    "specs/examples/weather/typical_year_hourly_houston.csv": [],
+    "specs/examples/weather/typical_year_hourly.csv": [],
+    "specs/handoff-plan.md": [],
+    "specs/HANDOFF.md": [],
+    "specs/legal.md": [],
+    "specs/legal/california.md": [],
+    "specs/legal/texas.md": [],
+    "specs/physics.md": [],
+    "specs/physics/01-solar-pv.md": [],
+    "specs/physics/02-thermal-systems.md": [],
+    "specs/physics/03-daylight-comfort.md": [],
+    "specs/physics/04-economics-emissions-mv.md": [],
+    "specs/SPEC.md": [],
+    "specs/workplan.md": [],
+    "tools/board": []
+  }
+}

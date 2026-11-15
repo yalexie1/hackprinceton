@@ -47,10 +47,16 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
-from . import cache, index, matterport
+from . import api, demo_check, demo_set, index, matterport
+from .demo_check import Check
 from .matterport import Poster
+
+#: `assemble`/`verify` signatures `warm_one` calls by default and that an injected
+#: replacement in a test must match closely enough to stand in for.
+Assembler = Callable[..., object]
+Verifier = Callable[..., list[Check]]
 
 
 def uncached_sids(n: int, *, root: Optional[Path] = None) -> list[str]:
@@ -61,11 +67,19 @@ def uncached_sids(n: int, *, root: Optional[Path] = None) -> list[str]:
     what a laptop already has - not the raw Matterport payload cache, because the
     question this answers is "does warming this sid still do useful work", and a
     bundle already on disk is the one case where it would not.
+
+    Delegates the "has a `bundle.json`" check to `demo_set.already_warm` - task 2
+    had to duplicate that primitive here because `warm.py` did not yet import
+    `demo_set` and the other direction would have been circular. Task 4 makes this
+    module import `demo_set` anyway (for `sids`/`spares`/`resolve`), so the
+    duplication is reconciled here; `demo_set.already_warm` keeps its own
+    docstring and is still called directly by `demo_set._generate`, which this
+    module does not touch.
     """
-    base = Path(root) if root is not None else cache.cache_root()
+    warmed = demo_set.already_warm(root)
     out: list[str] = []
     for summary in index.summaries():
-        if (base / summary.sid / "bundle.json").is_file():
+        if summary.sid in warmed:
             continue
         out.append(summary.sid)
         if len(out) >= n:
@@ -100,13 +114,145 @@ def probe(n: int = 5, *, post: Optional[Poster] = None) -> list[tuple[str, bool,
     return results
 
 
+def warm_one(
+    sid: str, *, assemble: Optional[Assembler] = None, verify: Optional[Verifier] = None
+) -> tuple[bool, str]:
+    """Assemble `sid` live and verify it. `(True, detail)` on success; `(False, reason)`
+    on any disqualification - this never raises, because `warm_all` calls it once per
+    property across a pass that may already have run for most of an hour, and one bad
+    sid (a dead model, an `IncompleteBundle` with no georeference, a failed check) must
+    not abort the rest.
+
+    `assemble` defaults to `api.get_property_bundle`, called with `live=True` - the
+    offline default returns a replayed fixture, which would make every property in a
+    real pass "succeed" against data nobody fetched. `refresh=False` because a bundle
+    already warmed earlier in this same pass (or by a previous run) should not be
+    re-fetched for nothing; the point of warming is that the second read is free.
+
+    `verify` defaults to `demo_check.check_property`, called with `run_analysis=True`
+    per the plan - a warmed property is meant to drive a demo end to end, not just sit
+    in cache. Only a `fail` status disqualifies; a `warn` (an unresolved utility, a
+    thin scan) is normal even on the golden three and must not throw away a property
+    over it.
+    """
+    assemble = assemble if assemble is not None else api.get_property_bundle
+    verify = verify if verify is not None else demo_check.check_property
+
+    try:
+        assemble(sid, live=True, refresh=False)
+    except Exception as exc:  # noqa: BLE001 - a disqualification, not a crash
+        return False, str(exc)
+
+    try:
+        checks = verify(sid, run_analysis=True)
+    except Exception as exc:  # noqa: BLE001 - same: reported, not raised
+        return False, str(exc)
+
+    fails = [c for c in checks if c.status == "fail"]
+    if fails:
+        return False, f"{fails[0].name}: {fails[0].detail}"
+    return True, "ok"
+
+
+class SparesExhausted(RuntimeError):
+    """Raised by `warm_all` when the spare pool ran out before the target count could
+    be met. Carries the shortfall by name - `"<warmed> of <len(target)>"` - rather
+    than a bare "ran out", because a pass that silently warmed fewer than planned is
+    exactly the failure mode over-provisioning (see `demo_set`'s module docstring)
+    exists to catch."""
+
+    def __init__(self, warmed: int, target: int):
+        self.warmed = warmed
+        self.target = target
+        super().__init__(
+            f"spares exhausted: only {warmed} of {target} warmed"
+        )
+
+
+def warm_all(
+    sids: Optional[list[str]] = None,
+    spares: Optional[list[str]] = None,
+    *,
+    assemble: Optional[Assembler] = None,
+    verify: Optional[Verifier] = None,
+    log: Callable[[str], None] = print,
+) -> dict:
+    """Warm every sid in `sids` (default `demo_set.sids()`), replacing any
+    disqualification with the next sid from `spares` (default `demo_set.spares()`,
+    already in replacement order - see `demo_set.select`'s docstring).
+
+    `demo_set.resolve()` runs first and its `ManifestStale` is let through unchanged:
+    a sid the manifest carries but the live index no longer has must surface in the
+    first second, not after an hour spent warming the other forty-nine.
+
+    Returns `{"warmed": [...], "replaced": [(disqualified_sid, next_sid), ...]}`.
+    `replaced` records every hop of a chain, not just the first: if a spare itself
+    fails and a second spare is drawn, both hops appear, so a reader can see exactly
+    which sid a warmed slot actually came from.
+
+    Logs one line per sid tried (not per target slot), because a pass over fifty
+    properties at a measured 2 s to 76 s each runs up to an hour, and a silent process
+    that long looks hung.
+
+    Raises `SparesExhausted` if the spare pool runs dry before every target slot is
+    filled - a shrunk demo set should be loud, not discovered by counting bundles
+    afterwards.
+    """
+    demo_set.resolve()
+
+    target = list(sids) if sids is not None else list(demo_set.sids())
+    spare_pool = list(spares) if spares is not None else list(demo_set.spares())
+
+    warmed: list[str] = []
+    replaced: list[tuple[str, str]] = []
+
+    for i, original in enumerate(target, start=1):
+        current = original
+        ok, detail = warm_one(current, assemble=assemble, verify=verify)
+        while not ok and spare_pool:
+            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - drawing a spare")
+            replacement = spare_pool.pop(0)
+            replaced.append((current, replacement))
+            current = replacement
+            ok, detail = warm_one(current, assemble=assemble, verify=verify)
+
+        if ok:
+            warmed.append(current)
+            log(f"[{i}/{len(target)}] {current}: warmed ({detail})")
+        else:
+            log(f"[{i}/{len(target)}] {current}: disqualified ({detail}) - no spares left")
+
+    if len(warmed) < len(target):
+        raise SparesExhausted(len(warmed), len(target))
+
+    return {"warmed": warmed, "replaced": replaced}
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--probe", type=int, metavar="N",
         help="reach-check N uncached sids against the live Matterport key",
     )
+    parser.add_argument(
+        "--all", action="store_true",
+        help="warm and verify the full 50-property demo set, replacing failures "
+             "from the 25 spares (up to an hour against the live keys)",
+    )
     args = parser.parse_args(list(sys.argv[1:] if argv is None else argv))
+
+    if args.all:
+        try:
+            result = warm_all()
+        except (demo_set.ManifestStale, SparesExhausted) as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        print(f"\nwarmed {len(result['warmed'])} properties")
+        if result["replaced"]:
+            print("replacements:")
+            for old, new in result["replaced"]:
+                print(f"  {old} -> {new}")
+        return 0
 
     if args.probe is not None:
         results = probe(args.probe)

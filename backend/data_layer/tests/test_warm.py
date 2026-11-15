@@ -119,3 +119,162 @@ def test_main_probe_exits_nonzero_on_zero_results(monkeypatch, capsys):
     assert rc == 1
     err = capsys.readouterr().err
     assert "probed 0 sids" in err
+
+
+# ---------- warm_one / warm_all (task 4) ----------
+#
+# These tests always inject both `assemble` and `verify` - `pytest backend -q` must
+# make no network call, and the production defaults (`api.get_property_bundle(...,
+# live=True, ...)` and `demo_check.check_property(..., run_analysis=True)`) do
+# exactly that. `warm_all`'s manifest check is bypassed the same way: `demo_set.
+# resolve()` walks the real `DEMO_SET` literal against `index.by_sid()`, which is
+# `lru_cache`d process-wide, so patching it per test (rather than the index it reads
+# from) is what keeps these tests independent of whatever ran before them in the
+# same `pytest` invocation.
+
+from backend.data_layer.demo_check import Check
+
+
+def ok_assemble(sid, **kwargs):
+    """Succeeds for any sid - stands in for `api.get_property_bundle`."""
+    return object()
+
+
+def raises_incomplete(sid, **kwargs):
+    """Stands in for an `IncompleteBundle` from assembly - a real disqualification,
+    never a crash."""
+    from backend.data_layer.api import IncompleteBundle
+
+    raise IncompleteBundle(f"{sid}: no georeference, so climate cannot be built", [])
+
+
+def ok_verify(sid, **kwargs):
+    return [Check("bundle", "ok", "assembled")]
+
+
+def fail_then_ok(sid, **kwargs):
+    """Fails for BAD1, succeeds for everything else - the shape of a bad target
+    sid that a spare then replaces cleanly."""
+    if sid == "BAD1":
+        raise RuntimeError("BAD1: dead model")
+    return object()
+
+
+def always_fail(sid, **kwargs):
+    raise RuntimeError(f"{sid}: always fails")
+
+
+def test_a_warn_does_not_disqualify_a_property():
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble,
+        verify=lambda s, **k: [Check("utility", "warn", "")],
+    )
+    assert ok is True
+
+
+def test_a_failed_check_disqualifies():
+    ok, detail = warm.warm_one(
+        "SID_A", assemble=ok_assemble,
+        verify=lambda s, **k: [Check("mask", "fail", "0.1 of footprint")],
+    )
+    assert ok is False and "mask" in detail
+
+
+def test_incomplete_bundle_disqualifies_without_raising():
+    ok, detail = warm.warm_one("SID_A", assemble=raises_incomplete)
+    assert ok is False and "no georeference" in detail
+
+
+def test_a_failure_is_replaced_from_the_same_bucket_spare(monkeypatch):
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    out = warm.warm_all(
+        ["BAD1"], ["SPARE1"], assemble=fail_then_ok, verify=ok_verify,
+        log=lambda *_: None,
+    )
+    assert out["warmed"] == ["SPARE1"]
+    assert out["replaced"] == [("BAD1", "SPARE1")]
+
+
+def test_exhausted_spares_report_short_and_do_not_claim_fifty(monkeypatch):
+    """The brief's own draft of this test asserted `match="48 of 50"` while passing
+    only two target sids - self-contradictory. The shortfall message is
+    parameterised on the actual target count, so with 2 targets and both failing
+    (no spares to draw) the message names `0 of 2`, not a number borrowed from the
+    real 50-property plan."""
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    with pytest.raises(warm.SparesExhausted, match="0 of 2"):
+        warm.warm_all(
+            ["B1", "B2"], [], assemble=always_fail, verify=ok_verify,
+            log=lambda *_: None,
+        )
+
+
+def test_warm_all_lets_manifest_stale_propagate_before_any_fetching(monkeypatch):
+    """`resolve()` must run before any assembly - a stale manifest should surface in
+    the first second, not after an hour. `assemble`/`verify` are never called when
+    `resolve` raises."""
+    called = []
+
+    def boom():
+        raise warm.demo_set.ManifestStale("SID_X: in DEMO_SET but not in the live index")
+
+    monkeypatch.setattr(warm.demo_set, "resolve", boom)
+
+    def tripwire(sid, **kwargs):
+        called.append(sid)
+        return object()
+
+    with pytest.raises(warm.demo_set.ManifestStale):
+        warm.warm_all(["B1"], ["S1"], assemble=tripwire, verify=ok_verify)
+    assert called == []
+
+
+def test_warm_all_logs_per_property_progress(monkeypatch):
+    """A pass over fifty properties can run up to an hour; silence that long looks
+    hung, so every sid tried (targets and spares) must produce a log line."""
+    monkeypatch.setattr(warm.demo_set, "resolve", lambda: None)
+    lines = []
+    warm.warm_all(
+        ["BAD1", "OK1"], ["SPARE1"], assemble=fail_then_ok, verify=ok_verify,
+        log=lines.append,
+    )
+    assert any("BAD1" in line for line in lines)
+    assert any("SPARE1" in line for line in lines)
+    assert any("OK1" in line for line in lines)
+
+
+# ---------- main --all (task 4) ----------
+
+def test_main_all_reports_warmed_and_replacements(monkeypatch, capsys):
+    """Wiring only - `warm_all` itself is exercised directly above. `main --all`
+    must never call the real `warm_all` here, so this patches it out rather than
+    letting it fall through to the live defaults."""
+    monkeypatch.setattr(
+        warm, "warm_all",
+        lambda: {"warmed": ["A", "B"], "replaced": [("BAD1", "A")]},
+    )
+    rc = warm.main(["--all"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "warmed 2" in out
+    assert "BAD1 -> A" in out
+
+
+def test_main_all_exits_nonzero_on_manifest_stale(monkeypatch, capsys):
+    def boom():
+        raise warm.demo_set.ManifestStale("SID_X: in DEMO_SET but not in the live index")
+
+    monkeypatch.setattr(warm, "warm_all", boom)
+    rc = warm.main(["--all"])
+    assert rc == 1
+    assert "SID_X" in capsys.readouterr().err
+
+
+def test_main_all_exits_nonzero_on_spares_exhausted(monkeypatch, capsys):
+    def boom():
+        raise warm.SparesExhausted(48, 50)
+
+    monkeypatch.setattr(warm, "warm_all", boom)
+    rc = warm.main(["--all"])
+    assert rc == 1
+    assert "48 of 50" in capsys.readouterr().err

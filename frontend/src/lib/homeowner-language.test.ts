@@ -29,4 +29,16 @@ describe("homeowner wording", () => {
   it("does not corrupt words containing a short categorical value", () => {
     expect(readableText("Las Vegas has gas service.")).toBe("Las Vegas has gas service.");
   });
+  it("names the tariff sector the property actually uses, never 'homes' for an office", () => {
+    const office = warningText("tariff eia/retail-sales (fallback): EIA state average retail price, CA COM, 2026-08");
+    expect(office).toContain("state average for businesses");
+    expect(office).not.toContain("for homes");
+    expect(office).toContain("2026-08");
+    const home = warningText("tariff eia/retail-sales (fallback): EIA state average retail price, CA RES, 2026-08");
+    expect(home).toContain("state average for homes");
+    const gas = warningText("tariff eia/natural-gas-price (fallback): EIA state average delivered gas price, TX COM, 2025");
+    expect(gas).toContain("delivered price for businesses");
+    const unknown = warningText("tariff eia/retail-sales (fallback): EIA state average retail price, 2026-08");
+    expect(unknown).not.toMatch(/for (homes|businesses)/);
+  });
 });

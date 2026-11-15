@@ -37,6 +37,14 @@ const WORDS: Record<string, string> = {
   vintage_default: "Estimate based on building age", gas: "Natural gas", smart: "Smart thermostat",
   manual: "Manual thermostat", attic: "Attic", shingle: "Shingles", plaster: "Plaster",
 };
+// The EIA tariff notes name the sector: RES for homes, COM for businesses. Offices use the commercial
+// average, so the sentence must not say "for homes" on an office audit.
+function sectorWords(text: string): string {
+  if (/\bRES\b/.test(text)) return " for homes";
+  if (/\bCOM\b/.test(text)) return " for businesses";
+  return "";
+}
+
 export function inputName(key: string, label = ""): string {
   if (label.includes(" ") && !/U-value|SHGC|AFUE|SEER|HVAC|coefficient|density|setpoint|\[U\]|ROOF-|50 Pa|above grade|floor plate|solar absorptance|model \+y|marginal|distribution efficiency/i.test(label)) return readableText(label);
   return INPUT_NAMES[key] || readableText(label || key);
@@ -108,8 +116,8 @@ export function warningText(text: string): string {
       ? `The selected aerial building outline covers ${area} m², compared with ${reference} m² per floor in the property record: a ${difference}% difference. ${date ? `The chosen aerial capture is dated ${date}. ` : ""}Several captures and candidate outlines were compared. Confirm the correct roof boundary before a final solar design.`
       : readableText(text);
   }
-  if (/tariff eia\/retail-sales/i.test(text)) return `Electricity costs use a state average for homes, rather than this property’s electricity bill. Source: the U.S. Energy Information Administration${text.match(/\d{4}-\d{2}/) ? `, ${text.match(/\d{4}-\d{2}/)![0]}` : ""}. Confirm your utility rate before deciding.`;
-  if (/tariff eia\/natural-gas-price/i.test(text)) return `Gas costs use a state average delivered price for homes, rather than this property’s gas bill. Source: the U.S. Energy Information Administration${text.match(/\b20\d{2}\b/) ? `, ${text.match(/\b20\d{2}\b/)![0]}` : ""}. Confirm your utility rate before deciding.`;
+  if (/tariff eia\/retail-sales/i.test(text)) return `Electricity costs use a state average${sectorWords(text)}, rather than this property’s electricity bill. Source: the U.S. Energy Information Administration${text.match(/\d{4}-\d{2}/) ? `, ${text.match(/\d{4}-\d{2}/)![0]}` : ""}. Confirm your utility rate before deciding.`;
+  if (/tariff eia\/natural-gas-price/i.test(text)) return `Gas costs use a state average delivered price${sectorWords(text)}, rather than this property’s gas bill. Source: the U.S. Energy Information Administration${text.match(/\b20\d{2}\b/) ? `, ${text.match(/\b20\d{2}\b/)![0]}` : ""}. Confirm your utility rate before deciding.`;
   return readableText(text);
 }
 const SOURCES: Record<string, string> = {

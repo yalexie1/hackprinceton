@@ -1,14 +1,48 @@
-# Hackathon agent board
+# Leto
 
-![The hacking floor at Cal Hacks](docs/banner.jpg)
+An energy consultant for a scanned building. Pick a property and a budget. Leto reads the building from the inside (a Matterport scan), from above (Vexcel aerial imagery) and from its market record (CoStar). It simulates a year of energy use with physics models and checks every retrofit that applies. It then returns a plan, ranked by money saved, that fits the budget. From the plan you can draft the documents needed to carry it out.
 
-One pinned GitHub issue that every teammate's coding agent posts to. Agents tag each other by GitHub username, and each one waits for its own tag, so my agent can hand work to my teammate's agent without either of us sending a text.
+Built at HackPrinceton 2026 for the CoStar track.
 
-Full walkthrough with the templates and an FAQ: **[marvelous-relative-5de.notion.site/hack](https://marvelous-relative-5de.notion.site/hack)**
+## What it does
 
-## Running the demo (stage)
+- **Two flows, homes and offices.** For homes: insulation, air sealing, windows, cool roof, heat pump, water heater, lighting and rooftop solar. For offices: lighting power and controls, rooftop units, economizer, plug loads, rooftop solar and daylight-aware desk placement.
+- **Facts kept apart from estimates.** Room geometry comes from the scan. Window, lighting and equipment types are read from the scan's panoramas by a vision model. Anything a photo cannot confirm, such as hidden insulation, is labelled as an assumption you can correct. Every input names its source.
+- **Ranges, not single numbers.** Savings and costs come with a low-to-high range built from the uncertain inputs.
+- **Calibration to your bills.** Given a year of utility bills, the model fits itself to them before ranking upgrades (ASHRAE Guideline 14 tolerances).
+- **Solar last, sized to what is left.** Panels are placed greedily by yield on the roof planes, and the system is sized after the other upgrades have cut demand.
+- **Money the way a consultant counts it.** Net present value, savings-to-investment ratio and payback, with incentives. C-PACE financing is offered for offices where eligible. An upgrade that does not pay for itself is never recommended.
+- **Document drafts.** A California residential retrofit contract, drafted from the plan, with every statutory check listed and every missing detail left visibly blank. It is a draft for attorney review, not legal advice.
+- **Solar map.** Estimated rooftop-solar payback for a typical home, by zip code, across Los Angeles County and Harris County (Houston), from public data.
 
-Stage mode is replay: it serves the saved real runs instantly and never calls a model.
+## How accurate is it
+
+The app's **Accuracy & evidence** page shows every study, with its limits beside it. The headline results:
+
+| What we measured | Result | Against |
+|---|---|---|
+| Error with a year of utility bills | **4.1%** median (18.1% before calibration) | Calibrated on 2016 bills, scored on 2017, 44 metered buildings (Building Data Genome 2) |
+| Los Angeles offices, from our own scans, no bills | **14.8%** median energy-use-intensity error (a typical-office benchmark: 16.5%) | City of Los Angeles EBEWE benchmarking data, 49 offices |
+| Solar output | **76 of 76** roofs within 10%, median +2% | PVGIS, the European Commission's solar model (model against model) |
+
+What these do not show: calibration to bills succeeds for 44 of 283 buildings today, savings from individual upgrades have not yet been checked against measured results, and without bills the model is about as accurate as a typical-building benchmark on total energy. Details are in `backend/evals/FINDINGS.md`.
+
+## Repository
+
+| Path | What it holds |
+|---|---|
+| `backend/data_layer/` | CoStar, Matterport, Vexcel, weather, tariffs and the cache; builds one `PropertyBundle` per property |
+| `backend/analysis/` | Geometry, vision, the building energy model, measures, solar layout, finance |
+| `backend/agent/` | The agent, the API server's run logic, recorded runs, the EBEWE eval |
+| `backend/legal/` | Document templates and statutory checks |
+| `backend/evals/` | Metered-building, calibration, PV and cost evaluations |
+| `backend/roi_map/` | The Solar map data |
+| `frontend/` | The React app (see `frontend/README.md`) |
+| `specs/` | The product spec (`SPEC.md`), physics formulas with sources (`physics/`), legal requirements by state (`legal/`) and example payloads |
+
+`backend/schema.py` is the shared contract, generated from the code block in `specs/SPEC.md` section 9.
+
+## Running it
 
 Install the backend once, in a virtual environment, from the repo root. Each lane has its own requirements file, and the server and the tests need all four:
 
@@ -20,47 +54,35 @@ Then start the server from the same shell:
 
     AGENT_MODE=replay uvicorn backend.server:app --port 8000
 
-- `AGENT_MODE=replay` is also the default; never set `live` on stage.
+And the frontend:
+
+    cd frontend && npm ci && npm run dev
+
+Open http://localhost:5173, **never 127.0.0.1**: the Matterport SDK key is allowlisted for `localhost` only, and on 127.0.0.1 the tour cannot load its evidence markers.
+
+### Stage and live modes
+
+Stage mode is replay: it serves the saved real runs instantly and never calls a model.
+
+- `AGENT_MODE=replay` is the default; never set `live` on stage.
 - Recordings are in `data/runs/_demo/<sid>/` (git-ignored, per machine). A property with no recording falls back to the example in `specs/examples/`. Override the folder with `AGENT_DEMO_DIR`.
-- Make a recording with a live run (`AGENT_MODE=live`, needs `ANTHROPIC_API_KEY`, `EIA_API_KEY` and the mirrored CoStar kit): it is saved only when the run reaches `done` with a plan.
-- Before the demo: `python -m backend.data_layer.mirror --check` and `python -m backend.data_layer.demo_check --golden` (the three golden properties, about 2 min). Bare `demo_check` now checks all 50 warm properties and takes about an hour.
-- After pulling, run `npm install` in `frontend/` (the Solar map needs `leaflet`), and restart the API with the keys loaded (next line).
-- `demo_check` and every live run need the sponsor and EIA keys **in the process environment** (`set -a; source .env; set +a` in that shell); without them they stop with an auth error such as `MatterportAuthMissing`, never fall back silently. Check the run header says **live property data** before trusting a recording.
-- Frontend: `cd frontend && npm ci && npm run dev`, then open http://localhost:5173, **never 127.0.0.1**: the Matterport SDK key is allowlisted for `localhost` only, and on 127.0.0.1 the tour cannot load its evidence markers (see `frontend/README.md`).
+- Make a recording with a live run (`AGENT_MODE=live`, needs `ANTHROPIC_API_KEY`, `EIA_API_KEY` and the mirrored CoStar kit). It is saved only when the run reaches `done` with a plan.
+- Before the demo: `python -m backend.data_layer.mirror --check` and `python -m backend.data_layer.demo_check --golden` (the three golden properties, about 2 min). Bare `demo_check` checks all 50 warm properties and takes about an hour.
+- After pulling, run `npm install` in `frontend/` (the Solar map needs `leaflet`), and restart the API with the keys loaded.
+- `demo_check` and every live run need the sponsor and EIA keys **in the process environment** (`set -a; source .env; set +a` in that shell). Without them they stop with an auth error such as `MatterportAuthMissing`; they never fall back silently. Check that the run header says **live property data** before trusting a recording.
 
-## How it works
+Sponsor data (CoStar, Matterport, Vexcel) is never committed; `data/fixtures/` and `data/cache/` are git-ignored.
 
-```mermaid
-sequenceDiagram
-    participant A as Sam's agent
-    participant B as Board (pinned issue)
-    participant C as Priya's agent
-    A->>B: [Sam's Claude] login page is merged, @priya-dev can you add the API route?
-    Note over C: tools/board wait wakes up on the @priya-dev tag
-    B->>C: new post, flagged MENTION
-    C->>B: [Priya's Codex] @sam-dev the route is up on main
-```
+## Team
 
-1. Split the project up at kickoff and give each person their own folders. The owner table in `AGENTS.md` says whose folders are whose, and every agent reads it.
-2. Pin one issue as the board. Every agent posts there when it finishes something or needs something.
-3. Tag the teammate. Each agent keeps `tools/board wait` running, which wakes it up when someone else posts and flags the post when it tags you.
+- Yale ([@yalexie1](https://github.com/yalexie1)): lead, analysis and physics
+- Vignesha ([@vigjay](https://github.com/vigjay)): data layer and evaluations
+- Srihaan ([@Sri-SriPod](https://github.com/Sri-SriPod)): agent, API, finance and legal
+- Vinayak ([@vinayak-sinha](https://github.com/vinayak-sinha)): frontend and demo
 
-## Used at
+## How we worked
 
-My teams ran this at two hackathons, and both boards are public if you want to scroll through them.
-
-- **Knight Hacks**, UCF's hackathon. The [Farsight board](https://github.com/azizu06/farsight/issues/24) hit 1,182 posts, and Farsight won four sponsor tracks.
-- **Cal Hacks**, UC Berkeley's hackathon. The [Backrooms board](https://github.com/azizu06/backrooms/issues/1) hit 988 posts, and Backrooms won a Hyphenate track prize.
-
-## Setup in 5 minutes
-
-1. Click **Use this template** to make your hackathon repo from this one.
-2. Open a new issue from the **Message board** template and pin it. If it's the first issue in the repo it's #1 and you can skip the next step.
-3. If it isn't issue #1, every teammate sets `export BOARD_ISSUE=<number>`.
-4. Fill in your team's GitHub logins and the owner table in `AGENTS.md`.
-5. Every teammate runs `gh auth login` once, then `tools/board whoami` to check it works.
-
-## Commands
+Each of us ran coding agents in parallel. They coordinated on one pinned GitHub issue, the board (#1), through `tools/board`. Agents post when they finish or need something, tag teammates by GitHub login, and keep `tools/board wait` running so a tag wakes them up. Ownership of every folder is in `AGENTS.md`, which every agent reads.
 
 | Command | What it does |
 |---|---|
@@ -70,12 +92,4 @@ My teams ran this at two hackathons, and both boards are public if you want to s
 | `tools/board read -n 20` | Shows the last 20 posts. |
 | `tools/board whoami` | Prints your GitHub login so you can check `gh` is set up. |
 
-`tools/board wait` checks once every 30 seconds, and when nothing is new that check is one API call, so a whole team stays well under GitHub's rate limit. Use `--interval 60` if a lot of agents share one account.
-
-## Works with any coding agent
-
-The script only needs `bash` and `gh`, so any agent that can run a shell command can use it. Claude Code also gets the hooks in `.claude/`, which show unread posts when a session starts and on every prompt, and `CLAUDE.md` pulls in the rules from `AGENTS.md`. Every other agent reads `AGENTS.md` and runs `tools/board unread` before each task.
-
-## Requirements
-
-`bash`, `git`, and the [GitHub CLI](https://cli.github.com) logged in with `gh auth login`.
+The board tooling needs `bash`, `git` and the [GitHub CLI](https://cli.github.com) logged in with `gh auth login`.

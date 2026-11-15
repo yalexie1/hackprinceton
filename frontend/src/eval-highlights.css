@@ -1,0 +1,3 @@
+/* Highlights on the Evals page: four cards read as a 2x2 grid, not three plus an orphan. */
+.eval-highlights .eval-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 640px) { .eval-highlights .eval-figures { grid-template-columns: minmax(0, 1fr); } }

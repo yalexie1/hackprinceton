@@ -48,6 +48,8 @@ import Calibration from "./components/Calibration";
 import RunSource from "./components/RunSource";
 import { AuditProgress } from "./components/AuditProgress";
 import HowItWorks from "./components/HowItWorks";
+import Evals from "./components/Evals";
+import RoiMap from "./components/RoiMap";
 import AuditTasks from "./components/AuditTasks";
 import AuditMethodChoice, { type AuditMethod } from "./components/AuditMethod";
 import {
@@ -65,7 +67,10 @@ type View =
   | "layout"
   | "assumptions"
   | "documents"
-  | "how";
+  | "how"
+  | "evals"
+  | "solar-map";
+const publicViews: ReadonlySet<View> = new Set(["find", "how", "evals", "solar-map"]);
 const views: { id: View; label: string; icon: typeof Home }[] = [
   { id: "find", label: "Properties", icon: Home },
   { id: "plan", label: "Energy plan", icon: ClipboardList },
@@ -73,6 +78,8 @@ const views: { id: View; label: string; icon: typeof Home }[] = [
   { id: "layout", label: "Workspace", icon: Layers3 },
   { id: "assumptions", label: "Assumptions", icon: Settings2 },
   { id: "documents", label: "Documents", icon: FileText },
+  { id: "solar-map", label: "Solar map", icon: MapPin },
+  { id: "evals", label: "Accuracy & evidence", icon: CheckCircle2 },
   { id: "how", label: "How it works", icon: BookOpen },
 ];
 function bills(text: string): number[] | undefined {
@@ -222,7 +229,7 @@ export default function App() {
     };
   }, [connectionAttempt]);
   function navigate(v: View) {
-    if (v !== "find" && !done) return;
+    if (!publicViews.has(v) && !done) return;
     setView(v);
     setMobileNav(false);
     setError("");
@@ -478,7 +485,8 @@ export default function App() {
           {views.map((item) => (
             <button
               key={item.id}
-              disabled={item.id !== "find" && !done}
+              disabled={!publicViews.has(item.id) && !done}
+              aria-current={view === item.id ? "page" : undefined}
               className={`nav-item ${view === item.id ? "active" : ""}`}
               onClick={() => navigate(item.id)}
             >
@@ -601,8 +609,9 @@ export default function App() {
               {notice}
             </p>
           )}
-          {/* The only view that needs no run: it describes the method, not a building. */}
-          {view === "how" && <HowItWorks />}
+          {view === "how" && <HowItWorks onExplore={navigate} />}
+          {view === "evals" && <Evals />}
+          {view === "solar-map" && <RoiMap />}
           {view === "find" && (
             <Find
               properties={properties}

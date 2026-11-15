@@ -172,7 +172,9 @@ const EQUATIONS: { group: string; spec: string; entries: string }[] = [
   },
 ];
 
-export default function HowItWorks() {
+export default function HowItWorks({ onExplore }: {
+  onExplore?: (view: "evals" | "solar-map") => void;
+}) {
   return (
     <section className="how-it-works">
       <div className="section-heading">
@@ -183,11 +185,21 @@ export default function HowItWorks() {
         <BookOpen size={26} />
       </div>
       <p className="section-description">
-        This is an engineering estimate, not a guess and not an appraisal. Below is what the
-        analysis does, every source it uses, and where each equation is written down. Figures are
-        named here, never restated: the specifications are the record, and a number copied onto a
-        page is a number that will one day disagree with the code.
+        See how we estimate your home's energy use and compare improvements.
+        Your results show which information comes from your property and which
+        assumptions still need checking. The studies below explain how we test
+        our estimates and where the evidence is limited.
       </p>
+      {onExplore && (
+        <div className="hiw-explore">
+          <button className="secondary-button" onClick={() => onExplore("evals")}>
+            See accuracy & evidence
+          </button>
+          <button className="secondary-button" onClick={() => onExplore("solar-map")}>
+            Explore the Solar map
+          </button>
+        </div>
+      )}
 
       <h3>
         <Workflow size={19} /> What happens to your building

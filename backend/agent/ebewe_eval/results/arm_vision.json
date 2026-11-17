@@ -1,0 +1,39 @@
+{
+ "arm": "vision",
+ "scored": 20,
+ "failed": 0,
+ "all": {
+  "n": 20,
+  "median_abs_error": 0.17239375236081678,
+  "ci90": [
+   0.11230339780006249,
+   0.34871148089424076
+  ],
+  "median_signed_error": -0.06567969631073772,
+  "within_25": 0.65,
+  "off_by_2x_either_way": 0.15,
+  "range_contained_truth": 0.6,
+  "truth_above_range": 6,
+  "truth_below_range": 2,
+  "rank_correlation": 0.24962406015037594,
+  "constant_predictor_median_abs_error": 0.12193270629884645,
+  "cohort_median_truth_eui": 45.8
+ },
+ "office": {
+  "n": 20,
+  "median_abs_error": 0.17239375236081678,
+  "ci90": [
+   0.11230339780006249,
+   0.34871148089424076
+  ],
+  "median_signed_error": -0.06567969631073772,
+  "within_25": 0.65,
+  "off_by_2x_either_way": 0.15,
+  "range_contained_truth": 0.6,
+  "truth_above_range": 6,
+  "truth_below_range": 2,
+  "rank_correlation": 0.24962406015037594,
+  "constant_predictor_median_abs_error": 0.12193270629884645,
+  "cohort_median_truth_eui": 45.8
+ }
+}

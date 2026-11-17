@@ -1,0 +1,16 @@
+{
+ "n": 76,
+ "n_no_design": 4,
+ "params": {
+  "loss": 14.08,
+  "raddatabase": "PVGIS-ERA5",
+  "coords_rounded_to": 0.01
+ },
+ "median_diff_pct": 2.3218565147867993,
+ "mean_diff_pct": 2.633798939005665,
+ "within_10_pct": 1.0,
+ "by_orientation": {
+  "south 135-225": 76
+ },
+ "note": "model vs model; flat single-plane offices dominate, so orientation is barely exercised"
+}

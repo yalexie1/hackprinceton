@@ -1,0 +1,73 @@
+{
+ "arm": "none",
+ "scored": 116,
+ "failed": 34,
+ "all": {
+  "n": 116,
+  "median_abs_error": 0.3625964061865521,
+  "ci90": [
+   0.24257360739390532,
+   0.43867259162812855
+  ],
+  "median_signed_error": 0.07348216213143721,
+  "within_25": 0.4396551724137931,
+  "off_by_2x_either_way": 0.3017241379310345,
+  "range_contained_truth": 0.4224137931034483,
+  "truth_above_range": 22,
+  "truth_below_range": 45,
+  "rank_correlation": 0.06065428824049514,
+  "constant_predictor_median_abs_error": 0.15253983024315587,
+  "cohort_median_truth_eui": 40.95
+ },
+ "multifamily_unit": {
+  "n": 66,
+  "median_abs_error": 0.5104765328114951,
+  "ci90": [
+   0.41016752116328115,
+   0.8552479465141047
+  ],
+  "median_signed_error": 0.4418178248626957,
+  "within_25": 0.3333333333333333,
+  "off_by_2x_either_way": 0.3939393939393939,
+  "range_contained_truth": 0.3181818181818182,
+  "truth_above_range": 9,
+  "truth_below_range": 36,
+  "rank_correlation": 0.17582715791671016,
+  "constant_predictor_median_abs_error": 0.17589479392624718,
+  "cohort_median_truth_eui": 37.95
+ },
+ "office": {
+  "n": 49,
+  "median_abs_error": 0.1482629045171534,
+  "ci90": [
+   0.11879944450367064,
+   0.28927430786584496
+  ],
+  "median_signed_error": -0.05300948908997494,
+  "within_25": 0.5918367346938775,
+  "off_by_2x_either_way": 0.16326530612244897,
+  "range_contained_truth": 0.5714285714285714,
+  "truth_above_range": 12,
+  "truth_below_range": 9,
+  "rank_correlation": 0.2273469387755102,
+  "constant_predictor_median_abs_error": 0.16542750929368033,
+  "cohort_median_truth_eui": 44.9
+ },
+ "retail": {
+  "n": 1,
+  "median_abs_error": 0.834814146534234,
+  "ci90": [
+   0.834814146534234,
+   0.834814146534234
+  ],
+  "median_signed_error": -0.834814146534234,
+  "within_25": 0.0,
+  "off_by_2x_either_way": 1.0,
+  "range_contained_truth": 0.0,
+  "truth_above_range": 1,
+  "truth_below_range": 0,
+  "rank_correlation": null,
+  "constant_predictor_median_abs_error": 0.0,
+  "cohort_median_truth_eui": 80.5
+ }
+}
